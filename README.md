@@ -5,7 +5,7 @@ https://www.phy.bnl.gov/~hyu/wcp-porting-img/celltreeOVERLAY.root
 
 CellTree -> Img
 ```
-wire-cell -l stdout -L debug -c wct-celltree-sink.jsonnet
+wire-cell -l stdout -L debug -c wct-celltree-img.jsonnet
 ```
 
 
