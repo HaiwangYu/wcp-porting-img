@@ -8,12 +8,19 @@ local wc = import 'wirecell.jsonnet';
     // A functio that sets up slicing for an APA.
     slicing :: function(anode, aname, tag="", span=4) {
         ret: g.pnode({
-            type: "SumSlices",
+            type: "MaskSlices",
             name: "slicing-"+aname,
             data: {
                 tag: tag,
                 tick_span: span,
                 anode: wc.tn(anode),
+                tmax: -1,
+                // active_planes: [1, 2],
+                // masked_plane_charge: [[4, 1]],
+                // active_planes: [1],
+                // masked_plane_charge: [[2,1],[4, 1]],
+                // active_planes: [],
+                // masked_plane_charge: [[1,1],[2,1],[4, 1]],
             },
         }, nin=1, nout=1, uses=[anode]),
     }.ret,
@@ -87,6 +94,7 @@ local wc = import 'wirecell.jsonnet';
             innodes=[bc], outnodes=[bs], centernodes=[bg],
             edges=[g.edge(bc,bg), g.edge(bg,bs)],
             name="solving-" + aname),
+        // ret: bc,
     }.ret,
 
     dump :: function(anode, aname, drift_speed) {
