@@ -17,8 +17,9 @@ local celltreesource = g.pnode({
     data: {
         filename: "celltreeOVERLAY.root",
         EventNo: 6501,
-        frames: ["gauss"],
-        in_branch: "calibGaussian", // raw [default], calibGaussian, calibWiener
+        // in_branch_base_names: raw [default], calibGaussian, calibWiener
+        in_branch_base_names: ["calibWiener", "calibGaussian"],
+        out_trace_tags: ["wiener", "gauss"], // orig, gauss, wiener
     },
  }, nin=0, nout=1);
 
@@ -33,15 +34,25 @@ local magdecon = g.pnode({
       data: {
         output_filename: "mag.root",
         root_file_mode: 'UPDATE',
-        frames: ['gauss', 'wiener'],
+        frames: ['gauss', 'wiener', 'error'],
+        cmmtree: [['bad','bad']],
         trace_has_tag: true,
         anode: wc.tn(anodes[0]),
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
+local charge_err = g.pnode({
+      type: 'ChargeErrorFrameEstimator',
+      name: 'cefe',
+      data: {
+        input_tag: "gauss",
+        output_tag: 'error',
+      },
+    }, nin=1, nout=1, uses=[]);
+
 local anode = anodes[0];
 local imgpipe = g.pipeline([
-        img.slicing(anode, anode.name),
+        img.slicing(anode, anode.name, "gauss"),
         img.tiling(anode, anode.name),
         img.solving(anode, anode.name),
         // img.clustering(anode, anode.name),
@@ -51,7 +62,13 @@ local imgpipe = g.pipeline([
       ], 
       "img-" + anode.name);
 
-local graph = g.pipeline([celltreesource, magdecon, /*dumpframes,*/ imgpipe], "main");
+local graph = g.pipeline([
+    celltreesource, 
+    charge_err,
+    magdecon,
+    // dumpframes,
+    imgpipe,
+    ], "main");
 
 local app = {
   type: 'Pgrapher',
