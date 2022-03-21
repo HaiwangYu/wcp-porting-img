@@ -34,21 +34,32 @@ local magdecon = g.pnode({
       data: {
         output_filename: "mag.root",
         root_file_mode: 'UPDATE',
-        frames: ['gauss', 'wiener', 'error'],
+        frames: ['gauss', 'wiener', 'gauss_error'],
         cmmtree: [['bad','bad']],
         trace_has_tag: true,
         anode: wc.tn(anodes[0]),
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
+local waveform_map = {
+      type: 'WaveformMap',
+      name: 'wfm',
+      data: {
+        filename: "microboone-charge-error.json.bz2",
+      },
+      uses: [],
+    };
+
 local charge_err = g.pnode({
       type: 'ChargeErrorFrameEstimator',
       name: 'cefe',
       data: {
-        input_tag: "gauss",
-        output_tag: 'error',
+        intag: "gauss",
+        outtag: 'gauss_error',
+        anode: wc.tn(anodes[0]),
+        errors: wc.tn(waveform_map),
       },
-    }, nin=1, nout=1, uses=[]);
+    }, nin=1, nout=1, uses=[waveform_map, anodes[0]]);
 
 local anode = anodes[0];
 local imgpipe = g.pipeline([
@@ -63,7 +74,7 @@ local imgpipe = g.pipeline([
       "img-" + anode.name);
 
 local graph = g.pipeline([
-    celltreesource, 
+    celltreesource,
     charge_err,
     magdecon,
     // dumpframes,
