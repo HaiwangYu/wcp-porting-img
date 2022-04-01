@@ -64,6 +64,16 @@ local charge_err = g.pnode({
       },
     }, nin=1, nout=1, uses=[waveform_map, anodes[0]]);
 
+local cmm_mod = g.pnode({
+      type: 'CMMModifier',
+      name: '',
+      data: {
+        cm_tag: "bad",
+        trace_tag: "gauss",
+        anode: wc.tn(anodes[0]),
+      },
+    }, nin=1, nout=1, uses=[anodes[0]]);
+
 local anode = anodes[0];
 local imgpipe = g.pipeline([
         img.slicing(anode, anode.name, "gauss"),
@@ -78,6 +88,7 @@ local imgpipe = g.pipeline([
 
 local graph = g.pipeline([
     celltreesource,
+    cmm_mod,
     charge_err,
     magdecon,
     dumpframes,
