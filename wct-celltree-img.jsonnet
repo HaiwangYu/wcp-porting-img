@@ -71,6 +71,19 @@ local cmm_mod = g.pnode({
         cm_tag: "bad",
         trace_tag: "gauss",
         anode: wc.tn(anodes[0]),
+	start: 0,   // start veto ...
+	end: 9592, // end  of veto
+	ncount_cont_ch: 2,
+        cont_ch_llimit: [296, 2336+4800 ], // veto if continues bad channels
+	cont_ch_hlimit: [671, 2463+4800 ],
+	ncount_veto_ch: 1,
+	veto_ch_llimit: [3684],  // direct veto these channels
+	veto_ch_hlimit: [3699],
+	dead_ch_ncount: 10,
+	dead_ch_charge: 1000,
+	ncount_dead_ch: 2,
+	dead_ch_llimit: [2160, 2080], // veto according to the charge size for dead channels
+	dead_ch_hlimit: [2176, 2096],
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
