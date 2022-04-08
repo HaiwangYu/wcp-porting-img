@@ -20,6 +20,7 @@ local celltreesource = g.pnode({
         // in_branch_base_names: raw [default], calibGaussian, calibWiener
         in_branch_base_names: ["calibWiener", "calibGaussian"],
         out_trace_tags: ["wiener", "gauss"], // orig, gauss, wiener
+        in_branch_thresholds: ["channelThreshold", ""],
     },
  }, nin=0, nout=1);
 
@@ -36,6 +37,7 @@ local magdecon = g.pnode({
         root_file_mode: 'UPDATE',
         frames: ['gauss', 'wiener', 'gauss_error'],
         cmmtree: [['bad','bad']],
+        summaries: ['gauss', 'wiener', 'gauss_error'],
         trace_has_tag: true,
         anode: wc.tn(anodes[0]),
       },
@@ -87,8 +89,30 @@ local cmm_mod = g.pnode({
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
+local frame_quality_tagging = g.pnode({
+      type: 'FrameQualityTagging',
+      name: '',
+      data: {
+        trace_tag: 'gauss',
+        anode: wc.tn(anodes[0]),
+      },
+    }, nin=1, nout=1, uses=[anodes[0]]);
+
+local frame_masking = g.pnode({
+      type: 'FrameMasking',
+      name: '',
+      data: {
+        cm_tag: "bad",
+        trace_tags: ['gauss','wiener'],
+        anode: wc.tn(anodes[0]),
+      },
+    }, nin=1, nout=1, uses=[anodes[0]]);
+
 local anode = anodes[0];
-local imgpipe = g.pipeline([
+// multi slicing includes 2-view tiling and dead tiling
+local multi_slicing = false;
+local imgpipe = if multi_slicing == false
+then g.pipeline([
         img.slicing(anode, anode.name, "gauss"),
         img.tiling(anode, anode.name),
         img.solving(anode, anode.name),
@@ -97,15 +121,30 @@ local imgpipe = g.pipeline([
       + [
         img.dump(anode, anode.name, params.lar.drift_speed),
       ], 
-      "img-" + anode.name);
+      "img-" + anode.name)
+else {
+    local active_fork = g.pipeline([
+        img.multi_active_slicing_tiling(anode, anode.name+"active", "gauss", 4),
+        img.solving(anode, anode.name+"active"),
+        img.dump(anode, anode.name+"active", params.lar.drift_speed),
+    ]),
+    local masked_fork = g.pipeline([
+        img.multi_masked_slicing_tiling(anode, anode.name+"masked", "gauss", 109),
+        img.clustering(anode, anode.name),
+        img.dump(anode, anode.name+"masked", params.lar.drift_speed),
+    ]),
+    ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked"),
+}.ret;
 
 local graph = g.pipeline([
     celltreesource,
-    cmm_mod,
-    charge_err,
-    magdecon,
-    dumpframes,
-    // imgpipe,
+    frame_quality_tagging, // event level tagging
+    cmm_mod, // CMM modification
+    frame_masking, // apply CMM
+    charge_err, // calculate charge error
+    magdecon, // magnify out
+    // dumpframes,
+    imgpipe,
     ], "main");
 
 local app = {

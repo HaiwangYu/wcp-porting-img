@@ -2,11 +2,12 @@
 // mostly per-apa but tiling portions are per-face.
 
 local g = import 'pgraph.jsonnet';
+local f = import 'pgrapher/common/funcs.jsonnet';
 local wc = import 'wirecell.jsonnet';
 
 {
     // A functio that sets up slicing for an APA.
-    slicing :: function(anode, aname, tag="", span=4) {
+    slicing :: function(anode, aname, tag="", span=4, active_planes=[1,2,4], masked_plane_charge=[]) {
         ret: g.pnode({
             type: "MaskSlices",
             name: "slicing-"+aname,
@@ -58,6 +59,38 @@ local wc = import 'wirecell.jsonnet';
         //         [g.edge(tilings[n], blobsync, 0, n) for n in [0,1]],
         //     name='tiling-' + aname),
         ret : tilings[0],
+    }.ret,
+
+    //
+    multi_active_slicing_tiling :: function(anode, name, tag="gauss", span=4) {
+        local active_planes = [[1,2,4],[1,2],[2,4],[1,4],],
+        local masked_plane_charge = [[],[[4,1]],[[1,1]],[[2,1]]],
+        local iota = std.range(0,std.length(active_planes)-1),
+        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span, active_planes[n], masked_plane_charge[n]) 
+            for n in iota],
+        local tilings = [$.tiling(anode, name+"_%d"%n)
+            for n in iota],
+        local multipass = [g.pipeline([slicings[n],tilings[n]]) for n in iota],
+        ret: f.fanpipe("FrameFanout", multipass, "BlobSetSync", "multi_active_slicing_tiling"),
+    }.ret,
+
+    //
+    multi_masked_slicing_tiling :: function(anode, name, tag="gauss", span=109) {
+        local active_planes = [[1],[2],[4],[],],
+        local masked_charge = 1,
+        local masked_plane_charge = [
+            [[2,masked_charge],[4,masked_charge]],
+            [[1,masked_charge],[4,masked_charge]],
+            [[1,masked_charge],[2,masked_charge]],
+            [[1,masked_charge],[2,masked_charge],[4,masked_charge]]
+            ],
+        local iota = std.range(0,std.length(active_planes)-1),
+        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span, active_planes[n], masked_plane_charge[n]) 
+            for n in iota],
+        local tilings = [$.tiling(anode, name+"_%d"%n)
+            for n in iota],
+        local multipass = [g.pipeline([slicings[n],tilings[n]]) for n in iota],
+        ret: f.fanpipe("FrameFanout", multipass, "BlobSetSync", "multi_masked_slicing_tiling"),
     }.ret,
 
     // Just clustering
