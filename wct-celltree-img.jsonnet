@@ -98,6 +98,22 @@ local frame_quality_tagging = g.pnode({
       data: {
         trace_tag: 'gauss',
         anode: wc.tn(anodes[0]),
+	nrebin: 4, // rebin count ...
+	length_cut: 3,
+	time_cut: 3,
+	ch_threshold: 100,
+	n_cover_cut1: 12,
+	n_fire_cut1: 14,
+	n_cover_cut2: 6,
+	n_fire_cut2: 6,
+	fire_threshold: 0.22,
+	n_cover_cut3: [1200, 1200, 1800 ],
+	percent_threshold: [0.25, 0.25, 0.2 ],
+	threshold1: [300, 300, 360 ],
+	threshold2: [150, 150, 180 ],
+	min_time: 3180,
+	max_time: 7870,
+	flag_corr: 1,
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
