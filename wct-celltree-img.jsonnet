@@ -86,6 +86,9 @@ local cmm_mod = g.pnode({
 	ncount_dead_ch: 2,
 	dead_ch_llimit: [2160, 2080], // veto according to the charge size for dead channels
 	dead_ch_hlimit: [2176, 2096],
+	ncount_org: 5,   // organize the dead channel ranges according to these boundaries 
+	org_llimit: [0   , 1920, 3840, 5760, 7680], // must be ordered ...
+	org_hlimit: [1919, 3839, 5759, 7679, 9592], // must be ordered ...
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
