@@ -110,10 +110,13 @@ local frame_masking = g.pnode({
 
 local anode = anodes[0];
 // multi slicing includes 2-view tiling and dead tiling
-local multi_slicing = false;
-local imgpipe = if multi_slicing == false
+local active_planes = [[1,2,4],[1,2],[2,4],[1,4],];
+local masked_plane_charge = [[],[[4,1]],[[1,1]],[[2,1]]];
+// single, multi, active, masked
+local multi_slicing = "multi";
+local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        img.slicing(anode, anode.name, "gauss"),
+        img.slicing(anode, anode.name, "gauss", 4, active_planes[0], masked_plane_charge[0]),
         img.tiling(anode, anode.name),
         img.solving(anode, anode.name),
         // img.clustering(anode, anode.name),
@@ -122,27 +125,36 @@ then g.pipeline([
         img.dump(anode, anode.name, params.lar.drift_speed),
       ], 
       "img-" + anode.name)
+else if multi_slicing == "active"
+then g.pipeline([
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", "gauss", 4),
+        img.solving(anode, anode.name+"-ms-active"),
+        img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)])
+else if multi_slicing == "masked"
+then g.pipeline([
+        img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        img.clustering(anode, anode.name+"-ms-masked"),
+        img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
 else {
     local active_fork = g.pipeline([
-        img.multi_active_slicing_tiling(anode, anode.name+"active", "gauss", 4),
-        img.solving(anode, anode.name+"active"),
-        img.dump(anode, anode.name+"active", params.lar.drift_speed),
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", "gauss", 4),
+        img.solving(anode, anode.name+"-ms-active"),
+        img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
     ]),
     local masked_fork = g.pipeline([
-        img.multi_masked_slicing_tiling(anode, anode.name+"masked", "gauss", 109),
-        img.clustering(anode, anode.name),
-        img.dump(anode, anode.name+"masked", params.lar.drift_speed),
+        img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        img.clustering(anode, anode.name+"-ms-masked"),
+        img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
     ]),
     ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked"),
 }.ret;
-
 local graph = g.pipeline([
     celltreesource,
-    frame_quality_tagging, // event level tagging
-    cmm_mod, // CMM modification
-    frame_masking, // apply CMM
-    charge_err, // calculate charge error
-    magdecon, // magnify out
+    // frame_quality_tagging, // event level tagging
+    // cmm_mod, // CMM modification
+    // frame_masking, // apply CMM
+    // charge_err, // calculate charge error
+    // magdecon, // magnify out
     // dumpframes,
     imgpipe,
     ], "main");

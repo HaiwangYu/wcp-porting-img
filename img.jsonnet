@@ -16,6 +16,8 @@ local wc = import 'wirecell.jsonnet';
                 tick_span: span,
                 anode: wc.tn(anode),
                 tmax: -1,
+                active_planes: active_planes,
+                masked_plane_charge: masked_plane_charge,
                 // active_planes: [1, 2],
                 // masked_plane_charge: [[4, 1]],
                 // active_planes: [1],
