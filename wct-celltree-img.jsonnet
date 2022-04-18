@@ -86,6 +86,9 @@ local cmm_mod = g.pnode({
 	ncount_dead_ch: 2,
 	dead_ch_llimit: [2160, 2080], // veto according to the charge size for dead channels
 	dead_ch_hlimit: [2176, 2096],
+	ncount_org: 5,   // organize the dead channel ranges according to these boundaries 
+	org_llimit: [0   , 1920, 3840, 5760, 7680], // must be ordered ...
+	org_hlimit: [1919, 3839, 5759, 7679, 9592], // must be ordered ...
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
@@ -95,6 +98,22 @@ local frame_quality_tagging = g.pnode({
       data: {
         trace_tag: 'gauss',
         anode: wc.tn(anodes[0]),
+	nrebin: 4, // rebin count ...
+	length_cut: 3,
+	time_cut: 3,
+	ch_threshold: 100,
+	n_cover_cut1: 12,
+	n_fire_cut1: 14,
+	n_cover_cut2: 6,
+	n_fire_cut2: 6,
+	fire_threshold: 0.22,
+	n_cover_cut3: [1200, 1200, 1800 ],
+	percent_threshold: [0.25, 0.25, 0.2 ],
+	threshold1: [300, 300, 360 ],
+	threshold2: [150, 150, 180 ],
+	min_time: 3180,
+	max_time: 7870,
+	flag_corr: 1,
       },
     }, nin=1, nout=1, uses=[anodes[0]]);
 
