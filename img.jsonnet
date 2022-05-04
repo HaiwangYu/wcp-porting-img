@@ -15,7 +15,8 @@ local wc = import 'wirecell.jsonnet';
                 tag: tag,
                 tick_span: span,
                 anode: wc.tn(anode),
-                tmax: -1,
+                min_tbin: 0,
+                max_tbin: 9592,
                 active_planes: active_planes,
                 masked_planes: masked_planes,
                 dummy_planes: dummy_planes,
@@ -72,9 +73,22 @@ local wc = import 'wirecell.jsonnet';
     }.ret,
 
     //
+    multi_masked_2view_slicing_tiling :: function(anode, name, tag="gauss", span=109) {
+        local dummy_planes = [[2],[0],[1]],
+        local masked_planes = [[0,1],[1,2],[0,2]],
+        local iota = std.range(0,std.length(dummy_planes)-1),
+        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span,
+            active_planes=[],masked_planes=masked_planes[n], dummy_planes=dummy_planes[n])
+            for n in iota],
+        local tilings = [$.tiling(anode, name+"_%d"%n)
+            for n in iota],
+        local multipass = [g.pipeline([slicings[n],tilings[n]]) for n in iota],
+        ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_masked_slicing_tiling"),
+    }.ret,
+    //
     multi_masked_slicing_tiling :: function(anode, name, tag="gauss", span=109) {
-        local active_planes = [[],[2],[0],[1]],
-        local masked_planes = [[0,1,2],[0,1],[1,2],[0,2],],
+        local active_planes = [[2],[0],[1],[]],
+        local masked_planes = [[0,1],[1,2],[0,2],[0,1,2]],
         local iota = std.range(0,std.length(active_planes)-1),
         local slicings = [$.slicing(anode, name+"_%d"%n, tag, span, active_planes[n], masked_planes[n]) 
             for n in iota],

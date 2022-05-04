@@ -135,7 +135,7 @@ local masked_planes = [[],[2],[0],[1]];
 local multi_slicing = "single";
 local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1], masked_planes=[2],dummy_planes=[]),
+        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0], masked_planes=[1],dummy_planes=[2]),
         img.tiling(anode, anode.name),
         // img.solving(anode, anode.name),
         img.clustering(anode, anode.name),
@@ -161,7 +161,8 @@ else {
         img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
     ]),
     local masked_fork = g.pipeline([
-        img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
     ]),
