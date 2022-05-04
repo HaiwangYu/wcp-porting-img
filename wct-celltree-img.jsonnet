@@ -129,16 +129,16 @@ local frame_masking = g.pnode({
 
 local anode = anodes[0];
 // multi slicing includes 2-view tiling and dead tiling
-local active_planes = [[1,2,4],[1,2],[2,4],[1,4],];
-local masked_plane_charge = [[],[[4,1]],[[1,1]],[[2,1]]];
+local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
+local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "multi";
+local multi_slicing = "single";
 local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        img.slicing(anode, anode.name, "gauss", 4, active_planes[0], masked_plane_charge[0]),
+        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1], masked_planes=[2],dummy_planes=[]),
         img.tiling(anode, anode.name),
-        img.solving(anode, anode.name),
-        // img.clustering(anode, anode.name),
+        // img.solving(anode, anode.name),
+        img.clustering(anode, anode.name),
       ]
       + [
         img.dump(anode, anode.name, params.lar.drift_speed),
@@ -172,7 +172,7 @@ local graph = g.pipeline([
     // frame_quality_tagging, // event level tagging
     // cmm_mod, // CMM modification
     // frame_masking, // apply CMM
-    // charge_err, // calculate charge error
+    charge_err, // calculate charge error
     // magdecon, // magnify out
     // dumpframes,
     imgpipe,
