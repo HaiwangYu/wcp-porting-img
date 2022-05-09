@@ -151,7 +151,8 @@ then g.pipeline([
         img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)])
 else if multi_slicing == "masked"
 then g.pipeline([
-        img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
 else {
