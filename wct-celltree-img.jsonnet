@@ -1,13 +1,13 @@
 local wc = import "wirecell.jsonnet";
 local g = import "pgraph.jsonnet";
 local params = import "pgrapher/experiment/uboone/simparams.jsonnet";
-local hs = import "pgrapher/common/helpers.jsonnet";
-
 local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools = tools_maker(params);
+local anodes = tools.anodes;
 
-local wires = hs.aux.wires(params.files.wires);
-local anodes = hs.aux.anodes(wires, params.det.volumes);
+// local hs = import "pgrapher/common/helpers.jsonnet";
+// local wires = hs.aux.wires(params.files.wires);
+// local anodes = hs.aux.anodes(wires, params.det.volumes);
 
 local img = import "img.jsonnet";
 
@@ -135,13 +135,13 @@ local masked_planes = [[],[2],[0],[1]];
 local multi_slicing = "single";
 local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0], masked_planes=[1],dummy_planes=[2]),
+        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
         img.tiling(anode, anode.name),
-        // img.solving(anode, anode.name),
-        img.clustering(anode, anode.name),
+        img.solving(anode, anode.name),
+        // img.clustering(anode, anode.name),
       ]
       + [
-        img.dump(anode, anode.name, params.lar.drift_speed),
+        img.dump_new(anode, anode.name, params.lar.drift_speed),
       ], 
       "img-" + anode.name)
 else if multi_slicing == "active"
