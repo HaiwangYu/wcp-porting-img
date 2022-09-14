@@ -128,9 +128,40 @@ local wc = import 'wirecell.jsonnet';
             name: "blobsolving-" + aname,
             data:  { threshold: threshold }
         }, nin=1, nout=1),
+        local cs0 = g.pnode({
+            type: "ChargeSolving",
+            name: "chargesolving0-" + aname,
+            data:  {
+                weighting_strategies: ["uniform"], //"uniform", "simple"
+            }
+        }, nin=1, nout=1),
+        local cs1 = g.pnode({
+            type: "ChargeSolving",
+            name: "chargesolving1-" + aname,
+            data:  {
+                weighting_strategies: ["uniform"], //"uniform", "simple"
+            }
+        }, nin=1, nout=1),
+        local lcbr = g.pnode({
+            type: "LCBlobRemoval",
+            name: "lcblobremoval-" + aname,
+            data:  {
+                blob_value_threshold: 1e6,
+                blob_error_threshold: 0,
+            }
+        }, nin=1, nout=1),
+        local cs = g.intern(
+            innodes=[cs0], outnodes=[cs1], centernodes=[],
+            edges=[g.edge(cs0,cs1)],
+            name="chargesolving-" + aname),
+        local csp = g.intern(
+            innodes=[cs0], outnodes=[cs1], centernodes=[lcbr],
+            edges=[g.edge(cs0,lcbr), g.edge(lcbr,cs1)],
+            name="chargesolving-" + aname),
+        local solver = cs0,
         ret: g.intern(
-            innodes=[bc], outnodes=[bs], centernodes=[bg],
-            edges=[g.edge(bc,bg), g.edge(bg,bs)],
+            innodes=[bc], outnodes=[solver], centernodes=[bg],
+            edges=[g.edge(bc,bg), g.edge(bg,solver)],
             name="solving-" + aname),
         // ret: bc,
     }.ret,
@@ -140,7 +171,7 @@ local wc = import 'wirecell.jsonnet';
             type: "JsonClusterTap",
             name: "clustertap-" + aname,
             data: {
-                filename: "clusters-"+aname+"-%04d.json",
+                filename: "clusters-pr165-"+aname+"-%04d.json",
                 drift_speed: drift_speed
             },
         }, nin=1, nout=1),
@@ -154,6 +185,20 @@ local wc = import 'wirecell.jsonnet';
         }, nin=1, nout=0),
         ret: g.intern(innodes=[js], outnodes=[cs], edges=[g.edge(js,cs)],
                       name="clusterdump-"+aname)
+    }.ret,
+
+    dump_new :: function(anode, aname, drift_speed) {
+
+        local cs = g.pnode({
+            type: "ClusterFileSink",
+            name: "clustersink-"+aname,
+            data: {
+                // outname: "clusters-apa-"+aname+".tar.gz",
+                outname: "clusters-pr163-"+aname+".tar.gz",
+                format: "json",
+            }
+        }, nin=1, nout=0),
+        ret: cs
     }.ret,
 
     // A function that reverts blobs to frames
