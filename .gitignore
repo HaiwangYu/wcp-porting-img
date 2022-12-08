@@ -1,0 +1,16 @@
+*.root
+*.json
+*.dot
+*.zip
+*.log
+*.tar.gz
+*.pdf
+*.npy
+validation*
+test*
+tmp*
+data*
+*.C
+*.h
+*.sh
+.ipynb_checkpoints
