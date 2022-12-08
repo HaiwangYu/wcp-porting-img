@@ -135,13 +135,14 @@ local masked_planes = [[],[2],[0],[1]];
 local multi_slicing = "single";
 local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
+        // img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
+        img.slicing(anode, anode.name, "gauss", 1916, active_planes=[], masked_planes=[0,1],dummy_planes=[2]), // 109*22*4
         img.tiling(anode, anode.name),
-        img.solving(anode, anode.name),
-        // img.clustering(anode, anode.name),
+        // img.solving(anode, anode.name),
+        img.clustering(anode, anode.name),
       ]
       + [
-        img.dump_new(anode, anode.name, params.lar.drift_speed),
+        img.dump(anode, anode.name, params.lar.drift_speed),
       ], 
       "img-" + anode.name)
 else if multi_slicing == "active"
@@ -152,7 +153,7 @@ then g.pipeline([
 else if multi_slicing == "masked"
 then g.pipeline([
         // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
-        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 1744),
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
 else {
@@ -172,8 +173,8 @@ else {
 local graph = g.pipeline([
     celltreesource,
     // frame_quality_tagging, // event level tagging
-    // cmm_mod, // CMM modification
-    // frame_masking, // apply CMM
+    cmm_mod, // CMM modification
+    frame_masking, // apply CMM
     charge_err, // calculate charge error
     // magdecon, // magnify out
     // dumpframes,
