@@ -6,15 +6,15 @@ TDC = root_file['TDC']
 TC = root_file['TC']
 # print(TC.allkeys())
 
-def _minmax_from_branch(tree, bname, entry=0):
+def _minmax_from_branch(tree, bname, entry=0, offset=0):
     '''
     Awkward Array
     TDC['wire_index_u'].array()[event#][blob#]
     '''
     akarray = tree[bname].array()[entry]
-    min = np.array([np.min(l) for l in akarray])
+    min = np.array([np.min(l)+offset for l in akarray])
     min = np.expand_dims(min, axis=1)
-    max = np.array([np.max(l) for l in akarray])
+    max = np.array([np.max(l)+offset for l in akarray])
     max = np.expand_dims(max, axis=1)
     return np.concatenate((min,max), axis=1)
 
@@ -28,14 +28,15 @@ def _signature(tree, entry=0):
     time_slice_mm = _minmax_from_branch(tree, 'time_slice',entry)
     time_slice_mm = time_slice_mm*4
     time_slice_mm[:,1] = time_slice_mm[:,1]+4
-    wire_index_u_mm = _minmax_from_branch(tree, 'wire_index_u',entry)
-    wire_index_v_mm = _minmax_from_branch(tree, 'wire_index_v',entry)
-    wire_index_w_mm = _minmax_from_branch(tree, 'wire_index_w',entry)
+    wire_index_u_mm = _minmax_from_branch(tree, 'wire_index_u',entry,0)
+    wire_index_v_mm = _minmax_from_branch(tree, 'wire_index_v',entry,2400)
+    wire_index_w_mm = _minmax_from_branch(tree, 'wire_index_w',entry,4800)
     sig = np.concatenate((time_slice_mm,wire_index_u_mm,wire_index_v_mm,wire_index_w_mm), axis=1)
     wire_charge_u = _wire_charge_sum(tree,'wire_charge_u',entry)
     wire_charge_v = _wire_charge_sum(tree,'wire_charge_v',entry)
     wire_charge_w = _wire_charge_sum(tree,'wire_charge_w',entry)
-    sig = np.concatenate((sig,wire_charge_u,wire_charge_v,wire_charge_w), axis=1)
+    q = tree['q'].array()[entry]
+    sig = np.concatenate((sig,wire_charge_u,wire_charge_v,wire_charge_w,q), axis=1)
     return sig
 #     flag_u = np.array(tree['flag_u'].array()[entry])
 #     flag_u = np.expand_dims(flag_u, axis=1)
@@ -53,14 +54,18 @@ def _sort(arr):
 
 sigs = _signature(TC, 0)
 
-sigs = _sort(sigs)
+sigs = sigs[sigs[:,8]>0,:]
+sigs = sigs[sigs[:,9]>0,:]
+sigs = sigs[sigs[:,10]==0,:]
 # sigs = sigs[sigs[:,11]==0,:]
-sigs = sigs[sigs[:,0]<40,:]
+# sigs = sigs[sigs[:,0]<40,:]
+
+sigs = _sort(sigs)
 print(sigs.shape)
-for i in range(min([sigs.shape[0], 20])):
-# for i in range(sigs.shape[0]):
+# for i in range(min([sigs.shape[0], 20])):
+for i in range(sigs.shape[0]):
     # print(i, sigs[i,:])
-    print(i, sigs[i,0:2],
+    print(sigs[i,0:2],
         sigs[i,2], ':', sigs[i,3]+1, ',',
         sigs[i,4], ':', sigs[i,5]+1, ',',
         sigs[i,6], ':', sigs[i,7]+1,

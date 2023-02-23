@@ -5,24 +5,24 @@ root_file.allkeys()
 TDC = root_file['TDC']
 print(TDC.allkeys())
 
-def _minmax_from_branch(tree, bname, entry=0):
+def _minmax_from_branch(tree, bname, entry=0, offset=0):
     '''
     Awkward Array
     TDC['wire_index_u'].array()[event#][blob#]
     '''
     akarray = tree[bname].array()[entry]
-    min = np.array([np.min(l) for l in akarray])
+    min = np.array([np.min(l)+offset for l in akarray])
     min = np.expand_dims(min, axis=1)
-    max = np.array([np.max(l) for l in akarray])
+    max = np.array([np.max(l)+offset for l in akarray])
     max = np.expand_dims(max, axis=1)
     return np.concatenate((min,max), axis=1)
 
 def _signature(tree, entry=0):
     time_slice_mm = _minmax_from_branch(tree, 'time_slice',entry)
     time_slice_mm = time_slice_mm*4
-    wire_index_u_mm = _minmax_from_branch(tree, 'wire_index_u',entry)
-    wire_index_v_mm = _minmax_from_branch(tree, 'wire_index_v',entry)
-    wire_index_w_mm = _minmax_from_branch(tree, 'wire_index_w',entry)
+    wire_index_u_mm = _minmax_from_branch(tree, 'wire_index_u',entry,0)
+    wire_index_v_mm = _minmax_from_branch(tree, 'wire_index_v',entry,2400)
+    wire_index_w_mm = _minmax_from_branch(tree, 'wire_index_w',entry,4800)
     flag_u = np.array(tree['flag_u'].array()[entry])
     flag_u = np.expand_dims(flag_u, axis=1)
     flag_v = np.array(tree['flag_v'].array()[entry])
@@ -36,11 +36,17 @@ def _sort(arr):
     arr = np.array([arr[i] for i in ind])
     return arr
 
-mm = _signature(TDC, 0)
-mm = mm[mm[:,0]==0,:] # select tick == 0
-mm = mm[mm[:,10]==1,:] # dummy = w
-
-mm = _sort(mm)
-print(mm.shape)
-for i in range(20):
-    print(i+1,mm[i,:])
+sigs = _signature(TDC, 0)
+sigs = sigs[sigs[:,0]==0,:] # select tick == 0
+sigs = sigs[sigs[:,10]==1,:] # dusigsy = w
+sigs = _sort(sigs)
+print(sigs.shape)
+# for i in range(min([sigs.shape[0], 20])):
+for i in range(sigs.shape[0]):
+    # print(i, sigs[i,:])
+    print(sigs[i,0:2],
+        sigs[i,2], ':', sigs[i,3]+1, ',',
+        sigs[i,4], ':', sigs[i,5]+1, ','
+        #,sigs[i,6], ':', sigs[i,7]+1
+        #,sigs[i,8:]
+        )
