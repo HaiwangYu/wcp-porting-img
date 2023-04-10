@@ -7,19 +7,23 @@ local wc = import 'wirecell.jsonnet';
 
 {
     // A functio that sets up slicing for an APA.
-    slicing :: function(anode, aname, tag="", span=4, active_planes=[0,1,2], masked_planes=[], dummy_planes=[]) {
+    slicing :: function(anode, aname, span=4, active_planes=[0,1,2], masked_planes=[], dummy_planes=[]) {
         ret: g.pnode({
             type: "MaskSlices",
             name: "slicing-"+aname,
             data: {
-                tag: tag,
                 tick_span: span,
+                wiener_tag: "wiener",
+                charge_tag: "gauss",
+                error_tag: "gauss_error",
                 anode: wc.tn(anode),
                 min_tbin: 0,
                 max_tbin: 9592,
                 active_planes: active_planes,
                 masked_planes: masked_planes,
                 dummy_planes: dummy_planes,
+                // nthreshold: [1e-6, 1e-6, 1e-6],
+                nthreshold: [3.6, 3.6, 3.6],
             },
         }, nin=1, nout=1, uses=[anode]),
     }.ret,
@@ -39,6 +43,7 @@ local wc = import 'wirecell.jsonnet';
             data: {
                 anode: wc.tn(anode),
                 face: face,
+                nudge: 1e-2,
             }
         }, nin=1, nout=1, uses=[anode]) for face in [0,1]],
 
@@ -60,11 +65,11 @@ local wc = import 'wirecell.jsonnet';
     }.ret,
 
     //
-    multi_active_slicing_tiling :: function(anode, name, tag="gauss", span=4) {
+    multi_active_slicing_tiling :: function(anode, name, span=4) {
         local active_planes = [[0,1,2],[0,1],[1,2],[0,2],],
         local masked_planes = [[],[2],[0],[1]],
         local iota = std.range(0,std.length(active_planes)-1),
-        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span, active_planes[n], masked_planes[n]) 
+        local slicings = [$.slicing(anode, name+"_%d"%n, span, active_planes[n], masked_planes[n]) 
             for n in iota],
         local tilings = [$.tiling(anode, name+"_%d"%n)
             for n in iota],
@@ -73,11 +78,11 @@ local wc = import 'wirecell.jsonnet';
     }.ret,
 
     //
-    multi_masked_2view_slicing_tiling :: function(anode, name, tag="gauss", span=109) {
+    multi_masked_2view_slicing_tiling :: function(anode, name, span=109) {
         local dummy_planes = [[2],[0],[1]],
         local masked_planes = [[0,1],[1,2],[0,2]],
         local iota = std.range(0,std.length(dummy_planes)-1),
-        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span,
+        local slicings = [$.slicing(anode, name+"_%d"%n, span,
             active_planes=[],masked_planes=masked_planes[n], dummy_planes=dummy_planes[n])
             for n in iota],
         local tilings = [$.tiling(anode, name+"_%d"%n)
@@ -86,11 +91,11 @@ local wc = import 'wirecell.jsonnet';
         ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_masked_slicing_tiling"),
     }.ret,
     //
-    multi_masked_slicing_tiling :: function(anode, name, tag="gauss", span=109) {
+    multi_masked_slicing_tiling :: function(anode, name, span=109) {
         local active_planes = [[2],[0],[1],[]],
         local masked_planes = [[0,1],[1,2],[0,2],[0,1,2]],
         local iota = std.range(0,std.length(active_planes)-1),
-        local slicings = [$.slicing(anode, name+"_%d"%n, tag, span, active_planes[n], masked_planes[n]) 
+        local slicings = [$.slicing(anode, name+"_%d"%n, span, active_planes[n], masked_planes[n]) 
             for n in iota],
         local tilings = [$.tiling(anode, name+"_%d"%n)
             for n in iota],
@@ -98,12 +103,14 @@ local wc = import 'wirecell.jsonnet';
         ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_masked_slicing_tiling"),
     }.ret,
 
+    local clustering_policy = "uboone", // uboone, simple
+
     // Just clustering
     clustering :: function(anode, aname, spans=1.0) {
         ret : g.pnode({
             type: "BlobClustering",
             name: "blobclustering-" + aname,
-            data:  { spans : spans }
+            data:  { spans : spans, policy: clustering_policy }
         }, nin=1, nout=1),
     }.ret, 
 
@@ -115,7 +122,7 @@ local wc = import 'wirecell.jsonnet';
         local bc = g.pnode({
             type: "BlobClustering",
             name: "blobclustering-" + aname,
-            data:  { spans : spans }
+            data:  { spans : spans, policy: clustering_policy }
         }, nin=1, nout=1),
         local bg = g.pnode({
             type: "BlobGrouping",
@@ -132,7 +139,9 @@ local wc = import 'wirecell.jsonnet';
             type: "ChargeSolving",
             name: "chargesolving0-" + aname,
             data:  {
-                weighting_strategies: ["uniform"], //"uniform", "simple"
+                weighting_strategies: ["uniform"], //"uniform", "simple", "uboone"
+                solve_config: "uboone",
+                whiten: true,
             }
         }, nin=1, nout=1),
         local cs1 = g.pnode({
@@ -174,7 +183,7 @@ local wc = import 'wirecell.jsonnet';
             innodes=[cs0], outnodes=[cs1], centernodes=[test_pipe],
             edges=[g.edge(cs0,test_pipe), g.edge(test_pipe,cs1)],
             name="chargesolving-" + aname),
-        local solver = csp,
+        local solver = cs0,
         ret: g.intern(
             innodes=[bc], outnodes=[solver], centernodes=[bg],
             edges=[g.edge(bc,bg), g.edge(bg,solver)],
@@ -187,7 +196,7 @@ local wc = import 'wirecell.jsonnet';
             type: "JsonClusterTap",
             name: "clustertap-" + aname,
             data: {
-                filename: "clusters-pr165-"+aname+"-%04d.json",
+                filename: "clusters-apa-"+aname+"-%04d.json",
                 drift_speed: drift_speed
             },
         }, nin=1, nout=1),
@@ -209,8 +218,7 @@ local wc = import 'wirecell.jsonnet';
             type: "ClusterFileSink",
             name: "clustersink-"+aname,
             data: {
-                // outname: "clusters-apa-"+aname+".tar.gz",
-                outname: "clusters-pr163-"+aname+".tar.gz",
+                outname: "clusters-apa-"+aname+".tar.gz",
                 format: "json",
             }
         }, nin=1, nout=0),

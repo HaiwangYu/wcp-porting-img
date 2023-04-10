@@ -20,7 +20,7 @@ local celltreesource = g.pnode({
         // in_branch_base_names: raw [default], calibGaussian, calibWiener
         in_branch_base_names: ["calibWiener", "calibGaussian"],
         out_trace_tags: ["wiener", "gauss"], // orig, gauss, wiener
-        in_branch_thresholds: ["channelThreshold", ""],
+        in_branch_thresholds: ["channelThreshold", "channelThreshold"]
     },
  }, nin=0, nout=1);
 
@@ -132,14 +132,15 @@ local anode = anodes[0];
 local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
 local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "single";
+local multi_slicing = "active";
 local imgpipe = if multi_slicing == "single"
 then g.pipeline([
-        // img.slicing(anode, anode.name, "gauss", 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
-        img.slicing(anode, anode.name, "gauss", 1916, active_planes=[], masked_planes=[0,1],dummy_planes=[2]), // 109*22*4
+        // img.slicing(anode, anode.name, 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
+        // img.slicing(anode, anode.name, 1916, active_planes=[], masked_planes=[0,1],dummy_planes=[2]), // 109*22*4
+        img.slicing(anode, anode.name, 4, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
         img.tiling(anode, anode.name),
-        // img.solving(anode, anode.name),
-        img.clustering(anode, anode.name),
+        img.solving(anode, anode.name),
+        // img.clustering(anode, anode.name),
       ]
       + [
         img.dump(anode, anode.name, params.lar.drift_speed),
@@ -147,24 +148,25 @@ then g.pipeline([
       "img-" + anode.name)
 else if multi_slicing == "active"
 then g.pipeline([
-        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", "gauss", 4),
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
         img.solving(anode, anode.name+"-ms-active"),
+        // img.clustering(anode, anode.name+"-ms-active"),
         img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)])
 else if multi_slicing == "masked"
 then g.pipeline([
-        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
-        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 1744),
+        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 1744),
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
 else {
     local active_fork = g.pipeline([
-        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", "gauss", 4),
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
         img.solving(anode, anode.name+"-ms-active"),
         img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
     ]),
     local masked_fork = g.pipeline([
-        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
-        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", "gauss", 109),
+        // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 109),
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
     ]),
@@ -182,7 +184,7 @@ local graph = g.pipeline([
     ], "main");
 
 local app = {
-  type: 'Pgrapher',
+  type: 'Pgrapher', //Pgrapher, TbbFlow
   data: {
     edges: g.edges(graph),
   },
@@ -191,7 +193,7 @@ local app = {
 local cmdline = {
     type: "wire-cell",
     data: {
-        plugins: ["WireCellGen", "WireCellPgraph", "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg"],
+        plugins: ["WireCellGen", "WireCellPgraph", "WireCellTbb", "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg"],
         apps: ["Pgrapher"]
     }
 };
