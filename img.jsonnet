@@ -159,36 +159,21 @@ local wc = import 'wirecell.jsonnet';
                 blob_error_threshold: 0,
             }
         }, nin=1, nout=1),
-        local test_projection2d = g.pnode({
-            type: "TestProjection2D",
-            name: "TestProjection2D-" + aname,
-            data:  {
-                compare_brute_force: false,
-                compare_rectangle: true,
-                verbose: false,
-            }
-        }, nin=1, nout=1),
         local test_clustershadow = g.pnode({
             type: "TestClusterShadow",
             name: "TestClusterShadow-" + aname,
             data:  {
             }
         }, nin=1, nout=1),
-        local test_pipe = g.pipeline([test_clustershadow, test_projection2d],"test_pipe"),
-        local cs = g.intern(
-            innodes=[cs0], outnodes=[cs1], centernodes=[],
-            edges=[g.edge(cs0,cs1)],
-            name="chargesolving-" + aname),
-        local csp = g.intern(
-            innodes=[cs0], outnodes=[cs1], centernodes=[test_pipe],
-            edges=[g.edge(cs0,test_pipe), g.edge(test_pipe,cs1)],
-            name="chargesolving-" + aname),
-        local solver = cs0,
-        ret: g.intern(
-            innodes=[bc], outnodes=[solver], centernodes=[bg],
-            edges=[g.edge(bc,bg), g.edge(bg,solver)],
-            name="solving-" + aname),
-        // ret: bc,
+        local projection_deghosting = g.pnode({
+            type: "ProjectionDeghosting",
+            name: "ProjectionDeghosting-" + aname,
+            data:  {
+                dryrun: false,
+            }
+        }, nin=1, nout=1),
+        local pipe1 = g.pipeline([bc, projection_deghosting, bg, cs0],"pipe1"),
+        ret: pipe1,
     }.ret,
 
     dump_old :: function(anode, aname, drift_speed) {
