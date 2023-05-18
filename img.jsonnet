@@ -135,20 +135,13 @@ local wc = import 'wirecell.jsonnet';
             name: "blobsolving-" + aname,
             data:  { threshold: threshold }
         }, nin=1, nout=1),
-        local cs0 = g.pnode({
-            type: "ChargeSolving",
-            name: "chargesolving0-" + aname,
-            data:  {
-                weighting_strategies: ["uniform"], //"uniform", "simple", "uboone"
-                solve_config: "uboone",
-                whiten: true,
-            }
-        }, nin=1, nout=1),
         local cs1 = g.pnode({
             type: "ChargeSolving",
             name: "chargesolving1-" + aname,
             data:  {
-                weighting_strategies: ["uniform"], //"uniform", "simple"
+                weighting_strategies: ["uniform"], //"uniform", "simple", "uboone"
+                solve_config: "uboone",
+                whiten: true,
             }
         }, nin=1, nout=1),
         local lcbr = g.pnode({
@@ -172,8 +165,15 @@ local wc = import 'wirecell.jsonnet';
                 dryrun: false,
             }
         }, nin=1, nout=1),
-        local pipe1 = g.pipeline([bc, projection_deghosting, bg, cs0],"pipe1"),
-        ret: pipe1,
+        local inslice_deghosting = g.pnode({
+            type: "InSliceDeghosting",
+            name: "inslice_deghosting-" + aname,
+            data:  {
+                dryrun: false,
+            }
+        }, nin=1, nout=1),
+        local pipe = g.pipeline([bc, projection_deghosting, bg, cs1, inslice_deghosting],"pipe"),
+        ret: pipe,
     }.ret,
 
     dump_old :: function(anode, aname, drift_speed) {
