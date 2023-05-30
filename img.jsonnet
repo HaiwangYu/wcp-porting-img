@@ -114,63 +114,10 @@ local wc = import 'wirecell.jsonnet';
         }, nin=1, nout=1),
     }.ret, 
 
-    // this bundles clustering, grouping and solving.  Other patterns
-    // should be explored.  Note, anode isn't really needed, we just
-    // use it for its ident and to keep similar calling pattern to
-    // above..
-    solving :: function(anode, aname, spans=1.0, threshold=0.0) {
-        local bc = g.pnode({
-            type: "BlobClustering",
-            name: "blobclustering-" + aname,
-            data:  { spans : spans, policy: clustering_policy }
-        }, nin=1, nout=1),
-        local bg = g.pnode({
-            type: "BlobGrouping",
-            name: "blobgrouping-" + aname,
-            data:  {
-            }
-        }, nin=1, nout=1),
-        local cs1 = g.pnode({
-            type: "ChargeSolving",
-            name: "chargesolving1-" + aname,
-            data:  {
-                weighting_strategies: ["uniform"], //"uniform", "simple", "uboone"
-                solve_config: "uboone",
-                whiten: true,
-            }
-        }, nin=1, nout=1),
-        local cs2 = g.pnode({
-            type: "ChargeSolving",
-            name: "chargesolving2-" + aname,
-            data:  {
-                weighting_strategies: ["uboone"], //"uniform", "simple", "uboone"
-                solve_config: "uboone",
-                whiten: true,
-            }
-        }, nin=1, nout=1),
-        local local_clustering = g.pnode({
-            type: "LocalGeomClustering",
-            name: "LocalGeomClustering-" + aname,
-            data:  {
-                dryrun: false,
-            }
-        }, nin=1, nout=1),
-        local projection_deghosting = g.pnode({
-            type: "ProjectionDeghosting",
-            name: "ProjectionDeghosting-" + aname,
-            data:  {
-                dryrun: false,
-            }
-        }, nin=1, nout=1),
-        local inslice_deghosting = g.pnode({
-            type: "InSliceDeghosting",
-            name: "inslice_deghosting-" + aname,
-            data:  {
-                dryrun: false,
-            }
-        }, nin=1, nout=1),
-        local pipe = g.pipeline([bc, projection_deghosting, bg, cs1, local_clustering, cs2, inslice_deghosting],"pipe"),
-        ret: pipe,
+    // solving now configured in uboone_pipe
+    solving :: function(anode, aname) {
+        local uboone_pipe = import "uboone-img.jsonnet",
+        ret: uboone_pipe(anode, aname),
     }.ret,
 
     dump_old :: function(anode, aname, drift_speed) {
