@@ -130,11 +130,6 @@ local wc = import 'wirecell.jsonnet';
             data:  {
             }
         }, nin=1, nout=1),
-        local bs = g.pnode({
-            type: "BlobSolving",
-            name: "blobsolving-" + aname,
-            data:  { threshold: threshold }
-        }, nin=1, nout=1),
         local cs1 = g.pnode({
             type: "ChargeSolving",
             name: "chargesolving1-" + aname,
@@ -151,20 +146,6 @@ local wc = import 'wirecell.jsonnet';
                 weighting_strategies: ["uboone"], //"uniform", "simple", "uboone"
                 solve_config: "uboone",
                 whiten: true,
-            }
-        }, nin=1, nout=1),
-        local lcbr = g.pnode({
-            type: "LCBlobRemoval",
-            name: "lcblobremoval-" + aname,
-            data:  {
-                blob_value_threshold: 1e6,
-                blob_error_threshold: 0,
-            }
-        }, nin=1, nout=1),
-        local test_clustershadow = g.pnode({
-            type: "TestClusterShadow",
-            name: "TestClusterShadow-" + aname,
-            data:  {
             }
         }, nin=1, nout=1),
         local local_clustering = g.pnode({
