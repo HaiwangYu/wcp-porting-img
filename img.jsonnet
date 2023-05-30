@@ -18,7 +18,7 @@ local wc = import 'wirecell.jsonnet';
                 error_tag: "gauss_error",
                 anode: wc.tn(anode),
                 min_tbin: 0,
-                max_tbin: 9592,
+                max_tbin: 1000, // 9592,
                 active_planes: active_planes,
                 masked_planes: masked_planes,
                 dummy_planes: dummy_planes,
@@ -144,6 +144,15 @@ local wc = import 'wirecell.jsonnet';
                 whiten: true,
             }
         }, nin=1, nout=1),
+        local cs2 = g.pnode({
+            type: "ChargeSolving",
+            name: "chargesolving2-" + aname,
+            data:  {
+                weighting_strategies: ["uboone"], //"uniform", "simple", "uboone"
+                solve_config: "uboone",
+                whiten: true,
+            }
+        }, nin=1, nout=1),
         local lcbr = g.pnode({
             type: "LCBlobRemoval",
             name: "lcblobremoval-" + aname,
@@ -156,6 +165,13 @@ local wc = import 'wirecell.jsonnet';
             type: "TestClusterShadow",
             name: "TestClusterShadow-" + aname,
             data:  {
+            }
+        }, nin=1, nout=1),
+        local local_clustering = g.pnode({
+            type: "LocalGeomClustering",
+            name: "LocalGeomClustering-" + aname,
+            data:  {
+                dryrun: false,
             }
         }, nin=1, nout=1),
         local projection_deghosting = g.pnode({
@@ -172,7 +188,7 @@ local wc = import 'wirecell.jsonnet';
                 dryrun: false,
             }
         }, nin=1, nout=1),
-        local pipe = g.pipeline([bc, projection_deghosting, bg, cs1, inslice_deghosting],"pipe"),
+        local pipe = g.pipeline([bc, projection_deghosting, bg, cs1, local_clustering, cs2, inslice_deghosting],"pipe"),
         ret: pipe,
     }.ret,
 
