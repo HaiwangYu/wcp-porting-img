@@ -5,19 +5,26 @@ local wc = import 'wirecell.jsonnet';
 // in: IBlobSet out: ICluster
 
 function(anode, aname) {
+
     local bc = g.pnode({
         type: "BlobClustering",
         name: "blobclustering-" + aname,
         data:  { policy: "uboone" }
     }, nin=1, nout=1),
-    local bg = g.pnode({
-        type: "BlobGrouping",
-        name: "blobgrouping-" + aname,
-        data:  {
-        }
+
+    local gc = g.pnode({
+        type: "GlobalGeomClustering",
+        name: "global-clustering-" + aname,
+        data:  { policy: "uboone" }
     }, nin=1, nout=1),
 
     solving :: function(suffix = "1st") {
+        local bg = g.pnode({
+            type: "BlobGrouping",
+            name: "blobgrouping-" + aname + suffix,
+            data:  {
+            }
+        }, nin=1, nout=1),
         local cs1 = g.pnode({
             type: "ChargeSolving",
             name: "cs1-" + aname + suffix,
@@ -43,7 +50,8 @@ function(anode, aname) {
                 dryrun: false,
             }
         }, nin=1, nout=1),
-        ret: g.pipeline([cs1, local_clustering, cs2],"cs-pipe"+aname+suffix),
+        // ret: g.pipeline([bg, cs1],"cs-pipe"+aname+suffix),
+        ret: g.pipeline([bg, cs1, local_clustering, cs2],"cs-pipe"+aname+suffix),
     }.ret,
 
     global_deghosting :: function(suffix = "1st") {
@@ -78,6 +86,6 @@ function(anode, aname) {
     local cs3 = $.solving("3rd"),
     local ld3 = $.local_deghosting(3,"3rd"),
 
-    ret: g.pipeline([bc, gd1, bg, cs1, ld1, gd2, cs2, ld2, cs3, ld3],"pipe"),
-    // ret: g.pipeline([bc, gd1, bg, cs1, ld1],"pipe"),
+    ret: g.pipeline([bc, gd1, cs1, ld1, gd2, cs2, ld2, cs3, ld3, gc],"uboone-pipe"),
+    // ret: g.pipeline([bc, gd1, cs1, ld1],"uboone-pipe"),
 }.ret

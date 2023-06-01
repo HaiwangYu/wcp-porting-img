@@ -18,7 +18,7 @@ local wc = import 'wirecell.jsonnet';
                 error_tag: "gauss_error",
                 anode: wc.tn(anode),
                 min_tbin: 0,
-                max_tbin: 1000, // 9592,
+                max_tbin: 9592, // 9592,
                 active_planes: active_planes,
                 masked_planes: masked_planes,
                 dummy_planes: dummy_planes,
