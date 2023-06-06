@@ -64,13 +64,14 @@ function(anode, aname) {
         }, nin=1, nout=1),
     }.ret,
 
-    local_deghosting :: function(config_round = 1, suffix = "1st") {
+    local_deghosting :: function(config_round = 1, suffix = "1st", good_blob_charge_th=300) {
         ret: g.pnode({
             type: "InSliceDeghosting",
             name: "inslice_deghosting-" + aname + suffix,
             data:  {
                 dryrun: false,
                 config_round: config_round,
+                good_blob_charge_th: good_blob_charge_th,
             }
         }, nin=1, nout=1),
     }.ret,
