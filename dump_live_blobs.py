@@ -5,7 +5,7 @@ def quadrature_sum(lst):
     squares_sum = sum(x**2 for x in lst)
     return math.sqrt(squares_sum)
 
-root_file = uproot.open("result_5384_130_6501.root")
+root_file = uproot.open("result_5384_130_6501_2nd_charge_noscale.root")
 # root_file = uproot.open("result_5384_130_6501_1st_charge_solving_wo_connectivity.root")
 # root_file = uproot.open("result_5384_130_6501_2nd_charge_solving_w_connectivity.root")
 # root_file.allkeys()
@@ -75,21 +75,21 @@ def _sort(arr):
 
 sigs = bsignature(TC, 0)
 
-sigs = sigs[sigs[:,8]>0,:]
-sigs = sigs[sigs[:,9]>0,:]
-sigs = sigs[sigs[:,10]>0,:]
+# sigs = sigs[sigs[:,8]>0,:]
+# sigs = sigs[sigs[:,9]>0,:]
+# sigs = sigs[sigs[:,10]>0,:]
 
 sigs = _sort(sigs)
 print('WCP:')
 print(f'sigs.shape: {sigs.shape}')
+np.save("wcp.npy", sigs)
 # for i in range(min([sigs.shape[0], 20])):
 for i in range(sigs.shape[0]):
-    # print(i, sigs[i,:])
     print(sigs[i,0:2],                    # tick
         sigs[i,2], ':', sigs[i,3]+1, ',', # u wire bounds
         sigs[i,4], ':', sigs[i,5]+1, ','  # v wire bounds
         ,sigs[i,6], ':', sigs[i,7]+1      # w wire bounds
         ,sigs[i,8:11]                     # sum of wire charge
-        # ,sigs[i,11:14]                    # measurement
-        # ,sigs[i,14]                       # blob charge
+        ,sigs[i,11:14]                    # measurement
+        ,sigs[i,14]                       # blob charge
         )
