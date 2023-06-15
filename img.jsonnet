@@ -148,7 +148,7 @@ local wc = import 'wirecell.jsonnet';
             name: "clustersink-"+aname,
             data: {
                 outname: "clusters-apa-"+aname+".tar.gz",
-                format: "dummy", // json, numpy
+                format: "dummy", // json, numpy, dummy
             }
         }, nin=1, nout=0),
         ret: cs
