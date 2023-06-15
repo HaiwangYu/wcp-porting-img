@@ -166,7 +166,7 @@ else {
     ]),
     local masked_fork = g.pipeline([
         // img.multi_masked_slicing_tiling(anode, anode.name+"-ms-masked", 109),
-        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 109),
+        img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 1744), // 109, 1744 (total 9592)
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
     ]),
