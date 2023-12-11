@@ -28,3 +28,10 @@ validation examples:
 wirecell-img dump-blobs clusters-apa-uboone.tar.gz >& b.log
 wirecell-img dump-bb-clusters clusters-apa-uboone-ms-active.tar.gz >& c.log
 ```
+
+## follow-up
+
+testing:
+```
+wire-cell -l stdout -L debug -c wct-uboone-full.jsonnet
+```

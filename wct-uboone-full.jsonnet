@@ -297,6 +297,37 @@ local img = {
         // ret: g.pipeline([bc, gd1, cs1, ld1],"uboone-pipe"),
     }.ret,
 
+    // ICluster -> ITensorSet
+    to_tensor :: function(anode, aname) {
+
+        // Note, the "sampler" must be unique to the "sampling".
+        local bs = {
+            type: "BlobSampler",
+            name: anode.data.ident, 
+            data: {
+                strategy: [
+                    "center","corner","edge","bounds","stepped",
+                    {name:"grid", step:1, planes:[0,1]},
+                    {name:"grid", step:1, planes:[1,2]},
+                    {name:"grid", step:1, planes:[2,0]},
+                    {name:"grid", step:2, planes:[0,1]},
+                    {name:"grid", step:2, planes:[1,2]},
+                    {name:"grid", step:2, planes:[2,0]},
+                ],
+                extra: [".*"] // want all the extra
+            }},
+
+        local tb = g.pnode({
+            type: "PointTreeBuilding",
+            name: "pct-buiding-" + aname,
+            data:  {
+                samplers: {samples: wc.tn(bs)},
+            }
+        }, nin=1, nout=1, uses=[bs]),
+
+        ret: g.pipeline([tb],"clustering"),
+    }.ret,
+
     dump :: function(anode, aname, drift_speed) {
         local cs = g.pnode({
             type: "ClusterFileSink",
@@ -308,13 +339,26 @@ local img = {
         }, nin=1, nout=0),
         ret: cs
     }.ret,
+
+    tensor_dump :: function(anode, aname) {
+        local cs = g.pnode({
+            type: "TensorFileSink",
+            name: "tensorsink-"+aname,
+            data: {
+                outname: "tensor-apa-"+aname+".tar.gz",
+                prefix: "clustering_", // json, numpy, dummy
+                dump_mode: true,
+            }
+        }, nin=1, nout=0),
+        ret: cs
+    }.ret,
 };
 
 // multi slicing includes 2-view tiling and dead tiling
 local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
 local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "multi";
+local multi_slicing = "single";
 local imgpipe (anode) =
 if multi_slicing == "single"
 then g.pipeline([
@@ -324,7 +368,10 @@ then g.pipeline([
         img.tiling(anode, anode.name),
         img.solving(anode, anode.name),
         // img.clustering(anode, anode.name),
-        img.dump(anode, anode.name, params.lar.drift_speed),])
+        // img.dump(anode, anode.name, params.lar.drift_speed),
+        img.to_tensor(anode, anode.name),
+        img.tensor_dump(anode, anode.name),
+        ])
 else if multi_slicing == "active"
 then g.pipeline([
         img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
