@@ -325,7 +325,16 @@ local img = {
             }
         }, nin=1, nout=1, uses=[bs]),
 
-        ret: g.pipeline([tb],"clustering"),
+        local mabc = g.pnode({
+            type: "MultiAlgBlobClustering",
+            name: "multi-alg-blob-clustering-" + aname,
+            data:  {
+                inpath: "pointtrees/%d",
+                outpath: "pointtrees/%d",
+            }
+        }, nin=1, nout=1, uses=[bs]),
+
+        ret: g.pipeline([tb, mabc],"clustering"),
     }.ret,
 
     dump :: function(anode, aname, drift_speed) {
