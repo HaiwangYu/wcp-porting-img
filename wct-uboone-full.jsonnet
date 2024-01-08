@@ -306,13 +306,15 @@ local img = {
             name: anode.data.ident, 
             data: {
                 strategy: [
-                    "center","corner","edge","bounds","stepped",
-                    {name:"grid", step:1, planes:[0,1]},
-                    {name:"grid", step:1, planes:[1,2]},
-                    {name:"grid", step:1, planes:[2,0]},
-                    {name:"grid", step:2, planes:[0,1]},
-                    {name:"grid", step:2, planes:[1,2]},
-                    {name:"grid", step:2, planes:[2,0]},
+                    "center",
+                    "corner",
+                    // "edge","bounds","stepped",
+                    // {name:"grid", step:1, planes:[0,1]},
+                    // {name:"grid", step:1, planes:[1,2]},
+                    // {name:"grid", step:1, planes:[2,0]},
+                    // {name:"grid", step:2, planes:[0,1]},
+                    // {name:"grid", step:2, planes:[1,2]},
+                    // {name:"grid", step:2, planes:[2,0]},
                 ],
                 extra: [".*"] // want all the extra
             }},
@@ -321,7 +323,7 @@ local img = {
             type: "PointTreeBuilding",
             name: "pct-buiding-" + aname,
             data:  {
-                samplers: {samples: wc.tn(bs)},
+                samplers: {"3d": wc.tn(bs)},
             }
         }, nin=1, nout=1, uses=[bs]),
 
@@ -367,7 +369,7 @@ local img = {
 local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
 local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "single";
+local multi_slicing = "multi";
 local imgpipe (anode) =
 if multi_slicing == "single"
 then g.pipeline([
@@ -393,17 +395,54 @@ then g.pipeline([
         img.clustering(anode, anode.name+"-ms-masked"),
         img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
 else {
-    local active_fork = g.pipeline([
-        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
-        img.solving(anode, anode.name+"-ms-active"),
-        img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
+    local single = g.pipeline([
+        img.slicing(anode, anode.name, 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
+        img.tiling(anode, anode.name),
+        img.solving(anode, anode.name),
     ]),
+    local active_fork = single,
+    // local active_fork = g.pipeline([
+    //     img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 109),
+    //     img.solving(anode, anode.name+"-ms-active"),
+    //     // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
+    // ]),
     local masked_fork = g.pipeline([
         img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 1744), // 109, 1744 (total 9592)
         img.clustering(anode, anode.name+"-ms-masked"),
-        img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
+        // img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
     ]),
-    ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked"),
+    // ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked"),
+    local dead_live_fanout = g.pnode({
+        type: "FrameFanout",
+        name: "dead_live_fanout-"+anode.name,
+        data: {
+            multiplicity: 2,
+        },
+    }, nin=1, nout=2),
+    local dead_live_merging = g.pnode({
+        type: "DeadLiveMerging",
+        name: "dead_live_merging"+anode.name,
+        data: {
+            multiplicity: 2,
+            tags: ["live", "dead"],
+        },
+    }, nin=2, nout=1),
+    local multipipe = g.intern(
+        innodes=[dead_live_fanout],
+        outnodes=[dead_live_merging],
+        centernodes=[active_fork, masked_fork],
+        edges=[
+            g.edge(dead_live_fanout, active_fork, 0, 0),
+            g.edge(dead_live_fanout, masked_fork, 1, 0),
+            g.edge(active_fork, dead_live_merging, 0, 0),
+            g.edge(masked_fork, dead_live_merging, 0, 1),
+        ],
+        name='img-multipipe'+anode.name),
+    ret: g.pipeline([
+        multipipe,
+        img.to_tensor(anode, anode.name),
+        img.tensor_dump(anode, anode.name),
+    ]),
 }.ret;
 
 local celltreesource = g.pnode({
