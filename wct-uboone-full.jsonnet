@@ -301,14 +301,16 @@ local img = {
     to_tensor :: function(anode, aname) {
 
         // Note, the "sampler" must be unique to the "sampling".
-        local bs = {
+        local bs_live = {
             type: "BlobSampler",
-            name: anode.data.ident, 
+            name: "bs_live" + anode.data.ident, 
             data: {
                 strategy: [
                     "center",
-                    "corner",
-                    // "edge","bounds","stepped",
+                    // "corner",
+                    // "edge",
+                    // "bounds",
+                    "stepped",
                     // {name:"grid", step:1, planes:[0,1]},
                     // {name:"grid", step:1, planes:[1,2]},
                     // {name:"grid", step:1, planes:[2,0]},
@@ -317,15 +319,29 @@ local img = {
                     // {name:"grid", step:2, planes:[2,0]},
                 ],
                 extra: [".*"] // want all the extra
-            }},
+        }},
+        local bs_dead = {
+            type: "BlobSampler",
+            name: "bs_dead" + anode.data.ident, 
+            data: {
+                strategy: [
+                    "center",
+                ],
+                extra: [".*"] // want all the extra
+        }},
 
         local tb = g.pnode({
             type: "PointTreeBuilding",
             name: "pct-buiding-" + aname,
             data:  {
-                samplers: {"3d": wc.tn(bs)},
+                samplers: {
+                    "3d": wc.tn(bs_live),
+                    "dead": wc.tn(bs_dead),
+                },
+                multiplicity: 1,
+                tags: ["live", "dead"],
             }
-        }, nin=1, nout=1, uses=[bs]),
+        }, nin=1, nout=1, uses=[bs_live, bs_dead]),
 
         local mabc = g.pnode({
             type: "MultiAlgBlobClustering",
@@ -334,7 +350,7 @@ local img = {
                 inpath: "pointtrees/%d",
                 outpath: "pointtrees/%d",
             }
-        }, nin=1, nout=1, uses=[bs]),
+        }, nin=1, nout=1, uses=[]),
 
         ret: g.pipeline([tb, mabc],"clustering"),
     }.ret,
@@ -369,7 +385,7 @@ local img = {
 local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
 local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "multi";
+local multi_slicing = "active";
 local imgpipe (anode) =
 if multi_slicing == "single"
 then g.pipeline([
@@ -388,7 +404,10 @@ then g.pipeline([
         img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
         img.solving(anode, anode.name+"-ms-active"),
         // img.clustering(anode, anode.name+"-ms-active"),
-        img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)])
+        // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)
+        img.to_tensor(anode, anode.name),
+        img.tensor_dump(anode, anode.name),
+        ])
 else if multi_slicing == "masked"
 then g.pipeline([
         img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 1744),
@@ -400,12 +419,12 @@ else {
         img.tiling(anode, anode.name),
         img.solving(anode, anode.name),
     ]),
-    local active_fork = single,
-    // local active_fork = g.pipeline([
-    //     img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 109),
-    //     img.solving(anode, anode.name+"-ms-active"),
-    //     // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
-    // ]),
+    // local active_fork = single,
+    local active_fork = g.pipeline([
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 109),
+        img.solving(anode, anode.name+"-ms-active"),
+        // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
+    ]),
     local masked_fork = g.pipeline([
         img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 1744), // 109, 1744 (total 9592)
         img.clustering(anode, anode.name+"-ms-masked"),
