@@ -298,7 +298,7 @@ local img = {
     }.ret,
 
     // ICluster -> ITensorSet
-    to_tensor :: function(anode, aname) {
+    to_tensor :: function(anode, aname, nin=1) {
 
         // Note, the "sampler" must be unique to the "sampling".
         local bs_live = {
@@ -338,10 +338,10 @@ local img = {
                     "3d": wc.tn(bs_live),
                     "dead": wc.tn(bs_dead),
                 },
-                multiplicity: 1,
+                multiplicity: nin,
                 tags: ["live", "dead"],
             }
-        }, nin=1, nout=1, uses=[bs_live, bs_dead]),
+        }, nin=nin, nout=1, uses=[bs_live, bs_dead]),
 
         local mabc = g.pnode({
             type: "MultiAlgBlobClustering",
@@ -385,7 +385,8 @@ local img = {
 local active_planes = [[0,1,2],[0,1],[1,2],[0,2],];
 local masked_planes = [[],[2],[0],[1]];
 // single, multi, active, masked
-local multi_slicing = "active";
+local multi_slicing = "multi";
+
 local imgpipe (anode) =
 if multi_slicing == "single"
 then g.pipeline([
@@ -438,14 +439,15 @@ else {
             multiplicity: 2,
         },
     }, nin=1, nout=2),
-    local dead_live_merging = g.pnode({
-        type: "DeadLiveMerging",
-        name: "dead_live_merging"+anode.name,
-        data: {
-            multiplicity: 2,
-            tags: ["live", "dead"],
-        },
-    }, nin=2, nout=1),
+    // local dead_live_merging = g.pnode({
+    //     type: "DeadLiveMerging",
+    //     name: "dead_live_merging"+anode.name,
+    //     data: {
+    //         multiplicity: 2,
+    //         tags: ["live", "dead"],
+    //     },
+    // }, nin=2, nout=1),
+    local dead_live_merging = img.to_tensor(anode, anode.name, nin=2),
     local multipipe = g.intern(
         innodes=[dead_live_fanout],
         outnodes=[dead_live_merging],
@@ -459,7 +461,7 @@ else {
         name='img-multipipe'+anode.name),
     ret: g.pipeline([
         multipipe,
-        img.to_tensor(anode, anode.name),
+        // img.to_tensor(anode, anode.name),
         img.tensor_dump(anode, anode.name),
     ]),
 }.ret;
@@ -499,3 +501,5 @@ local cmdline = {
 };
 
 [cmdline] + g.uses(graph) + [app]
+// graph
+// img.to_tensor(anodes[0], anodes[0].name, nin=2)
