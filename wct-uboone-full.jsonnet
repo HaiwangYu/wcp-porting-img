@@ -361,7 +361,7 @@ local img = {
             name: "clustersink-"+aname,
             data: {
                 outname: "clusters-apa-"+aname+".tar.gz",
-                format: "dummy", // json, numpy, dummy
+                format: "numpy", // json, numpy, dummy
             }
         }, nin=1, nout=0),
         ret: cs
@@ -405,9 +405,9 @@ then g.pipeline([
         img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
         img.solving(anode, anode.name+"-ms-active"),
         // img.clustering(anode, anode.name+"-ms-active"),
-        // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)
-        img.to_tensor(anode, anode.name),
-        img.tensor_dump(anode, anode.name),
+        img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)
+        // img.to_tensor(anode, anode.name),
+        // img.tensor_dump(anode, anode.name),
         ])
 else if multi_slicing == "masked"
 then g.pipeline([
@@ -422,7 +422,7 @@ else {
     ]),
     // local active_fork = single,
     local active_fork = g.pipeline([
-        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 109),
+        img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
         img.solving(anode, anode.name+"-ms-active"),
         // img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
     ]),
