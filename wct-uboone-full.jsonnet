@@ -349,6 +349,7 @@ local img = {
             data:  {
                 inpath: "pointtrees/%d",
                 outpath: "pointtrees/%d",
+                bee_file: "data/0/0-test.json",
             }
         }, nin=1, nout=1, uses=[]),
 
