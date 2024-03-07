@@ -34,4 +34,9 @@ wirecell-img dump-bb-clusters clusters-apa-uboone-ms-active.tar.gz >& c.log
 testing:
 ```
 wire-cell -l stdout -L debug -c wct-uboone-full.jsonnet
+
+wire-cell -l stdout -L debug -c wct-uboone-full.jsonnet \
+--tla-str input="celltreeOVERLAY.root" \
+--tla-code entry=0 \
+--tla-str bee_dir="data"
 ```

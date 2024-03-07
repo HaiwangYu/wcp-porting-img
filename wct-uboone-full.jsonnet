@@ -6,6 +6,11 @@ local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools = tools_maker(params);
 local anodes = tools.anodes;
 
+function (
+    input = "celltreeOVERLAY.root",
+    entry = 0,
+    bee_dir = "data")
+
 local img = {
     // IFrame -> IFrame
     pre_proc :: function(anode, aname = "") {
@@ -349,7 +354,7 @@ local img = {
             data:  {
                 inpath: "pointtrees/%d",
                 outpath: "pointtrees/%d",
-                bee_file: "data/0/0-test.json",
+                bee_dir: bee_dir, // "data/0/0",
             }
         }, nin=1, nout=1, uses=[]),
 
@@ -471,8 +476,9 @@ local celltreesource = g.pnode({
     type: "CelltreeSource",
     name: "celltreesource",
     data: {
-        filename: "celltreeOVERLAY.root",
-        EventNo: 6501,
+        filename: input, // "celltreeOVERLAY.root",
+        // EventNo: 6501,
+        entry: entry,
         // in_branch_base_names: raw [default], calibGaussian, calibWiener
         in_branch_base_names: ["calibWiener", "calibGaussian"],
         out_trace_tags: ["wiener", "gauss"], // orig, gauss, wiener
