@@ -15,3 +15,5 @@ data*
 *.sh
 .ipynb_checkpoints
 gperf
+*/*
+log*
