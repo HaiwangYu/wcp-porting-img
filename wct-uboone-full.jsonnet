@@ -355,6 +355,7 @@ local img = {
                 inpath: "pointtrees/%d",
                 outpath: "pointtrees/%d",
                 bee_dir: bee_dir, // "data/0/0",
+                dead_live_overlap_offset: 2,
             }
         }, nin=1, nout=1, uses=[]),
 
