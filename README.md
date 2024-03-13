@@ -43,7 +43,7 @@ wire-cell -l stdout -L debug -c wct-uboone-full.jsonnet \
 
 or the above, split up in two stages:
 ```
-wire-cell -l img.log -L debug -c wct-uboone-img.jsonnet
+wire-cell -l stdout -L debug -c wct-uboone-img.jsonnet
 $ ls -l active-clusters-anode0.npz masked-clusters-anode0.npz
-wire-cell -l clustering.log -L debug -c wct-uboone-clustering.jsonnet
+wire-cell -l stdout -L debug -c wct-uboone-clustering.jsonnet
 ```

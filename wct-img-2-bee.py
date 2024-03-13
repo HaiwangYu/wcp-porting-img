@@ -8,7 +8,10 @@ def main(filepattern):
     if (os.path.exists('upload.zip')):
         os.system('rm -f upload.zip')
     os.system('mkdir -p data/0')
-    cmd = 'wirecell-img bee-blobs -g uboone -s center -o data/0/0-test.json %s' % (
+    # cmd = 'wirecell-img bee-blobs -g uboone -s center -d 900 -o data/0/0-test.json %s' % (
+    # cmd = 'wirecell-img bee-blobs -g uboone -s uniform -d 1 -o data/0/0-test.json %s' % (
+    # cmd = 'wirecell-img bee-blobs -g uboone -s center --x0=0*cm -o data/0/0-test.json %s' % (
+    cmd = 'wirecell-img bee-blobs -g uboone -s center --x0=0*cm --t0=1600*us --speed=-1.101*mm/us -o data/0/0-test.json %s' % (
         filepattern, )
     print(cmd)
     os.system(cmd)
