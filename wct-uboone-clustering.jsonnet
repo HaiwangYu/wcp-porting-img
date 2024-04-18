@@ -44,7 +44,8 @@ function (
                 // {name:"grid", step:2, planes:[1,2]},
                 // {name:"grid", step:2, planes:[2,0]},
             ],
-            extra: [".*"] // want all the extra
+            // extra: [".*"] // want all the extra
+            extra: [] // no extra
         }};
     local bs_dead = {
         type: "BlobSampler",
@@ -85,6 +86,8 @@ function (
             inpath: "pointtrees/%d",
             outpath: "pointtrees/%d",
             bee_dir: bee_dir, // "data/0/0",
+            save_deadarea: false, 
+            // bee_dir: "", // "data/0/0",
             dead_live_overlap_offset: 2,
         }
     }, nin=1, nout=1, uses=[]);
