@@ -45,7 +45,8 @@ function (
                 // {name:"grid", step:2, planes:[2,0]},
             ],
             // extra: [".*"] // want all the extra
-            extra: [] // no extra
+            extra: [".*wire_index"] //
+            // extra: [] //
         }};
     local bs_dead = {
         type: "BlobSampler",
@@ -67,6 +68,7 @@ function (
             },
             multiplicity: 2,
             tags: ["live", "dead"],
+            anode: wc.tn(anodes[0]),
         }
     }, nin=2, nout=1, uses=[bs_live, bs_dead]);
 
@@ -85,6 +87,7 @@ function (
         data:  {
             inpath: "pointtrees/%d",
             outpath: "pointtrees/%d",
+            perf: true,
             bee_dir: bee_dir, // "data/0/0",
             save_deadarea: false, 
             // bee_dir: "", // "data/0/0",
