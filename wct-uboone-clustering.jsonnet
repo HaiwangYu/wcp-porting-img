@@ -117,7 +117,7 @@ function (
         type: "wire-cell",
         data: {
             plugins: ["WireCellGen", "WireCellPgraph", /*"WireCellTbb",*/
-                      "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg"],
+                      "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg", "WireCellClus"],
         apps: [wc.tn(app)]
         },
     };
