@@ -131,11 +131,11 @@ local BeeBlobTap = function(fname)
 
 local live(iname, oname) = pg.pipeline([
     multi_source(iname, "live", ["uvw","uv","vw","wu"]),
-    BeeBlobSink(oname, live_sampler),
+    // BeeBlobSink(oname, live_sampler),
 
     // BeeBlobTap("live.zip"),
 
-    // BlobClustering("live"),
+    BlobClustering("live"),
     // BlobGrouping("0"),
 
     // "standard":
@@ -147,8 +147,8 @@ local live(iname, oname) = pg.pipeline([
     // InSliceDeghosting("2",2),
     // BlobGrouping("3"), ChargeSolving("3a","uniform"), LocalGeomClustering("3"), ChargeSolving("3b","uboone"),
     // InSliceDeghosting("3",3),
-    // GlobalGeomClustering(""),
-    // ClusterFileSink(oname),
+    GlobalGeomClustering(""),
+    ClusterFileSink(oname),
 ]);
 
 
