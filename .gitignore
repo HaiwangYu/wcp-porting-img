@@ -6,14 +6,16 @@
 *.tar.gz
 *.pdf
 *.npy
+*.npz
 validation*
 test*
 tmp*
 data*
+massif.*
 *.C
 *.h
 *.sh
 .ipynb_checkpoints
 gperf
-*/*
 log*
+dune-vd-cfg/*
