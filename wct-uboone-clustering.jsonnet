@@ -32,7 +32,7 @@ function (
             time_offset: -1600 * wc.us,
             drift_speed: 1.101 * wc.mm / wc.us,
             strategy: [
-                "center",
+                // "center",
                 // "corner",
                 // "edge",
                 // "bounds",
