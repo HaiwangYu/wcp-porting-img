@@ -70,10 +70,12 @@ local LocalGeomClustering(name) = pg.pnode({
     name: name,
     data:  { },
 }, nin=1, nout=1);
-local GlobalGeomClustering(name) = pg.pnode({
+local GlobalGeomClustering(name, policy="uboone") = pg.pnode({
     type: "GlobalGeomClustering",
     name: name,
-    data:  { },
+    data:  {
+        clustering_policy: policy,
+    },
 }, nin=1, nout=1);
 
 local multi_source = function(iname, kind, views)
@@ -154,7 +156,9 @@ local live(iname, oname) = pg.pipeline([
 
 local dead(iname, oname) = pg.pipeline([
     multi_source(iname, "dead", ["uv","vw","wu"]),
-    BlobClustering("dead"), ClusterFileSink(oname),
+    BlobClustering("dead"),
+    GlobalGeomClustering("", "dead_clus"), //uboone, simple, dead_clus
+    ClusterFileSink(oname),
 ]);
 
 local extra_plugins = ["WireCellRoot","WireCellClus"];
