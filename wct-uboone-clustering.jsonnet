@@ -32,7 +32,7 @@ function (
             time_offset: -1600 * wc.us,
             drift_speed: 1.101 * wc.mm / wc.us,
             strategy: [
-                "center",
+                // "center",
                 // "corner",
                 // "edge",
                 // "bounds",
@@ -92,6 +92,7 @@ function (
             save_deadarea: false, 
             // bee_dir: "", // "data/0/0",
             dead_live_overlap_offset: 2,
+            anode: wc.tn(anodes[0]),
         }
     }, nin=1, nout=1, uses=[]);
 
