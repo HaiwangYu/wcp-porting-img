@@ -19,7 +19,7 @@ function (
     active_clusters = "active-clusters-anode0.npz",
     masked_clusters = "masked-clusters-anode0.npz",
     output = "tensor-apa-uboone.tar.gz",
-    bee_dir = "data")
+    bee_zip = "mabc.zip")
 
     local active = cluster_source(active_clusters);
     local masked = cluster_source(masked_clusters);
@@ -88,9 +88,8 @@ function (
             inpath: "pointtrees/%d",
             outpath: "pointtrees/%d",
             perf: true,
-            bee_dir: bee_dir, // "data/0/0",
-            save_deadarea: false, 
-            // bee_dir: "", // "data/0/0",
+            bee_zip: bee_zip,
+            save_deadarea: true, 
             dead_live_overlap_offset: 2,
             anode: wc.tn(anodes[0]),
         }
