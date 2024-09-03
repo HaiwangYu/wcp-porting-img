@@ -503,7 +503,7 @@ local app = {
 local cmdline = {
     type: "wire-cell",
     data: {
-        plugins: ["WireCellGen", "WireCellPgraph", /*"WireCellTbb",*/ "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg"],
+        plugins: ["WireCellGen", "WireCellPgraph", /*"WireCellTbb",*/ "WireCellSio", "WireCellSigProc", "WireCellRoot", "WireCellImg", "WireCellClus"],
         apps: ["Pgrapher"]
     }
 };
