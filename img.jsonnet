@@ -117,7 +117,7 @@ local wc = import 'wirecell.jsonnet';
     // solving now configured in uboone_pipe
     solving :: function(anode, aname) {
         local uboone_pipe = import "uboone-img.jsonnet",
-        ret: uboone_pipe(anode, aname),
+        ret: uboone_pipe.solving_pipe(anode, aname),
     }.ret,
 
     dump_old :: function(anode, aname, drift_speed) {
@@ -148,7 +148,7 @@ local wc = import 'wirecell.jsonnet';
             name: "clustersink-"+aname,
             data: {
                 outname: "clusters-apa-"+aname+".tar.gz",
-                format: "dummy", // json, numpy, dummy
+                format: "json", // json, numpy, dummy
             }
         }, nin=1, nout=0),
         ret: cs
