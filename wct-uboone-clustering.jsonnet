@@ -29,8 +29,8 @@ function (
         type: "BlobSampler",
         name: "bs_live",
         data: {
-            time_offset: -1600 * wc.us,
             drift_speed: 1.101 * wc.mm / wc.us,
+            time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
             strategy: [
                 // "center",
                 // "corner",
@@ -89,9 +89,11 @@ function (
             outpath: "pointtrees/%d",
             perf: true,
             bee_dir: bee_dir, // "data/0/0",
-            save_deadarea: false, 
+            save_deadarea: true, 
             // bee_dir: "", // "data/0/0",
             dead_live_overlap_offset: 2,
+            x_boundary_low_limit: -1*wc.cm,
+            x_boundary_high_limit: 257*wc.cm, // 257*wc.cm,
             anode: wc.tn(anodes[0]),
         }
     }, nin=1, nout=1, uses=[]);
