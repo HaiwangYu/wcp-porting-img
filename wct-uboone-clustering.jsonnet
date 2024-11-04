@@ -91,10 +91,23 @@ function (
             bee_dir: bee_dir, // "data/0/0",
             save_deadarea: true, 
             // bee_dir: "", // "data/0/0",
-            dead_live_overlap_offset: 2,
-            x_boundary_low_limit: -1*wc.cm,
-            x_boundary_high_limit: 257*wc.cm, // 257*wc.cm,
             anode: wc.tn(anodes[0]),
+            func_cfgs: [
+                {name: "clustering_live_dead", dead_live_overlap_offset: 2},
+                {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
+                {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false},
+                {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true},
+                {name: "clustering_parallel_prolong", length_cut: 35*wc.cm},
+                {name: "clustering_close", length_cut: 1.2*wc.cm},
+                {name: "clustering_extend_loop", num_try: 3},
+                {name: "clustering_separate", use_ctpc: true},
+                {name: "clustering_connect1"},
+                {name: "clustering_deghost"},
+                {name: "clustering_examine_x_boundary"},
+                {name: "clustering_protect_overclustering"},
+                {name: "clustering_neutrino"},
+                // {name: "clustering_isolated"},
+            ],
         }
     }, nin=1, nout=1, uses=[]);
 
