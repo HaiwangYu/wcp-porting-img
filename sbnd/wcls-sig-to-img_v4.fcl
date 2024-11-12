@@ -1,0 +1,77 @@
+#include "geometry_sbnd.fcl"
+
+process_name: wclssig2img
+ 
+services: {
+       @table::sbnd_geometry_services
+}
+
+
+
+source: {
+   module_type: RootInput
+   #saveMemoryObjectThreshold: 10485760 //commented Ewerton 2024-07-08
+
+   #inputCommands: ["drop *", "keep raw::RawDigits_*_*_*"]
+   #inputCommands: ["drop *", "keep *_*_*_Swizzler"]
+}
+
+physics :{
+   producers: {
+
+      sig2img : {
+         module_type : WireCellToolkit
+         wcls_main: {
+            tool_type: WCLS
+            apps: ["Pgrapher"]
+
+            logsinks: ["stdout:debug", "stderr:info", "wcls-sig-to-img.log:trace"]
+            loglevels: ["debug", "trace", "raygrid:trace", "pgraph:info"]
+
+            plugins: ["WireCellGen", "WireCellImg", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+
+            //inputers: ["wclsImagingFrameSource:sigs"
+            inputers: ["wclsCookedFrameSource:sigs"
+                      ]
+
+            //outputers: ["wclsNumpyFrameSaver:signal"]
+//            outputers: ["wclsFrameSaver:signal"] // commented Ewerton 2023-09-21
+
+            //configs: ["pgrapher/experiment/pdsp/wcls-sig-to-img.jsonnet"]
+            //configs: ["pgrapher/experiment/sbnd/wcls-sig-to-img_simplified.jsonnet"]
+            configs: ["pgrapher/experiment/sbnd/wct-sim-fans-sbnd.jsonnet"]
+
+            params : {
+
+               //art_label: "wctsp:wiener" // standard input
+               art_label: "simtpc2d:wiener" // standard input
+
+               // Set "data" vs. "sim".
+               //reality: "data"
+               reality: "sim"
+
+               // Input labels for imaging (added Ewerton 2023-07-20)
+               input_wiener_label: "wctsp:wiener"
+               input_gauss_label: "wctsp:gauss"
+               //badmasks_inputTag: ["wctsp:badmasks"]
+               //badmasks_inputTag: ["wctsp:bad0masks","wctsp:bad1masks"]
+               threshold_tag: "wctsp:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
+
+
+               //input_wiener_label: "simtpc2d:wiener"
+               //input_gauss_label: "simtpc2d:gauss"
+               //threshold_tag: "simtpc2d:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
+
+
+               // do the BlobReframer
+               use_blob_reframer: "false"
+
+            }
+         }
+      }
+   }
+
+   p1 : [ sig2img ]
+   trigger_paths : [ p1 ]
+
+}
