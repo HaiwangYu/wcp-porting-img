@@ -106,7 +106,7 @@ function (
                 {name: "clustering_examine_x_boundary"},
                 {name: "clustering_protect_overclustering"},
                 {name: "clustering_neutrino"},
-                // {name: "clustering_isolated"},
+                {name: "clustering_isolated"},
             ],
         }
     }, nin=1, nout=1, uses=[]);
