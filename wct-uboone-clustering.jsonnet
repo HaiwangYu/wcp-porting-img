@@ -80,6 +80,38 @@ function (
             g.edge(masked, ptb, 0, 1),
         ],
         name = "front-end");
+    
+    local geom_helper = {
+        type: "SimpleClusGeomHelper",
+        name: "uboone",
+        data: {
+            a0f0: {
+                pitch_u: 3 * wc.mm,
+                pitch_v: 3 * wc.mm,
+                pitch_w: 3 * wc.mm,
+                angle_u: 1.0472,    // 60 degrees
+                angle_v: -1.0472,   // -60 degrees
+                angle_w: 0,         // 0 degrees
+                drift_speed: 1.101 * wc.mm / wc.us,
+                tick: 0.5 * wc.us,  // 0.5 mm per tick
+                tick_drift: self.drift_speed * self.tick,
+                time_offset: -1600 * wc.us,
+                nticks_live_slice: 4,
+                FV_xmin: 1 * wc.cm,
+                FV_xmax: 255 * wc.cm,
+                FV_ymin: -99.5 * wc.cm,
+                FV_ymax: 101.5 * wc.cm,
+                FV_zmin: 15 * wc.cm,
+                FV_zmax: 1022 * wc.cm,
+                FV_xmin_margin: 2 * wc.cm,
+                FV_xmax_margin: 2 * wc.cm,
+                FV_ymin_margin: 2.5 * wc.cm,
+                FV_ymax_margin: 2.5 * wc.cm,
+                FV_zmin_margin: 3 * wc.cm,
+                FV_zmax_margin: 3 * wc.cm
+            },
+        }
+    };
 
     local mabc = g.pnode({
         type: "MultiAlgBlobClustering",
@@ -92,6 +124,8 @@ function (
             save_deadarea: true, 
             // bee_dir: "", // "data/0/0",
             anode: wc.tn(anodes[0]),
+            face: 0,
+            geom_helper: wc.tn(geom_helper),
             func_cfgs: [
                 {name: "clustering_live_dead", dead_live_overlap_offset: 2},
                 {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
@@ -109,7 +143,7 @@ function (
                 {name: "clustering_isolated"},
             ],
         }
-    }, nin=1, nout=1, uses=[]);
+    }, nin=1, nout=1, uses=[geom_helper]);
 
     local sink = g.pnode({
         type: "TensorFileSink",
