@@ -58,28 +58,6 @@ function (
             extra: [".*"] // want all the extra
         }};
 
-    local ptb = g.pnode({
-        type: "PointTreeBuilding",
-        name: "",
-        data:  {
-            samplers: {
-                "3d": wc.tn(bs_live),
-                "dead": wc.tn(bs_dead),
-            },
-            multiplicity: 2,
-            tags: ["live", "dead"],
-            anode: wc.tn(anodes[0]),
-        }
-    }, nin=2, nout=1, uses=[bs_live, bs_dead]);
-
-    local front_end = g.intern(
-        innodes = [active, masked],
-        outnodes = [ptb],
-        edges = [
-            g.edge(active, ptb, 0, 0),
-            g.edge(masked, ptb, 0, 1),
-        ],
-        name = "front-end");
     
     local geom_helper = {
         type: "SimpleClusGeomHelper",
@@ -112,6 +90,31 @@ function (
             },
         }
     };
+
+    local ptb = g.pnode({
+        type: "PointTreeBuilding",
+        name: "",
+        data:  {
+            samplers: {
+                "3d": wc.tn(bs_live),
+                "dead": wc.tn(bs_dead),
+            },
+            multiplicity: 2,
+            tags: ["live", "dead"],
+            anode: wc.tn(anodes[0]),
+            face: 0,
+            geom_helper: wc.tn(geom_helper),
+        }
+    }, nin=2, nout=1, uses=[bs_live, bs_dead]);
+
+    local front_end = g.intern(
+        innodes = [active, masked],
+        outnodes = [ptb],
+        edges = [
+            g.edge(active, ptb, 0, 0),
+            g.edge(masked, ptb, 0, 1),
+        ],
+        name = "front-end");
 
     local mabc = g.pnode({
         type: "MultiAlgBlobClustering",
