@@ -19,7 +19,18 @@ function (
     active_clusters = "active-clusters-anode0.npz",
     masked_clusters = "masked-clusters-anode0.npz",
     output = "tensor-apa-uboone.tar.gz",
-    bee_dir = "data")
+    bee_dir = "data",
+    bee_zip = "mabc.zip",
+    initial_index = "0",
+    initial_runNo = "1",
+    initial_subRunNo = "1",
+    initial_eventNo = "1")
+
+    local index = std.parseInt(initial_index);
+
+    local LrunNo = std.parseInt(initial_runNo);
+    local LsubRunNo = std.parseInt(initial_subRunNo);
+    local LeventNo  = std.parseInt(initial_eventNo);
 
     local active = cluster_source(active_clusters);
     local masked = cluster_source(masked_clusters);
@@ -124,8 +135,13 @@ function (
             outpath: "pointtrees/%d",
             perf: true,
             bee_dir: bee_dir, // "data/0/0",
+            bee_zip: bee_zip,
+            initial_index: index,   // New RSE configuration
+            use_config_rse: true,  // Enable use of configured RSE
+            runNo: LrunNo,
+            subRunNo: LsubRunNo,
+            eventNo: LeventNo,
             save_deadarea: true, 
-            // bee_dir: "", // "data/0/0",
             anode: wc.tn(anodes[0]),
             face: 0,
             geom_helper: wc.tn(geom_helper),
@@ -142,7 +158,7 @@ function (
                 {name: "clustering_deghost"},
                 {name: "clustering_examine_x_boundary"},
                 {name: "clustering_protect_overclustering"},
-                {name: "clustering_neutrino"},
+               // {name: "clustering_neutrino"},
                 {name: "clustering_isolated"},
             ],
         }
