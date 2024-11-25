@@ -154,12 +154,12 @@ function (
                 {name: "clustering_close", length_cut: 1.2*wc.cm},
                 {name: "clustering_extend_loop", num_try: 3},
                 {name: "clustering_separate", use_ctpc: true},
-                {name: "clustering_connect1"},
-                {name: "clustering_deghost"},
-                {name: "clustering_examine_x_boundary"},
-                {name: "clustering_protect_overclustering"},
-               // {name: "clustering_neutrino"},
-                {name: "clustering_isolated"},
+                //{name: "clustering_connect1"},
+                //{name: "clustering_deghost"},
+                //{name: "clustering_examine_x_boundary"},
+                //{name: "clustering_protect_overclustering"},
+                //{name: "clustering_neutrino"},
+                //{name: "clustering_isolated"},
             ],
         }
     }, nin=1, nout=1, uses=[geom_helper]);

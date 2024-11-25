@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 
-open(infile,"filelist");
+# Get optional target event number
+my $target_event = $ARGV[0] if @ARGV;
+
+open(infile,"filelist") or die "Cannot open filelist: $!\n";
 my $i = 0;
 while(<infile>){
     my $filename = $_;
@@ -9,6 +12,9 @@ while(<infile>){
     my $runNo = $1;
     my $subRunNo = $2;
     my $eventNo = $3;
+
+    # Skip if target event specified and doesn't match
+    next if (defined $target_event && $eventNo != $target_event);
 
     #if ($i%40 == 39){
     #     system("wire-cell -A iname=\"$filename\" -A oname=\"active-clusters-anode_$runNo\_$eventNo\.npz\" -A kind=\"live\" uboone-val.jsonnet");
@@ -28,3 +34,4 @@ while(<infile>){
     $i++;
 }
 
+close(infile);
