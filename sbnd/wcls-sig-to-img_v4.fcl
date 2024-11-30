@@ -25,8 +25,8 @@ physics :{
             tool_type: WCLS
             apps: ["Pgrapher"]
 
-            logsinks: ["stdout:debug", "stderr:info", "wcls-sig-to-img.log:trace"]
-            loglevels: ["debug", "trace", "raygrid:trace", "pgraph:info"]
+            logsinks: ["stdout"]
+            loglevels: ["debug"]
 
             plugins: ["WireCellGen", "WireCellImg", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
 
