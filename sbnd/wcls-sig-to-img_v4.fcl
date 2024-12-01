@@ -30,41 +30,36 @@ physics :{
 
             plugins: ["WireCellGen", "WireCellImg", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
 
-            //inputers: ["wclsImagingFrameSource:sigs"
             inputers: ["wclsCookedFrameSource:sigs"
                       ]
 
-            //outputers: ["wclsNumpyFrameSaver:signal"]
-//            outputers: ["wclsFrameSaver:signal"] // commented Ewerton 2023-09-21
+            # outputers: ["wclsNumpyFrameSaver:signal"]
 
-            //configs: ["pgrapher/experiment/pdsp/wcls-sig-to-img.jsonnet"]
-            //configs: ["pgrapher/experiment/sbnd/wcls-sig-to-img_simplified.jsonnet"]
             configs: ["pgrapher/experiment/sbnd/wct-sim-fans-sbnd.jsonnet"]
 
             params : {
 
-               //art_label: "wctsp:wiener" // standard input
-               art_label: "simtpc2d:wiener" // standard input
+                # Set "data" vs. "sim".
+                reality: "sim"
 
-               // Set "data" vs. "sim".
-               //reality: "data"
-               reality: "sim"
+                # Input labels for imaging (added Ewerton 2023-07-20)
 
-               // Input labels for imaging (added Ewerton 2023-07-20)
-               input_wiener_label: "wctsp:wiener"
-               input_gauss_label: "wctsp:gauss"
-               //badmasks_inputTag: ["wctsp:badmasks"]
-               //badmasks_inputTag: ["wctsp:bad0masks","wctsp:bad1masks"]
-               threshold_tag: "wctsp:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
+                # Ewerton
+                # input_wiener_label: "wctsp:wiener"
+                # input_gauss_label: "wctsp:gauss"
+                # threshold_tag: "wctsp:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
+                # badmasks_inputTag: ["wctsp:badmasks"]
+                # badmasks_inputTag: ["wctsp:bad0masks","wctsp:bad1masks"]
+                
+                # Moon
+                input_wiener_label: "sptpc2d:wiener"
+                input_gauss_label: "sptpc2d:gauss"
+                threshold_tag: "sptpc2d:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
+                badmasks_inputTag: "sptpc2d:badmasks"
 
 
-               //input_wiener_label: "simtpc2d:wiener"
-               //input_gauss_label: "simtpc2d:gauss"
-               //threshold_tag: "simtpc2d:wienersummary" #"wctsp:wiener" #"wctsp:threshold"
-
-
-               // do the BlobReframer
-               use_blob_reframer: "false"
+                # do the BlobReframer
+                use_blob_reframer: "false"
 
             }
          }
