@@ -15,7 +15,7 @@ def main(filepattern):
     cmd = 'wirecell-img bee-blobs -g sbnd -s center --x0=0*cm --t0=-200*us --speed=-1.6*mm/us -o data/0/0-apa0.json clusters-apa-apa0.tar.gz'
     print(cmd)
     os.system(cmd)
-    cmd = 'wirecell-img bee-blobs -g sbnd -s center --x0=0*cm --t0=-200*us --speed=-1.6*mm/us -o data/0/0-apa1.json clusters-apa-apa1.tar.gz'
+    cmd = 'wirecell-img bee-blobs -g sbnd -s center --x0=0*cm --t0=-200*us --speed=1.6*mm/us -o data/0/0-apa1.json clusters-apa-apa1.tar.gz'
     print(cmd)
     os.system(cmd)
     os.system('zip -r upload data')
