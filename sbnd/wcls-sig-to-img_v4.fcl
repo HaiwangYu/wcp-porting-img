@@ -28,7 +28,7 @@ physics :{
             logsinks: ["stdout"]
             loglevels: ["debug"]
 
-            plugins: ["WireCellGen", "WireCellImg", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+            plugins: ["WireCellGen", "WireCellImg", "WireCellClus", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
 
             inputers: ["wclsCookedFrameSource:sigs"
                       ]
