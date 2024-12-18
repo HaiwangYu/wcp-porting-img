@@ -1,4 +1,15 @@
 ```bash
-lar -n 1 -c wcls-sig-to-img_v4.fcl -s wcsimsp_g4_gen_prodgenie_bnb_nu_cosmic_sbnd_nskip6.root -o tmp.root
-python wct-img-2-bee.py "clusters-apa-apa*.gz"
+# in SL7 container
+
+# setup 
+source setup.sh
+
+# run img and clus
+time lar -n 1 -c wcls-sig-to-img_v4.fcl -s input-moon.root -o tmp.root >& log
+
+# merge two APAs
+python merge-zip.py
+
+# upload to BEE
+../upload-to-bee.sh mabc.zip
 ```
