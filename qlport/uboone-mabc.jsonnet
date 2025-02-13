@@ -93,6 +93,35 @@ local ub = {
         data: { multiplicity: multiplicity, },
     }, nin=multiplicity, nout=1),
 
+    // New function to handle both live and dead blobs with their respective views
+    multiplex_live_dead_blobs(iname) ::
+        // Define views for live and dead
+        local live_views = ["uvw","uv","vw","wu"];
+        local dead_views = ["uv","vw","wu"];
+        
+        // Create sources for both live and dead
+        local live_srcs = [ $.UbooneBlobSource(iname, 'live', view) for view in live_views ];
+        local dead_srcs = [ $.UbooneBlobSource(iname, 'dead', view) for view in dead_views ];
+        
+        // Calculate total number of views
+        local total_views = std.length(live_views) + std.length(dead_views);
+        
+        // Create single merger for all sources
+        local bsm = $.BlobSetMerge("live_dead", total_views);
+        
+        // Create edges for all sources to merger
+        local live_edges = [ pg.edge(live_srcs[ind], bsm, 0, ind)
+                            for ind in std.range(0, std.length(live_views)-1) ];
+        local dead_edges = [ pg.edge(dead_srcs[ind], bsm, 0, ind + std.length(live_views))
+                            for ind in std.range(0, std.length(dead_views)-1) ];
+        
+        // Combine all sources and edges
+        pg.intern(
+            innodes = live_srcs + dead_srcs,
+            outnodes = [bsm],
+            edges = live_edges + dead_edges
+        ),
+
     // Make one UbooneBlobSource for view and multiplex their output
     multiplex_blob_views(iname, kind, views) ::
         local nviews = std.length(views);
@@ -325,11 +354,13 @@ local ub = {
         [cmdline] + pg.uses(graph) + [appcfg],
 };
 
-    
+
 
 
 local graph(infiles, beezip, datapath=pointtree_datapath) = pg.pipeline([
-    ub.multiplex_blob_views(infiles, 'live', ["uvw","uv","vw","wu"]),
+    // ub.multiplex_blob_views(infiles, 'live', ["uvw","uv","vw","wu"]),
+    // ub.multiplex_blob_views(infiles, 'dead', ["uv","vw","wu"]),
+    ub.multiplex_live_dead_blobs(infiles),  // Single function handling both live and dead
     ub.UbooneClusterSource(infiles, datapath=datapath),
     ub.MultiAlgBlobClustering(beezip, datapath=datapath),
     ub.ClusterFlashDump(datapath=datapath)
