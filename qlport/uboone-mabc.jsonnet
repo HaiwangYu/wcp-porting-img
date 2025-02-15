@@ -3,8 +3,12 @@
 // Use like:
 //
 // wire-cell -l stderr -L debug \
+//   -A kind=live
 //   -A infiles=nuselEval_5384_137_6852.root \
 //      clus/test/uboone-mabc.jsonnet
+//
+// The "kind" can be "live" or "both" (live and dead).
+
 
 local wc = import "wirecell.jsonnet";
 local pg = import "pgraph.jsonnet";
@@ -25,10 +29,12 @@ local anode = tools.anodes[0];
 // The TDM datapath to find point trees.  This needs coordination between a few
 // nodes.  This provides the default but the construction functions allow
 // override.
-local pointtree_datapath = "pointtrees/%d/uboone";
+local pointtree_datapath = "pointtrees/%d";
 
-// This object holds a bunch of functions that construct parts of the graph.
-// We use this object below to build the full graph.
+// This object holds a bunch of functions that construct parts of the graph.  We
+// use this object at teh end to build the full graph.  Many functions are not
+// needed.  This "ub" object could be shared more globally to assist in building
+// novel uboone-specific graphs.
 local ub = {
     anode: anode,
 
@@ -36,7 +42,7 @@ local ub = {
         type: "BlobSampler",
         name: "live",
         data: {
-            time_offset: -1600 * wc.us,
+            time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
             drift_speed: 1.101 * wc.mm / wc.us,
             strategy: [
                 "stepped",
@@ -67,23 +73,33 @@ local ub = {
         }
     }, nin=0, nout=1, uses=[anode]),
 
-    UbooneClusterSource(fname, sampler=$.bs_live, datapath=pointtree_datapath, optical=true) :: pg.pnode({
+    UbooneClusterSource(fname, sampler=$.bs_live, datapath=pointtree_datapath, optical=true, kind="live") :: pg.pnode({
         type: 'UbooneClusterSource',
         name: sampler.name,
         data: {
             input: fname,       // file name or list
-            datapath: datapath + '/live', // see issue #375
+            datapath: datapath + '/' + kind, // see issue #375
             sampler: wc.tn(sampler),
+            kind: kind,
         } + if optical then {
             light: "light", flash: "flash", flashlight: "flashlight"
         } else {}
     }, nin=1, nout=1, uses=[sampler]),
         
-    ClusterFlashDump(datapath=pointtree_datapath) :: pg.pnode({
+    TensorSetFanin(multiplicity=2, tensor_order=[0,1]) :: pg.pnode({
+        type: 'TensorSetFanin',
+        name: '',
+        data: {
+            multiplicity: multiplicity,
+            tensor_order: tensor_order,
+        }
+    }, nin=multiplicity, nout=1),
+
+    ClusterFlashDump(datapath=pointtree_datapath, kind='live') :: pg.pnode({
         type: 'ClusterFlashDump',
         name: "",
         data: {
-            datapath: datapath + '/live', // see issue #375
+            datapath: datapath + '/' + kind, // see issue #375
         },
     }, nin=1, nout=0),
 
@@ -92,35 +108,6 @@ local ub = {
         name: kind,
         data: { multiplicity: multiplicity, },
     }, nin=multiplicity, nout=1),
-
-    // New function to handle both live and dead blobs with their respective views
-    multiplex_live_dead_blobs(iname) ::
-        // Define views for live and dead
-        local live_views = ["uvw","uv","vw","wu"];
-        local dead_views = ["uv","vw","wu"];
-        
-        // Create sources for both live and dead
-        local live_srcs = [ $.UbooneBlobSource(iname, 'live', view) for view in live_views ];
-        local dead_srcs = [ $.UbooneBlobSource(iname, 'dead', view) for view in dead_views ];
-        
-        // Calculate total number of views
-        local total_views = std.length(live_views) + std.length(dead_views);
-        
-        // Create single merger for all sources
-        local bsm = $.BlobSetMerge("live_dead", total_views);
-        
-        // Create edges for all sources to merger
-        local live_edges = [ pg.edge(live_srcs[ind], bsm, 0, ind)
-                            for ind in std.range(0, std.length(live_views)-1) ];
-        local dead_edges = [ pg.edge(dead_srcs[ind], bsm, 0, ind + std.length(live_views))
-                            for ind in std.range(0, std.length(dead_views)-1) ];
-        
-        // Combine all sources and edges
-        pg.intern(
-            innodes = live_srcs + dead_srcs,
-            outnodes = [bsm],
-            edges = live_edges + dead_edges
-        ),
 
     // Make one UbooneBlobSource for view and multiplex their output
     multiplex_blob_views(iname, kind, views) ::
@@ -157,7 +144,6 @@ local ub = {
         },
     }, nin=1, nout=0),
 
-// generators of the live pipeline elements
     ProjectionDeghosting(name) :: pg.pnode({
         type: 'ProjectionDeghosting',
         name: name,
@@ -280,7 +266,8 @@ local ub = {
         pg.intern(innodes=[fan], centernodes=[sink],
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
-    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, geom_helper = $.SimpleClusGeomHelper()) :: pg.pnode({
+    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live,
+                           geom_helper = $.SimpleClusGeomHelper()) :: pg.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
         data:  {
@@ -295,10 +282,10 @@ local ub = {
             eventNo: 1,
             save_deadarea: true, 
             anode: wc.tn(anode),
-            face: 0,
+            face: 0,            // FIXME: take an IAnodeFace!
             geom_helper: wc.tn(geom_helper),
             func_cfgs: [
-                {name: "clustering_ctpointcloud"},
+                //{name: "clustering_ctpointcloud"},
                 // {name: "clustering_live_dead", dead_live_overlap_offset: 2},
                 // {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
                 // {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false},
@@ -313,9 +300,11 @@ local ub = {
                 // {name: "clustering_protect_overclustering"},
                 // {name: "clustering_neutrino"},
                 // {name: "clustering_isolated"},
+                {name: "clustering_examine_bundles"},
+                {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode)},
             ],
         }
-    }, nin=1, nout=1, uses=[geom_helper]),
+    }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode]),
 
     TensorFileSink(fname) :: pg.pnode({
         type: "TensorFileSink",
@@ -354,21 +343,44 @@ local ub = {
         [cmdline] + pg.uses(graph) + [appcfg],
 };
 
+    
 
 
-
-local graph(infiles, beezip, datapath=pointtree_datapath) = pg.pipeline([
-    // ub.multiplex_blob_views(infiles, 'live', ["uvw","uv","vw","wu"]),
-    // ub.multiplex_blob_views(infiles, 'dead', ["uv","vw","wu"]),
-    ub.multiplex_live_dead_blobs(infiles),  // Single function handling both live and dead
-    ub.UbooneClusterSource(infiles, datapath=datapath),
+local ingraph_live(infiles, datapath=pointtree_datapath) = pg.pipeline([
+    ub.multiplex_blob_views(infiles, 'live', ["uvw","uv","vw","wu"]),
+    ub.UbooneClusterSource(infiles, datapath=datapath, sampler=ub.bs_live, kind='live')
+]);
+local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
+    ub.multiplex_blob_views(infiles, 'dead', ["uv","vw","wu"]),
+    ub.UbooneClusterSource(infiles, datapath=datapath, sampler=ub.bs_dead, kind='dead', optical=false)
+]);
+local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
     ub.MultiAlgBlobClustering(beezip, datapath=datapath),
     ub.ClusterFlashDump(datapath=datapath)
 ]);
 
+
+local graphs = {
+    live :: function(infiles, beezip, datapath) 
+        pg.pipeline([ingraph_live(infiles, datapath), outgraph(beezip, datapath)]),
+
+    dead :: function(infiles, beezip, datapath)
+        pg.pipeline([ingraph_dead(infiles, datapath), outgraph(beezip, datapath)]),
+
+    both :: function(infiles, beezip, datapath)
+        local live = ingraph_live(infiles, datapath);
+        local dead = ingraph_dead(infiles, datapath);
+        local out = outgraph(beezip, datapath);
+        local fanin = ub.TensorSetFanin();
+        pg.intern(innodes=[live,dead], outnodes=[out], centernodes=[fanin],
+                  edges=[
+                      pg.edge(live,fanin,0,0),
+                      pg.edge(dead,fanin,0,1),
+                      pg.edge(fanin,out,0,0)])
+};
+
 local extra_plugins = ["WireCellAux", "WireCellRoot", "WireCellClus"];
 
-function(infiles="uboone.root", beezip="bee.zip")
-    local g = graph(wc.listify(infiles), beezip);
-    ub.main(g, "Pgrapher", extra_plugins)
-    
+// kind can be "live", "dead" or "both".
+function(infiles="uboone.root", beezip="bee.zip", kind="live", datapath=pointtree_datapath)
+    ub.main(graphs[kind](infiles, beezip, datapath), "Pgrapher", extra_plugins)
