@@ -285,7 +285,7 @@ local ub = {
             face: 0,            // FIXME: take an IAnodeFace!
             geom_helper: wc.tn(geom_helper),
             func_cfgs: [
-                //{name: "clustering_ctpointcloud"},
+                {name: "clustering_ctpointcloud"},
                 // {name: "clustering_live_dead", dead_live_overlap_offset: 2},
                 // {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
                 // {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false},
@@ -300,8 +300,8 @@ local ub = {
                 // {name: "clustering_protect_overclustering"},
                 // {name: "clustering_neutrino"},
                 // {name: "clustering_isolated"},
-                {name: "clustering_examine_bundles"},
-                {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode)},
+                // {name: "clustering_examine_bundles"},
+                // {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode)},
             ],
         }
     }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode]),

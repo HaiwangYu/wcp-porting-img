@@ -13,6 +13,8 @@ while(<infile>){
     my $subRunNo = $2;
     my $eventNo = $3;
 
+    #print("$filename $eventNo $target_event\n");
+
     # Skip if target event specified and doesn't match
     next if (defined $target_event && $eventNo != $target_event);
 
