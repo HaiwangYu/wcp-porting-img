@@ -16,6 +16,7 @@ jsonnet \
 --ext-str input="orig-bl.root" \
 --ext-code evt=0 \
 --ext-str output="orig-bl-nf-sp.root" \
+-A kind="both" \
 -J $cfg/obsolete \
 -J $cfg \
 ${name}.jsonnet \
