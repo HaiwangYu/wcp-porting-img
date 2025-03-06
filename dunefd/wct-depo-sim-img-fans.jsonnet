@@ -50,10 +50,11 @@ local tools =
 if fcl_params.process_crm == "partial"
 then tools_all {anodes: [tools_all.anodes[n] for n in std.range(32, 79)]}
 else if fcl_params.process_crm == "test1"
-then tools_all {anodes: [tools_all.anodes[n] for n in [5,8,9,12,13,16,20]]}
+then tools_all {anodes: [tools_all.anodes[n] for n in [0]]}
 else if fcl_params.process_crm == "test2"
 then tools_all {anodes: [tools_all.anodes[n] for n in std.range(0, 7)]}
 else tools_all;
+local nanodes = std.length(tools.anodes);
 
 local sim_maker = import 'pgrapher/experiment/dune-vd/sim.jsonnet';
 local sim = sim_maker(params, tools);
@@ -117,7 +118,7 @@ local img_clus_pipe = [g.intern(
 )
 for n in std.range(0, std.length(tools.anodes) - 1)];
 
-local magoutput = 'mag-sim-sp.root';
+local magoutput = 'mag.root';
 local magnify = import 'pgrapher/experiment/dune-vd/magnify-sinks.jsonnet';
 local sinks = magnify(tools, magoutput);
 local frame_tap = function(name, outname, tags, digitize) {
@@ -161,7 +162,7 @@ local parallel_pipes = [
                 //     tags=["gauss%d"%tools.anodes[n].data.ident],
                 //     digitize=false
                 // ),
-                // sinks.decon_pipe[n],
+                sinks.decon_pipe[n],
                 // sinks.debug_pipe[n], // use_roi_debug_mode=true in sp.jsonnet
                 // g.pnode({type: "DumpFrames", name: "dumpframes-%d"%tools.anodes[n].data.ident}, nin = 1, nout=0)
                 img_clus_pipe[n],
@@ -215,7 +216,7 @@ local switch_pipes = [
 local parallel_graph = 
 if fcl_params.process_crm == "test1"
 // then f.multifanpipe('DepoSetFanout', parallel_pipes, 'FrameFanin', [1,4], [4,1], [1,4], [4,1], 'sn_mag', outtags, tag_rules)
-then f.multifanout('DepoSetFanout', parallel_pipes, [1,7], [7,1], 'sn_mag', tag_rules)
+then f.multifanout('DepoSetFanout', parallel_pipes, [1,nanodes], [nanodes,1], 'sn_mag', tag_rules)
 else if fcl_params.process_crm == "test2"
 then f.multifanpipe('DepoSetFanout', parallel_pipes, 'FrameFanin', [1,8], [8,1], [1,8], [8,1], 'sn_mag', outtags, tag_rules)
 // else f.multifanout('DepoSetFanout', switch_pipes, [1,4], [4,6], 'sn_mag', tag_rules);
