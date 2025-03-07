@@ -69,6 +69,14 @@ function (
             extra: [".*"] // want all the extra
         }};
 
+    local detector_volumes = 
+    {
+        "type": "DetectorVolumes",
+        "name": "",
+        "data": {
+            "anodes": [wc.tn(a) for a in anodes],
+        }
+    };
     
     local geom_helper = {
         type: "SimpleClusGeomHelper",
@@ -115,8 +123,9 @@ function (
             anode: wc.tn(anodes[0]),
             face: 0,
             geom_helper: wc.tn(geom_helper),
+            detector_volumes: "DetectorVolumes",
         }
-    }, nin=2, nout=1, uses=[bs_live, bs_dead]);
+    }, nin=2, nout=1, uses=[bs_live, bs_dead, detector_volumes]);
 
     local front_end = g.intern(
         innodes = [active, masked],
@@ -143,10 +152,11 @@ function (
             eventNo: LeventNo,
             save_deadarea: true, 
             anode: wc.tn(anodes[0]),
+            detector_volumes: "DetectorVolumes",
             face: 0,
             geom_helper: wc.tn(geom_helper),
             func_cfgs: [
-                {name: "clustering_test"},
+                {name: "clustering_test", detector_volumes: "DetectorVolumes"},
                 {name: "clustering_ctpointcloud"},
                 {name: "clustering_live_dead", dead_live_overlap_offset: 2},
                 {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
