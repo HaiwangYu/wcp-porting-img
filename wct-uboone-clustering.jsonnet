@@ -169,9 +169,9 @@ function (
                {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
                {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
                {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
-               // {name: "clustering_protect_overclustering"},
-               // {name: "clustering_neutrino"},
-               // {name: "clustering_isolated"},
+               {name: "clustering_protect_overclustering"},
+               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
+               {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
             ],
         }
     }, nin=1, nout=1, uses=[geom_helper]);
