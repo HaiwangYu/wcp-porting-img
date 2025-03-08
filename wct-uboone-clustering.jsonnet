@@ -168,7 +168,7 @@ function (
                {name: "clustering_separate", use_ctpc: true, detector_volumes: "DetectorVolumes"},
                {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
                {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
-               // {name: "clustering_examine_x_boundary"},
+               {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
                // {name: "clustering_protect_overclustering"},
                // {name: "clustering_neutrino"},
                // {name: "clustering_isolated"},
