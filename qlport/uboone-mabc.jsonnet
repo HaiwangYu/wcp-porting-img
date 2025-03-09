@@ -61,6 +61,14 @@ local ub = {
             extra: [".*"] // want all the extra
         }
     },
+
+    detector_volumes : {
+        "type": "DetectorVolumes",
+        "name": "",
+        "data": {
+            "anodes": [wc.tn(a) for a in tools.anodes],
+        }
+    },
     
     UbooneBlobSource(fname, kind /*live or dead*/, views /* uvw, uv, vw, wu */) :: pg.pnode({
         type: 'UbooneBlobSource',
@@ -233,8 +241,9 @@ local ub = {
             anode: wc.tn(anode),
             face: 0,
             geom_helper: wc.tn(geom_helper),
+            detector_volumes: "DetectorVolumes",
         }
-    }, nin=2, nout=1, uses=[$.bs_live, $.bs_dead, geom_helper]),
+    }, nin=2, nout=1, uses=[$.bs_live, $.bs_dead, $.detector_volumes]),
 
     point_tree_source(livefn, deadfn) ::
         local livesrc = $.ClusterFileSource(livefn);
@@ -282,26 +291,28 @@ local ub = {
             eventNo: 1,
             save_deadarea: true, 
             anode: wc.tn(anode),
+            detector_volumes: "DetectorVolumes",
             face: 0,            // FIXME: take an IAnodeFace!
             geom_helper: wc.tn(geom_helper),
             func_cfgs: [
-                // {name: "clustering_ctpointcloud"},
-                // {name: "clustering_live_dead", dead_live_overlap_offset: 2},
-                // {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1},
-                // {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false},
-                // {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true},
-                // {name: "clustering_parallel_prolong", length_cut: 35*wc.cm},
-                // {name: "clustering_close", length_cut: 1.2*wc.cm},
-                // {name: "clustering_extend_loop", num_try: 3},
-                // {name: "clustering_separate", use_ctpc: true},
-                // {name: "clustering_connect1"},
-                // {name: "clustering_deghost"},
-                // {name: "clustering_examine_x_boundary"},
-                // {name: "clustering_protect_overclustering"},
-                // {name: "clustering_neutrino"},
-                // {name: "clustering_isolated"},
-                {name: "clustering_examine_bundles"},
-                {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode), cut_time_low: 3*wc.us, cut_time_high: 5*wc.us},
+                //{name: "clustering_test", detector_volumes: "DetectorVolumes"},
+                // {name: "clustering_ctpointcloud, "detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_parallel_prolong", length_cut: 35*wc.cm, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_close", length_cut: 1.2*wc.cm},
+            //               {name: "clustering_extend_loop", num_try: 3, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_separate", use_ctpc: true, detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_protect_overclustering"},
+            //               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
+            //               {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
+                {name: "clustering_examine_bundles", detector_volumes: "DetectorVolumes"},
+                {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode), cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: "DetectorVolumes"},
             ],
         }
     }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode]),
