@@ -315,7 +315,7 @@ local ub = {
                 {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode), cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: "DetectorVolumes"},
             ],
         }
-    }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode]),
+    }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode, $.detector_volumes]),
 
     TensorFileSink(fname) :: pg.pnode({
         type: "TensorFileSink",
