@@ -50,7 +50,7 @@ local tools =
 if fcl_params.process_crm == "partial"
 then tools_all {anodes: [tools_all.anodes[n] for n in std.range(32, 79)]}
 else if fcl_params.process_crm == "test1"
-then tools_all {anodes: [tools_all.anodes[n] for n in [0]]}
+then tools_all {anodes: [tools_all.anodes[n] for n in [5,8,9]]}
 else if fcl_params.process_crm == "test2"
 then tools_all {anodes: [tools_all.anodes[n] for n in std.range(0, 7)]}
 else tools_all;
@@ -105,7 +105,7 @@ local img_pipes = [img_maker.per_anode(a, "multi-3view", add_dump = false) for a
 local clus = import 'pgrapher/experiment/dune-vd/clus.jsonnet';
 local clus_maker = clus();
 // local clus_pipes = [clus_maker.per_face(tools.anodes[n]) for n in std.range(0, std.length(tools.anodes) - 1)];
-local clus_pipes = [clus_maker.per_apa(tools.anodes[n]) for n in std.range(0, std.length(tools.anodes) - 1)];
+local clus_pipes = [clus_maker.per_apa(tools.anodes[n], dump=false) for n in std.range(0, std.length(tools.anodes) - 1)];
 
 local img_clus_pipe = [g.intern(
     innodes = [img_pipes[n]],
@@ -216,7 +216,15 @@ local switch_pipes = [
 local parallel_graph = 
 if fcl_params.process_crm == "test1"
 // then f.multifanpipe('DepoSetFanout', parallel_pipes, 'FrameFanin', [1,4], [4,1], [1,4], [4,1], 'sn_mag', outtags, tag_rules)
-then f.multifanout('DepoSetFanout', parallel_pipes, [1,nanodes], [nanodes,1], 'sn_mag', tag_rules)
+then {
+    local begin = f.multifanout('DepoSetFanout', parallel_pipes, [1,nanodes], [nanodes,1], 'sn_mag', tag_rules),
+    local end = clus_maker.all_apa(tools.anodes),
+    ret :: g.intern(
+        innodes=[begin],
+        outnodes=[end],
+        edges=[g.edge(begin, end, i, i) for i in std.range(0, nanodes-1)]
+    ),
+}.ret
 else if fcl_params.process_crm == "test2"
 then f.multifanpipe('DepoSetFanout', parallel_pipes, 'FrameFanin', [1,8], [8,1], [1,8], [8,1], 'sn_mag', outtags, tag_rules)
 // else f.multifanout('DepoSetFanout', switch_pipes, [1,4], [4,6], 'sn_mag', tag_rules);
@@ -251,4 +259,5 @@ local cmdline = {
 };
 
 [cmdline] + g.uses(graph) + [app]
-// clus_pipes
+// img_clus_pipe
+// clus_maker.all_apa(tools.anodes)
