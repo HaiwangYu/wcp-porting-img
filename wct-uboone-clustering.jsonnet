@@ -97,6 +97,10 @@ function (
                         tick_drift: self.drift_speed * self.tick,
                         time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
                         nticks_live_slice: 4,
+                        FV_xmin: 1 * wc.cm,
+                        FV_xmax: 255 * wc.cm,
+                        FV_xmin_margin: 2 * wc.cm,
+                        FV_xmax_margin: 2 * wc.cm,
                     } for a in anodes
                 }
         },
