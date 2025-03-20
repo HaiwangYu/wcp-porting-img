@@ -47,7 +47,7 @@ local ub = {
             strategy: [
                 "stepped",
             ],
-            extra: [".*wire_index"] //
+            extra: [".*wire_index", "wpid"] //
         }
     },
 

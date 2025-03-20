@@ -56,7 +56,7 @@ function (
                 // {name:"grid", step:2, planes:[2,0]},
             ],
             // extra: [".*"] // want all the extra
-            extra: [".*wire_index"] //
+            extra: [".*wire_index", "wpid"] //
             // extra: [] //
         }};
     local bs_dead = {
