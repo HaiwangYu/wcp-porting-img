@@ -184,7 +184,7 @@ function (
             face: 0,
             geom_helper: wc.tn(geom_helper),
             func_cfgs: [
-               {name: "clustering_test", detector_volumes: "DetectorVolumes"},
+               // {name: "clustering_test", detector_volumes: "DetectorVolumes"},
                // {name: "clustering_ctpointcloud", detector_volumes: "DetectorVolumes"},
                {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: "DetectorVolumes"},
                {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: "DetectorVolumes"},
@@ -197,7 +197,7 @@ function (
                {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
                {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
                {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_protect_overclustering"},
+               {name: "clustering_protect_overclustering", detector_volumes: "DetectorVolumes"},
                {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
                {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
             ],

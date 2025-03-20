@@ -337,7 +337,7 @@ local ub = {
             //               {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
             //               {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
             //               {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
-            //               {name: "clustering_protect_overclustering"},
+            //               {name: "clustering_protect_overclustering", detector_volumes: "DetectorVolumes"},
             //               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
             //               {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
                 {name: "clustering_examine_bundles", detector_volumes: "DetectorVolumes"},
