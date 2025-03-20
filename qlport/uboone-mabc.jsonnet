@@ -81,7 +81,9 @@ local ub = {
                     FV_ymin_margin: 2.5 * wc.cm,
                     FV_ymax_margin: 2.5 * wc.cm,
                     FV_zmin_margin: 3 * wc.cm,
-                    FV_zmax_margin: 3 * wc.cm
+                    FV_zmax_margin: 3 * wc.cm,
+                    vertical_dir: [0,1,0],
+                    beam_dir: [0,0,1]
                 }} +
                 {
                     [ "a" + std.toString(a.data.ident) + "f0pA" ]: {
