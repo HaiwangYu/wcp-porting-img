@@ -181,7 +181,7 @@ function (
             subRunNo: LsubRunNo,
             eventNo: LeventNo,
             save_deadarea: true, 
-            anode: wc.tn(anodes[0]),
+            anodes: [wc.tn(a) for a in anodes],
             detector_volumes: "DetectorVolumes",
             face: 0,
             geom_helper: wc.tn(geom_helper),
