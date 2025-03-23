@@ -107,38 +107,7 @@ function (
                 }
         },
     };
-    
-    local geom_helper = {
-        type: "SimpleClusGeomHelper",
-        name: "uboone",
-        data: {
-            a0f0: {
-                pitch_u: 3 * wc.mm,
-                pitch_v: 3 * wc.mm,
-                pitch_w: 3 * wc.mm,
-                angle_u: 1.0472,    // 60 degrees
-                angle_v: -1.0472,   // -60 degrees
-                angle_w: 0,         // 0 degrees
-                drift_speed: 1.101 * wc.mm / wc.us,
-                tick: 0.5 * wc.us,  // 0.5 mm per tick
-                tick_drift: self.drift_speed * self.tick,
-                time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
-                nticks_live_slice: 4,
-                FV_xmin: 1 * wc.cm,
-                FV_xmax: 255 * wc.cm,
-                FV_ymin: -99.5 * wc.cm,
-                FV_ymax: 101.5 * wc.cm,
-                FV_zmin: 15 * wc.cm,
-                FV_zmax: 1022 * wc.cm,
-                FV_xmin_margin: 2 * wc.cm,
-                FV_xmax_margin: 2 * wc.cm,
-                FV_ymin_margin: 2.5 * wc.cm,
-                FV_ymax_margin: 2.5 * wc.cm,
-                FV_zmin_margin: 3 * wc.cm,
-                FV_zmax_margin: 3 * wc.cm
-            },
-        }
-    };
+
 
     local ptb = g.pnode({
         type: "PointTreeBuilding",
@@ -152,7 +121,6 @@ function (
             tags: ["live", "dead"],
             anode: wc.tn(anodes[0]),
             face: 0,
-            geom_helper: wc.tn(geom_helper),
             detector_volumes: "DetectorVolumes",
         }
     }, nin=2, nout=1, uses=[bs_live, bs_dead, detector_volumes]);
@@ -184,7 +152,6 @@ function (
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: "DetectorVolumes",
             face: 0,
-            geom_helper: wc.tn(geom_helper),
             func_cfgs: [
                {name: "clustering_test", detector_volumes: "DetectorVolumes"},
                // {name: "clustering_ctpointcloud", detector_volumes: "DetectorVolumes"},
@@ -204,7 +171,7 @@ function (
                {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
             ],
         }
-    }, nin=1, nout=1, uses=[geom_helper]);
+    }, nin=1, nout=1, uses=[]);
 
     local sink = g.pnode({
         type: "TensorFileSink",

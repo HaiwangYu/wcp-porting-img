@@ -259,7 +259,7 @@ local ub = {
         }
     },
 
-    PointTreeBuilding(geom_helper = $.SimpleClusGeomHelper()) :: pg.pnode({
+    PointTreeBuilding() :: pg.pnode({
         type: "PointTreeBuilding",
         name: "",
         data:  {
@@ -271,7 +271,6 @@ local ub = {
             tags: ["live", "dead"],
             anode: wc.tn(anode),
             face: 0,
-            geom_helper: wc.tn(geom_helper),
             detector_volumes: "DetectorVolumes",
         }
     }, nin=2, nout=1, uses=[$.bs_live, $.bs_dead, $.detector_volumes]),
@@ -306,8 +305,7 @@ local ub = {
         pg.intern(innodes=[fan], centernodes=[sink],
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
-    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live,
-                           geom_helper = $.SimpleClusGeomHelper()) :: pg.pnode({
+    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live) :: pg.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
         data:  {
@@ -324,7 +322,6 @@ local ub = {
             anode: wc.tn(anode),
             detector_volumes: "DetectorVolumes",
             face: 0,            // FIXME: take an IAnodeFace!
-            geom_helper: wc.tn(geom_helper),
             func_cfgs: [
                 //{name: "clustering_test", detector_volumes: "DetectorVolumes"},
                 // {name: "clustering_ctpointcloud, "detector_volumes: "DetectorVolumes"},
@@ -346,7 +343,7 @@ local ub = {
                 {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode), cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: "DetectorVolumes"},
             ],
         }
-    }, nin=1, nout=1, uses=[geom_helper, live_sampler, anode, $.detector_volumes]),
+    }, nin=1, nout=1, uses=[live_sampler, anode, detector_volumes]),
 
     TensorFileSink(fname) :: pg.pnode({
         type: "TensorFileSink",
