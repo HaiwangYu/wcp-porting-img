@@ -226,63 +226,30 @@ local ub = {
         },
     }, nin=1, nout=1),
 
+    // PointTreeBuilding() :: pg.pnode({
+    //     type: "PointTreeBuilding",
+    //     name: "",
+    //     data:  {
+    //         samplers: {
+    //             "3d": wc.tn($.bs_live),
+    //             "dead": wc.tn($.bs_dead),
+    //         },
+    //         multiplicity: 2,
+    //         tags: ["live", "dead"],
+    //         anode: wc.tn(anode),
+    //         face: 0,
+    //         detector_volumes: "DetectorVolumes",
+    //     }
+    // }, nin=2, nout=1, uses=[$.bs_live, $.bs_dead, detector_volumes]),
 
-    SimpleClusGeomHelper() :: {
-        type: "SimpleClusGeomHelper",
-        name: "uboone",
-        data: {
-            a0f0: {
-                pitch_u: 3 * wc.mm,
-                pitch_v: 3 * wc.mm,
-                pitch_w: 3 * wc.mm,
-                angle_u: 1.0472,    // 60 degrees
-                angle_v: -1.0472,   // -60 degrees
-                angle_w: 0,         // 0 degrees
-                drift_speed: 1.101 * wc.mm / wc.us,
-                tick: 0.5 * wc.us,  // 0.5 mm per tick
-                tick_drift: self.drift_speed * self.tick,
-                time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
-                nticks_live_slice: 4,
-                FV_xmin: 1 * wc.cm,
-                FV_xmax: 255 * wc.cm,
-                FV_ymin: -99.5 * wc.cm,
-                FV_ymax: 101.5 * wc.cm,
-                FV_zmin: 15 * wc.cm,
-                FV_zmax: 1022 * wc.cm,
-                FV_xmin_margin: 2 * wc.cm,
-                FV_xmax_margin: 2 * wc.cm,
-                FV_ymin_margin: 2.5 * wc.cm,
-                FV_ymax_margin: 2.5 * wc.cm,
-                FV_zmin_margin: 3 * wc.cm,
-                FV_zmax_margin: 3 * wc.cm
-            },
-        }
-    },
-
-    PointTreeBuilding() :: pg.pnode({
-        type: "PointTreeBuilding",
-        name: "",
-        data:  {
-            samplers: {
-                "3d": wc.tn($.bs_live),
-                "dead": wc.tn($.bs_dead),
-            },
-            multiplicity: 2,
-            tags: ["live", "dead"],
-            anode: wc.tn(anode),
-            face: 0,
-            detector_volumes: "DetectorVolumes",
-        }
-    }, nin=2, nout=1, uses=[$.bs_live, $.bs_dead, $.detector_volumes]),
-
-    point_tree_source(livefn, deadfn) ::
-        local livesrc = $.ClusterFileSource(livefn);
-        local deadsrc = $.ClusterFileSource(deadfn);
-        local ptb = $.PointTreeBuilding();
-        pg.intern(innodes=[livesrc, deadsrc], outnodes=[ptb],
-                  edges=[ pg.edge(livesrc, ptb, 0, 0),
-                          pg.edge(deadsrc, ptb, 0, 1) ]
-                 ),
+    // point_tree_source(livefn, deadfn) ::
+    //     local livesrc = $.ClusterFileSource(livefn);
+    //     local deadsrc = $.ClusterFileSource(deadfn);
+    //     local ptb = $.PointTreeBuilding();
+    //     pg.intern(innodes=[livesrc, deadsrc], outnodes=[ptb],
+    //               edges=[ pg.edge(livesrc, ptb, 0, 0),
+    //                       pg.edge(deadsrc, ptb, 0, 1) ]
+    //              ),
 
     BeeBlobSink(fname, sampler) :: pg.pnode({
         type: "BeeBlobSink",
