@@ -23,6 +23,8 @@ local params = import "pgrapher/experiment/uboone/simparams.jsonnet";
 local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools = tools_maker(params);
 local anode = tools.anodes[0];
+local anodes = tools.anodes;
+
 
 
 
@@ -286,6 +288,7 @@ local ub = {
             subRunNo: 1,
             eventNo: 1,
             save_deadarea: true, 
+            anodes: [wc.tn(a) for a in anodes],
             anode: wc.tn(anode),
             detector_volumes: "DetectorVolumes",
             face: 0,            // FIXME: take an IAnodeFace!
