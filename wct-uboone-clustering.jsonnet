@@ -134,6 +134,8 @@ function (
         ],
         name = "front-end");
 
+    // local common_coords = ["x_t0cor", "y", "z"];
+    local common_coords = ["x", "y", "z"];
     local mabc = g.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
@@ -155,20 +157,21 @@ function (
             func_cfgs: [
                // {name: "clustering_test", detector_volumes: "DetectorVolumes"},
                // {name: "clustering_ctpointcloud", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: ["x", "y", "z"]},
-               {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_parallel_prolong", length_cut: 35*wc.cm, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_close", length_cut: 1.2*wc.cm},
-               {name: "clustering_extend_loop", num_try: 3, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_separate", use_ctpc: true, detector_volumes: "DetectorVolumes"},
-               {name: "clustering_connect1", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_deghost", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_protect_overclustering", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
-               {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
+               // {name: "clustering_switch_scope", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: ["x", "y", "z"], correction_name: "T0Correction"},
+               {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_parallel_prolong", length_cut: 35*wc.cm, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_close", length_cut: 1.2*wc.cm, pc_name: "3d", coords: common_coords},
+               {name: "clustering_extend_loop", num_try: 3, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_separate", use_ctpc: true, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_connect1", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_deghost", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_examine_x_boundary", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_protect_overclustering", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
+               {name: "clustering_isolated", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
             ],
         }
     }, nin=1, nout=1, uses=[]);
