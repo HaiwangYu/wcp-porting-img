@@ -134,8 +134,8 @@ function (
         ],
         name = "front-end");
 
-    // local common_coords = ["x_t0cor", "y", "z"];
-    local common_coords = ["x", "y", "z"];
+    local common_coords = ["x_t0cor", "y", "z"];
+    // local common_coords = ["x", "y", "z"];
     local mabc = g.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
@@ -153,11 +153,28 @@ function (
             save_deadarea: true, 
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: "DetectorVolumes",
-            face: 0,
+            bee_points_sets: [  // New configuration for multiple bee points sets
+                {
+                    name: "img",                // Name of the bee points set
+                    detector: "uboone",         // Detector name
+                    algorithm: "img",           // Algorithm identifier
+                    pcname: "3d",           // Which scope to use
+                    coords: ["x", "y", "z"],    // Coordinates to use
+                    individual: false           // Whether to output as a whole or individual APA/Face
+                },
+                {
+                    name: "clustering",         // Name of the bee points set
+                    detector: "uboone",         // Detector name
+                    algorithm: "clustering",    // Algorithm identifier
+                    pcname: "3d",           // Which scope to use
+                    coords: ["x_t0cor", "y", "z"],    // Coordinates to use
+                    individual: true            // Output individual APA/Face
+                }
+            ],
             func_cfgs: [
                // {name: "clustering_test", detector_volumes: "DetectorVolumes"},
                // {name: "clustering_ctpointcloud", detector_volumes: "DetectorVolumes"},
-               // {name: "clustering_switch_scope", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: ["x", "y", "z"], correction_name: "T0Correction"},
+               {name: "clustering_switch_scope", detector_volumes: "DetectorVolumes", pc_name: "3d", coords: ["x", "y", "z"], correction_name: "T0Correction"},
                {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
                {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
                {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: "DetectorVolumes", pc_name: "3d", coords: common_coords},
