@@ -3,7 +3,7 @@ local g = import "pgraph.jsonnet";
 local f = import 'pgrapher/common/funcs.jsonnet';
 
 
-local time_offset = 0 * wc.us;
+local time_offset = 250 * wc.us;
 local drift_speed = 1.6 * wc.mm / wc.us;
 local bee_dir = "data";
 local bee_zip = "mabc.zip";
@@ -19,6 +19,52 @@ local LeventNo  = std.parseInt(initial_eventNo);
 
 
 local common_coords = ["x", "y", "z"];
+
+local dvm = {
+    overall: {
+        FV_xmin: -3579.85 * wc.mm,
+        FV_xmax: 3579.85 * wc.mm,
+        FV_ymin: 76.1 * wc.mm,
+        FV_ymax: 6060.0 * wc.mm,
+        FV_zmin: 2.34345 * wc.mm,
+        FV_zmax: 4622.97 * wc.mm,
+        FV_xmin_margin: 2 * wc.cm,
+        FV_xmax_margin: 2 * wc.cm,
+        FV_ymin_margin: 2.5 * wc.cm,
+        FV_ymax_margin: 2.5 * wc.cm,
+        FV_zmin_margin: 3 * wc.cm,
+        FV_zmax_margin: 3 * wc.cm,
+        vertical_dir: [0,1,0],
+        beam_dir: [0,0,1]
+    },
+    a0f0pA: {
+        drift_speed: drift_speed,
+        tick: 0.5 * wc.us,  // 0.5 mm per tick
+        tick_drift: self.drift_speed * self.tick,
+        time_offset: time_offset,
+        nticks_live_slice: 4,
+        FV_xmin: -3579.85 * wc.mm,
+        FV_xmax: -25.4 * wc.mm,
+        FV_xmin_margin: 2 * wc.cm,
+        FV_xmax_margin: 2 * wc.cm,
+    },
+    a0f1pA: $.a0f0pA + {
+        FV_xmin: -3579.85 * wc.mm,
+        FV_xmax: -3579.85 * wc.mm,
+    },
+    a1f0pA: $.a0f0pA + {
+        FV_xmin: 3579.85 * wc.mm,
+        FV_xmax: 3579.85 * wc.mm,
+    },
+    a1f1pA: $.a0f0pA + {
+        FV_xmin: 25.4 * wc.mm,
+        FV_xmax: 3579.85 * wc.mm,
+    },
+    a2f0pA: $.a0f0pA,
+    a2f1pA: $.a0f1pA,
+    a3f0pA: $.a1f0pA,
+    a3f1pA: $.a1f1pA,
+};
 
 local clus_per_face (
     anode,
@@ -69,47 +115,16 @@ local clus_per_face (
         "data": {
             "anodes": [wc.tn(anode)],
             metadata:
-                {overall: {
-                    FV_xmin: 1 * wc.cm,
-                    FV_xmax: 255 * wc.cm,
-                    FV_ymin: -99.5 * wc.cm,
-                    FV_ymax: 101.5 * wc.cm,
-                    FV_zmin: 15 * wc.cm,
-                    FV_zmax: 1022 * wc.cm,
-                    FV_xmin_margin: 2 * wc.cm,
-                    FV_xmax_margin: 2 * wc.cm,
-                    FV_ymin_margin: 2.5 * wc.cm,
-                    FV_ymax_margin: 2.5 * wc.cm,
-                    FV_zmin_margin: 3 * wc.cm,
-                    FV_zmax_margin: 3 * wc.cm,
-                    vertical_dir: [0,1,0],
-                    beam_dir: [0,0,1]
-                }} +
+                {overall: dvm["overall"]} +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f0pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in [anode]
+                    [ "a" + std.toString(a.data.ident) + "f0pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f0pA" ]
+                    for a in [anode]
                 } +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f1pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in [anode]
+                    [ "a" + std.toString(a.data.ident) + "f1pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f1pA" ]
+                    for a in [anode]
                 }
         }
     },
@@ -257,47 +272,16 @@ local clus_per_apa (
         "data": {
             "anodes": [wc.tn(anode)],
             metadata:
-                {overall: {
-                    FV_xmin: 1 * wc.cm,
-                    FV_xmax: 255 * wc.cm,
-                    FV_ymin: -99.5 * wc.cm,
-                    FV_ymax: 101.5 * wc.cm,
-                    FV_zmin: 15 * wc.cm,
-                    FV_zmax: 1022 * wc.cm,
-                    FV_xmin_margin: 2 * wc.cm,
-                    FV_xmax_margin: 2 * wc.cm,
-                    FV_ymin_margin: 2.5 * wc.cm,
-                    FV_ymax_margin: 2.5 * wc.cm,
-                    FV_zmin_margin: 3 * wc.cm,
-                    FV_zmax_margin: 3 * wc.cm,
-                    vertical_dir: [0,1,0],
-                    beam_dir: [0,0,1]
-                }} +
+                {overall: dvm["overall"]} +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f0pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in [anode]
+                    [ "a" + std.toString(a.data.ident) + "f0pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f0pA" ]
+                    for a in [anode]
                 } +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f1pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in [anode]
+                    [ "a" + std.toString(a.data.ident) + "f1pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f1pA" ]
+                    for a in [anode]
                 }
         }
     },
@@ -395,47 +379,16 @@ local clus_all_apa (
         "data": {
             "anodes": [wc.tn(anode) for anode in anodes],
             metadata:
-                {overall: {
-                    FV_xmin: 1 * wc.cm,
-                    FV_xmax: 255 * wc.cm,
-                    FV_ymin: -99.5 * wc.cm,
-                    FV_ymax: 101.5 * wc.cm,
-                    FV_zmin: 15 * wc.cm,
-                    FV_zmax: 1022 * wc.cm,
-                    FV_xmin_margin: 2 * wc.cm,
-                    FV_xmax_margin: 2 * wc.cm,
-                    FV_ymin_margin: 2.5 * wc.cm,
-                    FV_ymax_margin: 2.5 * wc.cm,
-                    FV_zmin_margin: 3 * wc.cm,
-                    FV_zmax_margin: 3 * wc.cm,
-                    vertical_dir: [0,1,0],
-                    beam_dir: [0,0,1]
-                }} +
+                {overall: dvm["overall"]} +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f0pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in anodes
+                    [ "a" + std.toString(a.data.ident) + "f0pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f0pA" ]
+                    for a in anodes
                 } +
                 {
-                    [ "a" + std.toString(a.data.ident) + "f1pA" ]: {
-                        drift_speed: drift_speed,
-                        tick: 0.5 * wc.us,  // 0.5 mm per tick
-                        tick_drift: self.drift_speed * self.tick,
-                        time_offset: time_offset,
-                        nticks_live_slice: 4,
-                        FV_xmin: 1 * wc.cm,
-                        FV_xmax: 255 * wc.cm,
-                        FV_xmin_margin: 2 * wc.cm,
-                        FV_xmax_margin: 2 * wc.cm,
-                    } for a in anodes
+                    [ "a" + std.toString(a.data.ident) + "f1pA" ]:
+                    dvm[ "a" + std.toString(a.data.ident) + "f1pA" ]
+                    for a in anodes
                 }
         }
     },
@@ -462,7 +415,7 @@ local clus_all_apa (
             bee_points_sets: [  // New configuration for multiple bee points sets
                 {
                     name: "img",                // Name of the bee points set
-                    detector: "uboone",         // Detector name
+                    detector: "protodunehd",         // Detector name
                     algorithm: "img",           // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x", "y", "z"],    // Coordinates to use
@@ -470,7 +423,7 @@ local clus_all_apa (
                 },
                 {
                     name: "clustering",         // Name of the bee points set
-                    detector: "uboone",         // Detector name
+                    detector: "protodunehd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
