@@ -1,6 +1,8 @@
 #!/bin/bash
 
 name=$2
+base_name="${name%.jsonnet}"
+
 
 # Split $WIRECELL_PATH on colon into an array of directories
 IFS=':' read -ra cfg_dirs <<< "$WIRECELL_PATH"
@@ -24,11 +26,11 @@ if [[ $1 == "json" || $1 == "all" ]]; then
       --ext-code evt=0 \
       --ext-str output="orig-bl-nf-sp.root" \
       $J_ARGS \
-      ${name}.jsonnet \
-      -o ${name}.json
+      ${base_name}.jsonnet \
+      -o ${base_name}.json
 fi
 
 if [[ $1 == "pdf" || $1 == "all" ]]; then
-    # wirecell-pgraph dotify --jpath -1 --no-services --no-params ${name}.json ${name}.pdf
-    wirecell-pgraph dotify --jpath -1 ${3} ${name}.json ${name}.pdf
+    # wirecell-pgraph dotify --jpath -1 --no-services --no-params ${base_name}.json ${base_name}.pdf
+    wirecell-pgraph dotify --jpath -1 ${3} ${base_name}.json ${base_name}.pdf
 fi
