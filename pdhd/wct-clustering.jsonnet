@@ -25,8 +25,8 @@ local cluster_source(fname) = g.pnode({
         anodes: [wc.tn(a) for a in anodes],
     }
 }, nin=0, nout=1, uses=anodes);
-local active_files = [ "data/clusters-apa-apa%d-ms-active.tar.gz"%a.data.ident for a in anodes];
-local masked_files = [ "data/clusters-apa-apa%d-ms-masked.tar.gz"%a.data.ident for a in anodes];
+local active_files = [ "%s/clusters-apa-apa%d-ms-active.tar.gz"%[input, a.data.ident] for a in anodes];
+local masked_files = [ "%s/clusters-apa-apa%d-ms-masked.tar.gz"%[input, a.data.ident] for a in anodes];
 local active_clusters = [cluster_source(f) for f in active_files];
 local masked_clusters = [cluster_source(f) for f in masked_files];
 

@@ -3,7 +3,7 @@ local g = import "pgraph.jsonnet";
 local f = import 'pgrapher/common/funcs.jsonnet';
 
 
-local time_offset = 250 * wc.us;
+local time_offset = -250 * wc.us;
 local drift_speed = 1.6 * wc.mm / wc.us;
 local bee_dir = "data";
 local bee_zip = "mabc.zip";
