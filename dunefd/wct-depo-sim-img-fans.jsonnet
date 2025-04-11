@@ -244,7 +244,7 @@ local graph = g.pipeline([depo_source, setdrifter, parallel_graph], "main"); // 
 // local graph = g.pipeline([depo_source, setdrifter, parallel_graph, sink], "main"); // ending with Fanin
 
 local app = {
-  type: 'TbbFlow', //Pgrapher, TbbFlow
+  type: 'Pgrapher', //Pgrapher, TbbFlow
   data: {
     edges: g.edges(graph),
   },
@@ -254,7 +254,7 @@ local cmdline = {
     type: "wire-cell",
     data: {
         plugins: ["WireCellGen", "WireCellPgraph", "WireCellSio", "WireCellSigProc", "WireCellImg", "WireCellRoot", "WireCellTbb", "WireCellClus"],
-        apps: ["TbbFlow"]
+        apps: ["Pgrapher"]
     }
 };
 
