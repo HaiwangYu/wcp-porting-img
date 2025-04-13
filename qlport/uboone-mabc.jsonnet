@@ -326,7 +326,9 @@ local ub = {
             //               {name: "clustering_neutrino", detector_volumes: "DetectorVolumes"},
             //               {name: "clustering_isolated", detector_volumes: "DetectorVolumes"},
                 {name: "clustering_examine_bundles", detector_volumes: "DetectorVolumes"},
-                {name: "clustering_retile", sampler: wc.tn(live_sampler), anode: wc.tn(anode), cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: "DetectorVolumes"},
+                {name: "clustering_retile", 
+                samplers: [{apa: 0, face: 0, name: wc.tn(live_sampler)}], 
+                anodes: [wc.tn(anode)], cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: "DetectorVolumes"},
             ],
         }
     }, nin=1, nout=1, uses=[live_sampler, anode, detector_volumes]),
