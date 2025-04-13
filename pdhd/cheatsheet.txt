@@ -1,0 +1,7 @@
+Commands:
+
+wire-cell -l stdout -L debug -c wct-clustering.jsonnet -V input="1event"
+
+wire-cell -l stdout -L debug -c wct-clustering.jsonnet -V input="10events"
+
+Debug:
