@@ -214,10 +214,10 @@ local clus_per_face (
                 {name: "clustering_extend_loop", num_try: 3, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
                 {name: "clustering_separate", use_ctpc: true, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
                 {name: "clustering_connect1", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-                {name: "clustering_isolated", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords}, // hack for now ...
-                {name: "clustering_retile", 
-                samplers: [{apa : anode.data.ident, face : face, name: wc.tn(bs_live)}], 
-                anodes: [wc.tn(anode)], cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: wc.tn(detector_volumes)},
+                // {name: "clustering_isolated", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords}, // hack for now ...
+                // {name: "clustering_retile", 
+                // samplers: [{apa : anode.data.ident, face : face, name: wc.tn(bs_live)}], 
+                // anodes: [wc.tn(anode)], cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: wc.tn(detector_volumes)},
             ],
         }
     }, nin=1, nout=1, uses=[]),
