@@ -5,6 +5,7 @@ local params = import "pgrapher/experiment/uboone/simparams.jsonnet";
 local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools = tools_maker(params);
 local anodes = tools.anodes;
+local clus = import "pgrapher/common/clus.jsonnet";
 
 local cluster_source(fname) = g.pnode({
     type: "ClusterFileSource",
@@ -143,6 +144,36 @@ function (
 
     local common_coords = ["x_t0cor", "y", "z"];
     // local common_coords = ["x", "y", "z"];
+
+    // nominal
+    local cm = clus.clustering_methods(detector_volumes=detector_volumes,
+                                       pc_transforms=pctransforms);
+    // alternative with a scope built from common_coords.
+    local cm_com = clus.clustering_methods(detector_volumes=detector_volumes,
+                                           pc_transforms=pctransforms,
+                                           coords=common_coords);
+    local mabc_clustering = [
+        
+        // cm.test(),
+        // cm.ctpointcloud(),
+        cm.switch_scope(),
+        cm_com.live_dead(),
+        cm_com.extend(flag=4, length_cut=60*wc.cm, num_try=0, length_2_cut=15*wc.cm, num_dead_try=1),
+        cm_com.regular("one", length_cut=60*wc.cm, flag_enable_extend=false),
+        cm_com.regular("two", length_cut=30*wc.cm, flag_enable_extend=true),
+        cm_com.parallel_prolong(length_cut=35*wc.cm),
+        cm_com.close(length_cut=1.2*wc.cm),
+        cm_com.extend_loop(num_try=3),
+        cm_com.separate(),
+        cm_com.connect1(),
+        cm_com.deghost(),
+        cm_com.examine_x_boundary(),
+        cm_com.protect_overclustering(),
+        cm_com.neutrino(),
+        cm_com.isolated(),
+    ];
+
+
     local mabc = g.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
@@ -178,27 +209,9 @@ function (
                     individual: true            // Output individual APA/Face
                 }
             ],
-            func_cfgs: [
-               // {name: "clustering_test", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-               // {name: "clustering_ctpointcloud", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-               {name: "clustering_switch_scope", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: ["x", "y", "z"], correction_name: "T0Correction", pc_transforms: wc.tn(pctransforms)},
-               {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_parallel_prolong", length_cut: 35*wc.cm, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_close", length_cut: 1.2*wc.cm, pc_name: "3d", coords: common_coords},
-               {name: "clustering_extend_loop", num_try: 3, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_separate", use_ctpc: true, detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords, pc_transforms: wc.tn(pctransforms)},
-               {name: "clustering_connect1", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_deghost", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords, pc_transforms: wc.tn(pctransforms)},
-               {name: "clustering_examine_x_boundary", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_protect_overclustering", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords, pc_transforms: wc.tn(pctransforms)},
-               {name: "clustering_neutrino", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-               {name: "clustering_isolated", detector_volumes: wc.tn(detector_volumes), pc_name: "3d", coords: common_coords},
-            ],
+            clustering_methods: [wc.tn(cmeth) for cmeth in mabc_clustering],
         }
-    }, nin=1, nout=1, uses=[detector_volumes, pctransforms]);
+    }, nin=1, nout=1, uses=[detector_volumes, pctransforms]+mabc_clustering);
 
     local sink = g.pnode({
         type: "TensorFileSink",
