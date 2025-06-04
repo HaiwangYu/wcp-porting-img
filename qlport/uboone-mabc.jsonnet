@@ -24,6 +24,7 @@ local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools = tools_maker(params);
 local anode = tools.anodes[0];
 local anodes = tools.anodes;
+local clus = import "pgrapher/common/clus.jsonnet";
 
 
 
@@ -282,7 +283,17 @@ local ub = {
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
-                        index=0, runNo=1, subRunNo=1, eventNo=1) :: pg.pnode({
+                        index=0, runNo=1, subRunNo=1, eventNo=1) :: 
+        local cm = clus.clustering_methods(detector_volumes=detector_volumes,
+                                           pc_transforms=pctransforms);
+        local cm_pipeline = [
+            cm.examine_bundles(),
+            cm.retile(cut_time_low=3*wc.us, cut_time_high=5*wc.us,
+                      anodes=anodes,
+                      samplers=[clus.sampler(live_sampler, apa=0, face=0)]),
+        ];
+        pg.pnode({
+
         type: "MultiAlgBlobClustering",
         name: "",
         data:  {
@@ -316,30 +327,10 @@ local ub = {
                     individual: true            // Output individual APA/Face
                 }
             ],
-            func_cfgs: [
-                //{name: "clustering_test", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-                // {name: "clustering_ctpointcloud, "detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-            //               {name: "clustering_live_dead", dead_live_overlap_offset: 2, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_extend", flag: 4, length_cut: 60 * wc.cm, num_try: 0, length_2_cut: 15 * wc.cm, num_dead_try: 1, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_regular", length_cut: 60*wc.cm, flag_enable_extend: false, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_regular", length_cut: 30*wc.cm, flag_enable_extend: true, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_parallel_prolong", length_cut: 35*wc.cm, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_close", length_cut: 1.2*wc.cm},
-            //               {name: "clustering_extend_loop", num_try: 3, detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_separate", use_ctpc: true, detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-            //               {name: "clustering_connect1", detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_deghost", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-            //               {name: "clustering_examine_x_boundary", detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_protect_overclustering", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-            //               {name: "clustering_neutrino", detector_volumes: wc.tn(detector_volumes)},
-            //               {name: "clustering_isolated", detector_volumes: wc.tn(detector_volumes)},
-                {name: "clustering_examine_bundles", detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-                {name: "clustering_retile", 
-                samplers: [{apa: 0, face: 0, name: wc.tn(live_sampler)}], 
-                anodes: [wc.tn(anode)], cut_time_low: 3*wc.us, cut_time_high: 5*wc.us, detector_volumes: wc.tn(detector_volumes), pc_transforms: wc.tn(pctransforms)},
-            ],
+            clustering_methods: wc.tns(cm_pipeline),
         }
-    }, nin=1, nout=1, uses=[live_sampler, anode, detector_volumes, pctransforms]),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes] + cm_pipeline),
+
 
     TensorFileSink(fname) :: pg.pnode({
         type: "TensorFileSink",
