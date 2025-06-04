@@ -282,7 +282,8 @@ local ub = {
         pg.intern(innodes=[fan], centernodes=[sink],
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
-    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live) :: 
+    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
+                        index=0, runNo=1, subRunNo=1, eventNo=1) :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms);
         local cm_pipeline = [
@@ -292,6 +293,7 @@ local ub = {
                       samplers=[clus.sampler(live_sampler, apa=0, face=0)]),
         ];
         pg.pnode({
+
         type: "MultiAlgBlobClustering",
         name: "",
         data:  {
@@ -299,11 +301,11 @@ local ub = {
             outpath: pointtree_datapath,
             perf: true,
             bee_zip: beezip,
-            initial_index: 0,
+            initial_index: index,
             use_config_rse: true,  // Enable use of configured RSE
-            runNo: 1,
-            subRunNo: 1,
-            eventNo: 1,
+            runNo: runNo,
+            subRunNo: subRunNo,
+            eventNo: eventNo,
             save_deadarea: true, 
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: wc.tn(detector_volumes),
@@ -378,23 +380,29 @@ local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
     ub.multiplex_blob_views(infiles, 'dead', ["uv","vw","wu"]),
     ub.UbooneClusterSource(infiles, datapath=datapath, sampler=ub.bs_dead, kind='dead', optical=false)
 ]);
-local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
-    ub.MultiAlgBlobClustering(beezip, datapath=datapath),
+local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) = pg.pipeline([
+    ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
     ub.ClusterFlashDump(datapath=datapath)
 ]);
+//local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
+//    ub.MultiAlgBlobClustering(beezip, datapath=datapath),
+//    ub.ClusterFlashDump(datapath=datapath)
+//]);
 
 
 local graphs = {
-    live :: function(infiles, beezip, datapath) 
-        pg.pipeline([ingraph_live(infiles, datapath), outgraph(beezip, datapath)]),
+    live :: function(infiles, beezip, datapath, index=0, runNo=1, subRunNo=1, eventNo=1) 
+        pg.pipeline([ingraph_live(infiles, datapath), 
+                    outgraph(beezip, datapath, index, runNo, subRunNo, eventNo)]),
 
-    dead :: function(infiles, beezip, datapath)
-        pg.pipeline([ingraph_dead(infiles, datapath), outgraph(beezip, datapath)]),
+    dead :: function(infiles, beezip, datapath, index=0, runNo=1, subRunNo=1, eventNo=1)
+        pg.pipeline([ingraph_dead(infiles, datapath), 
+                    outgraph(beezip, datapath, index, runNo, subRunNo, eventNo)]),
 
-    both :: function(infiles, beezip, datapath)
+    both :: function(infiles, beezip, datapath, index=0, runNo=1, subRunNo=1, eventNo=1)
         local live = ingraph_live(infiles, datapath);
         local dead = ingraph_dead(infiles, datapath);
-        local out = outgraph(beezip, datapath);
+        local out = outgraph(beezip, datapath, index, runNo, subRunNo, eventNo);
         local fanin = ub.TensorSetFanin();
         pg.intern(innodes=[live,dead], outnodes=[out], centernodes=[fanin],
                   edges=[
@@ -403,8 +411,40 @@ local graphs = {
                       pg.edge(fanin,out,0,0)])
 };
 
+//local graphs = {
+//    live :: function(infiles, beezip, datapath) 
+//        pg.pipeline([ingraph_live(infiles, datapath), outgraph(beezip, datapath)]),
+//
+//    dead :: function(infiles, beezip, datapath)
+//        pg.pipeline([ingraph_dead(infiles, datapath), outgraph(beezip, datapath)]),
+//
+//    both :: function(infiles, beezip, datapath)
+//        local live = ingraph_live(infiles, datapath);
+//        local dead = ingraph_dead(infiles, datapath);
+//        local out = outgraph(beezip, datapath);
+//        local fanin = ub.TensorSetFanin();
+//        pg.intern(innodes=[live,dead], outnodes=[out], centernodes=[fanin],
+//                  edges=[
+//                      pg.edge(live,fanin,0,0),
+//                      pg.edge(dead,fanin,0,1),
+//                      pg.edge(fanin,out,0,0)])
+//};
+
 local extra_plugins = ["WireCellAux", "WireCellRoot", "WireCellClus"];
 
 // kind can be "live", "dead" or "both".
-function(infiles="uboone.root", beezip="bee.zip", kind="live", datapath=pointtree_datapath)
-    ub.main(graphs[kind](infiles, beezip, datapath), "Pgrapher", extra_plugins)
+function(infiles="uboone.root", beezip="bee.zip", kind="live", datapath=pointtree_datapath, 
+         initial_index="0", initial_runNo="1", initial_subRunNo="1", initial_eventNo="1")
+    
+    // Parse the integer values from strings
+    local index = std.parseInt(initial_index);
+    local runNo = std.parseInt(initial_runNo);
+    local subRunNo = std.parseInt(initial_subRunNo);
+    local eventNo = std.parseInt(initial_eventNo);
+    
+    // Use these parameters in the main graph
+    ub.main(graphs[kind](infiles, beezip, datapath, index, runNo, subRunNo, eventNo), 
+            "Pgrapher", extra_plugins)
+
+//function(infiles="uboone.root", beezip="bee.zip", kind="live", datapath=pointtree_datapath)
+//    ub.main(graphs[kind](infiles, beezip, datapath), "Pgrapher", extra_plugins)

@@ -19,9 +19,9 @@ while(<infile>){
     next if (defined $target_event && $eventNo != $target_event);
 
     if ($i%40 == 39){
-        system("wire-cell -l stderr -A kind=both -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log");
+        system("wire-cell -l stderr -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log");
     }else{
-        system("wire-cell -l stderr -A kind=both -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log&");
+        system("wire-cell -l stderr -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log&");
     }
 
 
