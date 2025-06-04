@@ -283,7 +283,7 @@ local ub = {
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
-                        index=0, runNo=1, subRunNo=1, eventNo=1) :: 
+                           index=0, runNo=1, subRunNo=1, eventNo=1) :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms);
         local cm_pipeline = [
@@ -293,7 +293,6 @@ local ub = {
                       samplers=[clus.sampler(live_sampler, apa=0, face=0)]),
         ];
         pg.pnode({
-
         type: "MultiAlgBlobClustering",
         name: "",
         data:  {
@@ -345,7 +344,8 @@ local ub = {
                     individual: true            // Output individual APA/Face
                 },
             ],
-            clustering_methods: wc.tns(cm_pipeline),
+            pipeline: wc.tns(cm_pipeline),
+            // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
         }, nin=1, nout=1, uses=anodes + [detector_volumes] + cm_pipeline),
 
