@@ -143,7 +143,7 @@ function (
         name = "front-end");
 
     local common_coords = ["x_t0cor", "y", "z"];
-    // local common_coords = ["x", "y", "z"];
+    //local common_coords = ["x", "y", "z"];
 
     // nominal
     local cm = clus.clustering_methods(detector_volumes=detector_volumes,
