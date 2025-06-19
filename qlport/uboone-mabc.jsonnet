@@ -287,6 +287,7 @@ local ub = {
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms);
         local cm_pipeline = [
+            cm.tagger_flag_transfer("tagger"),
             cm.examine_bundles(),
             cm.retile(cut_time_low=3*wc.us, cut_time_high=5*wc.us,
                       anodes=anodes,
