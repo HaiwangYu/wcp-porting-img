@@ -57,8 +57,7 @@ function (
                 // {name:"grid", step:2, planes:[2,0]},
             ],
             // extra: [".*"] // want all the extra
-            extra: [".*wire_index", "wpid"] //
-            // extra: [] //
+            extra: [".*wire_index", ".*charge*", "wpid"] //
         }};
     local bs_dead = {
         type: "BlobSampler",

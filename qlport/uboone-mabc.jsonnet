@@ -50,7 +50,7 @@ local ub = {
             strategy: [
                 "stepped",
             ],
-            extra: [".*wire_index", "wpid"] //
+            extra: [".*wire_index", ".*charge*", "wpid"] //
         }
     },
 
@@ -286,12 +286,14 @@ local ub = {
                            index=0, runNo=1, subRunNo=1, eventNo=1) :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms);
+        local retiler = cm.retiler(anodes=anodes, 
+                                   samplers=[clus.sampler(live_sampler, apa=0, face=0)],
+                                   cut_time_low=3*wc.us, cut_time_high=5*wc.us);
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
             cm.examine_bundles(),
-            cm.retile(cut_time_low=3*wc.us, cut_time_high=5*wc.us,
-                      anodes=anodes,
-                      samplers=[clus.sampler(live_sampler, apa=0, face=0)]),
+            cm.retile(retiler=retiler),
+            //cm.steiner(retiler=retiler),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
