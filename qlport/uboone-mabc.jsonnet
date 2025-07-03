@@ -47,9 +47,10 @@ local ub = {
         data: {
             time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
             drift_speed: 1.101 * wc.mm / wc.us,
-            strategy: [
-                "stepped",
-            ],
+            strategy: {
+                "name": "charge_stepped",
+                "disable_mix_dead_cell": true,
+            },
             extra: [".*wire_index", ".*charge*", "wpid"] //
         }
     },
@@ -291,9 +292,9 @@ local ub = {
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
-            cm.examine_bundles(),
-            cm.retile(retiler=retiler),
-            //cm.steiner(retiler=retiler),
+            // cm.examine_bundles(),
+            // cm.retile(retiler=retiler),
+            cm.steiner(retiler=retiler),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
