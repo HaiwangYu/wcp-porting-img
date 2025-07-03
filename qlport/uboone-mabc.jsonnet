@@ -51,7 +51,7 @@ local ub = {
                 "name": "charge_stepped",
                 "disable_mix_dead_cell": true,
             },
-            extra: [".*wire_index", ".*charge*", "wpid"] //
+            extra: [".*wire_index", ".*charge.*", "wpid"] //
         }
     },
 
