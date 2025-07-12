@@ -291,11 +291,15 @@ local ub = {
         local retiler = cm.retiler(anodes=anodes, 
                                    samplers=[clus.sampler(live_sampler, apa=0, face=0)],
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
+
+        local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes, 
+                                   samplers=[clus.sampler(live_sampler, apa=0, face=0)]);
+        
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
             // cm.examine_bundles(),
             // cm.retile(retiler=retiler),
-            cm.steiner(retiler=retiler),
+            cm.steiner(retiler=improve_cluster_2),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
