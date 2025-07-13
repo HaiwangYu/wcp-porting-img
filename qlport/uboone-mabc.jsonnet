@@ -294,9 +294,12 @@ local ub = {
 
         local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes, 
                                    samplers=[clus.sampler(live_sampler, apa=0, face=0)]);
-        
+
+
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
+            cm.clustering_recovering_bundle("recover_bundle"),
+            cm.switch_scope(),
             // cm.examine_bundles(),
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
