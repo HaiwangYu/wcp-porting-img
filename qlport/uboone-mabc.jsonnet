@@ -55,6 +55,21 @@ local ub = {
         }
     },
 
+    // Special for improvedCluster retiling
+    bs_live_no_dead_mix : {
+        type: "BlobSampler",
+        name: "live_no_dead_mix",
+        data: {
+            time_offset: -1600 * wc.us + 6 * wc.mm/self.drift_speed,
+            drift_speed: 1.101 * wc.mm / wc.us,
+            strategy: {
+                "name": "charge_stepped",
+                "disable_mix_dead_cell": false,  // This is the key change
+            },
+            extra: [".*wire_index", ".*charge.*", "wpid"]
+        }
+    },
+
     bs_dead : {
         type: "BlobSampler",
         name: "dead",
@@ -293,7 +308,7 @@ local ub = {
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
 
         local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes, 
-                                   samplers=[clus.sampler(live_sampler, apa=0, face=0)],
+                                   samplers=[clus.sampler($.bs_live_no_dead_mix, apa=0, face=0)],
                                    verbose=true);
 
 
