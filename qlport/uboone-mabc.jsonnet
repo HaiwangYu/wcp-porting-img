@@ -293,7 +293,8 @@ local ub = {
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
 
         local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes, 
-                                   samplers=[clus.sampler(live_sampler, apa=0, face=0)]);
+                                   samplers=[clus.sampler(live_sampler, apa=0, face=0)],
+                                   verbose=true);
 
 
         local cm_pipeline = [
