@@ -337,40 +337,60 @@ local ub = {
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: wc.tn(detector_volumes),
             bee_points_sets: [  // New configuration for multiple bee points sets
+                //{
+                //    name: "img",                // Name of the bee points set
+                //    detector: "uboone",         // Detector name
+                //    algorithm: "img",           // Algorithm identifier
+                //    pcname: "3d",           // Which scope to use
+                //    coords: ["x", "y", "z"],    // Coordinates to use
+                //    individual: false           // Whether to output as a whole or individual APA/Face
+                //},
+                //{
+                //    name: "clustering",         // Name of the bee points set
+                //    detector: "uboone",         // Detector name
+                //    algorithm: "clustering",    // Algorithm identifier
+                //    pcname: "3d",           // Which scope to use
+                //    coords: ["x", "y", "z"],    // Coordinates to use
+                //    individual: true            // Output individual APA/Face
+                //},
+                //{
+                //    name: "retiled",         // Name of the bee points set
+                //    grouping: "shadow",
+                //    detector: "uboone",         // Detector name
+                //    algorithm: "retiled",    // Algorithm identifier
+                //    pcname: "3d",           // Which scope to use
+                //    coords: ["x", "y", "z"],    // Coordinates to use
+                //    individual: true            // Output individual APA/Face
+                //},
+                //{
+                //    name: "examine",         // Name of the bee points set
+                //    visitor: "ClusteringExamineBundles",
+                //    detector: "uboone",         // Detector name
+                //    algorithm: "examine",    // Algorithm identifier
+                //    pcname: "3d",           // Which scope to use
+                //    coords: ["x", "y", "z"],    // Coordinates to use
+                //    individual: true            // Output individual APA/Face
+                //},
                 {
-                    name: "img",                // Name of the bee points set
+                    name: "regular",         // Name of the bee points set
+                    visitor: "CreateSteinerGraph",
                     detector: "uboone",         // Detector name
-                    algorithm: "img",           // Algorithm identifier
+                    algorithm: "regular",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
-                    coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: false           // Whether to output as a whole or individual APA/Face
+                    coords: ["x_t0cor", "y", "z"],    // Coordinates to use
+                    individual: false,            // Output individual APA/Face
+                    filter: -1
                 },
                 {
-                    name: "clustering",         // Name of the bee points set
+                    name: "steiner",         // Name of the bee points set
+                    visitor: "CreateSteinerGraph",
                     detector: "uboone",         // Detector name
-                    algorithm: "clustering",    // Algorithm identifier
-                    pcname: "3d",           // Which scope to use
-                    coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: true            // Output individual APA/Face
+                    algorithm: "steiner",    // Algorithm identifier
+                    pcname: "steiner_pc",           // Which scope to use
+                    coords: ["x_t0cor", "y", "z"],    // Coordinates to use
+                    individual: false            // Output individual APA/Face
                 },
-                {
-                    name: "retiled",         // Name of the bee points set
-                    grouping: "shadow",
-                    detector: "uboone",         // Detector name
-                    algorithm: "retiled",    // Algorithm identifier
-                    pcname: "3d",           // Which scope to use
-                    coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: true            // Output individual APA/Face
-                },
-                {
-                    name: "examine",         // Name of the bee points set
-                    visitor: "ClusteringExamineBundles",
-                    detector: "uboone",         // Detector name
-                    algorithm: "examine",    // Algorithm identifier
-                    pcname: "3d",           // Which scope to use
-                    coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: true            // Output individual APA/Face
-                },
+
             ],
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
