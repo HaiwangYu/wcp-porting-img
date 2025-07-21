@@ -379,7 +379,7 @@ local ub = {
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
                     individual: false,            // Output individual APA/Face
-                    filter: -1
+                    filter: 1                    // 1 apply scope filter, 0 ignore scope filter, -1 apply inverse scope filter
                 },
                 {
                     name: "steiner",         // Name of the bee points set
@@ -388,7 +388,7 @@ local ub = {
                     algorithm: "steiner",    // Algorithm identifier
                     pcname: "steiner_pc",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
-                    individual: false            // Output individual APA/Face
+                    individual: false,            // Output individual APA/Face
                 },
 
             ],
