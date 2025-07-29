@@ -319,6 +319,7 @@ local ub = {
             // cm.examine_bundles(),
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
+            cm.tagger_check_stm(),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
