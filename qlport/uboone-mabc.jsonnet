@@ -299,10 +299,14 @@ local ub = {
         pg.intern(innodes=[fan], centernodes=[sink],
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
+    local fiducial = detector_volumes,
+
+
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
                            index=0, runNo=1, subRunNo=1, eventNo=1) :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
-                                           pc_transforms=pctransforms);
+                                           pc_transforms=pctransforms,
+                                           fiducial=fiducial);
         local retiler = cm.retiler(anodes=anodes, 
                                    samplers=[clus.sampler(live_sampler, apa=0, face=0)],
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
@@ -319,8 +323,9 @@ local ub = {
             // cm.examine_bundles(),
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
-            cm.tagger_check_stm(),
-            cm.do_tracking("","multiple"),
+            cm.fiducialutils(),
+            // cm.tagger_check_stm(),
+            // cm.do_tracking("","multiple"),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
