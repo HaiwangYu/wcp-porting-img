@@ -299,14 +299,126 @@ local ub = {
         pg.intern(innodes=[fan], centernodes=[sink],
                   edges=[ pg.edge(fan, sink, 1, 0) ]),
 
-    local fiducial = detector_volumes,
+   
+
+    uboone_data_fid_xy : {
+        "type": "PolyFiducial",
+        "name": "fiducial_data_xy",
+        "data": {
+            "axis": 2,  // Z-axis slabs, checking X-Y plane polygons
+            "slabs": [
+                {
+                    "min": 0 * wc.cm,     // z start
+                    "max": 1037.0 * wc.cm,   // z end
+                    "corners": [    // [X,Y] coordinates from ToyFiducial boundary_xy
+                                   [3.0 * wc.cm, -113 * wc.cm],    // bottom-left   
+                                   [77.0 * wc.cm, -113 * wc.cm],   // bottom-middle
+                                   [253.0 * wc.cm, -96 * wc.cm],   // right-bottom
+                                   [253.0 * wc.cm, 99 * wc.cm],    // right-top
+                                   [97.0 * wc.cm, 113 * wc.cm],    // top-middle
+                                   [3.0 * wc.cm, 114 * wc.cm],     // top-left (reverse order)
+                                ]
+                }
+            ]
+        }
+    },
+
+    uboone_data_fid_zx : {
+        "type": "PolyFiducial",
+        "name": "fiducial_data_zx",
+        "data": {
+            "axis": 1,  // Y-axis slab
+            "slabs": [
+                {
+                    "min": -115 * wc.cm,     // y start
+                    "max": 115 * wc.cm,   // y end
+                    "corners": [    // [Z,X] coordinates from ToyFiducial boundary_zx
+                                    [4.0 * wc.cm, 3 * wc.cm],    
+                                    [4.0 * wc.cm, 117 * wc.cm], 
+                                    [15.0 * wc.cm, 253 * wc.cm],  
+                                    [1022.0 * wc.cm, 253 * wc.cm],
+                                    [1033.0 * wc.cm, 117 * wc.cm],
+                                    [1033.0 * wc.cm, 3 * wc.cm],     
+                                ]
+                }
+            ]
+        }
+    },
+
+    uboone_data_fid: {
+        "type": "CompositeFiducial",
+        "name": "uboone_data_fid",
+        "data": {
+        "logic": "and",
+        "fiducials": [
+            "PolyFiducial:fiducial_data_xy",
+            "PolyFiducial:fiducial_data_zx"
+        ]
+        }
+    },
+
+     uboone_mc_fid_xy : {
+        "type": "PolyFiducial",
+        "name": "fiducial_mc_xy",
+        "data": {
+            "axis": 2,  // Z-axis slabs, checking X-Y plane polygons
+            "slabs": [
+                {
+                    "min": 0 * wc.cm,     // z start
+                    "max": 1037.0 * wc.cm,   // z end
+                    "corners": [    // [X,Y] coordinates from ToyFiducial boundary_xy
+                                    [3.0 * wc.cm, -113 * wc.cm],    
+                                    [31.0 * wc.cm, -113 * wc.cm], 
+                                    [253.0 * wc.cm, -95 * wc.cm],  
+                                    [253.0 * wc.cm, 97 * wc.cm],
+                                    [67.0 * wc.cm, 113 * wc.cm],
+                                    [3.0 * wc.cm, 114 * wc.cm],     
+                                ]
+                }
+            ]
+        }
+    },
+
+    uboone_mc_fid_zx : {
+        "type": "PolyFiducial",
+        "name": "fiducial_mc_zx",
+        "data": {
+            "axis": 1,  // Y-axis slab
+            "slabs": [
+                {
+                    "min": -115 * wc.cm,     // y start
+                    "max": 115 * wc.cm,   // y end
+                    "corners": [    // [Z,X] coordinates from ToyFiducial boundary_zx
+                                    [4.0 * wc.cm, 3 * wc.cm],    
+                                    [4.0 * wc.cm, 47 * wc.cm], 
+                                    [18.0 * wc.cm, 253 * wc.cm],  
+                                    [1019.0 * wc.cm, 253 * wc.cm],
+                                    [1033.0 * wc.cm, 37 * wc.cm],
+                                    [1033.0 * wc.cm, 3 * wc.cm],     
+                                ]
+                }
+            ]
+        }
+    },
+
+    uboone_mc_fid: {
+        "type": "CompositeFiducial",
+        "name": "uboone_mc_fid",
+        "data": {
+        "logic": "and",
+        "fiducials": [
+            "PolyFiducial:fiducial_mc_xy",
+            "PolyFiducial:fiducial_mc_zx"
+        ]
+        }
+    },
 
 
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
                            index=0, runNo=1, subRunNo=1, eventNo=1) :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms,
-                                           fiducial=fiducial);
+                                           fiducial=$.uboone_mc_fid);
         local retiler = cm.retiler(anodes=anodes, 
                                    samplers=[clus.sampler(live_sampler, apa=0, face=0)],
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
@@ -402,7 +514,7 @@ local ub = {
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
-        }, nin=1, nout=1, uses=anodes + [detector_volumes] + cm_pipeline),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
 
 
     TensorFileSink(fname) :: pg.pnode({
