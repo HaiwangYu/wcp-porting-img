@@ -35,7 +35,13 @@
     "time_tick_cut": 20,
     "share_charge_err": 8000,
     "min_drift_time": 50000,
-    "search_range": 10
-
-    
+    "search_range": 10,
+    "dead_ind_weight": 0.3,
+    "dead_col_weight": 0.9,
+    "close_ind_weight": 0.15,
+    "close_col_weight": 0.45,
+    "overlap_th": 0.5,
+    "dx_norm_length": 6.0,
+    "lambda": 0.0005,
+    "div_sigma": 6.0
 }
