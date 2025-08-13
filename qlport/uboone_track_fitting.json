@@ -32,5 +32,10 @@
     "charge_cut": 2000,
     "low_dis_limit": 12.0,
     "end_point_limit": 6.0,
-    "time_tick_cut": 20
+    "time_tick_cut": 20,
+    "share_charge_err": 8000,
+    "min_drift_time": 50000,
+    "search_range": 10
+
+    
 }
