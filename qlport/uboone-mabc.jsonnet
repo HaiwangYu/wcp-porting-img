@@ -415,7 +415,7 @@ local ub = {
 
 
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
-                           index=0, runNo=1, subRunNo=1, eventNo=1) :: 
+                           index=0, runNo=1, subRunNo=1, eventNo=1, trackfitting_config="") :: 
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms,
                                            fiducial=$.uboone_mc_fid);
@@ -436,7 +436,7 @@ local ub = {
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
             cm.fiducialutils(),
-            cm.tagger_check_stm(),
+            cm.tagger_check_stm(trackfitting_config_file=trackfitting_config),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -565,7 +565,7 @@ local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
     ub.UbooneClusterSource(infiles, datapath=datapath, sampler=ub.bs_dead, kind='dead', optical=false)
 ]);
 local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) = pg.pipeline([
-    ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
+    ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json"),
     ub.ClusterFlashDump(datapath=datapath)
 ]);
 //local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
