@@ -126,6 +126,25 @@ local ub = {
                 }
         },
     },
+
+
+    // Add the LinterpFunction definition
+    muon_linterp_function: {
+        type: "LinterpFunction",
+        name: "Muon",
+        data: {
+            start: 0.5,    // First x-coordinate
+            step: 1.0,     // Spacing between x-coordinates
+            values: [
+                123417, 92909.8, 82815.2, 76865.8, 72760.7, 69711.4, 67393, 65380.9, 63780.9, 62367.8,
+                61186.1, 60132, 59215.7, 58397.4, 57672.8, 57011.1, 56423.7, 55874.5, 55387.2, 54922.1,
+                54513.4, 54118.2, 53772.3, 53441.6, 53138.5, 52855.7, 52585.5, 52340.7, 52100.6, 51880.9,
+                51667.3, 51472.6, 51296.3, 51123.7, 50965.2, 50810.7, 50698.2, 50618.3, 50538.5, 50458.7,
+                50379.1, 50299.5, 50220, 50140.6, 50061.1, 49981.9, 49902.7, 49823.5, 49744.4, 49665.4,
+                49586.5, 49507.6, 49428.8, 49350.1, 49271.5, 49193, 49114.4, 49036, 48957.7, 48879.4
+            ]
+        }
+    },
     
     UbooneBlobSource(fname, kind /*live or dead*/, views /* uvw, uv, vw, wu */) :: pg.pnode({
         type: 'UbooneBlobSource',
@@ -436,7 +455,8 @@ local ub = {
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
             cm.fiducialutils(),
-            cm.tagger_check_stm(trackfitting_config_file=trackfitting_config),
+            cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
+                    linterp_function=wc.tn(ub.muon_linterp_function)),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -513,7 +533,7 @@ local ub = {
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
-        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.muon_linterp_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
 
 
     TensorFileSink(fname) :: pg.pnode({
