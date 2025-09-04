@@ -1,7 +1,7 @@
 {
     "_comment": "uBooNETrackFitting Configuration for STMTagger",
-    "DL": 6.4e-6,
-    "DT": 9.8e-6,
+    "DL": 6.4e-7,
+    "DT": 9.8e-7,
     "col_sigma_w_T": 0.1128360,
     "ind_sigma_u_T": 0.3626937,
     "ind_sigma_v_T": 0.6044895,
