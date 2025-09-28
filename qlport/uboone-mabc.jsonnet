@@ -145,6 +145,19 @@ local ub = {
             ]
         }
     },
+
+    // add recombination model for uBooNE case, pay attention to units ...
+    uBooNE_box_recomb_model: {
+        "type": "BoxRecombination",
+        "name": "box_recomb", 
+        "data": {
+            "A": 1.0,
+            "B": 2.55e-4,
+            "Efield": 2.73,
+            "rho": 1.38e-3,
+            "Wi": 23.6e-6
+        }
+    },
     
     UbooneBlobSource(fname, kind /*live or dead*/, views /* uvw, uv, vw, wu */) :: pg.pnode({
         type: 'UbooneBlobSource',
@@ -456,6 +469,7 @@ local ub = {
             cm.steiner(retiler=improve_cluster_2),
             cm.fiducialutils(),
             cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
+                    recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
                     linterp_function=wc.tn(ub.muon_linterp_function)),
         ];
         pg.pnode({
@@ -533,7 +547,7 @@ local ub = {
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
-        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.muon_linterp_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uBooNE_box_recomb_model, $.muon_linterp_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
 
 
     TensorFileSink(fname) :: pg.pnode({
