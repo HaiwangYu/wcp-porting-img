@@ -829,8 +829,6 @@ local ub = {
         }
     },
 
-    // Keep the old muon_linterp_function for backward compatibility
-    muon_linterp_function: $.muon_dEdx_function,
 
     // add recombination model for uBooNE case, pay attention to units ...
     uBooNE_box_recomb_model: {
@@ -1156,7 +1154,7 @@ local ub = {
             cm.fiducialutils(),
             cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
                     recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
-                    linterp_function=wc.tn(ub.muon_linterp_function)),
+                    particle_dataset=wc.tn(ub.particle_dataset)),
         ];
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -1233,7 +1231,7 @@ local ub = {
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
-        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uBooNE_box_recomb_model, $.muon_linterp_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uBooNE_box_recomb_model, $.particle_dataset, $.muon_dEdx_function, $.pion_dEdx_function, $.kaon_dEdx_function, $.electron_dEdx_function, $.proton_dEdx_function, $.muon_range_function, $.pion_range_function, $.kaon_range_function, $.proton_range_function, $.electron_range_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
 
 
     TensorFileSink(fname) :: pg.pnode({
