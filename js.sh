@@ -24,7 +24,12 @@ if [[ $1 == "json" || $1 == "all" ]]; then
       --ext-str detector="uboone" \
       --ext-str input="orig-bl.root" \
       --ext-code evt=0 \
+      --ext-code elecGain=14 \
       --ext-str output="orig-bl-nf-sp.root" \
+      --ext-str reality="reality" \
+      --ext-str signal_output_form="signal_output_form" \
+      --ext-str raw_input_label="raw_input_lable" \
+      --ext-str use_magnify="use_magnify" \
       $J_ARGS \
       ${base_name}.jsonnet \
       -o ${base_name}.json
