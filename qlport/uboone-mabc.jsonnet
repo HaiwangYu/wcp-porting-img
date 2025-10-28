@@ -836,9 +836,9 @@ local ub = {
         "name": "box_recomb", 
         "data": {
             "A": 1.0,
-            "B": 2.55e-4,
-            "Efield": 2.73,
-            "rho": 1.38e-3,
+            "B": 0.255,
+            "Efield": 0.273,
+            "rho": 1.38,
             "Wi": 23.6e-6
         }
     },
