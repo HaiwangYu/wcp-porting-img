@@ -1,0 +1,45 @@
+#include "geometry_sbnd.fcl"
+
+outputs: {
+   out1: {
+      compressionLevel: 1
+      dataTier: "generated"
+      fileName: "prodcosmics_pdsp.root"
+      module_type: "RootOutput"
+   }
+}
+physics: {
+   analyzers: {
+      dumpgenietruth: {
+         AllowNoTruth: true
+         OutputCategory: "DumpMCTruth"
+         module_type: "DumpGTruth"
+      }
+      dumpmctruth: {
+         OutputCategory: "DumpMCTruth"
+         module_type: "DumpMCTruth"
+      }
+   }
+   dumpers: [
+      "dumpmctruth",
+      "dumpgenietruth"
+   ]
+   end_paths: [
+      "dumpers",
+      "stream1"
+   ]
+   producers: {
+   }
+   simulate: [
+   ]
+   stream1: [
+      "out1"
+   ]
+   trigger_paths: [
+    #   "simulate"
+   ]
+}
+process_name: "truthdump"
+services: {
+    @table::sbnd_geometry_services
+}
