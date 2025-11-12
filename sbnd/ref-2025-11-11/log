@@ -1,0 +1,1233 @@
+%MSG-i MF_INIT_OK:  Early 11-Nov-2025 11:31:14 CST JobSetup
+Messagelogger initialization complete.
+%MSG
+Info in <TGeoManager::Import>: Reading geometry from file: /cvmfs/sbnd.opensciencegrid.org/products/sbnd/sbndcode/v10_06_03/gdml/sbnd_v02_05.gdml
+Info in <TGeoManager::TGeoManager>: Geometry GDMLImport, Geometry imported from GDML created
+Error: Unsupported GDML Tag Used :gdml_simple_extension. Please Check Geometry/Schema.
+Info in <TGeoManager::SetTopVolume>: Top volume is volWorld. Master volume is volWorld
+Info in <TGeoNavigator::BuildCache>: --- Maximum geometry depth set to 100
+Info in <TGeoManager::CheckGeometry>: Fixing runtime shapes...
+Info in <TGeoManager::CheckGeometry>: ...Nothing to fix
+Info in <TGeoManager::CloseGeometry>: Counting nodes...
+Info in <TGeoManager::Voxelize>: Voxelizing...
+Info in <TGeoManager::CloseGeometry>: Building cache...
+Info in <TGeoManager::CountLevels>: max level = 6, max placements = 1984
+Info in <TGeoManager::CloseGeometry>: 15907 nodes/ 4514 volume UID's in Geometry imported from GDML
+Info in <TGeoManager::CloseGeometry>: ----------------modeler ready----------------
+%MSG-i AuxDetGeometryCore:  Early 11-Nov-2025 11:31:18 CST JobSetup
+New detector geometry loaded from
+	/cvmfs/sbnd.opensciencegrid.org/products/sbnd/sbndcode/v10_06_03/gdml/sbnd_v02_05.gdml
+%MSG
+%MSG-i GeometryCore:  Early 11-Nov-2025 11:31:18 CST JobSetup
+Sorting volumes...
+%MSG
+%MSG-i GeometryCore:  Early 11-Nov-2025 11:31:18 CST JobSetup
+New detector geometry loaded from
+	/cvmfs/sbnd.opensciencegrid.org/products/sbnd/sbndcode/v10_06_03/gdml/sbnd_v02_05.gdml
+%MSG
+%MSG-i WireReadoutStandardGeom:  Early 11-Nov-2025 11:31:18 CST JobSetup
+Initializing standard wire-readout geometry...
+%MSG
+%MSG-i StandardWireReadout:  Early 11-Nov-2025 11:31:18 CST JobSetup
+Loading wire readout: WireReadoutStandardGeom
+%MSG
+[11:31:18.792] D [  main  ] configuring component: "wclsCookedFrameSource":"sigs"
+[11:31:18.792] D [  main  ] configuring component: "FrameFanout":"parallel_graph"
+[11:31:18.792] D [  glue  ] <FrameFanout:parallel_graph> rule based 2-way fanout 
+[11:31:18.792] D [  main  ] configuring component: "WireSchemaFile":""
+[11:31:18.793] I [  wct   ] loading compressed json file: /exp/sbnd/app/users/yuhw/wire-cell-data/sbnd-wires-geometry-v0202.json.bz2
+[11:31:20.017] D [  main  ] configuring component: "AnodePlane":"apa0"
+[11:31:20.017] D [  geom  ] <AnodePlane:apa0> X planes: "cathode"@ -0.0045m, "response"@-1.9205m, "anode"@-2.0145m, dirx=1 
+[11:31:20.018] D [  geom  ] <AnodePlane:apa0> face:0, plane:0, origin:(-1920.5 -1.73125 2547) mm 
+[11:31:20.019] D [  geom  ] <AnodePlane:apa0> face:0, plane:1, origin:(-1920.5 1.73125 2547) mm 
+[11:31:20.019] D [  geom  ] <AnodePlane:apa0> face:0, plane:2, origin:(-1920.5 0 2547) mm 
+[11:31:20.019] D [  geom  ] <AnodePlane:apa0> face:0 with 3 planes and sensvol: [(-2014.5 -1999.65 42) --> (-4.5 1999.65 5052)] 
+[11:31:20.027] D [  main  ] configuring component: "ChannelSelector":"chsel0"
+[11:31:20.032] D [  main  ] configuring component: "CMMModifier":"cmm-mod-apa0"
+[11:31:20.032] D [  main  ] configuring component: "FrameMasking":"frame-masking-apa0"
+[11:31:20.032] D [  main  ] configuring component: "WaveformMap":"wfm"
+[11:31:20.032] I [  wct   ] loading compressed json file: /exp/sbnd/app/users/yuhw/wire-cell-data/sbnd-charge-error.json.bz2
+[11:31:20.035] D [  main  ] configuring component: "ChargeErrorFrameEstimator":"cefe-apa0"
+[11:31:20.035] D [  main  ] configuring component: "FrameFanout":"fan_active_masked-apa0"
+[11:31:20.036] D [  glue  ] <FrameFanout:fan_active_masked-apa0> trivial 2-way fanout 
+[11:31:20.036] D [  main  ] configuring component: "MaskSlices":"slicing-apa0"
+[11:31:20.036] D [  img   ] <MaskSlice:slicing-apa0> double dummy_error = 1000000000000 
+[11:31:20.036] D [  img   ] <MaskSlice:slicing-apa0> active planes: 0 
+[11:31:20.036] D [  img   ] <MaskSlice:slicing-apa0> active planes: 1 
+[11:31:20.036] D [  img   ] <MaskSlice:slicing-apa0> active planes: 2 
+[11:31:20.036] D [  main  ] configuring component: "GridTiling":"tiling-apa0-face0"
+[11:31:20.036] D [  img   ] <GridTiling:tiling-apa0-face0> configured with anode=0 face=0 
+[11:31:20.036] D [  main  ] configuring component: "BlobClustering":"blobclustering-apa0-ms-active"
+[11:31:20.036] D [  main  ] configuring component: "ProjectionDeghosting":"ProjectionDeghosting-apa0-ms-active1st"
+[11:31:20.037] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> {
+	"dead_default_charge" : -1000000000000.0,
+	"dryrun" : false,
+	"global_deghosting_cut_nparas" : 3,
+	"global_deghosting_cut_values" : 
+	[
+		3.0,
+		3000.0,
+		2000.0,
+		8.0,
+		8000.0,
+		4000.0,
+		8.0,
+		8000.0,
+		6000.0
+	],
+	"judge_alt_cut_values" : 
+	[
+		0.050000000000000003,
+		0.33000000000000002,
+		0.14999999999999999,
+		0.33000000000000002
+	],
+	"nchan" : 8256,
+	"nslice" : 9592,
+	"uncer_cut" : 100000000000.0,
+	"verbose" : false
+} 
+[11:31:20.037] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa0-ms-active1st"
+[11:31:20.037] D [  main  ] configuring component: "ChargeSolving":"cs1-apa0-ms-active1st"
+[11:31:20.038] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> weighting strategy: uniform 
+[11:31:20.038] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> SolveParams::Config: uboone 
+[11:31:20.038] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa0-ms-active1st"
+[11:31:20.038] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.038] D [  main  ] configuring component: "ChargeSolving":"cs2-apa0-ms-active1st"
+[11:31:20.038] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> weighting strategy: uboone 
+[11:31:20.038] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> SolveParams::Config: uboone 
+[11:31:20.038] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa0-ms-active1st"
+[11:31:20.038] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> {
+	"clustering_policy" : "uboone",
+	"config_round" : 1,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.038] D [  main  ] configuring component: "ProjectionDeghosting":"ProjectionDeghosting-apa0-ms-active2nd"
+[11:31:20.038] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> {
+	"dead_default_charge" : -1000000000000.0,
+	"dryrun" : false,
+	"global_deghosting_cut_nparas" : 3,
+	"global_deghosting_cut_values" : 
+	[
+		3.0,
+		3000.0,
+		2000.0,
+		8.0,
+		8000.0,
+		4000.0,
+		8.0,
+		8000.0,
+		6000.0
+	],
+	"judge_alt_cut_values" : 
+	[
+		0.050000000000000003,
+		0.33000000000000002,
+		0.14999999999999999,
+		0.33000000000000002
+	],
+	"nchan" : 8256,
+	"nslice" : 9592,
+	"uncer_cut" : 100000000000.0,
+	"verbose" : false
+} 
+[11:31:20.038] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa0-ms-active2nd"
+[11:31:20.038] D [  main  ] configuring component: "ChargeSolving":"cs1-apa0-ms-active2nd"
+[11:31:20.038] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> weighting strategy: uniform 
+[11:31:20.038] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> SolveParams::Config: uboone 
+[11:31:20.038] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa0-ms-active2nd"
+[11:31:20.038] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.038] D [  main  ] configuring component: "ChargeSolving":"cs2-apa0-ms-active2nd"
+[11:31:20.038] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> weighting strategy: uboone 
+[11:31:20.038] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> SolveParams::Config: uboone 
+[11:31:20.039] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa0-ms-active2nd"
+[11:31:20.039] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> {
+	"clustering_policy" : "uboone",
+	"config_round" : 2,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.039] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa0-ms-active3rd"
+[11:31:20.039] D [  main  ] configuring component: "ChargeSolving":"cs1-apa0-ms-active3rd"
+[11:31:20.039] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> weighting strategy: uniform 
+[11:31:20.039] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> SolveParams::Config: uboone 
+[11:31:20.039] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa0-ms-active3rd"
+[11:31:20.039] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.039] D [  main  ] configuring component: "ChargeSolving":"cs2-apa0-ms-active3rd"
+[11:31:20.039] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> weighting strategy: uboone 
+[11:31:20.039] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> SolveParams::Config: uboone 
+[11:31:20.039] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa0-ms-active3rd"
+[11:31:20.039] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> {
+	"clustering_policy" : "uboone",
+	"config_round" : 3,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.039] D [  main  ] configuring component: "GlobalGeomClustering":"global-clustering-apa0-ms-active"
+[11:31:20.039] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> {
+	"clustering_policy" : "uboone",
+	"policy" : "uboone"
+} 
+[11:31:20.039] D [  main  ] configuring component: "FrameFanout":"multi_masked_slicing_tiling-apa0"
+[11:31:20.039] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa0> trivial 3-way fanout 
+[11:31:20.039] D [  main  ] configuring component: "BlobSetMerge":"multi_masked_slicing_tiling-apa0"
+[11:31:20.039] D [  main  ] configuring component: "MaskSlices":"slicing-apa0-ms-masked_0"
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> double dummy_error = 1000000000000 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> dummy planes: 1 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> dummy planes: 2 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> masked planes: 0 
+[11:31:20.040] D [  main  ] configuring component: "GridTiling":"tiling-apa0-ms-masked_0-face0"
+[11:31:20.040] D [  img   ] <GridTiling:tiling-apa0-ms-masked_0-face0> configured with anode=0 face=0 
+[11:31:20.040] D [  main  ] configuring component: "MaskSlices":"slicing-apa0-ms-masked_1"
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> double dummy_error = 1000000000000 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> dummy planes: 0 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> dummy planes: 2 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> masked planes: 1 
+[11:31:20.040] D [  main  ] configuring component: "GridTiling":"tiling-apa0-ms-masked_1-face0"
+[11:31:20.040] D [  img   ] <GridTiling:tiling-apa0-ms-masked_1-face0> configured with anode=0 face=0 
+[11:31:20.040] D [  main  ] configuring component: "MaskSlices":"slicing-apa0-ms-masked_2"
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> double dummy_error = 1000000000000 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> dummy planes: 0 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> dummy planes: 1 
+[11:31:20.040] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> masked planes: 2 
+[11:31:20.040] D [  main  ] configuring component: "GridTiling":"tiling-apa0-ms-masked_2-face0"
+[11:31:20.040] D [  img   ] <GridTiling:tiling-apa0-ms-masked_2-face0> configured with anode=0 face=0 
+[11:31:20.040] D [  main  ] configuring component: "BlobClustering":"blobclustering-apa0-ms-masked"
+[11:31:20.041] D [  main  ] configuring component: "BlobSampler":"apa0-0"
+[11:31:20.041] D [  main  ] configuring component: "BlobSampler":"apa0-0"
+[11:31:20.041] D [  main  ] configuring component: "PointTreeBuilding":"apa0-0"
+[11:31:20.041] D [  clus  ] <PointTreeBuilding:apa0-0> using anode plane: AnodePlane:apa0 
+[11:31:20.041] D [  clus  ] <PointTreeBuilding:apa0-0> using face: 0 
+[11:31:20.041] D [  clus  ] <PointTreeBuilding:apa0-0> point cloud "3d" will be made by sampler "BlobSampler:apa0-0" 
+[11:31:20.041] D [  clus  ] <PointTreeBuilding:apa0-0> point cloud "dead" will be made by sampler "BlobSampler:apa0-0" 
+[11:31:20.041] D [  main  ] configuring component: "SimpleClusGeomHelper":"uboone"
+[11:31:20.041] D [  geom  ] <SimpleClusGeomHelper:uboone> m_tpcparams: {"a0f0":{"FV_xmax":-4.5,"FV_xmax_margin":20,"FV_xmin":-2014.5,"FV_xmin_margin":20,"FV_ymax":1997.9200000000001,"FV_ymax_margin":25,"FV_ymin":-1997.9200000000001,"FV_ymin_margin":25,"FV_zmax":5043,"FV_zmax_margin":30,"FV_zmin":51,"FV_zmin_margin":30,"angle_u":1.0471999999999999,"angle_v":-1.0471999999999999,"angle_w":0,"drift_speed":0.00156,"face":0,"nticks_live_slice":4,"pitch_u":3,"pitch_v":3,"pitch_w":3,"tick":500,"tick_drift":0.78000000000000003,"time_offset":-200000},"a1f1":{"FV_xmax":2014.5,"FV_xmax_margin":20,"FV_xmin":4.5,"FV_xmin_margin":20,"FV_ymax":1997.9200000000001,"FV_ymax_margin":25,"FV_ymin":-1997.9200000000001,"FV_ymin_margin":25,"FV_zmax":5043,"FV_zmax_margin":30,"FV_zmin":51,"FV_zmin_margin":30,"angle_u":1.0471999999999999,"angle_v":-1.0471999999999999,"angle_w":0,"drift_speed":-0.00156,"face":1,"nticks_live_slice":4,"pitch_u":3,"pitch_v":3,"pitch_w":3,"tick":500,"tick_drift":-0.78000000000000003,"time_offset":-200000}}
+ 
+[11:31:20.042] D [  main  ] configuring component: "MultiAlgBlobClustering":"apa0-0"
+[11:31:20.042] W [  clus  ] <MultiAlgBlobClustering:apa0-0> the 'bee_dir' option is no longer supported, instead use 'bee_zip' to name a .zip file 
+[11:31:20.046] D [  clus  ] <MultiAlgBlobClustering:apa0-0> m_bee_img.algorithm: img-0-0 
+[11:31:20.046] D [  clus  ] <MultiAlgBlobClustering:apa0-0> m_bee_ld.algorithm: clustering-0-0 
+[11:31:20.046] D [  main  ] configuring component: "TensorFileSink":"apa0-0"
+[11:31:20.048] D [  sio   ] <TensorFileSink:apa0-0> sink through 3 filters to clus-apa0-face0.tar.gz with prefix "clustering_" 
+[11:31:20.048] D [  sio   ] <TensorFileSink:apa0-0> dump_mode=true 
+[11:31:20.048] D [  main  ] configuring component: "AnodePlane":"apa1"
+[11:31:20.048] D [  geom  ] <AnodePlane:apa1> X planes: "cathode"@ 0.0045m, "response"@1.9205m, "anode"@2.0145m, dirx=-1 
+[11:31:20.048] D [  geom  ] <AnodePlane:apa1> face:0, plane:0, origin:(1920.5 1.73125 2547) mm 
+[11:31:20.049] D [  geom  ] <AnodePlane:apa1> face:0, plane:1, origin:(1920.5 -1.73125 2547) mm 
+[11:31:20.050] D [  geom  ] <AnodePlane:apa1> face:0, plane:2, origin:(1920.5 0 2547) mm 
+[11:31:20.050] D [  geom  ] <AnodePlane:apa1> face:1 with 3 planes and sensvol: [(4.5 -1999.65 42) --> (2014.5 1999.65 5052)] 
+[11:31:20.057] D [  main  ] configuring component: "ChannelSelector":"chsel1"
+[11:31:20.062] D [  main  ] configuring component: "CMMModifier":"cmm-mod-apa1"
+[11:31:20.062] D [  main  ] configuring component: "FrameMasking":"frame-masking-apa1"
+[11:31:20.062] D [  main  ] configuring component: "ChargeErrorFrameEstimator":"cefe-apa1"
+[11:31:20.062] D [  main  ] configuring component: "FrameFanout":"fan_active_masked-apa1"
+[11:31:20.062] D [  glue  ] <FrameFanout:fan_active_masked-apa1> trivial 2-way fanout 
+[11:31:20.062] D [  main  ] configuring component: "MaskSlices":"slicing-apa1"
+[11:31:20.063] D [  img   ] <MaskSlice:slicing-apa1> double dummy_error = 1000000000000 
+[11:31:20.063] D [  img   ] <MaskSlice:slicing-apa1> active planes: 0 
+[11:31:20.063] D [  img   ] <MaskSlice:slicing-apa1> active planes: 1 
+[11:31:20.063] D [  img   ] <MaskSlice:slicing-apa1> active planes: 2 
+[11:31:20.063] D [  main  ] configuring component: "GridTiling":"tiling-apa1-face1"
+[11:31:20.063] D [  img   ] <GridTiling:tiling-apa1-face1> configured with anode=1 face=1 
+[11:31:20.063] D [  main  ] configuring component: "BlobClustering":"blobclustering-apa1-ms-active"
+[11:31:20.063] D [  main  ] configuring component: "ProjectionDeghosting":"ProjectionDeghosting-apa1-ms-active1st"
+[11:31:20.063] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> {
+	"dead_default_charge" : -1000000000000.0,
+	"dryrun" : false,
+	"global_deghosting_cut_nparas" : 3,
+	"global_deghosting_cut_values" : 
+	[
+		3.0,
+		3000.0,
+		2000.0,
+		8.0,
+		8000.0,
+		4000.0,
+		8.0,
+		8000.0,
+		6000.0
+	],
+	"judge_alt_cut_values" : 
+	[
+		0.050000000000000003,
+		0.33000000000000002,
+		0.14999999999999999,
+		0.33000000000000002
+	],
+	"nchan" : 8256,
+	"nslice" : 9592,
+	"uncer_cut" : 100000000000.0,
+	"verbose" : false
+} 
+[11:31:20.063] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa1-ms-active1st"
+[11:31:20.063] D [  main  ] configuring component: "ChargeSolving":"cs1-apa1-ms-active1st"
+[11:31:20.063] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> weighting strategy: uniform 
+[11:31:20.063] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> SolveParams::Config: uboone 
+[11:31:20.063] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa1-ms-active1st"
+[11:31:20.063] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.063] D [  main  ] configuring component: "ChargeSolving":"cs2-apa1-ms-active1st"
+[11:31:20.063] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> weighting strategy: uboone 
+[11:31:20.063] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> SolveParams::Config: uboone 
+[11:31:20.063] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa1-ms-active1st"
+[11:31:20.064] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> {
+	"clustering_policy" : "uboone",
+	"config_round" : 1,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.064] D [  main  ] configuring component: "ProjectionDeghosting":"ProjectionDeghosting-apa1-ms-active2nd"
+[11:31:20.064] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> {
+	"dead_default_charge" : -1000000000000.0,
+	"dryrun" : false,
+	"global_deghosting_cut_nparas" : 3,
+	"global_deghosting_cut_values" : 
+	[
+		3.0,
+		3000.0,
+		2000.0,
+		8.0,
+		8000.0,
+		4000.0,
+		8.0,
+		8000.0,
+		6000.0
+	],
+	"judge_alt_cut_values" : 
+	[
+		0.050000000000000003,
+		0.33000000000000002,
+		0.14999999999999999,
+		0.33000000000000002
+	],
+	"nchan" : 8256,
+	"nslice" : 9592,
+	"uncer_cut" : 100000000000.0,
+	"verbose" : false
+} 
+[11:31:20.064] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa1-ms-active2nd"
+[11:31:20.064] D [  main  ] configuring component: "ChargeSolving":"cs1-apa1-ms-active2nd"
+[11:31:20.064] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> weighting strategy: uniform 
+[11:31:20.064] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> SolveParams::Config: uboone 
+[11:31:20.064] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa1-ms-active2nd"
+[11:31:20.064] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.064] D [  main  ] configuring component: "ChargeSolving":"cs2-apa1-ms-active2nd"
+[11:31:20.064] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> weighting strategy: uboone 
+[11:31:20.064] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> SolveParams::Config: uboone 
+[11:31:20.064] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa1-ms-active2nd"
+[11:31:20.064] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> {
+	"clustering_policy" : "uboone",
+	"config_round" : 2,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.064] D [  main  ] configuring component: "BlobGrouping":"blobgrouping-apa1-ms-active3rd"
+[11:31:20.064] D [  main  ] configuring component: "ChargeSolving":"cs1-apa1-ms-active3rd"
+[11:31:20.064] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> weighting strategy: uniform 
+[11:31:20.064] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> SolveParams::Config: uboone 
+[11:31:20.064] D [  main  ] configuring component: "LocalGeomClustering":"local-clustering-apa1-ms-active3rd"
+[11:31:20.065] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> {
+	"clustering_policy" : "uboone_local",
+	"dryrun" : false
+} 
+[11:31:20.065] D [  main  ] configuring component: "ChargeSolving":"cs2-apa1-ms-active3rd"
+[11:31:20.065] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> weighting strategy: uboone 
+[11:31:20.065] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> SolveParams::Config: uboone 
+[11:31:20.065] D [  main  ] configuring component: "InSliceDeghosting":"inslice_deghosting-apa1-ms-active3rd"
+[11:31:20.065] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> {
+	"clustering_policy" : "uboone",
+	"config_round" : 3,
+	"deghost_th" : 0.75,
+	"deghost_th1" : 0.5,
+	"dryrun" : false,
+	"good_blob_charge_th" : 300
+} 
+[11:31:20.065] D [  main  ] configuring component: "GlobalGeomClustering":"global-clustering-apa1-ms-active"
+[11:31:20.065] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> {
+	"clustering_policy" : "uboone",
+	"policy" : "uboone"
+} 
+[11:31:20.065] D [  main  ] configuring component: "FrameFanout":"multi_masked_slicing_tiling-apa1"
+[11:31:20.065] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa1> trivial 3-way fanout 
+[11:31:20.065] D [  main  ] configuring component: "BlobSetMerge":"multi_masked_slicing_tiling-apa1"
+[11:31:20.065] D [  main  ] configuring component: "MaskSlices":"slicing-apa1-ms-masked_0"
+[11:31:20.065] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> double dummy_error = 1000000000000 
+[11:31:20.065] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> dummy planes: 1 
+[11:31:20.065] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> dummy planes: 2 
+[11:31:20.065] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> masked planes: 0 
+[11:31:20.065] D [  main  ] configuring component: "GridTiling":"tiling-apa1-ms-masked_0-face1"
+[11:31:20.065] D [  img   ] <GridTiling:tiling-apa1-ms-masked_0-face1> configured with anode=1 face=1 
+[11:31:20.065] D [  main  ] configuring component: "MaskSlices":"slicing-apa1-ms-masked_1"
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> double dummy_error = 1000000000000 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> dummy planes: 0 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> dummy planes: 2 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> masked planes: 1 
+[11:31:20.066] D [  main  ] configuring component: "GridTiling":"tiling-apa1-ms-masked_1-face1"
+[11:31:20.066] D [  img   ] <GridTiling:tiling-apa1-ms-masked_1-face1> configured with anode=1 face=1 
+[11:31:20.066] D [  main  ] configuring component: "MaskSlices":"slicing-apa1-ms-masked_2"
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> double dummy_error = 1000000000000 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> dummy planes: 0 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> dummy planes: 1 
+[11:31:20.066] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> masked planes: 2 
+[11:31:20.066] D [  main  ] configuring component: "GridTiling":"tiling-apa1-ms-masked_2-face1"
+[11:31:20.066] D [  img   ] <GridTiling:tiling-apa1-ms-masked_2-face1> configured with anode=1 face=1 
+[11:31:20.066] D [  main  ] configuring component: "BlobClustering":"blobclustering-apa1-ms-masked"
+[11:31:20.066] D [  main  ] configuring component: "BlobSampler":"apa1-1"
+[11:31:20.066] D [  main  ] configuring component: "BlobSampler":"apa1-1"
+[11:31:20.067] D [  main  ] configuring component: "PointTreeBuilding":"apa1-1"
+[11:31:20.067] D [  clus  ] <PointTreeBuilding:apa1-1> using anode plane: AnodePlane:apa1 
+[11:31:20.067] D [  clus  ] <PointTreeBuilding:apa1-1> using face: 1 
+[11:31:20.067] D [  clus  ] <PointTreeBuilding:apa1-1> point cloud "3d" will be made by sampler "BlobSampler:apa1-1" 
+[11:31:20.067] D [  clus  ] <PointTreeBuilding:apa1-1> point cloud "dead" will be made by sampler "BlobSampler:apa1-1" 
+[11:31:20.067] D [  main  ] configuring component: "MultiAlgBlobClustering":"apa1-1"
+[11:31:20.067] W [  clus  ] <MultiAlgBlobClustering:apa1-1> the 'bee_dir' option is no longer supported, instead use 'bee_zip' to name a .zip file 
+[11:31:20.071] D [  clus  ] <MultiAlgBlobClustering:apa1-1> m_bee_img.algorithm: img-1-1 
+[11:31:20.071] D [  clus  ] <MultiAlgBlobClustering:apa1-1> m_bee_ld.algorithm: clustering-1-1 
+[11:31:20.071] D [  main  ] configuring component: "TensorFileSink":"apa1-1"
+[11:31:20.073] D [  sio   ] <TensorFileSink:apa1-1> sink through 3 filters to clus-apa1-face1.tar.gz with prefix "clustering_" 
+[11:31:20.073] D [  sio   ] <TensorFileSink:apa1-1> dump_mode=true 
+[11:31:20.074] D [  main  ] configuring component: "Pgrapher":""
+[11:31:20.075] D [ pgraph ] <Pgrapher:> connecting: 83 edges 
+[11:31:20.075] D [ pgraph ] connect <Node  type:wcls::CookedFrameSource cat:1 sig:WireCell::ISourceNode<WireCell::IFrame> inputs:[ ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::SigProc::ChannelSelector cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:1) -> <Node  type:WireCell::SigProc::ChannelSelector cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::GlobalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ](WireCell::ICluster:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ](WireCell::ICluster:1)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeErrorFrameEstimator cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::SigProc::ChannelSelector cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::CMMModifier cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::CMMModifier cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::FrameMasking cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::FrameMasking cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::ChargeErrorFrameEstimator cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:1) -> <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ](WireCell::IBlobSet:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.075] D [ pgraph ] connect <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::GlobalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ](WireCell::IBlobSet:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:1) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:2) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:1)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:2)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ]:(WireCell::ITensorSet:0) -> <Node  type:WireCell::Clus::MultiAlgBlobClustering cat:3 sig:WireCell::ITensorSetFilter inputs:[ WireCell::ITensorSet ] outputs:[ WireCell::ITensorSet ](WireCell::ITensorSet:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Clus::MultiAlgBlobClustering cat:3 sig:WireCell::ITensorSetFilter inputs:[ WireCell::ITensorSet ] outputs:[ WireCell::ITensorSet ]:(WireCell::ITensorSet:0) -> <Node  type:WireCell::Sio::TensorFileSink cat:2 sig:WireCell::ISinkNode<WireCell::ITensorSet> inputs:[ WireCell::ITensorSet ] outputs:[ ](WireCell::ITensorSet:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::GlobalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ](WireCell::ICluster:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ](WireCell::ICluster:1)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeErrorFrameEstimator cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::SigProc::ChannelSelector cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::CMMModifier cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::CMMModifier cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::FrameMasking cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Img::FrameMasking cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::ChargeErrorFrameEstimator cat:3 sig:WireCell::IFrameFilter inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.076] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:1) -> <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ](WireCell::IFrame:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ](WireCell::IBlobSet:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ProjectionDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::InSliceDeghosting cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::GlobalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::BlobGrouping cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::LocalGeomClustering cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ]:(WireCell::ICluster:0) -> <Node  type:WireCell::Img::ChargeSolving cat:3 sig:WireCell::IClusterFilter inputs:[ WireCell::ICluster ] outputs:[ WireCell::ICluster ](WireCell::ICluster:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobClustering cat:4 sig:WireCell::IClustering inputs:[ WireCell::IBlobSet ] outputs:[ WireCell::ICluster ](WireCell::IBlobSet:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:0) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:1) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Gen::FrameFanout cat:8 sig:WireCell::IFrameFanout inputs:[ WireCell::IFrame ] outputs:[ WireCell::IFrame WireCell::IFrame WireCell::IFrame ]:(WireCell::IFrame:2) -> <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ](WireCell::IFrame:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:1)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ]:(WireCell::IBlobSet:0) -> <Node  type:WireCell::Img::BlobSetMerge cat:7 sig:WireCell::IBlobSetFanin inputs:[ WireCell::IBlobSet WireCell::IBlobSet WireCell::IBlobSet ] outputs:[ WireCell::IBlobSet ](WireCell::IBlobSet:2)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Img::MaskSlices cat:4 sig:WireCell::IFrameSlices inputs:[ WireCell::IFrame ] outputs:[ WireCell::ISlice ]:(WireCell::ISlice:0) -> <Node  type:WireCell::Img::GridTiling cat:3 sig:WireCell::ITiling inputs:[ WireCell::ISlice ] outputs:[ WireCell::IBlobSet ](WireCell::ISlice:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Clus::PointTreeBuilding cat:7 sig:WireCell::IClusterFaninTensorSet inputs:[ WireCell::ICluster WireCell::ICluster ] outputs:[ WireCell::ITensorSet ]:(WireCell::ITensorSet:0) -> <Node  type:WireCell::Clus::MultiAlgBlobClustering cat:3 sig:WireCell::ITensorSetFilter inputs:[ WireCell::ITensorSet ] outputs:[ WireCell::ITensorSet ](WireCell::ITensorSet:0)
+[11:31:20.077] D [ pgraph ] connect <Node  type:WireCell::Clus::MultiAlgBlobClustering cat:3 sig:WireCell::ITensorSetFilter inputs:[ WireCell::ITensorSet ] outputs:[ WireCell::ITensorSet ]:(WireCell::ITensorSet:0) -> <Node  type:WireCell::Sio::TensorFileSink cat:2 sig:WireCell::ISinkNode<WireCell::ITensorSet> inputs:[ WireCell::ITensorSet ] outputs:[ ](WireCell::ITensorSet:0)
+Inputer: "wclsCookedFrameSource:sigs"
+11-Nov-2025 11:31:20 CST  Initiating request to open input file "input-moon.root"
+11-Nov-2025 11:31:20 CST  Opened input file "input-moon.root"
+Begin processing the 1st record. run: 14737 subRun: 1 event: 279 at 11-Nov-2025 11:31:20 CST
+[11:31:20.392] D [   io   ] CookedFrameSource::visit: event: 279
+[11:31:20.404] D [   io   ] wcls::CookedFrameSource: got 11276 sptpc2d:gauss recob::Wire objects
+[11:31:20.525] D [   io   ] wcls::CookedFrameSource: got 11276 sptpc2d:wiener recob::Wire objects
+[11:31:20.645] D [  main  ] executing 2 apps, thread limit 0:
+[11:31:20.645] D [  main  ] executing 2 apps, thread limit 0:
+[11:31:20.645] D [  main  ] executing app: "Pgrapher"
+[11:31:20.645] D [ pgraph ] <Pgrapher:> executing graph 
+[11:31:20.645] D [ pgraph ] executing with 78 nodes
+[11:31:20.646] D [   io   ] CookedFrameSource output frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig" ] 2 tagged trace sets:[ "gauss":11276 [0] "wiener":11276 [11276] ] cmm:[ bad:88 ]
+[11:31:20.646] D [  glue  ] <FrameFanout:parallel_graph> call=0: input: frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig" ] 2 tagged trace sets:[ "gauss":11276 [0] "wiener":11276 [11276] ] cmm:[ bad:88 ] output 0: frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":11276 [0] "wiener0":11276 [11276] ] cmm:[ bad:88 ] output 1: frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":11276 [0] "wiener1":11276 [11276] ] cmm:[ bad:88 ]  
+[11:31:20.648] D [  glue  ] <ChannelSelector:chsel1> input frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":11276 [0] "wiener1":11276 [11276] ] cmm:[ bad:88 ] output: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.648] D [  img   ] <CMMModifier:cmm-mod-apa1> call=0 input frame: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.648] D [  img   ] <CMMModifier:cmm-mod-apa1> input: bad size: 88 
+[11:31:20.648] D [  img   ] <CMMModifier:cmm-mod-apa1> call=0 output frame: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.648] D [  img   ] <CMMModifier:cmm-mod-apa1> output: bad size: 88 
+[11:31:20.648] D [  img   ] <FrameMasking:frame-masking-apa1> input: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.722] D [  img   ] <FrameMasking:frame-masking-apa1> out_trace_indices: gauss1 5638 
+[11:31:20.722] D [  img   ] <FrameMasking:frame-masking-apa1> out_trace_indices: wiener1 5638 
+[11:31:20.722] D [  img   ] <FrameMasking:frame-masking-apa1> out: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.772] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa1> input : frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig1" ] 2 tagged trace sets:[ "gauss1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.772] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa1> output: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.773] D [  glue  ] <FrameFanout:fan_active_masked-apa1> call=0: input->output x2: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.773] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa1> call=0: input->output x3: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.773] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.774] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> dummy plane: 0 size 1984 
+[11:31:20.774] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> dummy plane: 1 size 1984 
+[11:31:20.775] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> cmm.size(): 88 
+[11:31:20.775] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:20.776] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.777] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> dummy plane: 0 size 1984 
+[11:31:20.777] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> dummy plane: 2 size 1670 
+[11:31:20.778] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> cmm.size(): 88 
+[11:31:20.778] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:20.779] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:20.779] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> dummy plane: 1 size 1984 
+[11:31:20.780] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> dummy plane: 2 size 1670 
+[11:31:20.781] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> cmm.size(): 88 
+[11:31:20.781] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:20.799] D [  img   ] <MaskSlice:slicing-apa1> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig1" ] 3 tagged trace sets:[ "gauss1":5638 [0] "gauss_error1":5638 [0] "wiener1":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.108] D [  img   ] <MaskSlice:slicing-apa1> cmm.size(): 88 
+[11:31:21.108] D [  img   ] <MaskSlice:slicing-apa1> nslices=850 from ntraces=5638, tbin=[0, 3400] 
+[11:31:21.260] D [  glue  ] <ChannelSelector:chsel0> input frame: ident=279 time=57 tick=500 with 22552 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":11276 [0] "wiener0":11276 [11276] ] cmm:[ bad:88 ] output: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.261] D [  img   ] <CMMModifier:cmm-mod-apa0> call=0 input frame: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.261] D [  img   ] <CMMModifier:cmm-mod-apa0> input: bad size: 88 
+[11:31:21.261] D [  img   ] <CMMModifier:cmm-mod-apa0> call=0 output frame: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.261] D [  img   ] <CMMModifier:cmm-mod-apa0> output: bad size: 88 
+[11:31:21.261] D [  img   ] <FrameMasking:frame-masking-apa0> input: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.281] D [  img   ] <FrameMasking:frame-masking-apa0> out_trace_indices: gauss0 5638 
+[11:31:21.281] D [  img   ] <FrameMasking:frame-masking-apa0> out_trace_indices: wiener0 5638 
+[11:31:21.281] D [  img   ] <FrameMasking:frame-masking-apa0> out: frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.305] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa0> input : frame: ident=279 time=57 tick=500 with 11276 traces.  frame tags:[ "orig0" ] 2 tagged trace sets:[ "gauss0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.305] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa0> output: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.306] D [  glue  ] <FrameFanout:fan_active_masked-apa0> call=0: input->output x2: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.306] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa0> call=0: input->output x3: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.306] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.306] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> dummy plane: 0 size 1984 
+[11:31:21.307] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> dummy plane: 1 size 1984 
+[11:31:21.307] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> cmm.size(): 88 
+[11:31:21.307] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:21.308] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.309] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> dummy plane: 0 size 1984 
+[11:31:21.309] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> dummy plane: 2 size 1670 
+[11:31:21.310] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> cmm.size(): 88 
+[11:31:21.310] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:21.310] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.311] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> dummy plane: 1 size 1984 
+[11:31:21.311] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> dummy plane: 2 size 1670 
+[11:31:21.312] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> cmm.size(): 88 
+[11:31:21.312] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> nslices=7 from ntraces=5638, tbin=[0, 3400] 
+[11:31:21.332] D [  img   ] <MaskSlice:slicing-apa0> call=0 input frame: frame: ident=279 time=57 tick=500 with 16914 traces.  frame tags:[ "orig0" ] 3 tagged trace sets:[ "gauss0":5638 [0] "gauss_error0":5638 [0] "wiener0":5638 [5638] ] cmm:[ bad:88 ] 
+[11:31:21.640] D [  img   ] <MaskSlice:slicing-apa0> cmm.size(): 88 
+[11:31:21.640] D [  img   ] <MaskSlice:slicing-apa0> nslices=850 from ntraces=5638, tbin=[0, 3400] 
+[11:31:21.907] D [   io   ] CookedFrameSource output (null frame pointer)
+[11:31:21.907] D [  glue  ] <FrameFanout:parallel_graph> call=1: see EOS 
+[11:31:21.907] D [  glue  ] <ChannelSelector:chsel1> see EOS at call=0 
+[11:31:21.907] D [  img   ] <CMMModifier:cmm-mod-apa1> see EOS at call=1 
+[11:31:21.908] D [  img   ] <FrameMasking:frame-masking-apa1> see EOS 
+[11:31:21.908] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa1> see EOS 
+[11:31:21.908] D [  glue  ] <FrameFanout:fan_active_masked-apa1> call=1: see EOS 
+[11:31:21.908] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa1> call=1: see EOS 
+[11:31:21.908] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_2> EOS 
+[11:31:21.908] D [  img   ] <GridTiling:tiling-apa1-ms-masked_2-face1> EOS 
+[11:31:21.908] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_1> EOS 
+[11:31:21.908] D [  img   ] <GridTiling:tiling-apa1-ms-masked_1-face1> EOS 
+[11:31:21.908] D [  img   ] <MaskSlice:slicing-apa1-ms-masked_0> EOS 
+[11:31:21.908] D [  img   ] <GridTiling:tiling-apa1-ms-masked_0-face1> EOS 
+[11:31:21.908] D [  glue  ] <BlobSetMerge:multi_masked_slicing_tiling-apa1> EOS 
+[11:31:21.967] D [  img   ] <BlobClustering:blobclustering-apa1-ms-masked> flushing at call=7: ident=279 graph: graph: 11325 nodes of 4 types: b:42 c:5638 s:7 w:5638 bcats:[ okay=42 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 112058 edges of 4 types: bb:286 bw:106092 cw:5638 sb:42 
+[11:31:21.979] D [  img   ] <BlobClustering:blobclustering-apa1-ms-masked> flush 1 clusters + EOS on EOS at call=7 
+[11:31:21.979] D [  img   ] <BlobClustering:blobclustering-apa1-ms-masked> call=7 cluster=279 nvertices=11325 nedges=112058 
+[11:31:21.979] D [  img   ] <MaskSlice:slicing-apa1> EOS 
+[11:31:21.979] D [  img   ] <GridTiling:tiling-apa1-face1> EOS 
+[11:31:22.154] D [  img   ] <BlobClustering:blobclustering-apa1-ms-active> flushing at call=850: ident=279 graph: graph: 14289 nodes of 4 types: b:5911 c:3934 s:510 w:3934 bcats:[ okay=5911 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 140838 edges of 4 types: bb:10951 bw:120042 cw:3934 sb:5911 
+[11:31:22.171] D [  img   ] <BlobClustering:blobclustering-apa1-ms-active> flush 1 clusters + EOS on EOS at call=850 
+[11:31:22.171] D [  img   ] <BlobClustering:blobclustering-apa1-ms-active> call=850 cluster=279 nvertices=14289 nedges=140838 
+[11:31:22.196] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> in_graph: graph: 14289 nodes of 4 types: b:5911 c:3934 s:510 w:3934 bcats:[ okay=5911 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 140838 edges of 4 types: bb:10951 bw:120042 cw:3934 sb:5911 
+[11:31:22.363] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> c2b.size(): 877  
+[11:31:23.034] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> 2D --> 3D size: 131 105 96 
+[11:31:23.088] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> 2D --> 3D size: 127 104 95 
+[11:31:23.111] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> tagged_bs.size(): 1082 
+[11:31:23.114] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> in_graph: graph: 14289 nodes of 4 types: b:5911 c:3934 s:510 w:3934 bcats:[ okay=5911 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 140838 edges of 4 types: bb:10951 bw:120042 cw:3934 sb:5911 
+[11:31:23.117] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> out_graph: graph: 13207 nodes of 4 types: b:4829 c:3934 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 130393 edges of 4 types: bb:10637 bw:110993 cw:3934 sb:4829 
+[11:31:23.409] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active1st> call=0 cluster=279 nvertices=17265 nedges=170097 
+[11:31:23.515] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> cluster graph: vertices=17265 edges=170097 $blob=4829 bval=0(+/-0) #meas=4058 
+[11:31:23.535] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> cluster: 279 strategy=uniform 
+[11:31:23.647] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> count=0 cluster=279 solved nsubclusters=884 over nstrategies=1 
+[11:31:23.677] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> call=0 cluster=279 nvertices=17259 nedges=170069 
+[11:31:23.829] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> in_graph: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 170069 edges of 6 types: bb:10637 bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:23.835] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> in #clusters 49 
+[11:31:23.864] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> rm bb: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 159432 edges of 5 types: bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:23.927] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> out #clusters 81 
+[11:31:23.932] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> in: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 170069 edges of 6 types: bb:10637 bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:23.936] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> out: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 165090 edges of 6 types: bb:5658 bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:24.089] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> cluster graph: vertices=17259 edges=165090 $blob=4829 bval=5.90167e+07(+/-0) #meas=4052 
+[11:31:24.109] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> cluster: 279 strategy=uboone 
+[11:31:24.225] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> count=0 cluster=279 solved nsubclusters=884 over nstrategies=1 
+[11:31:24.254] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> call=0 cluster=279 nvertices=17259 nedges=165090 
+[11:31:24.391] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> in_graph: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 165090 edges of 6 types: bb:5658 bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:24.391] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> TICK: 30 ms (this: 30 ms) start blob tagging 
+[11:31:24.396] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> conf 1 step 1 blob_tags  2 4394 0 1882 
+[11:31:24.396] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> TICK: 36 ms (this: 5 ms) start local (in-slice) de-ghosting 
+[11:31:24.420] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> conf 1 step 2 blob_tags  2 4394 0 1882 4 3 
+[11:31:24.420] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> TICK: 59 ms (this: 23 ms) start delete some blobs 
+[11:31:24.420] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> conf 1 step 3 blob_tags  2 4394 0 1882 4 3 
+[11:31:24.420] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> TICK: 60 ms (this: 0 ms) start per group clustering 
+[11:31:24.455] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> cg_old_bb: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 164993 edges of 6 types: bb:5653 bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:24.484] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> cg_new_bb: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 159340 edges of 5 types: bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:24.485] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> conf 1 step 4 blob_tags  2 4394 0 1882 4 3 
+[11:31:24.485] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> group_sizes: 0 4394 
+[11:31:24.485] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> group_sizes: 2 432 
+[11:31:24.588] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> TICK: 228 ms (this: 168 ms) end 
+[11:31:24.591] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> cg_new_bb: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 169393 edges of 6 types: bb:10053 bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:24.621] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> in_graph: graph: 17259 nodes of 5 types: b:4829 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4829 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 165090 edges of 6 types: bb:5658 bm:14465 bw:110993 cm:25211 cw:3934 sb:4829 
+[11:31:24.624] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> out_graph: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 169393 edges of 6 types: bb:10053 bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:24.762] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> in_graph: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 169393 edges of 6 types: bb:10053 bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:24.907] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> c2b.size(): 327  
+[11:31:25.184] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> 2D --> 3D size: 104 79 72 
+[11:31:25.253] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> 2D --> 3D size: 92 74 65 
+[11:31:25.283] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> tagged_bs.size(): 434 
+[11:31:25.288] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> in_graph: graph: 17256 nodes of 5 types: b:4826 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4826 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 169393 edges of 6 types: bb:10053 bm:14459 bw:110910 cm:25211 cw:3934 sb:4826 
+[11:31:25.291] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> out_graph: graph: 16822 nodes of 5 types: b:4392 c:3934 m:4052 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 161543 edges of 6 types: bb:9862 bm:13157 bw:104987 cm:25211 cw:3934 sb:4392 
+[11:31:25.593] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active2nd> call=0 cluster=279 nvertices=16791 nedges=161521 
+[11:31:25.706] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> cluster graph: vertices=16791 edges=161521 $blob=4392 bval=5.90575e+07(+/-0) #meas=4021 
+[11:31:25.723] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> cluster: 279 strategy=uniform 
+[11:31:25.844] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> count=0 cluster=279 solved nsubclusters=903 over nstrategies=1 
+[11:31:25.872] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> call=0 cluster=279 nvertices=16787 nedges=161498 
+[11:31:26.013] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> in_graph: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 161498 edges of 6 types: bb:9862 bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.018] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> in #clusters 56 
+[11:31:26.045] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> rm bb: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 151636 edges of 5 types: bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.101] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> out #clusters 60 
+[11:31:26.106] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> in: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 161498 edges of 6 types: bb:9862 bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.109] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> out: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156811 edges of 6 types: bb:5175 bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.239] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> cluster graph: vertices=16787 edges=156811 $blob=4392 bval=5.90039e+07(+/-0) #meas=4017 
+[11:31:26.256] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> cluster: 279 strategy=uboone 
+[11:31:26.383] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> count=0 cluster=279 solved nsubclusters=903 over nstrategies=1 
+[11:31:26.411] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> call=0 cluster=279 nvertices=16787 nedges=156811 
+[11:31:26.540] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> in_graph: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156811 edges of 6 types: bb:5175 bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.545] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> conf 2 blob_tags  2 4364 0 1882 
+[11:31:26.601] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> cg_new_bb 2nd: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:26.605] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> in_graph: graph: 16787 nodes of 5 types: b:4392 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4392 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156811 edges of 6 types: bb:5175 bm:13157 bw:104987 cm:25166 cw:3934 sb:4392 
+[11:31:26.608] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> out_graph: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:26.878] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active3rd> call=0 cluster=279 nvertices=16782 nedges=156594 
+[11:31:26.986] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> cluster graph: vertices=16782 edges=156594 $blob=4384 bval=5.91276e+07(+/-0) #meas=4020 
+[11:31:27.003] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> cluster: 279 strategy=uniform 
+[11:31:27.123] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> count=0 cluster=279 solved nsubclusters=903 over nstrategies=1 
+[11:31:27.153] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> call=0 cluster=279 nvertices=16779 nedges=156580 
+[11:31:27.292] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> in_graph: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.297] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> in #clusters 62 
+[11:31:27.323] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> rm bb: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 151431 edges of 5 types: bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.379] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> out #clusters 62 
+[11:31:27.384] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> in: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.387] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> out: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.515] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> cluster graph: vertices=16779 edges=156580 $blob=4384 bval=5.90036e+07(+/-0) #meas=4017 
+[11:31:27.531] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> cluster: 279 strategy=uboone 
+[11:31:27.657] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> count=0 cluster=279 solved nsubclusters=903 over nstrategies=1 
+[11:31:27.684] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> call=0 cluster=279 nvertices=16779 nedges=156580 
+[11:31:27.813] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> in_graph: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.818] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> conf 3 blob_tags  2 4352 0 1877 
+[11:31:27.846] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> cg_new_bb 3rd: graph: 16747 nodes of 5 types: b:4352 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 155862 edges of 6 types: bb:5127 bm:13046 bw:104237 cm:25166 cw:3934 sb:4352 
+[11:31:27.850] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> in_graph: graph: 16779 nodes of 5 types: b:4384 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4384 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 156580 edges of 6 types: bb:5149 bm:13141 bw:104806 cm:25166 cw:3934 sb:4384 
+[11:31:27.853] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> out_graph: graph: 16747 nodes of 5 types: b:4352 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 155862 edges of 6 types: bb:5127 bm:13046 bw:104237 cm:25166 cw:3934 sb:4352 
+[11:31:27.981] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> cluster graph: vertices=16747 edges=155862 #blob=4352 bval=5.91489e+07(+/-0) #meas=4017 
+[11:31:27.986] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> in #clusters 51 
+[11:31:28.009] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> rm bb: 
+[11:31:28.009] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> cluster graph: vertices=16747 edges=150735 #blob=4352 bval=5.91489e+07(+/-0) #meas=4017 
+[11:31:28.114] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> out #clusters 47 
+[11:31:28.114] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> in_graph: 
+[11:31:28.114] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> cluster graph: vertices=16747 edges=155862 #blob=4352 bval=5.91489e+07(+/-0) #meas=4017 
+[11:31:28.114] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> out: 
+[11:31:28.114] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> cluster graph: vertices=16747 edges=160524 #blob=4352 bval=5.91489e+07(+/-0) #meas=4017 
+[11:31:28.223] D [  clus  ] <PointTreeBuilding:apa1-1> load cluster 279 at call=0: graph: 16747 nodes of 5 types: b:4352 c:3934 m:4017 s:510 w:3934 bcats:[ okay=4352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 160524 edges of 6 types: bb:9789 bm:13046 bw:104237 cm:25166 cw:3934 sb:4352 
+[11:31:28.233] D [  clus  ] <PointTreeBuilding:apa1-1> got 47 clusters 
+[11:31:28.925] D [  clus  ] <PointTreeBuilding:apa1-1> sampled 4352 live blobs to tree with 47 children 
+[11:31:28.934] D [  clus  ] <PointTreeBuilding:apa1-1> got dead winds 0 0 0  
+[11:31:29.003] D [  clus  ] <PointTreeBuilding:apa1-1> Made 76 live tensors 
+[11:31:29.003] D [  clus  ] <PointTreeBuilding:apa1-1> tensor pointtrees/279/live 17600 
+[11:31:29.006] D [  clus  ] <PointTreeBuilding:apa1-1> load cluster 279 at call=0: graph: 11325 nodes of 4 types: b:42 c:5638 s:7 w:5638 bcats:[ okay=42 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 112058 edges of 4 types: bb:286 bw:106092 cw:5638 sb:42 
+[11:31:29.007] D [  clus  ] <PointTreeBuilding:apa1-1> got 1 clusters 
+[11:31:29.008] D [  clus  ] <PointTreeBuilding:apa1-1> sampled 42 dead blobs to tree with 1 children 
+[11:31:29.008] D [  clus  ] <PointTreeBuilding:apa1-1> Made 28 dead tensors 
+[11:31:29.008] D [  clus  ] <PointTreeBuilding:apa1-1> tensor pointtrees/279/dead 176 
+[11:31:29.008] D [  clus  ] <PointTreeBuilding:apa1-1> Total outtens 104 tensors 
+[11:31:29.104] D [  clus  ] <MultiAlgBlobClustering:apa1-1> loading tensor set ident=279 (last=-1) 
+[11:31:29.272] D [  clus  ] <MultiAlgBlobClustering:apa1-1> loaded live grouping with 47 clusters, 33367 points, and 0 clusters with no points 
+[11:31:29.272] D [  clus  ] <MultiAlgBlobClustering:apa1-1> as_pctree from "pointtrees/279/dead" 
+[11:31:29.509] D [  clus  ] <MultiAlgBlobClustering:apa1-1> will save 6 dead patches 
+[11:31:29.510] D [  clus  ] <MultiAlgBlobClustering:apa1-1> pre clustering grouping <Grouping [0x3deb55b0]: nclusters=47> 
+[11:31:29.510] D [  clus  ] <MultiAlgBlobClustering:apa1-1> dead_u_index size 0 
+[11:31:29.510] D [  clus  ] <MultiAlgBlobClustering:apa1-1> dead_v_index size 0 
+[11:31:29.510] D [  clus  ] <MultiAlgBlobClustering:apa1-1> dead_w_index size 0 
+[11:31:29.559] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_live_dead grouping <Grouping [0x3deb55b0]: nclusters=41> 
+[11:31:29.573] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_extend grouping <Grouping [0x3deb55b0]: nclusters=41> 
+[11:31:29.576] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_regular grouping <Grouping [0x3deb55b0]: nclusters=41> 
+[11:31:29.578] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_regular grouping <Grouping [0x3deb55b0]: nclusters=41> 
+[11:31:29.603] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_parallel_prolong grouping <Grouping [0x3deb55b0]: nclusters=41> 
+[11:31:29.625] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_close grouping <Grouping [0x3deb55b0]: nclusters=39> 
+[11:31:29.728] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_extend_loop grouping <Grouping [0x3deb55b0]: nclusters=39> 
+[11:31:30.385] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_separate grouping <Grouping [0x3deb55b0]: nclusters=48> 
+[11:31:30.516] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_connect1 grouping <Grouping [0x3deb55b0]: nclusters=45> 
+[11:31:31.219] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_deghost grouping <Grouping [0x3deb55b0]: nclusters=40> 
+[11:31:31.223] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_examine_x_boundary grouping <Grouping [0x3deb55b0]: nclusters=40> 
+[11:31:31.960] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_protect_overclustering grouping <Grouping [0x3deb55b0]: nclusters=40> 
+[11:31:31.973] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_neutrino grouping <Grouping [0x3deb55b0]: nclusters=40> 
+[11:31:31.990] D [  clus  ] <MultiAlgBlobClustering:apa1-1> clustering_isolated grouping <Grouping [0x3deb55b0]: nclusters=11> 
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+[11:31:33.087] D [  clus  ] <MultiAlgBlobClustering:apa1-1> MultiAlgBlobClustering performance summary:
+Time summary:
+TICK: 0 ms (this: 0 ms) starting MultiAlgBlobClustering
+TICK: 161 ms (this: 161 ms) loaded live clusters
+TICK: 170 ms (this: 9 ms) loaded dead clusters
+TICK: 406 ms (this: 235 ms) loaded dump live clusters to bee
+TICK: 406 ms (this: 0 ms) loaded dump dead regions to bee
+TICK: 407 ms (this: 0 ms) pre clustering
+TICK: 456 ms (this: 49 ms) clustering_live_dead
+TICK: 470 ms (this: 13 ms) clustering_extend
+TICK: 473 ms (this: 2 ms) clustering_regular
+TICK: 475 ms (this: 2 ms) clustering_regular
+TICK: 500 ms (this: 24 ms) clustering_parallel_prolong
+TICK: 522 ms (this: 22 ms) clustering_close
+TICK: 625 ms (this: 103 ms) clustering_extend_loop
+TICK: 1282 ms (this: 656 ms) clustering_separate
+TICK: 1412 ms (this: 130 ms) clustering_connect1
+TICK: 2116 ms (this: 703 ms) clustering_deghost
+TICK: 2120 ms (this: 4 ms) clustering_examine_x_boundary
+TICK: 2857 ms (this: 736 ms) clustering_protect_overclustering
+TICK: 2870 ms (this: 12 ms) clustering_neutrino
+TICK: 2887 ms (this: 17 ms) clustering_isolated
+TICK: 3129 ms (this: 242 ms) dump live clusters to bee
+TICK: 3933 ms (this: 803 ms) output live clusters to tensors
+TICK: 3934 ms (this: 0 ms) output dead clusters to tensors
+TICK: 3934 ms (this: 0 ms) combine tensors
+TICK: 3983 ms (this: 49 ms) clear pc tree memory
+
+Memory usage:
+MEM: total: size=3.24511e+06K, res=1.4438e+06K increment: size=0K, res=0K starting MultiAlgBlobClustering
+MEM: total: size=3.24511e+06K, res=1.4438e+06K increment: size=0K, res=0K loaded live clusters
+MEM: total: size=3.24511e+06K, res=1.4438e+06K increment: size=0K, res=0K loaded dead clusters
+MEM: total: size=3.24511e+06K, res=1.4438e+06K increment: size=0K, res=0K loaded dump live clusters to bee
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=512K loaded dump dead regions to bee
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K pre clustering
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_live_dead
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_extend
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_regular
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_regular
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_parallel_prolong
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_close
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_extend_loop
+MEM: total: size=3.24511e+06K, res=1.44432e+06K increment: size=0K, res=0K clustering_separate
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=512K clustering_connect1
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_deghost
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_examine_x_boundary
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_protect_overclustering
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_neutrino
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_isolated
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K dump live clusters to bee
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K output live clusters to tensors
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K output dead clusters to tensors
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K combine tensors
+MEM: total: size=3.24511e+06K, res=1.44483e+06K increment: size=0K, res=0K clear pc tree memory
+ 
+[11:31:33.087] D [  sio   ] <TensorFileSink:apa1-1> dumping tensor set ident=279 at call 0 
+[11:31:33.087] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active1st> EOS 
+[11:31:33.087] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active1st> EOS 
+[11:31:33.087] D [  img   ] <ChargeSolving:cs1-apa1-ms-active1st> EOS at call=1 
+[11:31:33.088] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active1st> EOS 
+[11:31:33.088] D [  img   ] <ChargeSolving:cs2-apa1-ms-active1st> EOS at call=1 
+[11:31:33.088] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active1st> EOS 
+[11:31:33.088] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa1-ms-active2nd> EOS 
+[11:31:33.088] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active2nd> EOS 
+[11:31:33.088] D [  img   ] <ChargeSolving:cs1-apa1-ms-active2nd> EOS at call=1 
+[11:31:33.088] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active2nd> EOS 
+[11:31:33.088] D [  img   ] <ChargeSolving:cs2-apa1-ms-active2nd> EOS at call=1 
+[11:31:33.088] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active2nd> EOS 
+[11:31:33.088] D [  img   ] <BlobGrouping:blobgrouping-apa1-ms-active3rd> EOS 
+[11:31:33.088] D [  img   ] <ChargeSolving:cs1-apa1-ms-active3rd> EOS at call=1 
+[11:31:33.088] D [  img   ] <LocalGeomClustering:local-clustering-apa1-ms-active3rd> EOS 
+[11:31:33.088] D [  img   ] <ChargeSolving:cs2-apa1-ms-active3rd> EOS at call=1 
+[11:31:33.088] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa1-ms-active3rd> EOS 
+[11:31:33.088] D [  img   ] <GlobalGeomClustering:global-clustering-apa1-ms-active> EOS 
+[11:31:33.088] D [  clus  ] <PointTreeBuilding:apa1-1> EOS at call 1 
+[11:31:33.521] D [  clus  ] <MultiAlgBlobClustering:apa1-1> EOS at call 0 
+[11:31:33.521] D [  sio   ] <TensorFileSink:apa1-1> see EOS at call=0 
+[11:31:33.521] D [  glue  ] <ChannelSelector:chsel0> see EOS at call=0 
+[11:31:33.521] D [  img   ] <CMMModifier:cmm-mod-apa0> see EOS at call=1 
+[11:31:33.521] D [  img   ] <FrameMasking:frame-masking-apa0> see EOS 
+[11:31:33.521] D [  img   ] <ChargeErrorFrameEstimator:cefe-apa0> see EOS 
+[11:31:33.521] D [  glue  ] <FrameFanout:fan_active_masked-apa0> call=1: see EOS 
+[11:31:33.522] D [  glue  ] <FrameFanout:multi_masked_slicing_tiling-apa0> call=1: see EOS 
+[11:31:33.522] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_2> EOS 
+[11:31:33.522] D [  img   ] <GridTiling:tiling-apa0-ms-masked_2-face0> EOS 
+[11:31:33.522] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_1> EOS 
+[11:31:33.522] D [  img   ] <GridTiling:tiling-apa0-ms-masked_1-face0> EOS 
+[11:31:33.522] D [  img   ] <MaskSlice:slicing-apa0-ms-masked_0> EOS 
+[11:31:33.522] D [  img   ] <GridTiling:tiling-apa0-ms-masked_0-face0> EOS 
+[11:31:33.522] D [  glue  ] <BlobSetMerge:multi_masked_slicing_tiling-apa0> EOS 
+[11:31:33.610] D [  img   ] <BlobClustering:blobclustering-apa0-ms-masked> flushing at call=7: ident=279 graph: graph: 11346 nodes of 4 types: b:63 c:5638 s:7 w:5638 bcats:[ okay=63 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 157163 edges of 4 types: bb:451 bw:151011 cw:5638 sb:63 
+[11:31:33.630] D [  img   ] <BlobClustering:blobclustering-apa0-ms-masked> flush 1 clusters + EOS on EOS at call=7 
+[11:31:33.630] D [  img   ] <BlobClustering:blobclustering-apa0-ms-masked> call=7 cluster=279 nvertices=11346 nedges=157163 
+[11:31:33.631] D [  img   ] <MaskSlice:slicing-apa0> EOS 
+[11:31:33.631] D [  img   ] <GridTiling:tiling-apa0-face0> EOS 
+[11:31:33.695] D [  img   ] <BlobClustering:blobclustering-apa0-ms-active> flushing at call=850: ident=279 graph: graph: 11607 nodes of 4 types: b:2675 c:4235 s:462 w:4235 bcats:[ okay=2675 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 52045 edges of 4 types: bb:5295 bw:39840 cw:4235 sb:2675 
+[11:31:33.699] D [  img   ] <BlobClustering:blobclustering-apa0-ms-active> flush 1 clusters + EOS on EOS at call=850 
+[11:31:33.699] D [  img   ] <BlobClustering:blobclustering-apa0-ms-active> call=850 cluster=279 nvertices=11607 nedges=52045 
+[11:31:33.708] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> in_graph: graph: 11607 nodes of 4 types: b:2675 c:4235 s:462 w:4235 bcats:[ okay=2675 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 52045 edges of 4 types: bb:5295 bw:39840 cw:4235 sb:2675 
+[11:31:33.726] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> c2b.size(): 142  
+[11:31:33.805] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> 2D --> 3D size: 82 64 56 
+[11:31:33.817] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> 2D --> 3D size: 78 61 55 
+[11:31:33.824] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> tagged_bs.size(): 255 
+[11:31:33.826] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> in_graph: graph: 11607 nodes of 4 types: b:2675 c:4235 s:462 w:4235 bcats:[ okay=2675 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 52045 edges of 4 types: bb:5295 bw:39840 cw:4235 sb:2675 
+[11:31:33.827] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> out_graph: graph: 11352 nodes of 4 types: b:2420 c:4235 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 49723 edges of 4 types: bb:5084 bw:37984 cw:4235 sb:2420 
+[11:31:33.889] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active1st> call=0 cluster=279 nvertices=16340 nedges=86128 
+[11:31:33.927] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> cluster graph: vertices=16340 edges=86128 $blob=2420 bval=0(+/-0) #meas=4988 
+[11:31:33.937] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> cluster: 279 strategy=uniform 
+[11:31:33.947] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> count=0 cluster=279 solved nsubclusters=1311 over nstrategies=1 
+[11:31:33.960] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> call=0 cluster=279 nvertices=16335 nedges=86106 
+[11:31:34.024] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> in_graph: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86106 edges of 6 types: bb:5084 bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.026] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> in #clusters 30 
+[11:31:34.037] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> rm bb: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 81022 edges of 5 types: bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.055] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> out #clusters 32 
+[11:31:34.058] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> in: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86106 edges of 6 types: bb:5084 bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.060] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> out: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83795 edges of 6 types: bb:2773 bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.120] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> cluster graph: vertices=16335 edges=83795 $blob=2420 bval=6.5046e+07(+/-0) #meas=4983 
+[11:31:34.130] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> cluster: 279 strategy=uboone 
+[11:31:34.141] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> count=0 cluster=279 solved nsubclusters=1311 over nstrategies=1 
+[11:31:34.154] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> call=0 cluster=279 nvertices=16335 nedges=83795 
+[11:31:34.215] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> in_graph: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83795 edges of 6 types: bb:2773 bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.215] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> TICK: 14 ms (this: 14 ms) start blob tagging 
+[11:31:34.217] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> conf 1 step 1 blob_tags  2 2375 0 1935 
+[11:31:34.217] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> TICK: 16 ms (this: 2 ms) start local (in-slice) de-ghosting 
+[11:31:34.226] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> conf 1 step 2 blob_tags  2 2375 0 1935 4 1 
+[11:31:34.226] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> TICK: 25 ms (this: 8 ms) start delete some blobs 
+[11:31:34.226] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> conf 1 step 3 blob_tags  2 2375 0 1935 4 1 
+[11:31:34.226] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> TICK: 25 ms (this: 0 ms) start per group clustering 
+[11:31:34.242] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> cg_old_bb: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83784 edges of 6 types: bb:2771 bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.255] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> cg_new_bb: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 81013 edges of 5 types: bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.255] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> conf 1 step 4 blob_tags  2 2375 0 1935 4 1 
+[11:31:34.255] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> group_sizes: 0 2375 
+[11:31:34.255] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> group_sizes: 2 44 
+[11:31:34.284] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> TICK: 83 ms (this: 58 ms) end 
+[11:31:34.286] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> cg_new_bb: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86030 edges of 6 types: bb:5017 bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.301] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> in_graph: graph: 16335 nodes of 5 types: b:2420 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2420 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83795 edges of 6 types: bb:2773 bm:7243 bw:37984 cm:29140 cw:4235 sb:2420 
+[11:31:34.304] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> out_graph: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86030 edges of 6 types: bb:5017 bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.367] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> in_graph: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86030 edges of 6 types: bb:5017 bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.389] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> c2b.size(): 54  
+[11:31:34.429] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> 2D --> 3D size: 37 30 30 
+[11:31:34.435] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> 2D --> 3D size: 34 30 30 
+[11:31:34.449] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> tagged_bs.size(): 41 
+[11:31:34.451] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> in_graph: graph: 16334 nodes of 5 types: b:2419 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2419 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 86030 edges of 6 types: bb:5017 bm:7241 bw:37978 cm:29140 cw:4235 sb:2419 
+[11:31:34.453] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> out_graph: graph: 16293 nodes of 5 types: b:2378 c:4235 m:4983 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 85476 edges of 6 types: bb:4995 bm:7118 bw:37610 cm:29140 cw:4235 sb:2378 
+[11:31:34.541] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active2nd> call=0 cluster=279 nvertices=16290 nedges=85486 
+[11:31:34.590] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> cluster graph: vertices=16290 edges=85486 $blob=2378 bval=6.51909e+07(+/-0) #meas=4980 
+[11:31:34.601] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> cluster: 279 strategy=uniform 
+[11:31:34.610] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> count=0 cluster=279 solved nsubclusters=1327 over nstrategies=1 
+[11:31:34.624] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> call=0 cluster=279 nvertices=16285 nedges=85465 
+[11:31:34.686] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> in_graph: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 85465 edges of 6 types: bb:4995 bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.688] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> in #clusters 29 
+[11:31:34.701] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> rm bb: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 80470 edges of 5 types: bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.719] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> out #clusters 30 
+[11:31:34.722] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> in: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 85465 edges of 6 types: bb:4995 bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.724] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> out: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83188 edges of 6 types: bb:2718 bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.783] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> cluster graph: vertices=16285 edges=83188 $blob=2378 bval=6.50407e+07(+/-0) #meas=4975 
+[11:31:34.793] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> cluster: 279 strategy=uboone 
+[11:31:34.804] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> count=0 cluster=279 solved nsubclusters=1327 over nstrategies=1 
+[11:31:34.818] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> call=0 cluster=279 nvertices=16285 nedges=83188 
+[11:31:34.879] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> in_graph: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83188 edges of 6 types: bb:2718 bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.881] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> conf 2 blob_tags  2 2364 0 1930 
+[11:31:34.906] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> cg_new_bb 2nd: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:34.908] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> in_graph: graph: 16285 nodes of 5 types: b:2378 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2378 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 83188 edges of 6 types: bb:2718 bm:7118 bw:37610 cm:29129 cw:4235 sb:2378 
+[11:31:34.910] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> out_graph: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:34.996] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active3rd> call=0 cluster=279 nvertices=16276 nedges=82859 
+[11:31:35.042] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> cluster graph: vertices=16276 edges=82859 $blob=2366 bval=6.52127e+07(+/-0) #meas=4978 
+[11:31:35.052] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> cluster: 279 strategy=uniform 
+[11:31:35.062] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> count=0 cluster=279 solved nsubclusters=1327 over nstrategies=1 
+[11:31:35.075] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> call=0 cluster=279 nvertices=16273 nedges=82852 
+[11:31:35.134] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> in_graph: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.136] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> in #clusters 30 
+[11:31:35.148] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> rm bb: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 80165 edges of 5 types: bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.166] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> out #clusters 30 
+[11:31:35.169] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> in: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.171] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> out: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.230] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> cluster graph: vertices=16273 edges=82852 $blob=2366 bval=6.50407e+07(+/-0) #meas=4975 
+[11:31:35.240] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> cluster: 279 strategy=uboone 
+[11:31:35.251] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> count=0 cluster=279 solved nsubclusters=1327 over nstrategies=1 
+[11:31:35.264] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> call=0 cluster=279 nvertices=16273 nedges=82852 
+[11:31:35.325] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> in_graph: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.327] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> conf 3 blob_tags  2 2352 0 1930 
+[11:31:35.341] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> cg_new_bb 3rd: graph: 16259 nodes of 5 types: b:2352 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82596 edges of 6 types: bb:2672 bm:7052 bw:37156 cm:29129 cw:4235 sb:2352 
+[11:31:35.343] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> in_graph: graph: 16273 nodes of 5 types: b:2366 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2366 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82852 edges of 6 types: bb:2687 bm:7094 bw:37341 cm:29129 cw:4235 sb:2366 
+[11:31:35.345] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> out_graph: graph: 16259 nodes of 5 types: b:2352 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 82596 edges of 6 types: bb:2672 bm:7052 bw:37156 cm:29129 cw:4235 sb:2352 
+[11:31:35.404] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> cluster graph: vertices=16259 edges=82596 #blob=2352 bval=6.52127e+07(+/-0) #meas=4975 
+[11:31:35.406] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> in #clusters 29 
+[11:31:35.416] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> rm bb: 
+[11:31:35.416] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> cluster graph: vertices=16259 edges=79924 #blob=2352 bval=6.52127e+07(+/-0) #meas=4975 
+[11:31:35.447] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> out #clusters 28 
+[11:31:35.447] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> in_graph: 
+[11:31:35.448] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> cluster graph: vertices=16259 edges=82596 #blob=2352 bval=6.52127e+07(+/-0) #meas=4975 
+[11:31:35.448] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> out: 
+[11:31:35.448] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> cluster graph: vertices=16259 edges=84855 #blob=2352 bval=6.52127e+07(+/-0) #meas=4975 
+[11:31:35.496] D [  clus  ] <PointTreeBuilding:apa0-0> load cluster 279 at call=0: graph: 16259 nodes of 5 types: b:2352 c:4235 m:4975 s:462 w:4235 bcats:[ okay=2352 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 84855 edges of 6 types: bb:4931 bm:7052 bw:37156 cm:29129 cw:4235 sb:2352 
+[11:31:35.501] D [  clus  ] <PointTreeBuilding:apa0-0> got 28 clusters 
+[11:31:35.782] D [  clus  ] <PointTreeBuilding:apa0-0> sampled 2352 live blobs to tree with 28 children 
+[11:31:35.790] D [  clus  ] <PointTreeBuilding:apa0-0> got dead winds 0 0 0  
+[11:31:35.825] D [  clus  ] <PointTreeBuilding:apa0-0> Made 76 live tensors 
+[11:31:35.825] D [  clus  ] <PointTreeBuilding:apa0-0> tensor pointtrees/279/live 9524 
+[11:31:35.829] D [  clus  ] <PointTreeBuilding:apa0-0> load cluster 279 at call=0: graph: 11346 nodes of 4 types: b:63 c:5638 s:7 w:5638 bcats:[ okay=63 null=0 nostrips=0 nowidth=0 nocorners=0 novolume=0] 157163 edges of 4 types: bb:451 bw:151011 cw:5638 sb:63 
+[11:31:35.831] D [  clus  ] <PointTreeBuilding:apa0-0> got 1 clusters 
+[11:31:35.832] D [  clus  ] <PointTreeBuilding:apa0-0> sampled 63 dead blobs to tree with 1 children 
+[11:31:35.833] D [  clus  ] <PointTreeBuilding:apa0-0> Made 28 dead tensors 
+[11:31:35.833] D [  clus  ] <PointTreeBuilding:apa0-0> tensor pointtrees/279/dead 260 
+[11:31:35.833] D [  clus  ] <PointTreeBuilding:apa0-0> Total outtens 104 tensors 
+[11:31:35.900] D [  clus  ] <MultiAlgBlobClustering:apa0-0> loading tensor set ident=279 (last=-1) 
+[11:31:35.992] D [  clus  ] <MultiAlgBlobClustering:apa0-0> loaded live grouping with 28 clusters, 15953 points, and 0 clusters with no points 
+[11:31:35.992] D [  clus  ] <MultiAlgBlobClustering:apa0-0> as_pctree from "pointtrees/279/dead" 
+[11:31:36.104] D [  clus  ] <MultiAlgBlobClustering:apa0-0> will save 9 dead patches 
+[11:31:36.104] D [  clus  ] <MultiAlgBlobClustering:apa0-0> pre clustering grouping <Grouping [0x2594af30]: nclusters=28> 
+[11:31:36.104] D [  clus  ] <MultiAlgBlobClustering:apa0-0> dead_u_index size 0 
+[11:31:36.104] D [  clus  ] <MultiAlgBlobClustering:apa0-0> dead_v_index size 0 
+[11:31:36.104] D [  clus  ] <MultiAlgBlobClustering:apa0-0> dead_w_index size 0 
+[11:31:36.121] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_live_dead grouping <Grouping [0x2594af30]: nclusters=25> 
+[11:31:36.133] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_extend grouping <Grouping [0x2594af30]: nclusters=25> 
+[11:31:36.138] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_regular grouping <Grouping [0x2594af30]: nclusters=25> 
+[11:31:36.142] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_regular grouping <Grouping [0x2594af30]: nclusters=25> 
+[11:31:36.153] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_parallel_prolong grouping <Grouping [0x2594af30]: nclusters=25> 
+[11:31:36.164] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_close grouping <Grouping [0x2594af30]: nclusters=23> 
+[11:31:36.220] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_extend_loop grouping <Grouping [0x2594af30]: nclusters=22> 
+[11:31:36.226] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_separate grouping <Grouping [0x2594af30]: nclusters=22> 
+[11:31:36.271] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_connect1 grouping <Grouping [0x2594af30]: nclusters=21> 
+[11:31:36.515] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_deghost grouping <Grouping [0x2594af30]: nclusters=21> 
+[11:31:36.515] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_examine_x_boundary grouping <Grouping [0x2594af30]: nclusters=21> 
+[11:31:36.744] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_protect_overclustering grouping <Grouping [0x2594af30]: nclusters=21> 
+[11:31:36.748] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_neutrino grouping <Grouping [0x2594af30]: nclusters=21> 
+[11:31:36.760] D [  clus  ] <MultiAlgBlobClustering:apa0-0> clustering_isolated grouping <Grouping [0x2594af30]: nclusters=8> 
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+ten->dtype() f4
+[11:31:37.173] D [  clus  ] <MultiAlgBlobClustering:apa0-0> MultiAlgBlobClustering performance summary:
+Time summary:
+TICK: 0 ms (this: 0 ms) starting MultiAlgBlobClustering
+TICK: 90 ms (this: 90 ms) loaded live clusters
+TICK: 95 ms (this: 5 ms) loaded dead clusters
+TICK: 205 ms (this: 109 ms) loaded dump live clusters to bee
+TICK: 205 ms (this: 0 ms) loaded dump dead regions to bee
+TICK: 206 ms (this: 0 ms) pre clustering
+TICK: 222 ms (this: 16 ms) clustering_live_dead
+TICK: 234 ms (this: 12 ms) clustering_extend
+TICK: 239 ms (this: 4 ms) clustering_regular
+TICK: 244 ms (this: 4 ms) clustering_regular
+TICK: 254 ms (this: 10 ms) clustering_parallel_prolong
+TICK: 265 ms (this: 11 ms) clustering_close
+TICK: 321 ms (this: 55 ms) clustering_extend_loop
+TICK: 328 ms (this: 6 ms) clustering_separate
+TICK: 372 ms (this: 44 ms) clustering_connect1
+TICK: 616 ms (this: 243 ms) clustering_deghost
+TICK: 616 ms (this: 0 ms) clustering_examine_x_boundary
+TICK: 845 ms (this: 229 ms) clustering_protect_overclustering
+TICK: 849 ms (this: 3 ms) clustering_neutrino
+TICK: 861 ms (this: 12 ms) clustering_isolated
+TICK: 975 ms (this: 113 ms) dump live clusters to bee
+TICK: 1248 ms (this: 272 ms) output live clusters to tensors
+TICK: 1249 ms (this: 0 ms) output dead clusters to tensors
+TICK: 1249 ms (this: 0 ms) combine tensors
+TICK: 1274 ms (this: 25 ms) clear pc tree memory
+
+Memory usage:
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K starting MultiAlgBlobClustering
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K loaded live clusters
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K loaded dead clusters
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K loaded dump live clusters to bee
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K loaded dump dead regions to bee
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K pre clustering
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_live_dead
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_extend
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_regular
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_regular
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_parallel_prolong
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_close
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_extend_loop
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_separate
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_connect1
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_deghost
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_examine_x_boundary
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_protect_overclustering
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_neutrino
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clustering_isolated
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K dump live clusters to bee
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K output live clusters to tensors
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K output dead clusters to tensors
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K combine tensors
+MEM: total: size=3.24512e+06K, res=1.44483e+06K increment: size=0K, res=0K clear pc tree memory
+ 
+[11:31:37.174] D [  sio   ] <TensorFileSink:apa0-0> dumping tensor set ident=279 at call 0 
+[11:31:37.174] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active1st> EOS 
+[11:31:37.174] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active1st> EOS 
+[11:31:37.174] D [  img   ] <ChargeSolving:cs1-apa0-ms-active1st> EOS at call=1 
+[11:31:37.174] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active1st> EOS 
+[11:31:37.174] D [  img   ] <ChargeSolving:cs2-apa0-ms-active1st> EOS at call=1 
+[11:31:37.175] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active1st> EOS 
+[11:31:37.175] D [  img   ] <ProjectionDeghosting:ProjectionDeghosting-apa0-ms-active2nd> EOS 
+[11:31:37.175] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active2nd> EOS 
+[11:31:37.175] D [  img   ] <ChargeSolving:cs1-apa0-ms-active2nd> EOS at call=1 
+[11:31:37.175] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active2nd> EOS 
+[11:31:37.175] D [  img   ] <ChargeSolving:cs2-apa0-ms-active2nd> EOS at call=1 
+[11:31:37.175] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active2nd> EOS 
+[11:31:37.175] D [  img   ] <BlobGrouping:blobgrouping-apa0-ms-active3rd> EOS 
+[11:31:37.176] D [  img   ] <ChargeSolving:cs1-apa0-ms-active3rd> EOS at call=1 
+[11:31:37.176] D [  img   ] <LocalGeomClustering:local-clustering-apa0-ms-active3rd> EOS 
+[11:31:37.176] D [  img   ] <ChargeSolving:cs2-apa0-ms-active3rd> EOS at call=1 
+[11:31:37.176] D [  img   ] <InSliceDeghosting:inslice_deghosting-apa0-ms-active3rd> EOS 
+[11:31:37.176] D [  img   ] <GlobalGeomClustering:global-clustering-apa0-ms-active> EOS 
+[11:31:37.176] D [  clus  ] <PointTreeBuilding:apa0-0> EOS at call 1 
+[11:31:37.372] D [  clus  ] <MultiAlgBlobClustering:apa0-0> EOS at call 0 
+[11:31:37.372] D [  sio   ] <TensorFileSink:apa0-0> see EOS at call=0 
+[11:31:37.372] D [ pgraph ] <Pgrapher:> graph execution complete 
+[11:31:37.372] I [ timer  ] Timer: WireCell::Clus::MultiAlgBlobClustering : 4.41 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Clus::MultiAlgBlobClustering : 1.47 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 1.04 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Clus::PointTreeBuilding : 0.88 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0.7 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Clus::PointTreeBuilding : 0.4 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.37 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.33 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.32 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.32 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0.31 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.3 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0.3 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.29 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.29 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.27 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.27 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::GlobalGeomClustering : 0.27 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.25 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.24 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.23 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.23 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.21 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0.2 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.17 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0.15 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.15 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0.14 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.11 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::GlobalGeomClustering : 0.11 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.11 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0.11 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.1 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.1 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0.1 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.1 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.09 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.09 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.09 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0.09 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.08 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::FrameMasking : 0.08 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0.08 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0.07 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.07 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0.07 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0.06 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeErrorFrameEstimator : 0.04 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::GridTiling : 0.04 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0.02 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::GridTiling : 0.02 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0.02 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::FrameMasking : 0.02 sec
+[11:31:37.372] I [ timer  ] Timer: WireCell::Img::ChargeErrorFrameEstimator : 0.02 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobSetMerge : 0.01 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Sio::TensorFileSink : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobSetMerge : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::CMMModifier : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Sio::TensorFileSink : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::SigProc::ChannelSelector : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::SigProc::ChannelSelector : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::CMMModifier : 0 sec
+[11:31:37.373] I [ timer  ] Timer: wcls::CookedFrameSource : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: Total node execution : 16.45999989286065 sec
+[11:31:37.373] D [  main  ] executing app: "Pgrapher"
+[11:31:37.373] D [ pgraph ] <Pgrapher:> executing graph 
+[11:31:37.373] D [ pgraph ] executing with 78 nodes
+[11:31:37.373] D [ pgraph ] <Pgrapher:> graph execution complete 
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Sio::TensorFileSink : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeErrorFrameEstimator : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Clus::PointTreeBuilding : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobSetMerge : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GlobalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Clus::MultiAlgBlobClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::CMMModifier : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Sio::TensorFileSink : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::FrameMasking : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::SigProc::ChannelSelector : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::SigProc::ChannelSelector : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Gen::FrameFanout : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::CMMModifier : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.373] I [ timer  ] Timer: wcls::CookedFrameSource : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::LocalGeomClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ProjectionDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Clus::MultiAlgBlobClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::FrameMasking : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.373] I [ timer  ] Timer: WireCell::Img::ChargeErrorFrameEstimator : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::BlobGrouping : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::ChargeSolving : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::InSliceDeghosting : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::GlobalGeomClustering : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::MaskSlices : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::GridTiling : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::BlobSetMerge : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Img::BlobClustering : 0 sec
+[11:31:37.374] I [ timer  ] Timer: WireCell::Clus::PointTreeBuilding : 0 sec
+[11:31:37.374] I [ timer  ] Timer: Total node execution : 0 sec
+11-Nov-2025 11:31:37 CST  Opened output file with pattern "tmp.root"
+%MSG-w FastCloning:  PostProcessEvent 11-Nov-2025 11:31:37 CST  run: 14737 subRun: 1 event: 279
+Fast cloning has been deactivated for the following reasons:
+ - There are fewer events to process than are present in the event tree.
+%MSG
+11-Nov-2025 11:31:46 CST  Closed output file "tmp.root"
+11-Nov-2025 11:31:46 CST  Closed input file "input-moon.root"
+
+TrigReport ---------- Event summary -------------
+TrigReport Events total = 1 passed = 1 failed = 0
+
+TrigReport ---------- Modules in End-path ----------
+TrigReport        Run    Success      Error Name
+TrigReport          1          1          0 out
+
+TimeReport ---------- Time summary [sec] -------
+TimeReport CPU = 26.014976 Real = 26.578920
+
+MemReport  ---------- Memory summary [base-10 MB] ------
+MemReport  VmPeak = 3618.56 VmHWM = 1890.49
+
+[11:31:46.975] D [  main  ] finalizing component: "MultiAlgBlobClustering":"apa0-0"
+[11:31:46.975] D [  main  ] finalizing component: "TensorFileSink":"apa0-0"
+[11:31:46.975] D [  sio   ] <TensorFileSink:apa0-0> closing clus-apa0-face0.tar.gz after 1 calls 
+[11:31:46.984] D [  main  ] finalizing component: "MultiAlgBlobClustering":"apa1-1"
+[11:31:46.984] D [  main  ] finalizing component: "TensorFileSink":"apa1-1"
+[11:31:46.984] D [  sio   ] <TensorFileSink:apa1-1> closing clus-apa1-face1.tar.gz after 1 calls 
+Art has completed and will exit with status 0.
