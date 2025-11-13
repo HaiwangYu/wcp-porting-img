@@ -51,7 +51,7 @@ local img_pipes = [img_maker.per_anode(a, "multi-3view", add_dump = false) for a
 
 local clus = import 'clus.jsonnet';
 local clus_maker = clus();
-local clus_pipes = [clus_maker.per_volume(tools.anodes[0], face=0, dump=true), clus_maker.per_volume(tools.anodes[1], face=1, dump=true)];
+local clus_pipes = [clus_maker.per_apa(anode, dump=true) for anode in tools.anodes];
 
 local img_clus_pipe = [g.intern(
     innodes = [img_pipes[n]],
@@ -103,3 +103,4 @@ local cmdline = {
 };
 
 [cmdline] + g.uses(graph) + [app]
+// clus_pipes

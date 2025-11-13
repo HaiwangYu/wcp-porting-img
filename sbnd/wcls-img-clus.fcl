@@ -35,7 +35,7 @@ physics :{
 
             # outputers: ["wclsNumpyFrameSaver:signal"]
 
-            configs: ["pgrapher/experiment/sbnd/wcls-img-clus.jsonnet"]
+            configs: ["wcls-img-clus.jsonnet"]
 
             params : {
                 # Set "data" vs. "sim".
