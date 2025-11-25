@@ -152,16 +152,16 @@ local clus_per_face (
         }
     }, nin=2, nout=1, uses=[bsl, bsd, dv]),
 
-    local cluster2pct = g.intern(
-        innodes = [cluster_scope_filter_live, cluster_scope_filter_dead],
-        centernodes = [],
-        outnodes = [ptb],
-        edges = [
-            g.edge(cluster_scope_filter_live, ptb, 0, 0),
-            g.edge(cluster_scope_filter_dead, ptb, 0, 1)
-        ]
-    ),
-    // local cluster2pct = ptb,
+    // local cluster2pct = g.intern(
+    //     innodes = [cluster_scope_filter_live, cluster_scope_filter_dead],
+    //     centernodes = [],
+    //     outnodes = [ptb],
+    //     edges = [
+    //         g.edge(cluster_scope_filter_live, ptb, 0, 0),
+    //         g.edge(cluster_scope_filter_dead, ptb, 0, 1)
+    //     ]
+    // ),
+    local cluster2pct = ptb,
 
     local face_name = "%s-%d"%[anode.name, face],
 
