@@ -209,7 +209,7 @@ local clus_per_face (
             bee_points_sets: [  // New configuration for multiple bee points sets
                 {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodunehd",         // Detector name
+                    detector: "sbnd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x", "y", "z"],    // Coordinates to use
@@ -316,17 +316,17 @@ local clus_all_apa (
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: wc.tn(dv),
             bee_points_sets: [  // New configuration for multiple bee points sets
-            //    {
-            //        name: "img",                // Name of the bee points set
-            //        detector: "protodunehd",         // Detector name
-            //        algorithm: "img",           // Algorithm identifier
-            //        pcname: "3d",           // Which scope to use
-            //        coords: ["x", "y", "z"],    // Coordinates to use
-            //        individual: false           // Whether to output as a whole or individual APA/Face
-            //    },
+            {
+               name: "img",                // Name of the bee points set
+               detector: "sbnd",         // Detector name
+               algorithm: "img",           // Algorithm identifier
+               pcname: "3d",           // Which scope to use
+               coords: ["x", "y", "z"],    // Coordinates to use
+               individual: false           // Whether to output as a whole or individual APA/Face
+            },
             {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodunehd",         // Detector name
+                    detector: "sbnd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
