@@ -16,3 +16,9 @@ python merge-zip.py
 # upload to BEE
 ../upload-to-bee.sh mabc.zip
 ```
+
+
+Sim/prabhjot
+```bash
+time lar --nskip 0 -n 1 -c wcls-img-clus.fcl -s input-prabhjot.root --no-output >& log
+```

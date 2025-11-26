@@ -1,7 +1,10 @@
+import argparse
+import glob
+import json
 import os
 import shutil
+import tempfile
 import zipfile
-import json
 
 def merge_json_arrays(src_file1, src_file2, dest_file):
     with open(src_file1, 'r') as file1:
@@ -15,70 +18,85 @@ def merge_json_arrays(src_file1, src_file2, dest_file):
         json.dump(merged_data, dest)
 
 
-def merge_directories(src_dir1, src_dir2, dest_dir):
-    for root, _, files in os.walk(src_dir1):
-        relative_path = os.path.relpath(root, src_dir1)
+def merge_into(dest_dir, incoming_dir):
+    """
+    Merge files from incoming_dir into dest_dir.
+    - JSON files: append arrays when the same relative path exists in dest_dir.
+    - Other files: keep existing dest version; copy only if missing.
+    """
+    for root, _, files in os.walk(incoming_dir):
+        relative_path = os.path.relpath(root, incoming_dir)
         dest_path = os.path.join(dest_dir, relative_path)
         os.makedirs(dest_path, exist_ok=True)
 
         for file in files:
-            src_file1 = os.path.join(root, file)
+            incoming_file = os.path.join(root, file)
             dest_file = os.path.join(dest_path, file)
 
-            if file.endswith(".json") and os.path.exists(os.path.join(src_dir2, relative_path, file)):
-                # If a JSON file with the same name exists in src_dir2, merge them
-                src_file2 = os.path.join(src_dir2, relative_path, file)
-                merge_json_arrays(src_file1, src_file2, dest_file)
+            if os.path.exists(dest_file):
+                if file.endswith(".json"):
+                    merge_json_arrays(dest_file, incoming_file, dest_file)
+                # Keep existing non-JSON files; do nothing.
             else:
-                shutil.copy2(src_file1, dest_file)
+                shutil.copy2(incoming_file, dest_file)
 
-    # Copy files from src_dir2 that are not already handled
-    for root, _, files in os.walk(src_dir2):
-        relative_path = os.path.relpath(root, src_dir2)
-        dest_path = os.path.join(dest_dir, relative_path)
-        os.makedirs(dest_path, exist_ok=True)
+def merge_zip_list(zip_paths, output_zip_base):
+    if not zip_paths:
+        raise ValueError("No zip files provided.")
 
-        for file in files:
-            src_file2 = os.path.join(root, file)
-            dest_file = os.path.join(dest_path, file)
-
-            if not os.path.exists(dest_file):
-                shutil.copy2(src_file2, dest_file)
-
-def main(zip1, zip2, output_zip):
-    # Temporary directories for extracted contents
-    temp_dir1 = "temp_dir1"
-    temp_dir2 = "temp_dir2"
-    output_dir = "output_dir"
-
-    os.makedirs(temp_dir1, exist_ok=True)
-    os.makedirs(temp_dir2, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = tempfile.mkdtemp(prefix="merge_zip_output_")
+    created_output = None
 
     try:
-        # Extract zip files
-        with zipfile.ZipFile(zip1, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir1)
-        with zipfile.ZipFile(zip2, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir2)
+        for idx, zip_path in enumerate(zip_paths):
+            with tempfile.TemporaryDirectory(prefix="merge_zip_input_") as temp_in:
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_in)
 
-        # Merge directories
-        merge_directories(temp_dir1, temp_dir2, output_dir)
+                if created_output is None:
+                    # First zip initializes the output directory.
+                    shutil.copytree(temp_in, output_dir, dirs_exist_ok=True)
+                    created_output = True
+                else:
+                    merge_into(output_dir, temp_in)
 
-        # Create a zip file from the output directory
-        shutil.make_archive(output_zip, 'zip', output_dir)
+        shutil.make_archive(output_zip_base, 'zip', output_dir)
     finally:
-        # Clean up temporary directories
-        shutil.rmtree(temp_dir1)
-        shutil.rmtree(temp_dir2)
-        shutil.rmtree(output_dir)
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+def normalize_output_basename(output_path):
+    return output_path[:-4] if output_path.endswith(".zip") else output_path
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Merge multiple zip files (supporting glob patterns) into one."
+    )
+    parser.add_argument(
+        "output_zip",
+        help="Output zip file path ('.zip' is optional).",
+    )
+    parser.add_argument(
+        "inputs",
+        nargs="+",
+        help="Zip files or glob patterns (e.g., 'mabc-apa*-face*.zip').",
+    )
+    return parser.parse_args()
 
 if __name__ == "__main__":
-    # Example usage
-    zip1 = "mabc-apa0-face0.zip"  # Replace with your first ZIP file
-    zip2 = "mabc-apa1-face1.zip"  # Replace with your second ZIP file
-    output_zip = "mabc"  # Replace with desired output directory
+    args = parse_args()
+    output_base = normalize_output_basename(args.output_zip)
 
-    shutil.rmtree(output_zip, ignore_errors=True)
-    main(zip1, zip2, output_zip)
-    print(f"Files merged successfully into {output_zip}")
+    zip_list = []
+    for pattern in args.inputs:
+        zip_list.extend(sorted(glob.glob(pattern)))
+
+    if not zip_list:
+        raise SystemExit("No zip files matched the provided patterns.")
+
+    # Remove any existing archive to avoid appending ".zip" twice when re-running.
+    existing_zip = f"{output_base}.zip"
+    if os.path.exists(existing_zip):
+        os.remove(existing_zip)
+
+    merge_zip_list(zip_list, output_base)
+    print(f"Merged {len(zip_list)} zip files into {existing_zip}")

@@ -51,7 +51,7 @@ local img_pipes = [img_maker.per_anode(a, "multi-3view", add_dump = false) for a
 
 local clus = import 'clus.jsonnet';
 local clus_maker = clus();
-local clus_pipes = [clus_maker.per_apa(anode, dump=true) for anode in tools.anodes];
+local clus_pipes = [clus_maker.per_apa(anode, dump=false) for anode in tools.anodes];
 
 local img_clus_pipe = [g.intern(
     innodes = [img_pipes[n]],
@@ -83,9 +83,19 @@ local fanout_apa_rules =
     }
     for n in std.range(0, std.length(tools.anodes) - 1)
 ];
-local parallel_graph = f.fanout("FrameFanout", img_clus_pipe, "parallel_graph", fanout_apa_rules);
+local img_clus_per_apa = f.fanout("FrameFanout", img_clus_pipe, "img_clus_per_apa", fanout_apa_rules);
 
-local graph = g.pipeline([wcls_input, parallel_graph], "main"); // added Ewerton 2023-09-08
+local clus_all_apa = clus_maker.all_apa(tools.anodes);
+
+// local graph = g.pipeline([wcls_input, clus_graph], "main");
+local graph = g.intern(
+    innodes=[wcls_input],
+    centernodes = [img_clus_per_apa],
+    outnodes=[clus_all_apa],
+    edges=
+    [g.edge(wcls_input, img_clus_per_apa, 0, 0)] +
+    [g.edge(img_clus_per_apa, clus_all_apa, i, i) for i in std.range(0, std.length(tools.anodes) - 1)]
+);
 
 local app = {
   type: 'Pgrapher', //Pgrapher, TbbFlow
@@ -103,4 +113,4 @@ local cmdline = {
 };
 
 [cmdline] + g.uses(graph) + [app]
-// clus_pipes
+// clus_all_apa
