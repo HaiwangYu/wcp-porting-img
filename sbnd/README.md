@@ -11,10 +11,10 @@ time wire-cell -l stdout -L debug -c wct-clus.jsonnet -V input="1event" >& log
 
 
 # merge two APAs
-python merge-zip.py
+python merge-zip.py merged.zip "mabc-*.zip"
 
 # upload to BEE
-../upload-to-bee.sh mabc.zip
+../upload-to-bee.sh merged.zip
 ```
 
 
