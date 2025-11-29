@@ -1,0 +1,67 @@
+#include "geometry_sbnd.fcl"
+
+process_name: wclssig2img
+ 
+services: {
+       @table::sbnd_geometry_services
+}
+
+
+
+source: {
+   module_type: RootInput
+   #saveMemoryObjectThreshold: 10485760 //commented Ewerton 2024-07-08
+
+   #inputCommands: ["drop *", "keep raw::RawDigits_*_*_*"]
+   #inputCommands: ["drop *", "keep *_*_*_Swizzler"]
+}
+
+physics :{
+   producers: {
+
+      sig2img : {
+         module_type : WireCellToolkit
+         wcls_main: {
+            tool_type: WCLS
+            apps: ["Pgrapher"]
+
+            logsinks: ["stdout"]
+            loglevels: ["debug"]
+
+            plugins: ["WireCellGen", "WireCellImg", "WireCellClus", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+
+            inputers: ["wclsCookedFrameSource:sigs"
+                      ]
+
+            # outputers: ["wclsNumpyFrameSaver:signal"]
+
+            configs: ["wcls-img-clus.jsonnet"]
+
+            params : {
+                # Set "data" vs. "sim".
+                reality: "data"
+                opflash0_input_label: "opflashtpc0:"
+                opflash1_input_label: "opflashtpc1:"
+            }
+            structs : {
+                # data/moon
+                # recobwire_tags: "[\"sptpc2d:gauss\", \"sptpc2d:wiener\"]"
+                # trace_tags: "[\"gauss\", \"wiener\"]"
+                # summary_tags: "[\"\", \"sptpc2d:wienersummary\"]"
+                # input_mask_tags: "[\"sptpc2d:badmasks\"]"
+                # output_mask_tags: "[\"bad\"]"
+                # sim
+                recobwire_tags: "[\"simtpc2d:gauss\", \"simtpc2d:wiener\"]"
+                trace_tags: "[\"gauss\", \"wiener\"]"
+                summary_tags: "[\"\", \"simtpc2d:wienersummary\"]"
+                input_mask_tags: "[\"simtpc2d:badmasks\"]"
+                output_mask_tags: "[\"bad\"]"
+            }
+         }
+      }
+   }
+
+   p1 : [ sig2img ]
+   trigger_paths : [ p1 ]
+
+}
