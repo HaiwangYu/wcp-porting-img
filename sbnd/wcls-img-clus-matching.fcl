@@ -1,11 +1,19 @@
-#include "geometry_sbnd.fcl"
+
+#include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "detsim_drops.fcl"
+#include "opdetdigitizer_sbnd.fcl"
 
 process_name: wclssig2img
- 
-services: {
-       @table::sbnd_geometry_services
-}
 
+services:
+{
+  TFileService: { fileName: "tf-default.root" }
+  @table::sbnd_detsim_services
+  # FileCatalogMetadata: @local::sbnd_file_catalog_mc
+  AuxDetGeometry: @local::sbnd_auxdetgeo
+  @table::sbnd_geometry_services
+}
 
 
 source: {
@@ -28,14 +36,17 @@ physics :{
             logsinks: ["stdout"]
             loglevels: ["debug"]
 
-            plugins: ["WireCellGen", "WireCellImg", "WireCellClus", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+            plugins: ["WireCellGen", "WireCellImg", "WireCellClus", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft", "WireCellQLMatch"]
 
-            inputers: ["wclsCookedFrameSource:sigs"
+            inputers: [
+                "wclsCookedFrameSource:sigs"
+                , "wclsOpFlashSource:tpc0"
+                , "wclsOpFlashSource:tpc1"
                       ]
 
             # outputers: ["wclsNumpyFrameSaver:signal"]
 
-            configs: ["wcls-img-clus.jsonnet"]
+            configs: ["wcls-img-clus-matching.jsonnet"]
 
             params : {
                 # Set "data" vs. "sim".

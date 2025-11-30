@@ -20,3 +20,4 @@ gperf
 log*
 dune-vd-cfg/*
 *~
+*.db

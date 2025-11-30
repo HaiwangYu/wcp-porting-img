@@ -85,8 +85,10 @@ local matching_pipe = [
     g.pnode({
         type: 'QLMatching',
         name: 'matching%d' % n,
+        local dv = clus_maker.detector_volumes([tools.anodes[n]], face=tools.anodes[n].data.ident), // face = anode is specific to sbnd
         data: {
             anode: wc.tn(tools.anodes[n]),
+            detector_volumes: wc.tn(dv),
             bee_dir: "data-sep"
         },
     }, nin=2, nout=1)
@@ -160,6 +162,7 @@ local fanout_apa_rules =
     for n in std.range(0, std.length(tools.anodes) - 1)
 ];
 local img_clus_per_apa = f.fanout("FrameFanout", matching_pipes, "img_clus_per_apa", fanout_apa_rules);
+// local img_clus_per_apa = f.fanout("FrameFanout", img_clus_pipe, "img_clus_per_apa", fanout_apa_rules);
 
 local clus_all_apa = clus_maker.all_apa(tools.anodes);
 

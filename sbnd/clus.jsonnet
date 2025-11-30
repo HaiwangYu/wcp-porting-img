@@ -280,7 +280,7 @@ local clus_all_apa (
         cm.separate(use_ctpc=true),
         cm.neutrino(),
         cm.isolated(),
-        cm.examine_bundles(),
+        // cm.examine_bundles(),
         #cm.retile(cut_time_low=3*wc.us,
         #          cut_time_high=5*wc.us,
         #          anodes=anodes, 
@@ -364,4 +364,5 @@ function () {
     per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump),
     per_apa(anode, dump=true) :: clus_per_face(anode, face=anode.data.ident, dump=dump), # face=anode is specific to sbnd
     all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump),
+    detector_volumes(anodes, face) :: detector_volumes(anodes=anodes, face=face),
 }
