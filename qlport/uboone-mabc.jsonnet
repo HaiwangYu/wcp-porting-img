@@ -1152,7 +1152,10 @@ local ub = {
             // cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2),
             cm.fiducialutils(),
-            cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
+            //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
+            //        recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
+            //        particle_dataset=wc.tn(ub.particle_dataset)),
+            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config,
                     recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
                     particle_dataset=wc.tn(ub.particle_dataset)),
         ];
