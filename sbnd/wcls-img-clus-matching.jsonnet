@@ -85,7 +85,7 @@ local matching_pipe = [
     g.pnode({
         type: 'QLMatching',
         name: 'matching%d' % n,
-        local dv = clus_maker.detector_volumes([tools.anodes[n]], face=tools.anodes[n].data.ident), // face = anode is specific to sbnd
+        local dv = clus_maker.detector_volumes([tools.anodes[n]]), // face should be 0 for sbnd
         data: {
             anode: wc.tn(tools.anodes[n]),
             detector_volumes: wc.tn(dv),
@@ -117,19 +117,31 @@ local cl_sinks = [
     for n in std.range(0, std.length(tools.anodes) - 1)
 ];
 
-local matching_maker = function(light_pipe, charge_pipe, matching_pipe, outnode) {
-    ret: g.intern(
-        innodes=[charge_pipe],
-        outnodes=[outnode],
-        centernodes=[
-            light_pipe,
-            matching_pipe
-        ],
-        edges=[
-            g.edge(charge_pipe, matching_pipe, 0, 0),
-            g.edge(light_pipe, matching_pipe, 0, 1),
-            g.edge(matching_pipe, outnode, 0, 0),
-        ],
+local matching_maker = function(light_pipe, charge_pipe, matching_pipe, outnode=null) {
+    ret: if outnode != null then
+        g.intern(
+            innodes=[charge_pipe],
+            outnodes=[outnode],
+            centernodes=[
+                light_pipe,
+                matching_pipe
+            ],
+            edges=[
+                g.edge(charge_pipe, matching_pipe, 0, 0),
+                g.edge(light_pipe, matching_pipe, 0, 1),
+                g.edge(matching_pipe, outnode, 0, 0),
+            ])
+        else
+        g.intern(
+            innodes=[charge_pipe],
+            outnodes=[matching_pipe],
+            centernodes=[
+                light_pipe
+            ],
+            edges=[
+                g.edge(charge_pipe, matching_pipe, 0, 0),
+                g.edge(light_pipe, matching_pipe, 0, 1),
+            ],
     )
 }.ret;
 
@@ -138,7 +150,8 @@ local matching_pipes = [
         wcls_input.opflashes[n],
         img_clus_pipe[n],
         matching_pipe[n],
-        cl_sinks[n])
+        null /*cl_sinks[n]*/
+        )
     for n in std.range(0, std.length(tools.anodes) - 1)
 ];
 
@@ -166,15 +179,15 @@ local img_clus_per_apa = f.fanout("FrameFanout", matching_pipes, "img_clus_per_a
 
 local clus_all_apa = clus_maker.all_apa(tools.anodes);
 
-local graph = g.pipeline([wcls_input.sigs, img_clus_per_apa], "main");
-// local graph = g.intern(
-//     innodes=[wcls_input.sigs],
-//     centernodes = [img_clus_per_apa],
-//     outnodes=[clus_all_apa],
-//     edges=
-//     [g.edge(wcls_input.sigs, img_clus_per_apa, 0, 0)] +
-//     [g.edge(img_clus_per_apa, clus_all_apa, i, i) for i in std.range(0, std.length(tools.anodes) - 1)]
-// );
+// local graph = g.pipeline([wcls_input.sigs, img_clus_per_apa], "main");
+local graph = g.intern(
+    innodes=[wcls_input.sigs],
+    centernodes = [img_clus_per_apa],
+    outnodes=[clus_all_apa],
+    edges=
+    [g.edge(wcls_input.sigs, img_clus_per_apa, 0, 0)] +
+    [g.edge(img_clus_per_apa, clus_all_apa, i, i) for i in std.range(0, std.length(tools.anodes) - 1)]
+);
 
 local app = {
   type: 'Pgrapher', //Pgrapher, TbbFlow

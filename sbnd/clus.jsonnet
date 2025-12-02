@@ -51,7 +51,7 @@ local dvm = {
         FV_xmin_margin: 2 * wc.cm,
         FV_xmax_margin: 2 * wc.cm,
     },
-    a1f1pA: $.a0f0pA + {
+    a1f0pA: $.a0f0pA + {
         FV_xmin: 0.45 * wc.mm,
         FV_xmax: 201.45 * wc.mm,
     },
@@ -69,7 +69,7 @@ local detector_volumes(anodes, face="") = {
         metadata:
             {overall: dvm["overall"]} +
             {a0f0pA: dvm["a0f0pA"]} +
-            {a1f1pA: dvm["a1f1pA"]}
+            {a1f0pA: dvm["a1f0pA"]}
     },
     uses: anodes
 };
@@ -362,7 +362,7 @@ local clus_all_apa (
 
 function () {
     per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump),
-    per_apa(anode, dump=true) :: clus_per_face(anode, face=anode.data.ident, dump=dump), # face=anode is specific to sbnd
+    per_apa(anode, dump=true) :: clus_per_face(anode, face=0, dump=dump), # face=anode is specific to sbnd
     all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump),
-    detector_volumes(anodes, face) :: detector_volumes(anodes=anodes, face=face),
+    detector_volumes(anodes, face=0) :: detector_volumes(anodes=anodes, face=face),
 }

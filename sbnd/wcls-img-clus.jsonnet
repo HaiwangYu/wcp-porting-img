@@ -87,7 +87,7 @@ local img_clus_per_apa = f.fanout("FrameFanout", img_clus_pipe, "img_clus_per_ap
 
 local clus_all_apa = clus_maker.all_apa(tools.anodes);
 
-// local graph = g.pipeline([wcls_input, clus_graph], "main");
+// local graph = g.pipeline([wcls_input, img_clus_per_apa], "main");
 local graph = g.intern(
     innodes=[wcls_input],
     centernodes = [img_clus_per_apa],
