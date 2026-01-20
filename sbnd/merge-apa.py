@@ -35,6 +35,7 @@ def merge_charge(file_list, cluster_id_offset_per_file=1000):
         merged_data["type"] = data["type"]
         merged_data["geom"] = "sbnd"
         merged_data["cluster_id"].extend([id + cluster_id_offset for id in data["cluster_id"]])
+        print(f"file: {file}, cluster_ids: {list(set(merged_data['cluster_id']))}")
         merged_data["apa"].extend([str2apa(file)] * len(data["cluster_id"]))
         merged_data["x"].extend(data["x"])
         merged_data["y"].extend(data["y"])

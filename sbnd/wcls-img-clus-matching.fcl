@@ -50,7 +50,7 @@ physics :{
 
             params : {
                 # Set "data" vs. "sim".
-                reality: "data"
+                reality: "sim"
                 opflash0_input_label: "opflashtpc0:"
                 opflash1_input_label: "opflashtpc1:"
             }
