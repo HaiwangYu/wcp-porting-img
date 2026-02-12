@@ -1229,6 +1229,16 @@ local ub = {
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
                     individual: false,            // Output individual APA/Face
                 },
+                {
+                    name: "track_fit",       // Name of the bee points set
+                    visitor: "TaggerCheckNeutrino",  // Dump after this visitor runs
+                    grouping: "live",        // Which grouping to use
+                    detector: "uboone",      // Detector name
+                    algorithm: "track_fit",  // Algorithm identifier
+                    pcname: "3d",            // Not used for PRGraph, but required
+                    coords: ["x", "y", "z"], // Not used for PRGraph, but required
+                    individual: false,       // Output as global, not per APA/face
+                },
 
             ],
             pipeline: wc.tns(cm_pipeline),
