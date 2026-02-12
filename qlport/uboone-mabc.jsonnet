@@ -1155,6 +1155,9 @@ local ub = {
                 runNo: runNo,
                 subRunNo: subRunNo,
                 eventNo: eventNo,
+                dQdx_scale: 0.1,
+                dQdx_offset: -1000,
+                flag_skip_vertex: false,
             },
         };
 
