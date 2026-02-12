@@ -1130,19 +1130,33 @@ local ub = {
     },
 
 
-    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live, 
-                           index=0, runNo=1, subRunNo=1, eventNo=1, trackfitting_config="") :: 
+    MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live,
+                           index=0, runNo=1, subRunNo=1, eventNo=1, trackfitting_config="",
+                           tracking_output="") ::
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms,
                                            fiducial=$.uboone_mc_fid);
-        local retiler = cm.retiler(anodes=anodes, 
+        local retiler = cm.retiler(anodes=anodes,
                                    samplers=[clus.sampler(live_sampler, apa=0, face=0)],
                                    cut_time_low=3*wc.us, cut_time_high=5*wc.us);
 
-        local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes, 
+        local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes,
                                    samplers=[clus.sampler($.bs_live_no_dead_mix, apa=0, face=0)],
                                    verbose=true);
 
+        local tracking_visitor = {
+            type: "UbooneMagnifyTrackingVisitor",
+            name: "",
+            data: {
+                output_filename: tracking_output,
+                grouping: "live",
+                anodes: [wc.tn(a) for a in anodes],
+                detector_volumes: wc.tn(detector_volumes),
+                runNo: runNo,
+                subRunNo: subRunNo,
+                eventNo: eventNo,
+            },
+        };
 
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
@@ -1158,7 +1172,7 @@ local ub = {
             cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config,
                     recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
                     particle_dataset=wc.tn(ub.particle_dataset)),
-        ];
+        ] + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
@@ -1257,21 +1271,6 @@ local ub = {
         }
     }, nin=1, nout=0),
 
-    UbooneMagnifyTrackingSink(fname="track_com.root", runNo=1, subRunNo=1, eventNo=1, datapath=pointtree_datapath) :: pg.pnode({
-        type: "UbooneMagnifyTrackingSink",
-        name: fname,
-        data: {
-            output_filename: fname,
-            root_file_mode: "RECREATE",
-            datapath: datapath,
-            grouping: "live",
-            anodes: [wc.tn(a) for a in anodes],
-            detector_volumes: wc.tn(detector_volumes),
-            runNo: runNo,
-            subRunNo: subRunNo,
-            eventNo: eventNo,
-        }
-    }, nin=1, nout=1, uses=anodes + [detector_volumes]),
 
     main(graph, app='Pgrapher', extra_plugins = []) ::
         local uses = pg.uses(graph);
@@ -1314,8 +1313,7 @@ local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
 local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) =
     local tracking_output = "track_com_%d_%d.root" % [runNo, eventNo];
     pg.pipeline([
-        ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json"),
-        ub.UbooneMagnifyTrackingSink(tracking_output, runNo, subRunNo, eventNo, datapath),
+        ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json", tracking_output=tracking_output),
         ub.ClusterFlashDump(datapath=datapath)
     ]);
 //local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
