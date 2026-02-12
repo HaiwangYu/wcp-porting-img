@@ -93,9 +93,9 @@ local matching_pipe = [
             // bee_dir : "",
             beamonly: false,
             data: if reality=='data' then true else false,
-            QtoL: 1.0,
+            QtoL: 1.0, // 1.0,
             // QtoL: if reality=='data' then 0.2 else 1.0,
-            ch_mask: [39, 66, 67, 69, 71, 85, 86, 87, 92, 115, 138, 141, 170, 197, 217, 218, 221, 222, 223, 226, 245, 248, 249, 302],
+            ch_mask: [39,  64,  66,  71,  85,  86,  87, 115, 138, 141, 197, 217, 221, 222, 223, 226, 245, 249, 302],
             flash_minPE: 50,
         },
     }, nin=2, nout=1)
@@ -181,7 +181,18 @@ local fanout_apa_rules =
     }
     for n in std.range(0, std.length(tools.anodes) - 1)
 ];
-local img_clus_per_apa = f.fanout("FrameFanout", matching_pipes, "img_clus_per_apa", fanout_apa_rules);
+
+local magoutput = 'mag.root';
+local magnify = import 'pgrapher/experiment/sbnd/magnify-sinks.jsonnet';
+local magnify_sinks = magnify(tools, magoutput);
+local prosessing_pipes = [
+    g.pipeline([
+        // magnify_sinks.decon_pipe[n],
+        matching_pipes[n]], "prosessing_pipes%d" % n)
+    for n in std.range(0, std.length(tools.anodes) - 1)
+];
+
+local img_clus_per_apa = f.fanout("FrameFanout", prosessing_pipes, "img_clus_per_apa", fanout_apa_rules);
 // local img_clus_per_apa = f.fanout("FrameFanout", img_clus_pipe, "img_clus_per_apa", fanout_apa_rules);
 
 local clus_all_apa = clus_maker.all_apa(tools.anodes);

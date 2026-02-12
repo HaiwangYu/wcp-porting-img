@@ -1,3 +1,3 @@
 rm -f upload.zip
 zip -r upload data
-./upload-to-bee.sh upload.zip
+/exp/sbnd/app/users/yuhw/wcp-porting-img/upload-to-bee.sh upload.zip

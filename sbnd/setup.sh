@@ -54,12 +54,15 @@ path-append ()
 # path-prepend /exp/sbnd/app/users/yuhw/opt/lib/ LD_LIBRARY_PATH
 # path-prepend /exp/sbnd/app/users/yuhw/opt/bin/ PATH
 
-# path-prepend /exp/sbnd/app/users/yuhw/wire-cell-toolkit/cfg WIRECELL_PATH
-# path-prepend /exp/sbnd/app/users/yuhw/wire-cell-data WIRECELL_PATH
+path-prepend /exp/sbnd/app/users/$USER/wire-cell-toolkit/cfg WIRECELL_PATH
+path-prepend /exp/sbnd/app/users/yuhw/wire-cell-data WIRECELL_PATH
 
-# path-prepend /exp/sbnd/app/users/yuhw/wct-porting/cfg WIRECELL_PATH
-# rs
-# export PS1=(app)$PS1
+path-prepend /exp/sbnd/app/users/yuhw/wct-porting/cfg WIRECELL_PATH
+path-prepend . FHICL_FILE_PATH
 
-# source /exp/sbnd/app/users/yuhw/wire-cell-python/venv/bin/activate
+
+rs
+export PS1=(app)$PS1
+
+source /exp/sbnd/app/users/yuhw/wire-cell-python/venv/bin/activate
 

@@ -27,9 +27,12 @@ time lar --nskip 0 -n 4 -c wcls-img-clus.fcl -s input-prabhjot.root --no-output 
 add matching
 ```bash
 time lar --nskip 1 -n 1 -c wcls-img-clus.fcl -s lynn-sim.root --no-output >& log
-time lar --nskip 1 -n 1 -c wcls-img-clus-matching.fcl -s lynn-sim.root --no-output >& log
+time lar --nskip 1 -n 1 -c wcls-img-clus-matching.fcl -s lynn-sim.root --no-output >& lynn-sim.log
+time lar --nskip 0 -n 1 -c wcls-img-clus-matching.fcl -s lynn-iso.root --no-output >& lynn-iso.log
+time lar --nskip 0 -n 1 -c wcls-img-clus-matching.fcl -s lynn-30.root --no-output >& lynn-30.log
 
 python merge-zip.py merged.zip "mabc-*.zip"
+python merge-apa.py --inpath=data-sep --outpath=data --eventNo=0
 ./merge-upload.sh
 ```
 
