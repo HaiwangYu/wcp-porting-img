@@ -1229,6 +1229,16 @@ local ub = {
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
                     individual: false,            // Output individual APA/Face
                 },
+                {
+                    name: "track_fit",       // Name of the bee points set
+                    visitor: "TaggerCheckNeutrino",  // Dump after this visitor runs
+                    grouping: "live",        // Which grouping to use
+                    detector: "uboone",      // Detector name
+                    algorithm: "track_fit",  // Algorithm identifier
+                    pcname: "3d",            // Not used for PRGraph, but required
+                    coords: ["x", "y", "z"], // Not used for PRGraph, but required
+                    individual: false,       // Output as global, not per APA/face
+                },
 
             ],
             pipeline: wc.tns(cm_pipeline),
@@ -1246,6 +1256,22 @@ local ub = {
             dump_mode: true,
         }
     }, nin=1, nout=0),
+
+    UbooneMagnifyTrackingSink(fname="track_com.root", runNo=1, subRunNo=1, eventNo=1, datapath=pointtree_datapath) :: pg.pnode({
+        type: "UbooneMagnifyTrackingSink",
+        name: fname,
+        data: {
+            output_filename: fname,
+            root_file_mode: "RECREATE",
+            datapath: datapath,
+            grouping: "live",
+            anodes: [wc.tn(a) for a in anodes],
+            detector_volumes: wc.tn(detector_volumes),
+            runNo: runNo,
+            subRunNo: subRunNo,
+            eventNo: eventNo,
+        }
+    }, nin=1, nout=1, uses=anodes + [detector_volumes]),
 
     main(graph, app='Pgrapher', extra_plugins = []) ::
         local uses = pg.uses(graph);
@@ -1285,10 +1311,13 @@ local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
     ub.multiplex_blob_views(infiles, 'dead', ["uv","vw","wu"]),
     ub.UbooneClusterSource(infiles, datapath=datapath, sampler=ub.bs_dead, kind='dead', optical=false)
 ]);
-local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) = pg.pipeline([
-    ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json"),
-    ub.ClusterFlashDump(datapath=datapath)
-]);
+local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) =
+    local tracking_output = "track_com_%d_%d.root" % [runNo, eventNo];
+    pg.pipeline([
+        ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json"),
+        ub.UbooneMagnifyTrackingSink(tracking_output, runNo, subRunNo, eventNo, datapath),
+        ub.ClusterFlashDump(datapath=datapath)
+    ]);
 //local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
 //    ub.MultiAlgBlobClustering(beezip, datapath=datapath),
 //    ub.ClusterFlashDump(datapath=datapath)
