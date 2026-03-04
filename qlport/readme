@@ -1,2 +1,15 @@
 # converting file
 wire-cell-uboone-magnify-tracking-convert -btrack_com_5384_6501.root -f2
+
+
+#Generate dump data - Run your full pipeline with:
+WCT_DUMP_INIT_FIRST_SEGMENT=./tmp/test_data.json wire-cell -l stderr -A kind=both  -A beezip=mabc_0.zip -A initial_index="0" -A initial_runNo="5384" -A initial_subRunNo="130" -A initial_eventNo="6501" -A infiles=rootfiles/nuselEval_5384_130_6501.root uboone-mabc.jsonnet
+
+# Run geometry-only test (no DV/PCTS needed):
+WCT_TEST_DUMP=./tmp/test_data.json wcdoctest-clus -tc="init_first_segment geometry only"
+
+# generate test configuration
+wcsonnet -o ./tmp/test_config.json uboone-mabc.jsonnet 
+
+# Run full end-to-end test (needs WCT config for DV/PCTS):
+WCT_TEST_DUMP=./tmp/test_data.json WCT_TEST_CONFIG=./tmp/test_config.json wcdoctest-clus -tc="init_first_segment end-to-end"
