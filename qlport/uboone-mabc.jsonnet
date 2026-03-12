@@ -1165,19 +1165,14 @@ local ub = {
 
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
-            cm.clustering_recovering_bundle("recover_bundle"),
+            // //cm.examine_bundles(graph_name="relaxed_pid"),
+            cm.clustering_recovering_bundle("recover_bundle", graph_name="relaxed_pid"),
             cm.switch_scope(),
-            // cm.examine_bundles(),
-            // cm.retile(retiler=retiler),
+            // //cm.retile(retiler=retiler),
             cm.steiner(retiler=improve_cluster_2, perf=perf),
             cm.fiducialutils(),
-            //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
-            //        recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
-            //        particle_dataset=wc.tn(ub.particle_dataset)),
-            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config,
-                    recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
-                    particle_dataset=wc.tn(ub.particle_dataset),
-                    perf=perf),
+            // //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset)),
+            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf),
         ] + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
