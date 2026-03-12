@@ -18,12 +18,15 @@ while(<infile>){
     # Skip if target event specified and doesn't match
     next if (defined $target_event && $eventNo != $target_event);
 
+    # -L clus.NeutrinoPattern:debug
     if ($i%40 == 39){
-        system("wire-cell -l stderr -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log");
-        print("wire-cell -l stderr -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
+        system("rm -f wct_$runNo\_$eventNo\.log");
+        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > /dev/null 2>&1");
+        print("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug  -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
     }else{
-        system("wire-cell -l stderr -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > wct_$runNo\_$eventNo\.log&");
-        print("wire-cell -l stderr -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
+        system("rm -f wct_$runNo\_$eventNo\.log");
+        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > /dev/null 2>&1 &");
+        print("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug  -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
     }
 
 

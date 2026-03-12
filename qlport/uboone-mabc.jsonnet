@@ -1161,20 +1161,23 @@ local ub = {
             },
         };
 
+        local perf = true;   // single knob: controls timing printout for MABC and CreateSteinerGraph
+
         local cm_pipeline = [
             cm.tagger_flag_transfer("tagger"),
             cm.clustering_recovering_bundle("recover_bundle"),
             cm.switch_scope(),
             // cm.examine_bundles(),
             // cm.retile(retiler=retiler),
-            cm.steiner(retiler=improve_cluster_2),
+            cm.steiner(retiler=improve_cluster_2, perf=perf),
             cm.fiducialutils(),
             //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config,
             //        recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
             //        particle_dataset=wc.tn(ub.particle_dataset)),
             cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config,
                     recombination_model=wc.tn(ub.uBooNE_box_recomb_model),
-                    particle_dataset=wc.tn(ub.particle_dataset)),
+                    particle_dataset=wc.tn(ub.particle_dataset),
+                    perf=perf),
         ] + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -1182,7 +1185,7 @@ local ub = {
         data:  {
             inpath: pointtree_datapath,
             outpath: pointtree_datapath,
-            perf: true,
+            perf: perf,
             bee_zip: beezip,
             initial_index: index,
             use_config_rse: true,  // Enable use of configured RSE
@@ -1255,6 +1258,8 @@ local ub = {
                     pcname: "3d",            // Not used for PRGraph, but required
                     coords: ["x", "y", "z"], // Not used for PRGraph, but required
                     individual: false,       // Output as global, not per APA/face
+                    dQdx_scale: 0.1,
+                    dQdx_offset: -1000,
                 },
 
             ],
