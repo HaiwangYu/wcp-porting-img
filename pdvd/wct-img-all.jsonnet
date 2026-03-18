@@ -38,7 +38,7 @@ function(
 
   local anodes = [tools_all.anodes[i] for i in anode_indices];
 
-  local img = import 'pgrapher/experiment/protodunevd/img.jsonnet';
+  local img = import 'img.jsonnet';
   local img_maker = img();
 
   // Build one FrameFileSource + imaging pipeline per anode

@@ -23,14 +23,20 @@ local common_coords = ["x", "y", "z"];
 local common_corr_coords = ["x_t0cor", "y", "z"];
 
 
+// ProtoDUNE-VD geometry parameters
+// 8 anodes total: anodes 0-3 are bottom drift (centerline x=-3415.5mm, drift in +x direction)
+//                 anodes 4-7 are top    drift (centerline x=+3415.5mm, drift in -x direction)
+// apa_plane = 57.15mm (half of apa_g2g=114.3mm), cpa_plane = 3390.1mm
+// Bottom drift anode face x ~ -3358.35mm, cathode x ~ -25.4mm
+// Top    drift anode face x ~  3358.35mm, cathode x ~   25.4mm
 local dvm = {
     overall: {
-        FV_xmin: -3579.85 * wc.mm,
-        FV_xmax: 3579.85 * wc.mm,
-        FV_ymin: 76.1 * wc.mm,
-        FV_ymax: 6060.0 * wc.mm,
-        FV_zmin: 2.34345 * wc.mm,
-        FV_zmax: 4622.97 * wc.mm,
+        FV_xmin: -3415.5 * wc.mm,
+        FV_xmax:  3415.5 * wc.mm,
+        FV_ymin: -3364.0 * wc.mm,
+        FV_ymax:  3364.0 * wc.mm,
+        FV_zmin: 0.5 * wc.mm,
+        FV_zmax: 2992.5 * wc.mm,
         FV_xmin_margin: 2 * wc.cm,
         FV_xmax_margin: 2 * wc.cm,
         FV_ymin_margin: 2.5 * wc.cm,
@@ -40,38 +46,43 @@ local dvm = {
         vertical_dir: [0,1,0],
         beam_dir: [0,0,1]
     },
+    // Bottom drift (anodes 0-3): anode face at ~-3358.35mm, cathode at ~-25.4mm
+    // Both faces share same x-bounds (2-sided CRP, same drift direction)
     a0f0pA: {
         drift_speed: drift_speed,
         tick: 0.5 * wc.us,  // 0.5 mm per tick
         tick_drift: self.drift_speed * self.tick,
         time_offset: time_offset,
         nticks_live_slice: 4,
-        FV_xmin: -3579.85 * wc.mm,
+        FV_xmin: -3358.35 * wc.mm,
         FV_xmax: -25.4 * wc.mm,
         FV_xmin_margin: 2 * wc.cm,
         FV_xmax_margin: 2 * wc.cm,
     },
-    a0f1pA: $.a0f0pA + {
-        FV_xmin: -3579.85 * wc.mm,
-        FV_xmax: -3579.85 * wc.mm,
-    },
-    a1f0pA: $.a0f0pA + {
-        FV_xmin: 3579.85 * wc.mm,
-        FV_xmax: 3579.85 * wc.mm,
-    },
-    a1f1pA: $.a0f0pA + {
-        FV_xmin: 25.4 * wc.mm,
-        FV_xmax: 3579.85 * wc.mm,
-    },
+    a0f1pA: $.a0f0pA,
+    a1f0pA: $.a0f0pA,
+    a1f1pA: $.a0f0pA,
     a2f0pA: $.a0f0pA,
-    a2f1pA: $.a0f1pA,
-    a3f0pA: $.a1f0pA,
-    a3f1pA: $.a1f1pA,
+    a2f1pA: $.a0f0pA,
+    a3f0pA: $.a0f0pA,
+    a3f1pA: $.a0f0pA,
+    // Top drift (anodes 4-7): cathode at ~25.4mm, anode face at ~3358.35mm
+    a4f0pA: $.a0f0pA + {
+        FV_xmin: 25.4 * wc.mm,
+        FV_xmax: 3358.35 * wc.mm,
+    },
+    a4f1pA: $.a4f0pA,
+    a5f0pA: $.a4f0pA,
+    a5f1pA: $.a4f0pA,
+    a6f0pA: $.a4f0pA,
+    a6f1pA: $.a4f0pA,
+    a7f0pA: $.a4f0pA,
+    a7f1pA: $.a4f0pA,
 };
 
 local anodes_name(anodes, face="") =
     std.join("-", [std.toString(a.data.ident) for a in anodes]) + if face == "" then "" else "-" + std.toString(face);
-          
+
 
 local detector_volumes(anodes, face="") = {
     "type": "DetectorVolumes",
@@ -94,7 +105,7 @@ local detector_volumes(anodes, face="") = {
     uses: anodes
 };
 
-      
+
 local pctransforms(dv) = {
     type: "PCTransformSet",
     name: dv.name,
@@ -194,8 +205,6 @@ local clus_per_face (
         // cm.ctpointcloud(),
         cm.live_dead(dead_live_overlap_offset=2),
         cm.extend(flag=4, length_cut=60*wc.cm, num_try=0, length_2_cut=15*wc.cm, num_dead_try=1),
-        cm.deghost2(length_cut = 0*wc.cm, length_threshold = 5*wc.cm,coverage_threshold=0.8),
-        // cm.deghost2(length_cut = 10*wc.cm, length_threshold = 3*wc.cm,coverage_threshold=0.9),
         cm.regular(name="-one", length_cut=60*wc.cm, flag_enable_extend=false),
         cm.regular(name="_two", length_cut=30*wc.cm, flag_enable_extend=true),
         cm.parallel_prolong(length_cut=35*wc.cm),
@@ -203,7 +212,6 @@ local clus_per_face (
         cm.extend_loop(num_try=3),
         cm.separate(use_ctpc=true),
         cm.connect1(),
-        cm.deghost2(length_cut = 0*wc.cm, length_threshold = 5*wc.cm,coverage_threshold=0.8),
         // cm.isolated(),
         // cm.retile(cut_time_low=3*wc.us, cut_time_high=5*wc.us, anodes=[anode], samplers=[clus.sampler(bsl, apa=anode.data.ident, face=face)]),
     ],
@@ -219,103 +227,26 @@ local clus_per_face (
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
             bee_zip: "mabc-%s-face%d.zip"%[anode.name, face],
-            // bee_zip: "mabc-%s-face%d.zip"%[anode.name, face],
             bee_detector: "sbnd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
             runNo: LrunNo,
             subRunNo: LsubRunNo,
             eventNo: LeventNo,
-            save_deadarea: true, 
+            save_deadarea: true,
             anodes: [wc.tn(anode)],
             face: face,
             detector_volumes: wc.tn(dv),
             bee_points_sets: [  // New configuration for multiple bee points sets
                 {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodunehd",         // Detector name
+                    detector: "protodunevd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: true,           // Output individual APA/Face
-                    filter: 1, // 
-                }
-                {
-                    name: "clustering",         // Name of the bee points set
-                    detector: "protodunehd",         // Detector name
-                    algorithm: "clustering-deghosting",    // Algorithm identifier
-                    pcname: "3d",           // Which scope to use
-                    coords: ["x", "y", "z"],    // Coordinates to use
-                    individual: true,           // Output individual APA/Face
-                    filter: -1 ,// 
+                    individual: true            // Output individual APA/Face
                 }
             ],
-            pipeline: wc.tns(cm_pipeline),
-        }
-    }, nin=1, nout=1, uses=[dv, anode, pcts]+cm_pipeline),
-
- local mabc1 = g.pnode({
-        local name = "%s-%d-normal"%[anode.name, face],
-        type: "MultiAlgBlobClustering",
-        name: name,
-        data: {
-            inpath: "pointtrees/%d",
-            outpath: "pointtrees/%d",
-            perf: true,
-            bee_dir: bee_dir,
-            bee_zip: "mabc-%s-face%d-normal.zip"%[anode.name, face],
-            bee_detector: "sbnd",
-            initial_index: index,
-            use_config_rse: true,
-            runNo: LrunNo,
-            subRunNo: LsubRunNo,
-            eventNo: LeventNo,
-            save_deadarea: true,
-            anodes: [wc.tn(anode)],
-            face: face,
-            detector_volumes: wc.tn(dv),
-            bee_points_sets: [{
-                name: "clustering",
-                detector: "protodunehd",
-                algorithm: "clustering",
-                pcname: "3d",
-                coords: ["x", "y", "z"],
-                individual: true,
-                filter: 1
-            }],
-            pipeline: wc.tns(cm_pipeline),
-        }
-    }, nin=1, nout=1, uses=[dv, anode, pcts]+cm_pipeline),
-
-    local mabc2 = g.pnode({
-        local name = "%s-%d-ghost"%[anode.name, face],
-        type: "MultiAlgBlobClustering", 
-        name: name,
-        data: {
-            inpath: "pointtrees/%d",
-            outpath: "pointtrees/%d",
-            perf: true,
-            bee_dir: bee_dir,
-            bee_zip: "mabc-%s-face%d-ghost.zip"%[anode.name, face],
-            bee_detector: "sbnd",
-            initial_index: index,
-            use_config_rse: true,
-            runNo: LrunNo,
-            subRunNo: LsubRunNo,
-            eventNo: LeventNo,
-            save_deadarea: true,
-            anodes: [wc.tn(anode)],
-            face: face,
-            detector_volumes: wc.tn(dv),
-            bee_points_sets: [{
-                name: "clustering-deghosting",
-                detector: "protodunehd",
-                algorithm: "clustering-deghosting",
-                pcname: "3d",
-                coords: ["x", "y", "z"],
-                individual: true,
-                filter: -1
-            }],
             pipeline: wc.tns(cm_pipeline),
         }
     }, nin=1, nout=1, uses=[dv, anode, pcts]+cm_pipeline),
@@ -331,12 +262,10 @@ local clus_per_face (
     }, nin=1, nout=0),
 
     local end = if dump
-    then g.pipeline([mabc1,mabc2, sink])
-    else g.pipeline([mabc1,mabc2]),
-
+    then g.pipeline([mabc, sink])
+    else g.pipeline([mabc]),
 
     ret :: g.pipeline([cluster2pct, end], "clus_per_face-%s-%d"%[anode.name, face])
-
 }.ret;
 
 local clus_per_apa (
@@ -350,7 +279,7 @@ local clus_per_apa (
         data: {
             multiplicity: 2
         }}, nin=1, nout=2),
-    
+
     local cfout_dead = g.pnode({
         type:'ClusterFanout',
         name: 'clus_per_apa-cfout_dead-%s'%anode.name,
@@ -382,7 +311,7 @@ local clus_per_apa (
                                        coords=common_coords),
     local cm_pipeline = [
         // cm.deghost(),
-        // cm.protect_overclustering(),
+        cm.protect_overclustering(),
     ],
 
     local mabc = g.pnode({
@@ -468,24 +397,24 @@ local clus_all_apa (
                                        detector_volumes=dv,
                                        pc_transforms=pcts,
                                        coords=common_corr_coords),
-        
+
     local cm_pipeline = [
         // cm_old.examine_x_boundary(),
-        // cm_old.switch_scope(),
+        cm_old.switch_scope(),
 
-        // cm.extend(flag=4, length_cut=60*wc.cm, num_try=0, length_2_cut=15*wc.cm, num_dead_try= 1),
-        // cm.regular(name="1", length_cut=60*wc.cm, flag_enable_extend=false),
-        // cm.regular(name="2", length_cut=30*wc.cm, flag_enable_extend=true),
-        // cm.parallel_prolong(length_cut=35*wc.cm),
-        // cm.close(length_cut=1.2*wc.cm),
-        // cm.extend_loop(num_try=3),
-        // cm.separate(use_ctpc=true),
-        // cm.neutrino(),
-        // cm.isolated(),
-        // cm.examine_bundles(),
+        cm.extend(flag=4, length_cut=60*wc.cm, num_try=0, length_2_cut=15*wc.cm, num_dead_try= 1),
+        cm.regular(name="1", length_cut=60*wc.cm, flag_enable_extend=false),
+        cm.regular(name="2", length_cut=30*wc.cm, flag_enable_extend=true),
+        cm.parallel_prolong(length_cut=35*wc.cm),
+        cm.close(length_cut=1.2*wc.cm),
+        cm.extend_loop(num_try=3),
+        cm.separate(use_ctpc=true),
+        cm.neutrino(),
+        cm.isolated(),
+        cm.examine_bundles(),
         // cm.retile(cut_time_low=3*wc.us,
         //           cut_time_high=5*wc.us,
-        //           anodes=anodes, 
+        //           anodes=anodes,
         //           samplers=[
         //               clus.sampler(bs_rt_face(0,0), apa=0, face=0),
         //               clus.sampler(bs_rt_face(0,1), apa=0, face=1),
@@ -514,13 +443,13 @@ local clus_all_apa (
             runNo: LrunNo,
             subRunNo: LsubRunNo,
             eventNo: LeventNo,
-            save_deadarea: true, 
+            save_deadarea: true,
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: wc.tn(dv),
             bee_points_sets: [  // New configuration for multiple bee points sets
             //    {
             //        name: "img",                // Name of the bee points set
-            //        detector: "protodunehd",         // Detector name
+            //        detector: "protodUNEvd",         // Detector name
             //        algorithm: "img",           // Algorithm identifier
             //        pcname: "3d",           // Which scope to use
             //        coords: ["x", "y", "z"],    // Coordinates to use
@@ -528,12 +457,11 @@ local clus_all_apa (
             //    },
             {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodunehd",         // Detector name
+                    detector: "protodUNEvd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
-                    individual: false,            // Output individual APA/Face
-                    filter:-1
+                    individual: false            // Output individual APA/Face
                 }
             ],
             pipeline: wc.tns(cm_pipeline),

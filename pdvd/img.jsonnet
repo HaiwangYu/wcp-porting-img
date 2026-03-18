@@ -346,8 +346,8 @@ function() {
         ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked-%s"%anode.name),
     }.ret,
 
-    per_anode(anode, pipe_type = "single") :: g.pipeline([
-    // per_anode(anode, pipe_type = "multi") :: g.pipeline([
+    // per_anode(anode, pipe_type = "single") :: g.pipeline([
+    per_anode(anode, pipe_type = "multi") :: g.pipeline([
         img.pre_proc(anode, anode.name),
         imgpipe(anode, pipe_type),
         ], "per_anode"),

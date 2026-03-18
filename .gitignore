@@ -21,3 +21,6 @@ log*
 dune-vd-cfg/*
 *~
 *.db
+*.png
+*.txt
+*.tar.bz2
