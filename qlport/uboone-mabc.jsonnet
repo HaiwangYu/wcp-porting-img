@@ -1256,6 +1256,17 @@ local ub = {
                     dQdx_scale: 0.1,
                     dQdx_offset: -1000,
                 },
+                {
+                    name: "shower_track",    // Associated points colored by shower/track classification
+                    visitor: "TaggerCheckNeutrino",
+                    grouping: "live",
+                    detector: "uboone",
+                    algorithm: "shower_track",
+                    pcname: "3d",
+                    coords: ["x", "y", "z"],
+                    individual: false,
+                    use_associate_points: true,  // q=15000 if shower (traj or topo), q=0 if track
+                },
 
             ],
             pipeline: wc.tns(cm_pipeline),

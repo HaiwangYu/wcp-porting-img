@@ -21,11 +21,11 @@ while(<infile>){
     # -L clus.NeutrinoPattern:debug
     if ($i%40 == 39){
         system("rm -f wct_$runNo\_$eventNo\.log");
-        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > /dev/null 2>&1");
+        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet ");# > /dev/null 2>&1
         print("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug  -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
     }else{
         system("rm -f wct_$runNo\_$eventNo\.log");
-        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet > /dev/null 2>&1 &");
+        system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet   &"); # > /dev/null 2>&1
         print("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug  -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet\n");
     }
 
