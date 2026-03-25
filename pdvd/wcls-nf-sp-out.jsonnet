@@ -185,6 +185,23 @@ local magoutput = 'protodune-data-check.root';
 local magnify = import 'pgrapher/experiment/protodunevd/magnify-sinks.jsonnet';
 local mio = magnify(tools, magoutput);
 
+// FrameFileSink tap: saves raw (NF output) frame to tar file, inserted after NF and before SP.
+local raw_frame_tap = function(anode_ident)
+    g.fan.tap('FrameFanout',
+        g.pnode({
+            type: 'FrameFileSink',
+            name: 'rawframesink%d' % anode_ident,
+            data: {
+                outname: 'protodune-sp-frames-raw-anode%d.tar.bz2' % anode_ident,
+                tags: [
+                    'raw%d' % anode_ident,
+                ],
+                digitize: false,
+                masks: false,
+            },
+        }, nin=1, nout=0),
+        'rawframetap%d' % anode_ident);
+
 // FrameFileSink tap: saves SP frames (gauss+wiener) with real channel IDs and
 // trace summaries (RMS) to a tar file readable by wct-img.jsonnet.
 // Uses g.fan.tap to insert as a pass-through after sp_pipes.
@@ -212,6 +229,7 @@ local nfsp_pipes = [
              + (if use_resampler=='true' && n<4 then [ resamplers[n] ] else [ ])
             //  + (if use_magnify =='true' then [mio.orig_pipe[n]] else [ ])
              + [ nf_pipes[n] ]
+             + [ raw_frame_tap(tools.anodes[n].data.ident) ]  // save NF (raw) frames
             //  + (if use_magnify =='true' then [mio.raw_pipe[n]] else [ ])
              + [ sp_pipes[n] ]
              + [ frame_tap(tools.anodes[n].data.ident) ]  // save SP frames for wct-img.jsonnet

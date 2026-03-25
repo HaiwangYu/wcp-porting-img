@@ -19,6 +19,11 @@
 //   wire-cell -l stdout -L debug \
 //     --tla-code anode_indices='[4,5]' \
 //     -c wct-img-all.jsonnet
+//
+// To write cluster output files to a specific directory:
+//   wire-cell -l stdout -L debug \
+//     --tla-str output_dir="woodpecker_data" \
+//     -c wct-img-all.jsonnet
 
 local g = import 'pgraph.jsonnet';
 local wc = import 'wirecell.jsonnet';
@@ -33,13 +38,15 @@ function(
   // Prefix for per-anode input files: "{input_prefix}-anode{N}.tar.bz2"
   input_prefix = 'protodune-sp-frames',
   // Indices into tools_all.anodes to process; default = all
-  anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
+  anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
+  // Directory for output cluster files ('' means current directory)
+  output_dir = ''
 )
 
   local anodes = [tools_all.anodes[i] for i in anode_indices];
 
   local img = import 'img.jsonnet';
-  local img_maker = img();
+  local img_maker = img(output_dir=output_dir);
 
   // Build one FrameFileSource + imaging pipeline per anode
   local per_anode_graph(anode) =
@@ -49,6 +56,7 @@ function(
       name: 'frame_source_anode%d' % aid,
       data: {
         inname: '%s-anode%d.tar.bz2' % [input_prefix, aid],
+        // inname: '%s-anode%d-selected.tar.bz2' % [input_prefix, aid],
         tags: ['gauss%d' % aid, 'wiener%d' % aid],
       },
     }, nin=0, nout=1);

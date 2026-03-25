@@ -286,12 +286,14 @@ local img = {
         else g.pipeline([bc, cs1, gc],"simple-solving"),
     }.ret,
 
-    dump :: function(anode, aname, drift_speed) {
+    dump :: function(anode, aname, drift_speed, output_dir='') {
+        local outname = if output_dir == '' then "clusters-apa-"+aname+".tar.gz"
+                        else output_dir+"/clusters-apa-"+aname+".tar.gz",
         local cs = g.pnode({
             type: "ClusterFileSink",
             name: "clustersink-"+aname,
             data: {
-                outname: "clusters-apa-"+aname+".tar.gz",
+                outname: outname,
                 format: "json", // json, numpy, dummy
             }
         }, nin=1, nout=0),
@@ -299,7 +301,7 @@ local img = {
     }.ret,
 };
 
-function() {
+function(output_dir='') {
     local imgpipe (anode, multi_slicing) =
     if multi_slicing == "single"
     then g.pipeline([
@@ -310,7 +312,7 @@ function() {
             // img.solving(anode, anode.name, "full"),
             img.solving(anode, anode.name, "simple"),
             // img.clustering(anode, anode.name),
-            img.dump(anode, anode.name, params.lar.drift_speed),])
+            img.dump(anode, anode.name, params.lar.drift_speed, output_dir),])
     else if multi_slicing == "pdhd1"
     then g.pipeline([
             // img.slicing(anode, anode.name, 109, active_planes=[0,1,2], masked_planes=[],dummy_planes=[]), // 109*22*4
@@ -319,29 +321,29 @@ function() {
             img.tiling(anode, anode.name),
             img.solving(anode, anode.name, "full"),
             // img.clustering(anode, anode.name),
-            img.dump(anode, anode.name, params.lar.drift_speed),])
+            img.dump(anode, anode.name, params.lar.drift_speed, output_dir),])
     else if multi_slicing == "active"
     then g.pipeline([
             img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 8),
             img.solving(anode, anode.name+"-ms-active"),
             // img.clustering(anode, anode.name+"-ms-active"),
-            img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed)])
+            img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed, output_dir)])
     else if multi_slicing == "masked"
     then g.pipeline([
             img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 500),
             img.clustering(anode, anode.name+"-ms-masked"),
-            img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed)])
+            img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed, output_dir)])
     else {
         local active_fork = g.pipeline([
             img.multi_active_slicing_tiling(anode, anode.name+"-ms-active", 4),
             img.solving(anode, anode.name+"-ms-active", "full"),
             // img.solving(anode, anode.name+"-ms-active", "simple"),
-            img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed),
+            img.dump(anode, anode.name+"-ms-active", params.lar.drift_speed, output_dir),
         ]),
         local masked_fork = g.pipeline([
             img.multi_masked_2view_slicing_tiling(anode, anode.name+"-ms-masked", 100), // 109, 1744 (total 9592)
             img.clustering(anode, anode.name+"-ms-masked"),
-            img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed),
+            img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed, output_dir),
         ]),
         ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked-%s"%anode.name),
     }.ret,

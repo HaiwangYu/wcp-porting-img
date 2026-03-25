@@ -6,7 +6,6 @@ local clus = import "pgrapher/common/clus.jsonnet";
 
 local time_offset = -250 * wc.us;
 local drift_speed = 1.6 * wc.mm / wc.us;
-local bee_dir = "data";
 local bee_zip = "mabc.zip";
 
 local initial_index = "0";
@@ -141,6 +140,7 @@ local clus_per_face (
     anode,
     face,
     dump = true,
+    bee_dir = "data",
     ) =
 {
 
@@ -226,7 +226,7 @@ local clus_per_face (
             // grouping2file_prefix: "grouping%s-%d"%[anode.name, face],
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
-            bee_zip: "mabc-%s-face%d.zip"%[anode.name, face],
+            bee_zip: "%s/mabc-%s-face%d.zip"%[bee_dir, anode.name, face],
             bee_detector: "sbnd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
@@ -255,7 +255,7 @@ local clus_per_face (
         type: "TensorFileSink",
         name: "clus_per_face-%s-%d"%[anode.name, face],
         data: {
-            outname: "trash-%s-face%d.tar.gz"%[anode.name, face],
+            outname: "%s/trash-%s-face%d.tar.gz"%[bee_dir, anode.name, face],
             prefix: "clustering_", // json, numpy, dummy
             dump_mode: true,
         }
@@ -271,6 +271,7 @@ local clus_per_face (
 local clus_per_apa (
     anode,
     dump = true,
+    bee_dir = "data",
     ) =
 {
     local cfout_live = g.pnode({
@@ -288,8 +289,8 @@ local clus_per_apa (
         }}, nin=1, nout=2),
 
     local per_face_pipes = [
-        clus_per_face(anode, face=0, dump=false),
-        clus_per_face(anode, face=1, dump=false),
+        clus_per_face(anode, face=0, dump=false, bee_dir=bee_dir),
+        clus_per_face(anode, face=1, dump=false, bee_dir=bee_dir),
     ],
 
     local pcmerging = g.pnode({
@@ -324,7 +325,7 @@ local clus_per_apa (
             // grouping2file_prefix: "grouping%s-%d"%[anode.name, face],
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
-            bee_zip: "mabc-%s.zip"%[anode.name],
+            bee_zip: "%s/mabc-%s.zip"%[bee_dir, anode.name],
             bee_detector: "sbnd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
@@ -342,7 +343,7 @@ local clus_per_apa (
         type: "TensorFileSink",
         name: "clus_per_apa-%s"%[anode.name],
         data: {
-            outname: "trash-%s.tar.gz"%[anode.name],
+            outname: "%s/trash-%s.tar.gz"%[bee_dir, anode.name],
             prefix: "clustering_", // json, numpy, dummy
             dump_mode: true,
         }
@@ -371,6 +372,7 @@ local clus_per_apa (
 local clus_all_apa (
     anodes,
     dump = true,
+    bee_dir = "data",
     ) = {
     local nanodes = std.length(anodes),
     local pcmerging = g.pnode({
@@ -436,7 +438,7 @@ local clus_all_apa (
             // grouping2file_prefix: "grouping%s-%d"%[anode.name, face],
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
-            bee_zip: "mabc-all-apa.zip",
+            bee_zip: "%s/mabc-all-apa.zip"%[bee_dir],
             bee_detector: "sbnd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
@@ -472,7 +474,7 @@ local clus_all_apa (
         type: "TensorFileSink",
         name: "clus_all_apa",
         data: {
-            outname: "trash-all-apa.tar.gz",
+            outname: "%s/trash-all-apa.tar.gz"%[bee_dir],
             prefix: "clustering_", // json, numpy, dummy
             dump_mode: true,
         }
@@ -491,8 +493,9 @@ local clus_all_apa (
 }.ret;
 
 
-function () {
-    per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump),
-    per_apa(anode, dump=true) :: clus_per_apa(anode, dump=dump),
-    all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump),
+function (output_dir='') {
+    local bee_dir = if output_dir == '' then 'data' else output_dir,
+    per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump, bee_dir=bee_dir),
+    per_apa(anode, dump=true) :: clus_per_apa(anode, dump=dump, bee_dir=bee_dir),
+    all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump, bee_dir=bee_dir),
 }
