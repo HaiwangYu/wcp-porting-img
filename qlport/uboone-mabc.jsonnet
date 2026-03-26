@@ -1267,6 +1267,17 @@ local ub = {
                     individual: false,
                     use_associate_points: true,  // q=15000 if shower (traj or topo), q=0 if track
                 },
+                {
+                    name: "vertices",        // All PR graph vertices; main vertex has q=15000, others q=0
+                    visitor: "TaggerCheckNeutrino",
+                    grouping: "live",
+                    detector: "uboone",
+                    algorithm: "vertices",
+                    pcname: "3d",
+                    coords: ["x", "y", "z"],
+                    individual: false,
+                    use_graph_vertices: true,
+                },
 
             ],
             pipeline: wc.tns(cm_pipeline),
