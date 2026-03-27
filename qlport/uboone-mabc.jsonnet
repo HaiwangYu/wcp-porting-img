@@ -1132,7 +1132,8 @@ local ub = {
 
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live,
                            index=0, runNo=1, subRunNo=1, eventNo=1, trackfitting_config="",
-                           tracking_output="") ::
+                           tracking_output="", dl_weights="",
+                           dQdx_scale=0.1, dQdx_offset=-1000) ::
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms,
                                            fiducial=$.uboone_mc_fid);
@@ -1155,8 +1156,8 @@ local ub = {
                 runNo: runNo,
                 subRunNo: subRunNo,
                 eventNo: eventNo,
-                dQdx_scale: 0.1,
-                dQdx_offset: -1000,
+                dQdx_scale: dQdx_scale,
+                dQdx_offset: dQdx_offset,
                 flag_skip_vertex: false,
             },
         };
@@ -1172,7 +1173,7 @@ local ub = {
             cm.steiner(retiler=improve_cluster_2, perf=perf),
             cm.fiducialutils(),
             // //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset)),
-            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf),
+            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf, dl_weights=dl_weights, dQdx_scale=dQdx_scale, dQdx_offset=dQdx_offset),
         ] + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -1253,8 +1254,8 @@ local ub = {
                     pcname: "3d",            // Not used for PRGraph, but required
                     coords: ["x", "y", "z"], // Not used for PRGraph, but required
                     individual: false,       // Output as global, not per APA/face
-                    dQdx_scale: 0.1,
-                    dQdx_offset: -1000,
+                    dQdx_scale: dQdx_scale,
+                    dQdx_offset: dQdx_offset,
                 },
                 {
                     name: "shower_track",    // Associated points colored by shower/track classification
@@ -1338,7 +1339,8 @@ local ingraph_dead(infiles, datapath=pointtree_datapath) = pg.pipeline([
 local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1, eventNo=1) =
     local tracking_output = "track_com_%d_%d.root" % [runNo, eventNo];
     pg.pipeline([
-        ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json", tracking_output=tracking_output),
+        ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json", tracking_output=tracking_output,
+                                  dl_weights="scn_vtx/t48k-m16-l5-lr5d-res0.5-CP24.pth"),  // set to path of t48k-m16-l5-lr5d-res0.5-CP24.pth to enable DL vertex
         ub.ClusterFlashDump(datapath=datapath)
     ]);
 //local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
