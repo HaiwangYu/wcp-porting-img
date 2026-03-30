@@ -1281,6 +1281,16 @@ local ub = {
                 },
 
             ],
+            // Particle-flow Bee output: emitted once after TaggerCheckNeutrino runs.
+            // Produces one JSON file per event named "mc", a bare array of jsTree nodes
+            // matching the prototype "mc" format read by the Bee viewer.
+            bee_pf: [
+                {
+                    name: "mc",                      // output file: data/{index}/{index}-mc.json
+                    visitor: "TaggerCheckNeutrino",
+                    grouping: "live",
+                },
+            ],
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
