@@ -88,7 +88,32 @@ local ub = {
         uses: [detector_volumes]
     },
 
-    local detector_volumes = 
+    // UbooneGeomHelper provides FV checks and UBoone data-driven SCE position correction.
+    // Lives in WireCellRoot (not WireCellClus) because it depends on ROOT TH3F histograms.
+    // sce_offsets_file: resolved via Persist::resolve() in C++ against WIRECELL_PATH.
+    local uboone_geom_helper = {
+        type: "UbooneGeomHelper",
+        name: "",
+        data: {
+            sce_offsets_file: "uboone/SCEoffsets_dataDriven_combined_bkwd_Jan18.root",
+            "a0f0": {
+                FV_xmin: 1 * wc.cm,
+                FV_xmax: 255 * wc.cm,
+                FV_ymin: -99.5 * wc.cm,
+                FV_ymax: 101.5 * wc.cm,
+                FV_zmin: 15 * wc.cm,
+                FV_zmax: 1022 * wc.cm,
+                FV_xmin_margin: 2 * wc.cm,
+                FV_xmax_margin: 2 * wc.cm,
+                FV_ymin_margin: 2.5 * wc.cm,
+                FV_ymax_margin: 2.5 * wc.cm,
+                FV_zmin_margin: 3 * wc.cm,
+                FV_zmax_margin: 3 * wc.cm,
+            },
+        },
+    },
+
+    local detector_volumes =
     {
         type: "DetectorVolumes",
         name: "",
@@ -1173,7 +1198,7 @@ local ub = {
             cm.steiner(retiler=improve_cluster_2, perf=perf),
             cm.fiducialutils(),
             // //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset)),
-            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf, dl_weights=dl_weights, dQdx_scale=dQdx_scale, dQdx_offset=dQdx_offset),
+            cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf, dl_weights=dl_weights, dQdx_scale=dQdx_scale, dQdx_offset=dQdx_offset, clus_geom_helper=wc.tn(uboone_geom_helper)),
         ] + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
@@ -1294,7 +1319,7 @@ local ub = {
             pipeline: wc.tns(cm_pipeline),
             // cluster_id_order: "size", // or "tree" for insertion order or nothing for no rewriting
         }
-        }, nin=1, nout=1, uses=anodes + [detector_volumes, $.uBooNE_box_recomb_model, $.particle_dataset, $.muon_dEdx_function, $.pion_dEdx_function, $.kaon_dEdx_function, $.electron_dEdx_function, $.proton_dEdx_function, $.muon_range_function, $.pion_range_function, $.kaon_range_function, $.proton_range_function, $.electron_range_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
+        }, nin=1, nout=1, uses=anodes + [detector_volumes, uboone_geom_helper, $.uBooNE_box_recomb_model, $.particle_dataset, $.muon_dEdx_function, $.pion_dEdx_function, $.kaon_dEdx_function, $.electron_dEdx_function, $.proton_dEdx_function, $.muon_range_function, $.pion_range_function, $.kaon_range_function, $.proton_range_function, $.electron_range_function, $.uboone_data_fid, $.uboone_data_fid_xy, $.uboone_data_fid_zx, $.uboone_mc_fid, $.uboone_mc_fid_xy, $.uboone_mc_fid_zx] + cm_pipeline),
 
 
     TensorFileSink(fname) :: pg.pnode({
