@@ -1158,7 +1158,9 @@ local ub = {
     MultiAlgBlobClustering(beezip, datapath=pointtree_datapath, live_sampler=$.bs_live,
                            index=0, runNo=1, subRunNo=1, eventNo=1, trackfitting_config="",
                            tracking_output="", dl_weights="",
-                           dQdx_scale=0.1, dQdx_offset=-1000) ::
+                           dQdx_scale=0.1, dQdx_offset=-1000,
+                           numu_weights_dir="",
+                           nue_weights_dir="") ::
         local cm = clus.clustering_methods(detector_volumes=detector_volumes,
                                            pc_transforms=pctransforms,
                                            fiducial=$.uboone_mc_fid);
@@ -1169,6 +1171,48 @@ local ub = {
         local improve_cluster_2 = cm.improve_cluster_2(anodes=anodes,
                                    samplers=[clus.sampler($.bs_live_no_dead_mix, apa=0, face=0)],
                                    verbose=true);
+
+        local numu_bdt_scorer = cm.numu_bdt_scorer(
+            numu1_weights_xml=     wc.resolve(numu_weights_dir + "/numu_tagger1.weights.xml"),
+            numu2_weights_xml=     wc.resolve(numu_weights_dir + "/numu_tagger2.weights.xml"),
+            numu3_weights_xml=     wc.resolve(numu_weights_dir + "/numu_tagger3.weights.xml"),
+            cosmict10_weights_xml= wc.resolve(numu_weights_dir + "/cos_tagger_10.weights.xml"),
+            numu_xgboost_xml=      wc.resolve(numu_weights_dir + "/numu_scalars_scores_0923.xml"),
+        );
+
+        local nue_bdt_scorer = cm.nue_bdt_scorer(
+            mipid_weights_xml=       wc.resolve(nue_weights_dir + "/mipid_BDT.weights.xml"),
+            gap_weights_xml=         wc.resolve(nue_weights_dir + "/gap_BDT.weights.xml"),
+            hol_lol_weights_xml=     wc.resolve(nue_weights_dir + "/hol_lol_BDT.weights.xml"),
+            cme_anc_weights_xml=     wc.resolve(nue_weights_dir + "/cme_anc_BDT.weights.xml"),
+            mgo_mgt_weights_xml=     wc.resolve(nue_weights_dir + "/mgo_mgt_BDT.weights.xml"),
+            br1_weights_xml=         wc.resolve(nue_weights_dir + "/br1_BDT.weights.xml"),
+            br3_weights_xml=         wc.resolve(nue_weights_dir + "/br3_BDT.weights.xml"),
+            br3_3_weights_xml=       wc.resolve(nue_weights_dir + "/br3_3_BDT.weights.xml"),
+            br3_5_weights_xml=       wc.resolve(nue_weights_dir + "/br3_5_BDT.weights.xml"),
+            br3_6_weights_xml=       wc.resolve(nue_weights_dir + "/br3_6_BDT.weights.xml"),
+            stemdir_br2_weights_xml= wc.resolve(nue_weights_dir + "/stem_dir_br2_BDT.weights.xml"),
+            trimuon_weights_xml=     wc.resolve(nue_weights_dir + "/stl_lem_brm_BDT.weights.xml"),
+            br4_tro_weights_xml=     wc.resolve(nue_weights_dir + "/br4_tro_BDT.weights.xml"),
+            mipquality_weights_xml=  wc.resolve(nue_weights_dir + "/mipquality_BDT.weights.xml"),
+            pio_1_weights_xml=       wc.resolve(nue_weights_dir + "/pio_1_BDT.weights.xml"),
+            pio_2_weights_xml=       wc.resolve(nue_weights_dir + "/pio_2_BDT.weights.xml"),
+            stw_spt_weights_xml=     wc.resolve(nue_weights_dir + "/stw_spt_BDT.weights.xml"),
+            vis_1_weights_xml=       wc.resolve(nue_weights_dir + "/vis_1_BDT.weights.xml"),
+            vis_2_weights_xml=       wc.resolve(nue_weights_dir + "/vis_2_BDT.weights.xml"),
+            stw_2_weights_xml=       wc.resolve(nue_weights_dir + "/stw_2_BDT.weights.xml"),
+            stw_3_weights_xml=       wc.resolve(nue_weights_dir + "/stw_3_BDT.weights.xml"),
+            stw_4_weights_xml=       wc.resolve(nue_weights_dir + "/stw_4_BDT.weights.xml"),
+            sig_1_weights_xml=       wc.resolve(nue_weights_dir + "/sig_1_BDT.weights.xml"),
+            sig_2_weights_xml=       wc.resolve(nue_weights_dir + "/sig_2_BDT.weights.xml"),
+            lol_1_weights_xml=       wc.resolve(nue_weights_dir + "/lol_1_BDT.weights.xml"),
+            lol_2_weights_xml=       wc.resolve(nue_weights_dir + "/lol_2_BDT.weights.xml"),
+            tro_1_weights_xml=       wc.resolve(nue_weights_dir + "/tro_1_BDT.weights.xml"),
+            tro_2_weights_xml=       wc.resolve(nue_weights_dir + "/tro_2_BDT.weights.xml"),
+            tro_4_weights_xml=       wc.resolve(nue_weights_dir + "/tro_4_BDT.weights.xml"),
+            tro_5_weights_xml=       wc.resolve(nue_weights_dir + "/tro_5_BDT.weights.xml"),
+            nue_xgboost_xml=         wc.resolve(nue_weights_dir + "/XGB_nue_seed2_0923.xml"),
+        );
 
         local tracking_visitor = {
             type: "UbooneMagnifyTrackingVisitor",
@@ -1199,7 +1243,9 @@ local ub = {
             cm.fiducialutils(),
             // //cm.tagger_check_stm(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset)),
             cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf, dl_weights=dl_weights, dQdx_scale=dQdx_scale, dQdx_offset=dQdx_offset, clus_geom_helper=wc.tn(uboone_geom_helper)),
-        ] + (if tracking_output != "" then [tracking_visitor] else []);
+        ] + (if numu_weights_dir != "" then [numu_bdt_scorer] else [])
+          + (if nue_weights_dir  != "" then [nue_bdt_scorer]  else [])
+          + (if tracking_output != "" then [tracking_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
@@ -1375,7 +1421,9 @@ local outgraph(beezip, datapath=pointtree_datapath, index=0, runNo=1, subRunNo=1
     local tracking_output = "track_com_%d_%d.root" % [runNo, eventNo];
     pg.pipeline([
         ub.MultiAlgBlobClustering(beezip, datapath=datapath, index=index, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo, trackfitting_config="uboone_track_fitting.json", tracking_output=tracking_output,
-                                  dl_weights="scn_vtx/t48k-m16-l5-lr5d-res0.5-CP24.pth"),  // set to path of t48k-m16-l5-lr5d-res0.5-CP24.pth to enable DL vertex
+                                  dl_weights="uboone/scn_vtx/t48k-m16-l5-lr5d-res0.5-CP24.pth",  // set to path of t48k-m16-l5-lr5d-res0.5-CP24.pth to enable DL vertex
+                                  numu_weights_dir="uboone/weights",
+                                  nue_weights_dir="uboone/weights"),
         ub.ClusterFlashDump(datapath=datapath)
     ]);
 //local outgraph(beezip,  datapath=pointtree_datapath) = pg.pipeline([
