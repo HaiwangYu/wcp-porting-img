@@ -1231,6 +1231,8 @@ local ub = {
             },
         };
 
+        local tagger_output_visitor = cm.tagger_output(output_filename=tracking_output);
+
         local perf = true;   // single knob: controls timing printout for MABC and CreateSteinerGraph
 
         local cm_pipeline = [
@@ -1245,7 +1247,7 @@ local ub = {
             cm.tagger_check_neutrino(trackfitting_config_file=trackfitting_config, recombination_model=wc.tn(ub.uBooNE_box_recomb_model), particle_dataset=wc.tn(ub.particle_dataset), perf=perf, dl_weights=dl_weights, dQdx_scale=dQdx_scale, dQdx_offset=dQdx_offset, clus_geom_helper=wc.tn(uboone_geom_helper)),
         ] + (if numu_weights_dir != "" then [numu_bdt_scorer] else [])
           + (if nue_weights_dir  != "" then [nue_bdt_scorer]  else [])
-          + (if tracking_output != "" then [tracking_visitor] else []);
+          + (if tracking_output != "" then [tracking_visitor, tagger_output_visitor] else []);
         pg.pnode({
         type: "MultiAlgBlobClustering",
         name: "",
