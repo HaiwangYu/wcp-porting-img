@@ -18,7 +18,13 @@ while(<infile>){
     # Skip if target event specified and doesn't match
     next if (defined $target_event && $eventNo != $target_event);
 
-    # -L clus.NeutrinoPattern:debug
+    # Log verbosity toggle: clus sub-logger detail is at TRACE level.
+    # Default (-L clus:debug) shows only high-level MultiAlgBlobClustering flow.
+    # To enable detail per sub-system, add one or more:
+    #   -L clus.Cluster:trace          (Facade_Cluster per-blob/per-cluster detail)
+    #   -L clus.TrackFitting:trace     (TrackFitting dQ/dx and fit detail)
+    #   -L clus.NeutrinoPattern:trace  (NeutrinoPattern recognition detail)
+    #   -L clus:trace                  (all of the above + CreateSteinerGraph, ImproveCluster, etc.)
     if ($i%40 == 39){
         system("rm -f wct_$runNo\_$eventNo\.log");
         system("wire-cell -l stderr -l wct_$runNo\_$eventNo\.log:debug -L clus:debug -A kind=both  -A beezip=mabc_$i\.zip -A initial_index=\"$i\" -A initial_runNo=\"$runNo\" -A initial_subRunNo=\"$subRunNo\" -A initial_eventNo=\"$eventNo\" -A infiles=$filename uboone-mabc.jsonnet ");# > /dev/null 2>&1
