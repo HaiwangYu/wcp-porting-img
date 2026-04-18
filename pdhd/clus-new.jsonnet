@@ -129,7 +129,7 @@ local bs_live_face(apa, face) = {
             // {name:"grid", step:2, planes:[2,0]},
         ],
         // extra: [".*"] // want all the extra
-        extra: [".*wire_index", "wpid"]
+        extra: [".*wire_index", ".*charge_val", ".*charge_unc", "wpid"]
     }
 };
 local bs_dead_face(apa, face) = {
@@ -163,7 +163,7 @@ local bs_face(apa, face) = {
             // {name:"grid", step:2, planes:[2,0]},
         ],
         // extra: [".*"] // want all the extra
-        extra: [".*wire_index", "wpid"]
+        extra: [".*wire_index", ".*charge_val", ".*charge_unc", "wpid"]
     }
 };
 
