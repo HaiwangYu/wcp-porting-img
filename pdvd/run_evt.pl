@@ -30,4 +30,4 @@ sub run_stage {
 
 run_stage('./run_img_evt.sh',  $run, $evt) if $stage eq 'img'   || $stage eq 'chain';
 run_stage('./run_clus_evt.sh', $run, $evt) if $stage eq 'clus'  || $stage eq 'chain';
-run_stage('./run_bee_evt.sh',  $run, $evt) if $stage eq 'bee'   || $stage eq 'chain';
+run_stage('./run_bee_img_evt.sh',  $run, $evt) if $stage eq 'bee'   || $stage eq 'chain';

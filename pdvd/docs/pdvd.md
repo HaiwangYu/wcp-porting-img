@@ -29,7 +29,7 @@ pdvd/
 ├── run_evt.pl               ← main per-(run,event) dispatcher
 ├── run_img_evt.sh           ← imaging only
 ├── run_clus_evt.sh          ← clustering only
-├── run_bee_evt.sh           ← Bee conversion + upload
+├── run_bee_img_evt.sh       ← Bee conversion + upload, from IMAGING output (no clustering)
 ├── run_img.sh               ← original manual recipe (commented examples)
 ├── unzip.pl                 ← extract mabc*.zip into data/ (Path B Bee upload)
 ├── wct-img-2-bee.py         ← convert cluster tarballs → Bee JSON
@@ -160,7 +160,7 @@ All scripts are run from the `pdvd/` directory.  Outputs go to
 Main dispatcher.  `stage` is one of:
 - `img` — imaging only
 - `clus` — clustering only
-- `bee` — Bee conversion + upload only
+- `bee` — Bee conversion + upload from imaging output (no clustering)
 - `chain` — img → clus → bee (**default**)
 
 ```sh
@@ -183,21 +183,25 @@ Reads cluster tarballs from `work/<run>_<evt>/` (after imaging) or falls back
 to the pre-computed tarballs in `input_data/` event dir.  Writes Bee zips to
 `work/<run>_<evt>/`.
 
-### `./run_bee_evt.sh <run> <evt>`
+### `./run_bee_img_evt.sh <run> <evt>`
 
-Converts active cluster tarballs → Bee JSON, zips, uploads.  Reads from
-`work/<run>_<evt>/` if imaging has been run, otherwise from `input_data/` event
-dir.  Produces `upload_<run>_<evt>.zip` and prints the Bee URL.
+Converts imaging cluster tarballs (`clusters-apa-anode{N}-ms-active.tar.gz`,
+produced by `run_img_evt.sh`) directly to Bee JSON via `wirecell-img bee-blobs`
+— does **not** run clustering/MABC.  Reads from `work/<run>_<evt>/` if imaging
+has been run, otherwise from `input_data/` event dir.  Produces
+`upload_<run>_<evt>.zip` and prints the Bee URL.
 
 ---
 
 ## Bee upload
 
-### Path A — via `wct-img-2-bee.py` (used by the helper scripts)
+### Path A — imaging → Bee directly (used by `run_bee_img_evt.sh`)
 
-`wct-img-2-bee.py` calls `wirecell-img bee-blobs -g protodunevd` on each of the 8
-per-anode active cluster tarballs, writing `data/0/0-apa{N}.json`.  The drift
-speed and x-offset sign differ by TPC half:
+Reads the per-anode imaging cluster tarballs
+(`clusters-apa-anode{N}-ms-active.tar.gz`) and calls
+`wirecell-img bee-blobs -g protodunevd` on each, writing `data/0/0-apa{N}.json`.
+No clustering is performed — the Bee display shows the raw imaging blobs.
+The drift speed and x-offset sign differ by TPC half:
 
 | Anodes 0–3 (bottom drift) | Anodes 4–7 (top drift) |
 |---|---|
@@ -206,10 +210,12 @@ speed and x-offset sign differ by TPC half:
 
 After conversion: `zip -r upload data`, then `./upload-to-bee.sh upload.zip`.
 
-### Path B — via clustering's built-in Bee writer (legacy)
+### Path B — clustering → Bee via MABC's built-in writer (used by `run_clus_evt.sh`)
 
-`wct-clustering.jsonnet` / `clus.jsonnet` produce `mabc-anode{N}.zip` via
-`MultiAlgBlobClustering`'s built-in Bee writer.  To upload these:
+`wct-clustering.jsonnet` / `clus.jsonnet` run MABC on the imaging tarballs and
+produce `mabc-anode{N}.zip` / `mabc-all-apa.zip` via
+`MultiAlgBlobClustering`'s built-in Bee writer — the Bee display here shows
+**clustered** blobs, in contrast to Path A's raw imaging blobs.  To upload:
 ```sh
 ./unzip.pl        # expands mabc*.zip into data/
 ./zip-upload.sh   # rezips data/ → upload.zip, calls ../upload-to-bee.sh

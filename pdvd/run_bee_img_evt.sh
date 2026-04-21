@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bee conversion + upload for one event.
-# Usage: ./run_bee_evt.sh <run> <evt>
+# Usage: ./run_bee_img_evt.sh <run> <evt>
 # Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
 # Output: upload_<run>_<evt>.zip  (Bee URL printed to stdout)
 
