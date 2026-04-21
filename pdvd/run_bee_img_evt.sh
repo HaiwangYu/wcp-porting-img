@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bee conversion + upload for one event.
-# Usage: ./run_bee_img_evt.sh <run> <evt>
+# Usage: ./run_bee_img_evt.sh <run> <evt> [subrun]
 # Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
 # Output: upload_<run>_<evt>.zip  (Bee URL printed to stdout)
 
@@ -9,11 +9,12 @@ set -e
 PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <run> <evt>" >&2
+    echo "Usage: $0 <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
 EVT=$2
+SUBRUN=${3:-0}
 
 RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
 [ -z "$RUN_STRIPPED" ] && RUN_STRIPPED=0
@@ -56,10 +57,21 @@ if [ -z "$CLUS_INPUT" ]; then
 fi
 echo "Cluster input: $CLUS_INPUT"
 
+# Extract the art event number from the first available cluster tarball.
+# e.g. cluster_339870_graph.json  →  339870
+ANODE0_CLUS=$(ls "$CLUS_INPUT/clusters-apa-anode"*"-ms-active.tar.gz" 2>/dev/null | head -1)
+EVENT_NO=$(tar tzf "$ANODE0_CLUS" | head -1 | sed -E 's/.*cluster_([0-9]+)_.*/\1/')
+if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
+    echo "ERROR: could not parse event number from $ANODE0_CLUS (got: '$EVENT_NO')" >&2
+    exit 1
+fi
+echo "Art event number: $EVENT_NO"
+
 ZIPNAME="upload_${RUN_PADDED}_${EVT}.zip"
 
 cd "$PDVD_DIR"
 python wct-img-2-bee.py \
+    "$RUN_STRIPPED" "$SUBRUN" "$EVENT_NO" \
     "$CLUS_INPUT/clusters-apa-anode0-ms-active.tar.gz" \
     "$CLUS_INPUT/clusters-apa-anode1-ms-active.tar.gz" \
     "$CLUS_INPUT/clusters-apa-anode2-ms-active.tar.gz" \
