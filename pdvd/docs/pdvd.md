@@ -112,6 +112,8 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/dunereco/dunereco/DUNEW
 
 ## Q3. Clustering
 
+> For a deep-dive on graph topology, RSE propagation, dead-channel handling, and per-APA/face selection see **[clus-workflow.md](clus-workflow.md)**.
+
 **Purpose:** convert per-anode imaging cluster tarballs → multi-algorithm blob clustering → Bee zips.
 
 **Config:** `wct-clustering.jsonnet` (imports `clus.jsonnet`)
