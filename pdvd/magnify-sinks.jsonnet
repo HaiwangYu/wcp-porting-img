@@ -3,6 +3,7 @@
 // outputfile: output ROOT file path
 // runinfo:    optional {runNo, subRunNo, eventNo, total_time_bin} injected into
 //             the first sink's Trun tree; null skips Trun writing.
+//             anodeNo is added automatically from the anode's ident.
 
 local g = import 'pgraph.jsonnet';
 local wc = import 'wirecell.jsonnet';
@@ -26,7 +27,7 @@ function(tools, outputfile, runinfo=null) {
       cmmtree: [['bad', 'T_bad%d' % anode.data.ident]],
       trace_has_tag: true,
       anode: wc.tn(anode),
-    } + (if n == 0 && runinfo != null then { runinfo: runinfo } else {}),
+    } + (if n == 0 && runinfo != null then { runinfo: runinfo { anodeNo: anode.data.ident } } else {}),
   }, nin=1, nout=1, uses=[anode]),
 
   return: {
