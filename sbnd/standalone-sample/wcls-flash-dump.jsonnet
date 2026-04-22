@@ -29,7 +29,6 @@ local opflash_sinks = [
         data: {
             outname: "opflash_apa%d.tar.gz" % n,
             prefix: "opflash_",
-            dump_mode: true,
         }
     }, nin=1, nout=0)
     for n in std.range(0, std.length(tools.anodes) - 1)
