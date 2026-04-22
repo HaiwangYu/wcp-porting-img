@@ -32,6 +32,7 @@ time lar --nskip 0 -n 1 -c wcls-img-clus-matching.fcl -s lynn-iso.root --no-outp
 time lar --nskip 0 -n 1 -c wcls-img-clus-matching.fcl -s lynn-30.root --no-output >& lynn-30.log
 
 python merge-zip.py merged.zip "mabc-*.zip"
+../upload-to-bee.sh merged.zip
 python merge-apa.py --inpath=data-sep --outpath=data --eventNo=0
 ./merge-upload.sh
 ```
@@ -40,4 +41,26 @@ debug stuff
 ```bash
 python filter_cluster.py -o data-sep/2/2-img-apa0-cluster-2.json data-sep/2/2-img-apa0.json 2
 python filter_cluster.py -o ref-lynn-filter.json ref-lynn.json 2
+```
+
+## wire-cell standalone sample
+
+```bash
+lar -c eventdump.fcl -s wire-cell-standalone-sample/genie.root >& log
+time lar --nskip 0 -n 1 -c wcls-img-dump.fcl -s wire-cell-standalone-sample/genie.root --no-output >& log
+python wct-img-2-bee.py sbnd_dead_clus_ # not working
+../zip-upload.sh
+
+
+time lar --nskip 0 -n 1 -c wcls-img-clus.fcl -s wire-cell-standalone-sample/genie.root --no-output >& wcls-img-clus.log
+../upload-to-bee.sh mabc-apa0-face0.zip
+../upload-to-bee.sh mabc-apa1-face0.zip
+
+time lar --nskip 0 -n 1 -c wcls-img-clus-matching.fcl -s standalone-sample/2025f-mc.root --no-output >& wcls-img-clus-matching.log
+# process clustering output
+python merge-zip.py merged.zip "mabc-*.zip"
+../upload-to-bee.sh merged.zip
+# process qlmatching output
+# python merge-apa.py --inpath=data-sep --outpath=data --eventNo=0 # single event
+./merge-upload.sh
 ```
