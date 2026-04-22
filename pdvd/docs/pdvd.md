@@ -104,8 +104,8 @@ TLA reference:
 
 **Required `WIRECELL_PATH`** (set automatically by the helper scripts):
 ```sh
-WCT_BASE=/nfs/data/1/xning/wirecell-working
-export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/dunereco/dunereco/DUNEWireCell/protodunevd:${WIRECELL_PATH}
+WCT_BASE=/nfs/data/1/xqian/toolkit-dev
+export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 ```
 
 ---
@@ -155,7 +155,7 @@ No — the two steps are separate `wire-cell` invocations.  Use
 All scripts are run from the `pdvd/` directory.  Outputs go to
 `work/<run>_<evt>/` (6-digit zero-padded run, e.g. `work/039324_1/`).
 
-### `perl run_evt.pl <run> <evt> [stage]`
+### `perl run_evt.pl [-a anode] <run> <evt> [stage]`
 
 Main dispatcher.  `stage` is one of:
 - `img` — imaging only
@@ -168,28 +168,36 @@ perl run_evt.pl 039324 1          # full chain
 perl run_evt.pl 039324 1 img      # imaging only
 perl run_evt.pl 039324 1 clus     # clustering only (uses imaging output if present)
 perl run_evt.pl 039324 1 bee      # upload to Bee
+perl run_evt.pl -a 3 039324 1 img # imaging for anode 3 only
 ```
+
+The optional `-a N` (0–7) is forwarded to each underlying script, restricting
+all processing to that single anode.  The flag may appear anywhere in the
+argument list (before or after `<run>`, `<evt>`, etc.).
 
 Logs: `work/039324_1/wct_img_039324_1.log`, `work/039324_1/wct_clus_039324_1.log`
 
-### `./run_img_evt.sh <run> <evt>`
+### `./run_img_evt.sh [-a anode] <run> <evt>`
 
 Reads SP frames from `input_data/` event dir, writes cluster tarballs to
-`work/<run>_<evt>/`.
+`work/<run>_<evt>/`.  Use `-a N` (0–7) to process only anode `N`; without it
+all 8 are processed.
 
-### `./run_clus_evt.sh <run> <evt>`
+### `./run_clus_evt.sh [-a anode] <run> <evt>`
 
 Reads cluster tarballs from `work/<run>_<evt>/` (after imaging) or falls back
 to the pre-computed tarballs in `input_data/` event dir.  Writes Bee zips to
-`work/<run>_<evt>/`.
+`work/<run>_<evt>/`.  Use `-a N` (0–7) to restrict to a single anode; without
+it all 8 are processed.
 
-### `./run_bee_img_evt.sh <run> <evt>`
+### `./run_bee_img_evt.sh [-a anode] <run> <evt>`
 
 Converts imaging cluster tarballs (`clusters-apa-anode{N}-ms-active.tar.gz`,
 produced by `run_img_evt.sh`) directly to Bee JSON via `wirecell-img bee-blobs`
 — does **not** run clustering/MABC.  Reads from `work/<run>_<evt>/` if imaging
 has been run, otherwise from `input_data/` event dir.  Produces
-`upload_<run>_<evt>.zip` and prints the Bee URL.
+`upload_<run>_<evt>.zip` and prints the Bee URL.  Use `-a N` (0–7) to convert
+only that anode; the resulting zip contains a single `0-apa{N}.json`.
 
 ---
 
@@ -252,3 +260,8 @@ https://www.phy.bnl.gov/twister/bee/set/<UUID>/event/list/
 - **`wct-img-2-bee.py` clears `data/` on each run**: running multiple events
   sequentially overwrites the previous event's Bee JSON.  Each run produces a
   persistent `upload_<run>_<evt>.zip` file.
+
+- **`run_clus_evt.sh -a N` shrinks the clustering topology to a single APA**:
+  detector volumes, `PointTreeMerging` multiplicity, and MABC's anode list all
+  become single-APA.  Cross-APA clustering steps are a no-op in this mode.
+  Use this for debugging a single anode, not for production.

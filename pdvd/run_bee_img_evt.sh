@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bee conversion + upload for one event.
-# Usage: ./run_bee_img_evt.sh <run> <evt> [subrun]
+# Usage: ./run_bee_img_evt.sh [-a anode] <run> <evt> [subrun]
 # Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
 # Output: upload_<run>_<evt>.zip  (Bee URL printed to stdout)
 
@@ -8,8 +8,19 @@ set -e
 
 PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
 
+ANODE=""
+_args=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -a) ANODE="$2"; shift 2 ;;
+        -a*) ANODE="${1#-a}"; shift ;;
+        *) _args+=("$1"); shift ;;
+    esac
+done
+set -- "${_args[@]}"
+
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-a anode] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -67,19 +78,22 @@ if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
 fi
 echo "Art event number: $EVENT_NO"
 
-ZIPNAME="upload_${RUN_PADDED}_${EVT}.zip"
+if [ -n "$ANODE" ]; then
+    TAG_SUFFIX="_a${ANODE}"
+    ANODE_PAIRS="${ANODE}:${CLUS_INPUT}/clusters-apa-anode${ANODE}-ms-active.tar.gz"
+else
+    TAG_SUFFIX=""
+    ANODE_PAIRS=""
+    for i in 0 1 2 3 4 5 6 7; do
+        ANODE_PAIRS="$ANODE_PAIRS ${i}:${CLUS_INPUT}/clusters-apa-anode${i}-ms-active.tar.gz"
+    done
+fi
+
+ZIPNAME="upload_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.zip"
 
 cd "$PDVD_DIR"
-python wct-img-2-bee.py \
-    "$RUN_STRIPPED" "$SUBRUN" "$EVENT_NO" \
-    "$CLUS_INPUT/clusters-apa-anode0-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode1-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode2-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode3-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode4-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode5-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode6-ms-active.tar.gz" \
-    "$CLUS_INPUT/clusters-apa-anode7-ms-active.tar.gz"
+# shellcheck disable=SC2086
+python wct-img-2-bee.py "$RUN_STRIPPED" "$SUBRUN" "$EVENT_NO" $ANODE_PAIRS
 
 # wct-img-2-bee.py writes upload.zip; rename to per-event name
 mv -f upload.zip "$ZIPNAME"
