@@ -227,7 +227,7 @@ local clus_per_face (
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
             bee_zip: "%s/mabc-%s-face%d.zip"%[bee_dir, anode.name, face],
-            bee_detector: "sbnd",
+            bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
             runNo: LrunNo,
@@ -326,7 +326,7 @@ local clus_per_apa (
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
             bee_zip: "%s/mabc-%s.zip"%[bee_dir, anode.name],
-            bee_detector: "sbnd",
+            bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
             runNo: LrunNo,
@@ -439,7 +439,7 @@ local clus_all_apa (
             perf: true,
             bee_dir: bee_dir, // "data/0/0", // not used
             bee_zip: "%s/mabc-all-apa.zip"%[bee_dir],
-            bee_detector: "sbnd",
+            bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
             runNo: LrunNo,
@@ -451,7 +451,7 @@ local clus_all_apa (
             bee_points_sets: [  // New configuration for multiple bee points sets
             //    {
             //        name: "img",                // Name of the bee points set
-            //        detector: "protodUNEvd",         // Detector name
+            //        detector: "protodunevd",         // Detector name
             //        algorithm: "img",           // Algorithm identifier
             //        pcname: "3d",           // Which scope to use
             //        coords: ["x", "y", "z"],    // Coordinates to use
@@ -459,7 +459,7 @@ local clus_all_apa (
             //    },
             {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodUNEvd",         // Detector name
+                    detector: "protodunevd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use
