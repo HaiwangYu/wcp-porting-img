@@ -82,6 +82,14 @@ for N in 0 1 2 3 4 5 6 7; do
     echo "--- Anode ${N}: $OUTPUT"
     rm -f "$LOG"
 
+    RAW_ARCHIVE="$EVTDIR/protodune-sp-frames-raw-anode${N}.tar.bz2"
+    if [ -s "$RAW_ARCHIVE" ]; then
+        echo "    + raw: $RAW_ARCHIVE"
+        RAW_ARGS="--tla-code include_raw=true --tla-str raw_input_prefix=${EVTDIR}/protodune-sp-frames-raw"
+    else
+        RAW_ARGS="--tla-code include_raw=false"
+    fi
+
     wire-cell \
         -l stderr \
         -l "${LOG}:debug" \
@@ -92,6 +100,7 @@ for N in 0 1 2 3 4 5 6 7; do
         --tla-code "run=${RUN_STRIPPED}" \
         --tla-code "subrun=${SUBRUN}" \
         --tla-code "event=${EVENT_NO}" \
+        ${RAW_ARGS} \
         -c wct-sp-to-magnify.jsonnet
 
     echo "    done -> $OUTPUT"
