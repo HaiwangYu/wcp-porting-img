@@ -9,13 +9,7 @@ local drift_speed = 1.6 * wc.mm / wc.us;
 local bee_zip = "mabc.zip";
 
 local initial_index = "0";
-local initial_runNo = "1";
-local initial_subRunNo = "1";
-local initial_eventNo = "1";
 local index = std.parseInt(initial_index);
-local LrunNo = std.parseInt(initial_runNo);
-local LsubRunNo = std.parseInt(initial_subRunNo);
-local LeventNo  = std.parseInt(initial_eventNo);
 
 
 local common_coords = ["x", "y", "z"];
@@ -141,6 +135,9 @@ local clus_per_face (
     face,
     dump = true,
     bee_dir = "data",
+    runNo = 1,
+    subRunNo = 1,
+    eventNo = 1,
     ) =
 {
 
@@ -230,9 +227,9 @@ local clus_per_face (
             bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
-            runNo: LrunNo,
-            subRunNo: LsubRunNo,
-            eventNo: LeventNo,
+            runNo: runNo,
+            subRunNo: subRunNo,
+            eventNo: eventNo,
             save_deadarea: true,
             anodes: [wc.tn(anode)],
             face: face,
@@ -272,6 +269,9 @@ local clus_per_apa (
     anode,
     dump = true,
     bee_dir = "data",
+    runNo = 1,
+    subRunNo = 1,
+    eventNo = 1,
     ) =
 {
     local cfout_live = g.pnode({
@@ -289,8 +289,8 @@ local clus_per_apa (
         }}, nin=1, nout=2),
 
     local per_face_pipes = [
-        clus_per_face(anode, face=0, dump=false, bee_dir=bee_dir),
-        clus_per_face(anode, face=1, dump=false, bee_dir=bee_dir),
+        clus_per_face(anode, face=0, dump=false, bee_dir=bee_dir, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
+        clus_per_face(anode, face=1, dump=false, bee_dir=bee_dir, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
     ],
 
     local pcmerging = g.pnode({
@@ -329,9 +329,9 @@ local clus_per_apa (
             bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
-            runNo: LrunNo,
-            subRunNo: LsubRunNo,
-            eventNo: LeventNo,
+            runNo: runNo,
+            subRunNo: subRunNo,
+            eventNo: eventNo,
             save_deadarea: true,
             anodes: [wc.tn(anode)],
             detector_volumes: wc.tn(dv),
@@ -373,6 +373,9 @@ local clus_all_apa (
     anodes,
     dump = true,
     bee_dir = "data",
+    runNo = 1,
+    subRunNo = 1,
+    eventNo = 1,
     ) = {
     local nanodes = std.length(anodes),
     local pcmerging = g.pnode({
@@ -442,9 +445,9 @@ local clus_all_apa (
             bee_detector: "protodunevd",
             initial_index: index,   // New RSE configuration
             use_config_rse: true,  // Enable use of configured RSE
-            runNo: LrunNo,
-            subRunNo: LsubRunNo,
-            eventNo: LeventNo,
+            runNo: runNo,
+            subRunNo: subRunNo,
+            eventNo: eventNo,
             save_deadarea: true,
             anodes: [wc.tn(a) for a in anodes],
             detector_volumes: wc.tn(dv),
@@ -493,9 +496,9 @@ local clus_all_apa (
 }.ret;
 
 
-function (output_dir='') {
+function (output_dir='', runNo=1, subRunNo=1, eventNo=1) {
     local bee_dir = if output_dir == '' then 'data' else output_dir,
-    per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump, bee_dir=bee_dir),
-    per_apa(anode, dump=true) :: clus_per_apa(anode, dump=dump, bee_dir=bee_dir),
-    all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump, bee_dir=bee_dir),
+    per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump, bee_dir=bee_dir, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
+    per_apa(anode, dump=true) :: clus_per_apa(anode, dump=dump, bee_dir=bee_dir, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
+    all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump, bee_dir=bee_dir, runNo=runNo, subRunNo=subRunNo, eventNo=eventNo),
 }
