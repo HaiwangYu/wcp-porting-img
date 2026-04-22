@@ -4,12 +4,11 @@
 
 Wire geometry file:
 ```
-/nfs/data/1/xning/wirecell-working/dunereco/dunereco/DUNEWireCell/protodunevd/protodunevd-wires-larsoft-v3.json.bz2
+/nfs/data/1/xqian/toolkit-dev/wire-cell-data/protodunevd-wires-larsoft-v3.json.bz2
 ```
 
 ```sh
-WCT_BASE=/nfs/data/1/xning/wirecell-working
-GEOM=${WCT_BASE}/dunereco/dunereco/DUNEWireCell/protodunevd/protodunevd-wires-larsoft-v3.json.bz2
+GEOM=/nfs/data/1/xqian/toolkit-dev/wire-cell-data/protodunevd-wires-larsoft-v3.json.bz2
 ```
 
 ### Text summary (anode/face/plane/wire counts, pitch, coordinate ranges)
