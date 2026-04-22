@@ -1,0 +1,59 @@
+#include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "detsim_drops.fcl"
+#include "opdetdigitizer_sbnd.fcl"
+
+process_name: wclssig2img
+
+services:
+{
+  TFileService: { fileName: "tf-default.root" }
+  @table::sbnd_detsim_services
+  AuxDetGeometry: @local::sbnd_auxdetgeo
+  @table::sbnd_geometry_services
+}
+
+source: {
+   module_type: RootInput
+}
+
+physics :{
+   producers: {
+
+      sig2img : {
+         module_type : WireCellToolkit
+         wcls_main: {
+            tool_type: WCLS
+            apps: ["Pgrapher"]
+
+            logsinks: ["stdout"]
+            loglevels: ["debug"]
+
+            plugins: ["WireCellGen", "WireCellImg", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+
+            inputers: ["wclsCookedFrameSource:sigs"]
+
+            configs: ["wcls-img-dump.jsonnet"]
+
+            params : {
+                reality: "sim"
+            }
+            structs : {
+                DL: 6.2
+                DT: 9.8
+                lifetime: 6
+                driftSpeed: 1.565
+                recobwire_tags: "[\"simtpc2d:dnnsp\", \"simtpc2d:dnnsp\"]"
+                trace_tags: "[\"gauss\", \"wiener\"]"
+                summary_tags: "[\"\", \"simtpc2d:wienersummary\"]"
+                input_mask_tags: "[\"simtpc2d:badmasks\"]"
+                output_mask_tags: "[\"bad\"]"
+            }
+         }
+      }
+   }
+
+   p1 : [ sig2img ]
+   trigger_paths : [ p1 ]
+
+}
