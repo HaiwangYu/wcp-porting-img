@@ -183,12 +183,14 @@ Reads SP frames from `input_data/` event dir, writes cluster tarballs to
 `work/<run>_<evt>/`.  Use `-a N` (0–7) to process only anode `N`; without it
 all 8 are processed.
 
-### `./run_clus_evt.sh [-a anode] <run> <evt>`
+### `./run_clus_evt.sh [-a anode] <run> <evt> [subrun]`
 
 Reads cluster tarballs from `work/<run>_<evt>/` (after imaging) or falls back
 to the pre-computed tarballs in `input_data/` event dir.  Writes Bee zips to
 `work/<run>_<evt>/`.  Use `-a N` (0–7) to restrict to a single anode; without
-it all 8 are processed.
+it all 8 are processed.  The Art event number is parsed automatically from the
+cluster-tarball filenames and embedded in the Bee output.  The optional
+`[subrun]` arg sets the subRun number (default `0`).
 
 ### `./run_bee_img_evt.sh [-a anode] <run> <evt>`
 
@@ -241,10 +243,12 @@ https://www.phy.bnl.gov/twister/bee/set/<UUID>/event/list/
 
 ## Known gotchas
 
-- **RSE hard-coded in `clus.jsonnet`**: `initial_runNo`, `initial_subRunNo`,
-  `initial_eventNo` are hard-coded locals (lines 11–18), not TLAs.  Bee event
-  metadata will not reflect the actual run/event.  For visualisation this is
-  usually fine.
+- **RSE in clustering Bee output**: `run_clus_evt.sh` automatically parses
+  the Art event number from the cluster-tarball filename and passes
+  `run`/`subrun`/`event` as TLAs to `wct-clustering.jsonnet`, which threads
+  them into all three `MultiAlgBlobClustering` instances.  The optional third
+  positional arg sets subrun: `./run_clus_evt.sh 039324 1 7` → subRun=7;
+  default is 0.
 
 - **`run41189` vs `run039324` naming**: `run41189` has no leading zeros and stores
   data files directly at the run root with no `evt*/` subdir.  The helper scripts

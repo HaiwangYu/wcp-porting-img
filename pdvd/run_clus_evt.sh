@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run clustering for one event.
-# Usage: ./run_clus_evt.sh [-a anode] <run> <evt>
+# Usage: ./run_clus_evt.sh [-a anode] <run> <evt> [subrun]
 # Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
 # Output: work/<run>_<evt>/mabc-anode{N}.zip, mabc-all-apa.zip
 
@@ -23,11 +23,12 @@ done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt>" >&2
+    echo "Usage: $0 [-a anode] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
 EVT=$2
+SUBRUN=${3:-0}
 
 RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
 [ -z "$RUN_STRIPPED" ] && RUN_STRIPPED=0
@@ -73,6 +74,16 @@ fi
 echo "Cluster input: $CLUS_INPUT"
 echo "Work dir:      $WORKDIR"
 
+# Extract the art event number from the first available cluster tarball.
+# e.g. cluster_339870_graph.json  →  339870
+ANODE0_CLUS=$(ls "$CLUS_INPUT/clusters-apa-anode"*"-ms-active.tar.gz" 2>/dev/null | head -1)
+EVENT_NO=$(tar tzf "$ANODE0_CLUS" | head -1 | sed -E 's/.*cluster_([0-9]+)_.*/\1/')
+if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
+    echo "ERROR: could not parse event number from $ANODE0_CLUS (got: '$EVENT_NO')" >&2
+    exit 1
+fi
+echo "Art event number: $EVENT_NO"
+
 if [ -n "$ANODE" ]; then
     ANODE_CODE="[$ANODE]"
     TAG_SUFFIX="_a${ANODE}"
@@ -93,6 +104,9 @@ wire-cell \
     --tla-str "input=${CLUS_INPUT}" \
     --tla-code "anode_indices=${ANODE_CODE}" \
     --tla-str "output_dir=${WORKDIR}" \
+    --tla-code "run=${RUN_STRIPPED}" \
+    --tla-code "subrun=${SUBRUN}" \
+    --tla-code "event=${EVENT_NO}" \
     -c wct-clustering.jsonnet
 
 echo "Clustering done -> $WORKDIR"

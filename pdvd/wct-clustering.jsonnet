@@ -17,7 +17,10 @@ function(
     // Indices into tools_all.anodes to process; default = all
     anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
     // Directory for output mabc-*.zip and bee data files ('' means current directory)
-    output_dir = ''
+    output_dir = '',
+    run = 1,
+    subrun = 1,
+    event = 1,
 )
 
 local anodes = [tools_all.anodes[i] for i in anode_indices];
@@ -37,7 +40,7 @@ local active_clusters = [cluster_source(f) for f in active_files];
 local masked_clusters = [cluster_source(f) for f in masked_files];
 
 local clus = import 'clus.jsonnet';
-local clus_maker = clus(output_dir=output_dir);
+local clus_maker = clus(output_dir=output_dir, runNo=run, subRunNo=subrun, eventNo=event);
 local clus_pipes = [clus_maker.per_apa(anodes[n], dump=false) for n in std.range(0, nanodes - 1)];
 
 local img_clus_pipe = [g.intern(
