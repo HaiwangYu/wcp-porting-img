@@ -6,3 +6,19 @@
 - reference: `/exp/sbnd/app/users/yuhw/wcp-porting-img/sbnd` and `/exp/sbnd/app/users/yuhw/sbnd-op`
 - ask me if anyting is not clear
 - do not auto-commit
+
+# write a wct-clus-matching.fcl
+- Good, but the QLMatching in sbnd/standalone-sample/wct-clus-matching.jsonnet needs a larsoft enviroment. So we now have to run wct-clus-matching.jsonnet in a wct-clus-matching.fcl
+- The inputers/outputers could be empty from the fcl side. So that we use the wire-cell standalone format.
+- To setup testing enviroment:
+```bash
+sl7 () 
+{ 
+    /cvmfs/oasis.opensciencegrid.org/mis/apptainer/current/bin/apptainer shell --shell=/bin/bash -B /cvmfs,/exp,/nashome,${1},/opt,/run/user,/etc/hostname,/etc/hosts,/etc/krb5.conf --ipc --pid /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-dev-sl7:latest;
+    source /nashome/y/yuhw/.bash_profile;
+    export PS1=(app)$PS1
+}
+source /exp/sbnd/app/users/yuhw/setup.sh
+```
+- ask me if anyting is not clear
+- do not auto-commit

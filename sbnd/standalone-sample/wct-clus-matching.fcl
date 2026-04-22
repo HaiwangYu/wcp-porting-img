@@ -1,0 +1,56 @@
+#include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+
+process_name: wctclusmatching
+
+services:
+{
+  TFileService: { fileName: "tf-default.root" }
+  @table::sbnd_detsim_services
+  AuxDetGeometry: @local::sbnd_auxdetgeo
+  @table::sbnd_geometry_services
+}
+
+source: {
+  module_type: EmptyEvent
+  maxEvents: 1
+}
+
+physics:
+{
+  producers: {
+    clusmatching: {
+      module_type: WireCellToolkit
+      wcls_main: {
+        tool_type: WCLS
+        apps: ["Pgrapher"]
+
+        logsinks: ["stdout"]
+        loglevels: ["debug"]
+
+        plugins: ["WireCellGen", "WireCellPgraph", "WireCellSio", "WireCellSigProc",
+                  "WireCellImg", "WireCellRoot", "WireCellTbb", "WireCellClus",
+                  "WireCellQLMatch", "WireCellLarsoft"]
+
+        inputers: []
+        outputers: []
+
+        configs: ["wct-clus-matching.jsonnet"]
+
+        params: {
+          reality: "sim"
+          input: "."
+        }
+        structs: {
+          DL: 6.2
+          DT: 9.8
+          lifetime: 6
+          driftSpeed: 1.565
+        }
+      }
+    }
+  }
+
+  p1: [clusmatching]
+  trigger_paths: [p1]
+}
