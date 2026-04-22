@@ -8,8 +8,8 @@ set -e
 
 PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
 
-WCT_BASE=/nfs/data/1/xning/wirecell-working
-export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/dunereco/dunereco/DUNEWireCell/protodunevd:${WIRECELL_PATH}
+WCT_BASE=/nfs/data/1/xqian/toolkit-dev
+export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <run> <evt> [subrun]" >&2

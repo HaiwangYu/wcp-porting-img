@@ -104,8 +104,8 @@ TLA reference:
 
 **Required `WIRECELL_PATH`** (set automatically by the helper scripts):
 ```sh
-WCT_BASE=/nfs/data/1/xning/wirecell-working
-export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/dunereco/dunereco/DUNEWireCell/protodunevd:${WIRECELL_PATH}
+WCT_BASE=/nfs/data/1/xqian/toolkit-dev
+export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 ```
 
 ---
