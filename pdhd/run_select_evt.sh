@@ -108,6 +108,7 @@ for archive in "${ARCHIVES[@]}"; do
     [ -s "$archive" ] || { echo "Skipping missing/empty: $archive"; continue; }
     echo "--- Opening GUI: $archive"
     woodpecker select "$archive" \
+        --detector hd \
         --outdir "$SELDIR" \
         --prefix "protodunehd-sp-frames"
 done
