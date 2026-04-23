@@ -166,7 +166,7 @@ local img = {
         local tilings = [$.tiling(anode, name+"_%d"%n)
             for n in iota],
         local multipass = [g.pipeline([slicings[n],tilings[n]]) for n in iota],
-        ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_active_slicing_tiling"),
+        ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_active_slicing_tiling_%s"%name),
     }.ret,
 
     //
@@ -180,7 +180,7 @@ local img = {
         local tilings = [$.tiling(anode, name+"_%d"%n)
             for n in iota],
         local multipass = [g.pipeline([slicings[n],tilings[n]]) for n in iota],
-        ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_masked_slicing_tiling"),
+        ret: f.fanpipe("FrameFanout", multipass, "BlobSetMerge", "multi_masked_slicing_tiling_%s"%name),
     }.ret,
 
     local clustering_policy = "uboone", // uboone, simple
@@ -341,7 +341,7 @@ function(output_dir='') {
             img.clustering(anode, anode.name+"-ms-masked"),
             img.dump(anode, anode.name+"-ms-masked", params.lar.drift_speed, output_dir),
         ]),
-        ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked"),
+        ret: g.fan.fanout("FrameFanout",[active_fork,masked_fork], "fan_active_masked-%s"%anode.name),
     }.ret,
 
     per_anode(anode, pipe_type = "multi") :: g.pipeline([

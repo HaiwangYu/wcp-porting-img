@@ -4,10 +4,10 @@
 #
 # Usage: ./run_select_evt.sh [-a anode] <run> <evt> <sel_tag>
 #
-# Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode<N>.tar.bz2
+# Input:  input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode<N>.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>_sel<TAG>/input/
-#             protodune-sp-frames-anode<N>.tar.bz2   (masked, zeros outside selection)
-#             selection-anode<N>.json                (tick/channel sidecar)
+#             protodunehd-sp-frames-anode<N>.tar.bz2   (masked, zeros outside selection)
+#             selection-anode<N>.json                  (tick/channel sidecar)
 #
 # After selection, pass -s <TAG> to the pipeline scripts:
 #   ./run_sp_to_magnify_evt.sh <run> <evt> -s <TAG>
@@ -17,7 +17,7 @@
 
 set -e
 
-PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
+PDHD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 ANODE=""
 _args=()
@@ -44,7 +44,7 @@ RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
 RUN_PADDED=$(printf '%06d' "$RUN_STRIPPED")
 
 find_evtdir() {
-    local base="$PDVD_DIR/input_data"
+    local base="$PDHD_DIR/input_data"
     for rname in "run${RUN}" "run${RUN_PADDED}" "run${RUN_STRIPPED}"; do
         local rdir="$base/$rname"
         [ -d "$rdir" ] || continue
@@ -54,7 +54,7 @@ find_evtdir() {
                 echo "$cand"; return 0
             fi
         done
-        if ls "$rdir/protodune-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+        if ls "$rdir/protodunehd-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
             echo "$rdir"; return 0
         fi
     done
@@ -63,24 +63,24 @@ find_evtdir() {
 
 EVTDIR=$(find_evtdir)
 if [ -z "$EVTDIR" ]; then
-    echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
+    echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDHD_DIR/input_data/" >&2
     exit 1
 fi
 echo "Source event dir: $EVTDIR"
 
-SELDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}/input"
+SELDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}/input"
 mkdir -p "$SELDIR"
 echo "Selection output: $SELDIR"
 
 # Find archives to select from; optionally restrict to one anode
 if [ -n "$ANODE" ]; then
-    ARCHIVES=("$EVTDIR/protodune-sp-frames-anode${ANODE}.tar.bz2")
+    ARCHIVES=("$EVTDIR/protodunehd-sp-frames-anode${ANODE}.tar.bz2")
 else
-    mapfile -t ARCHIVES < <(ls "$EVTDIR/protodune-sp-frames-anode"*.tar.bz2 2>/dev/null)
+    mapfile -t ARCHIVES < <(ls "$EVTDIR/protodunehd-sp-frames-anode"*.tar.bz2 2>/dev/null)
 fi
 
 if [ ${#ARCHIVES[@]} -eq 0 ]; then
-    echo "ERROR: no protodune-sp-frames-anode*.tar.bz2 found in $EVTDIR" >&2
+    echo "ERROR: no protodunehd-sp-frames-anode*.tar.bz2 found in $EVTDIR" >&2
     exit 1
 fi
 
@@ -109,7 +109,7 @@ for archive in "${ARCHIVES[@]}"; do
     echo "--- Opening GUI: $archive"
     woodpecker select "$archive" \
         --outdir "$SELDIR" \
-        --prefix "protodune-sp-frames"
+        --prefix "protodunehd-sp-frames"
 done
 
 echo ""
