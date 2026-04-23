@@ -46,7 +46,7 @@ local tools_all = tools_maker(params);
 //     anodes : [
 //               // tools_all.anodes[4]
 //               // tools_all.anodes[5] // problem one
-//               tools_all.anodes[5] // good one
+//               tools_all.anodes[4] // good one
 //               ]
 // }
 // ;
@@ -185,6 +185,21 @@ local magoutput = 'protodune-data-check.root';
 local magnify = import 'pgrapher/experiment/protodunevd/magnify-sinks.jsonnet';
 local mio = magnify(tools, magoutput);
 
+// FrameFileSink tap: saves orig frame (after chsel, before resampler) per anode.
+local orig_frame_tap = function(anode_ident)
+    g.fan.tap('FrameFanout',
+        g.pnode({
+            type: 'FrameFileSink',
+            name: 'origframesink%d' % anode_ident,
+            data: {
+                outname: 'protodune-orig-frames-anode%d.tar.bz2' % anode_ident,
+                tags: ['orig'],
+                digitize: false,
+                masks: false,
+            },
+        }, nin=1, nout=0),
+        'origframetap%d' % anode_ident);
+
 // FrameFileSink tap: saves raw (NF output) frame to tar file, inserted after NF and before SP.
 local raw_frame_tap = function(anode_ident)
     g.fan.tap('FrameFanout',
@@ -217,7 +232,7 @@ local frame_tap = function(anode_ident)
                     'wiener%d' % anode_ident,
                 ],
                 digitize: false,
-                masks: false,  // skip chanmask: empty (0,3) array causes pigenc parse error in reader
+                masks: true,  // save "bad" chanmask (passed through by OmnibusSigProc) for wct-img-all.jsonnet
             },
         }, nin=1, nout=0),
         'spframetap%d' % anode_ident);
@@ -226,6 +241,7 @@ local use_magnify = std.extVar("use_magnify");
 local nfsp_pipes = [
   g.pipeline(
              [ chsel_pipes[n] ]
+             + [ orig_frame_tap(tools.anodes[n].data.ident) ]  // save orig frames before resampler
              + (if use_resampler=='true' && n<4 then [ resamplers[n] ] else [ ])
             //  + (if use_magnify =='true' then [mio.orig_pipe[n]] else [ ])
              + [ nf_pipes[n] ]
