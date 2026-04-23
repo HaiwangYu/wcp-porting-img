@@ -46,7 +46,9 @@ function(
   local img = import 'img.jsonnet';
   local img_maker = img(output_dir=output_dir);
 
-  // Build one FrameFileSource + imaging pipeline per anode
+  // Build one FrameFileSource + imaging pipeline per anode.
+  // Reframer densifies sparse IFrames (where gauss/wiener may have
+  // different row counts) to the full anode channel set before imaging.
   local per_anode_graph(anode) =
     local aid = anode.data.ident;
     local src = g.pnode({
@@ -57,7 +59,18 @@ function(
         tags: ['gauss%d' % aid, 'wiener%d' % aid],
       },
     }, nin=0, nout=1);
-    g.pipeline([src, img_maker.per_anode(anode)],
+    local reframer = g.pnode({
+      type: 'Reframer',
+      name: 'reframer_anode%d' % aid,
+      data: {
+        anode: wc.tn(anode),
+        tags: ['gauss%d' % aid, 'wiener%d' % aid],
+        tbin: 0,
+        nticks: params.daq.nticks,
+        fill: 0.0,
+      },
+    }, nin=1, nout=1, uses=[anode]);
+    g.pipeline([src, reframer, img_maker.per_anode(anode)],
                'img_graph_anode%d' % aid);
 
   local graphs = [per_anode_graph(a) for a in anodes];

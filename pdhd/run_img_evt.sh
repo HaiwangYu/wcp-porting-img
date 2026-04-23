@@ -1,7 +1,11 @@
 #!/bin/bash
 # Run imaging for one event.
-# Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <run> <evt>
+# Usage: ./run_img_evt.sh [-a anode] [-S] [-s sel_tag] <run> <evt>
 # Input:  input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode{0..3}.tar.bz2
+#   By default the dense archive is used.  If the dense archive for an anode is
+#   missing and a sparse variant (*-sparseon.tar.bz2) exists, the sparse variant
+#   is used automatically as a fallback.
+#   -S:  force-prefer the sparse variant for every anode that has one.
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
 # Output: work/<run>_<evt>[_sel<TAG>]/clusters-apa-apa{N}-ms-{active,masked}.tar.gz
 
@@ -14,6 +18,7 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 
 ANODE=""
 SEL_TAG=""
+FORCE_SPARSE=false
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -21,13 +26,14 @@ while [ $# -gt 0 ]; do
         -a*) ANODE="${1#-a}"; shift ;;
         -s) SEL_TAG="$2"; shift 2 ;;
         -s*) SEL_TAG="${1#-s}"; shift ;;
+        -S) FORCE_SPARSE=true; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt>" >&2
+    echo "Usage: $0 [-a anode] [-S] [-s sel_tag] <run> <evt>" >&2
     exit 1
 fi
 RUN=$1
@@ -76,13 +82,56 @@ echo "Event dir: $EVTDIR"
 
 if [ -n "$ANODE" ]; then
     ANODE_CODE="[$ANODE]"
+    ANODE_INDICES=("$ANODE")
     TAG_SUFFIX="_a${ANODE}"
 else
     ANODE_CODE="[0,1,2,3]"
+    ANODE_INDICES=(0 1 2 3)
     TAG_SUFFIX=""
 fi
 
 mkdir -p "$WORKDIR"
+
+# Determine per-anode archive: dense by default; sparse if forced (-S) or
+# dense is missing (automatic fallback).  Staging is only created when at
+# least one anode uses a sparse archive (whose filename differs from the
+# standard pattern expected by FrameFileSource).
+NEED_STAGE=false
+for ai in "${ANODE_INDICES[@]}"; do
+    dense="${EVTDIR}/protodunehd-sp-frames-anode${ai}.tar.bz2"
+    sparse="${EVTDIR}/protodunehd-sp-frames-anode${ai}-sparseon.tar.bz2"
+    if $FORCE_SPARSE && [ -f "$sparse" ]; then
+        NEED_STAGE=true; break
+    elif [ ! -f "$dense" ] && [ -f "$sparse" ]; then
+        NEED_STAGE=true; break
+    fi
+done
+
+if $NEED_STAGE; then
+    STAGE_DIR="${WORKDIR}/sp_stage"
+    mkdir -p "$STAGE_DIR"
+    for ai in "${ANODE_INDICES[@]}"; do
+        dense="${EVTDIR}/protodunehd-sp-frames-anode${ai}.tar.bz2"
+        sparse="${EVTDIR}/protodunehd-sp-frames-anode${ai}-sparseon.tar.bz2"
+        if $FORCE_SPARSE && [ -f "$sparse" ]; then
+            ln -sf "$sparse" "${STAGE_DIR}/protodunehd-sp-frames-anode${ai}.tar.bz2"
+            echo "  anode${ai}: sparse (forced)"
+        elif [ -f "$dense" ]; then
+            ln -sf "$dense" "${STAGE_DIR}/protodunehd-sp-frames-anode${ai}.tar.bz2"
+            echo "  anode${ai}: dense"
+        elif [ -f "$sparse" ]; then
+            ln -sf "$sparse" "${STAGE_DIR}/protodunehd-sp-frames-anode${ai}.tar.bz2"
+            echo "  anode${ai}: sparse (dense not found)"
+        else
+            echo "ERROR: no archive found for anode${ai} in $EVTDIR" >&2
+            exit 1
+        fi
+    done
+    INPUT_PREFIX="${STAGE_DIR}/protodunehd-sp-frames"
+else
+    INPUT_PREFIX="${EVTDIR}/protodunehd-sp-frames"
+fi
+
 LOG="$WORKDIR/wct_img_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
 echo "Work dir:  $WORKDIR"
 echo "Log:       $LOG"
@@ -93,7 +142,7 @@ wire-cell \
     -l stderr \
     -l "${LOG}:debug" \
     -L debug \
-    --tla-str "input_prefix=${EVTDIR}/protodunehd-sp-frames" \
+    --tla-str "input_prefix=${INPUT_PREFIX}" \
     --tla-code "anode_indices=${ANODE_CODE}" \
     --tla-str "output_dir=${WORKDIR}" \
     -c wct-img-all.jsonnet
