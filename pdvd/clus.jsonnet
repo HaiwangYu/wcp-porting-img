@@ -335,6 +335,16 @@ local clus_per_apa (
             save_deadarea: true,
             anodes: [wc.tn(anode)],
             detector_volumes: wc.tn(dv),
+            bee_points_sets: [
+                {
+                    name: "clustering",
+                    detector: "protodunevd",
+                    algorithm: "clustering",
+                    pcname: "3d",
+                    coords: ["x", "y", "z"],
+                    individual: false,
+                }
+            ],
             pipeline: wc.tns(cm_pipeline),
         }
     }, nin=1, nout=1, uses=[anode, dv, pcts]+cm_pipeline),
@@ -465,7 +475,7 @@ local clus_all_apa (
                     detector: "protodunevd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
-                    coords: ["x_t0cor", "y", "z"],    // Coordinates to use
+                    coords: ["x", "y", "z"],    // Coordinates to use (uncorrected; x_t0cor needs flash-associated t0)
                     individual: false            // Output individual APA/Face
                 }
             ],
