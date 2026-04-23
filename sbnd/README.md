@@ -52,7 +52,7 @@ python wct-img-2-bee.py sbnd_dead_clus_ # not working
 ../zip-upload.sh
 
 
-time lar --nskip 0 -n 1 -c wcls-img-clus.fcl -s wire-cell-standalone-sample/genie.root --no-output >& wcls-img-clus.log
+time lar --nskip 0 -n 1 -c wcls-img-clus.fcl -s standalone-sample/2025f-mc.root --no-output >& wcls-img-clus.log
 ../upload-to-bee.sh mabc-apa0-face0.zip
 ../upload-to-bee.sh mabc-apa1-face0.zip
 
@@ -63,4 +63,10 @@ python merge-zip.py merged.zip "mabc-*.zip"
 # process qlmatching output
 # python merge-apa.py --inpath=data-sep --outpath=data --eventNo=0 # single event
 ./merge-upload.sh
+```
+
+wire information
+```bash
+wirecell-util plot-wires /exp/sbnd/app/users/yuhw/wire-cell-data/sbnd-wires-geometry-v0206.json.bz2 sbnd-wires-geometry-v0206.pdf
+wirecell-util plot-wires /exp/sbnd/app/users/yuhw/wire-cell-data/sbnd-wires-geometry-v0200.json.bz2 sbnd-wires-geometry-v0200.pdf
 ```
