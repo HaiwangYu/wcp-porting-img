@@ -1,13 +1,13 @@
 #!/bin/bash
 # Convert SP frame archives for one event to per-anode Magnify ROOT files.
 # Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <run> <evt> [subrun]
-# Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
+# Input:  input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode{0..3}.tar.bz2
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
-# Output: work/<run>_<evt>[_sel<TAG>]/magnify-run<RUN>-evt<EVT>-anode<N>.root  (one per anode)
+# Output: work/<run>_<evt>[_sel<TAG>]/magnify-run<RUN>-evt<EVT>-apa<N>.root  (one per anode)
 
 set -e
 
-PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
+PDHD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
@@ -36,7 +36,7 @@ RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
 RUN_PADDED=$(printf '%06d' "$RUN_STRIPPED")
 
 find_evtdir() {
-    local base="$PDVD_DIR/input_data"
+    local base="$PDHD_DIR/input_data"
     for rname in "run${RUN}" "run${RUN_PADDED}" "run${RUN_STRIPPED}"; do
         local rdir="$base/$rname"
         [ -d "$rdir" ] || continue
@@ -46,7 +46,7 @@ find_evtdir() {
                 echo "$cand"; return 0
             fi
         done
-        if ls "$rdir/protodune-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+        if ls "$rdir/protodunehd-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
             echo "$rdir"; return 0
         fi
     done
@@ -54,7 +54,7 @@ find_evtdir() {
 }
 
 if [ -n "$SEL_TAG" ]; then
-    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
     EVTDIR="$WORKDIR/input"
     if [ ! -d "$EVTDIR" ]; then
         echo "ERROR: selection dir not found: $EVTDIR" >&2
@@ -64,16 +64,16 @@ if [ -n "$SEL_TAG" ]; then
 else
     EVTDIR=$(find_evtdir)
     if [ -z "$EVTDIR" ]; then
-        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
+        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDHD_DIR/input_data/" >&2
         exit 1
     fi
-    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}"
 fi
 echo "Event dir: $EVTDIR"
 
 # Extract the art event number from the anode0 archive filename suffix.
 # e.g. frame_gauss0_339870.npy  →  339870
-ANODE0_ARCHIVE="$EVTDIR/protodune-sp-frames-anode0.tar.bz2"
+ANODE0_ARCHIVE="$EVTDIR/protodunehd-sp-frames-anode0.tar.bz2"
 if [ ! -s "$ANODE0_ARCHIVE" ]; then
     echo "ERROR: missing or empty $ANODE0_ARCHIVE" >&2
     exit 1
@@ -85,29 +85,47 @@ if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
 fi
 echo "Art event number: $EVENT_NO"
 
+# Extract the actual frame tick count (number of columns in frame_gauss0_*.npy)
+# rather than hard-coding it.  Only the Trun metadata field total_time_bin uses
+# this value; all TH2F binning is data-driven from the frame shape.
+SHAPE_TMP=$(mktemp -d)
+trap 'rm -rf "$SHAPE_TMP"' EXIT
+FRAME_NPY="frame_gauss0_${EVENT_NO}.npy"
+tar xjf "$ANODE0_ARCHIVE" -C "$SHAPE_TMP" "$FRAME_NPY"
+NTICKS=$(python3 -c "
+import numpy as np
+a = np.load('${SHAPE_TMP}/${FRAME_NPY}', mmap_mode='r')
+print(a.shape[1])
+")
+if ! echo "$NTICKS" | grep -qE '^[0-9]+$'; then
+    echo "ERROR: could not determine nticks from $FRAME_NPY (got: '$NTICKS')" >&2
+    exit 1
+fi
+echo "Frame tick count: $NTICKS"
+
 mkdir -p "$WORKDIR"
 echo "Work dir: $WORKDIR"
 
-cd "$PDVD_DIR"
+cd "$PDHD_DIR"
 
 # Process each anode independently → one ROOT file per anode.
 PROCESSED=0
-for N in 0 1 2 3 4 5 6 7; do
-    f="$EVTDIR/protodune-sp-frames-anode${N}.tar.bz2"
+for N in 0 1 2 3; do
+    f="$EVTDIR/protodunehd-sp-frames-anode${N}.tar.bz2"
     if [ ! -s "$f" ]; then
-        echo "Skipping anode ${N} (missing or empty $f)"
+        echo "Skipping apa ${N} (missing or empty $f)"
         continue
     fi
 
-    OUTPUT="$WORKDIR/magnify-run${RUN_PADDED}-evt${EVT}-anode${N}.root"
-    LOG="$WORKDIR/wct_magnify_${RUN_PADDED}_${EVT}_anode${N}.log"
-    echo "--- Anode ${N}: $OUTPUT"
+    OUTPUT="$WORKDIR/magnify-run${RUN_PADDED}-evt${EVT}-apa${N}.root"
+    LOG="$WORKDIR/wct_magnify_${RUN_PADDED}_${EVT}_apa${N}.log"
+    echo "--- APA ${N}: $OUTPUT"
     rm -f "$LOG"
 
-    RAW_ARCHIVE="$EVTDIR/protodune-sp-frames-raw-anode${N}.tar.bz2"
+    RAW_ARCHIVE="$EVTDIR/protodunehd-sp-frames-raw-anode${N}.tar.bz2"
     if [ -s "$RAW_ARCHIVE" ]; then
         echo "    + raw: $RAW_ARCHIVE"
-        RAW_ARGS="--tla-code include_raw=true --tla-str raw_input_prefix=${EVTDIR}/protodune-sp-frames-raw"
+        RAW_ARGS="--tla-code include_raw=true --tla-str raw_input_prefix=${EVTDIR}/protodunehd-sp-frames-raw"
     else
         RAW_ARGS="--tla-code include_raw=false"
     fi
@@ -116,12 +134,13 @@ for N in 0 1 2 3 4 5 6 7; do
         -l stderr \
         -l "${LOG}:debug" \
         -L debug \
-        --tla-str  "input_prefix=${EVTDIR}/protodune-sp-frames" \
+        --tla-str  "input_prefix=${EVTDIR}/protodunehd-sp-frames" \
         --tla-code "anode_indices=[${N}]" \
         --tla-str  "output_file=${OUTPUT}" \
         --tla-code "run=${RUN_STRIPPED}" \
         --tla-code "subrun=${SUBRUN}" \
         --tla-code "event=${EVENT_NO}" \
+        --tla-code "nticks=${NTICKS}" \
         ${RAW_ARGS} \
         -c wct-sp-to-magnify.jsonnet
 
@@ -134,4 +153,4 @@ if [ "$PROCESSED" -eq 0 ]; then
     exit 1
 fi
 
-echo "Magnify done: $PROCESSED anode(s) written to $WORKDIR/"
+echo "Magnify done: $PROCESSED apa(s) written to $WORKDIR/"

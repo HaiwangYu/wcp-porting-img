@@ -1,13 +1,13 @@
 #!/bin/bash
 # Run imaging for one event.
 # Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <run> <evt>
-# Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
+# Input:  input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode{0..3}.tar.bz2
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
-# Output: work/<run>_<evt>[_sel<TAG>]/clusters-apa-anode{N}-ms-{active,masked}.tar.gz
+# Output: work/<run>_<evt>[_sel<TAG>]/clusters-apa-apa{N}-ms-{active,masked}.tar.gz
 
 set -e
 
-PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
+PDHD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
@@ -38,7 +38,7 @@ RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
 RUN_PADDED=$(printf '%06d' "$RUN_STRIPPED")
 
 find_evtdir() {
-    local base="$PDVD_DIR/input_data"
+    local base="$PDHD_DIR/input_data"
     for rname in "run${RUN}" "run${RUN_PADDED}" "run${RUN_STRIPPED}"; do
         local rdir="$base/$rname"
         [ -d "$rdir" ] || continue
@@ -49,7 +49,7 @@ find_evtdir() {
             fi
         done
         # flat layout: SP frame files live directly in run root
-        if ls "$rdir/protodune-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+        if ls "$rdir/protodunehd-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
             echo "$rdir"; return 0
         fi
     done
@@ -57,7 +57,7 @@ find_evtdir() {
 }
 
 if [ -n "$SEL_TAG" ]; then
-    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
     EVTDIR="$WORKDIR/input"
     if [ ! -d "$EVTDIR" ]; then
         echo "ERROR: selection dir not found: $EVTDIR" >&2
@@ -67,10 +67,10 @@ if [ -n "$SEL_TAG" ]; then
 else
     EVTDIR=$(find_evtdir)
     if [ -z "$EVTDIR" ]; then
-        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
+        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDHD_DIR/input_data/" >&2
         exit 1
     fi
-    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}"
 fi
 echo "Event dir: $EVTDIR"
 
@@ -78,7 +78,7 @@ if [ -n "$ANODE" ]; then
     ANODE_CODE="[$ANODE]"
     TAG_SUFFIX="_a${ANODE}"
 else
-    ANODE_CODE="[0,1,2,3,4,5,6,7]"
+    ANODE_CODE="[0,1,2,3]"
     TAG_SUFFIX=""
 fi
 
@@ -87,13 +87,13 @@ LOG="$WORKDIR/wct_img_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
 echo "Work dir:  $WORKDIR"
 echo "Log:       $LOG"
 
-cd "$PDVD_DIR"
+cd "$PDHD_DIR"
 rm -f "$LOG"
 wire-cell \
     -l stderr \
     -l "${LOG}:debug" \
     -L debug \
-    --tla-str "input_prefix=${EVTDIR}/protodune-sp-frames" \
+    --tla-str "input_prefix=${EVTDIR}/protodunehd-sp-frames" \
     --tla-code "anode_indices=${ANODE_CODE}" \
     --tla-str "output_dir=${WORKDIR}" \
     -c wct-img-all.jsonnet

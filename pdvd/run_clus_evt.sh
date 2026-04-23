@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run clustering for one event.
-# Usage: ./run_clus_evt.sh [-a anode] <run> <evt> [subrun]
-# Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
-# Output: work/<run>_<evt>/mabc-anode{N}.zip, mabc-all-apa.zip
+# Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <run> <evt> [subrun]
+# Input:  work/<run>_<evt>[_sel<TAG>]/ (from imaging) or input_data event dir as fallback
+# Output: work/<run>_<evt>[_sel<TAG>]/mabc-anode{N}.zip, mabc-all-apa.zip
 
 set -e
 
@@ -12,18 +12,21 @@ WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 
 ANODE=""
+SEL_TAG=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
+        -s) SEL_TAG="$2"; shift 2 ;;
+        -s*) SEL_TAG="${1#-s}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -52,7 +55,11 @@ find_evtdir() {
     return 1
 }
 
-WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+if [ -n "$SEL_TAG" ]; then
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+else
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+fi
 mkdir -p "$WORKDIR"
 
 # prefer work dir (post-imaging output), fall back to input_data
