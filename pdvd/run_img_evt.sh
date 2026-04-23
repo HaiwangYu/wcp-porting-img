@@ -1,8 +1,9 @@
 #!/bin/bash
 # Run imaging for one event.
-# Usage: ./run_img_evt.sh [-a anode] <run> <evt>
+# Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <run> <evt>
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
-# Output: work/<run>_<evt>/clusters-apa-anode{N}-ms-{active,masked}.tar.gz
+#   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
+# Output: work/<run>_<evt>[_sel<TAG>]/clusters-apa-anode{N}-ms-{active,masked}.tar.gz
 
 set -e
 
@@ -12,18 +13,21 @@ WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 
 ANODE=""
+SEL_TAG=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
+        -s) SEL_TAG="$2"; shift 2 ;;
+        -s*) SEL_TAG="${1#-s}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt>" >&2
+    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt>" >&2
     exit 1
 fi
 RUN=$1
@@ -52,10 +56,21 @@ find_evtdir() {
     return 1
 }
 
-EVTDIR=$(find_evtdir)
-if [ -z "$EVTDIR" ]; then
-    echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
-    exit 1
+if [ -n "$SEL_TAG" ]; then
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+    EVTDIR="$WORKDIR/input"
+    if [ ! -d "$EVTDIR" ]; then
+        echo "ERROR: selection dir not found: $EVTDIR" >&2
+        echo "  Run: ./run_select_evt.sh $RUN $EVT $SEL_TAG" >&2
+        exit 1
+    fi
+else
+    EVTDIR=$(find_evtdir)
+    if [ -z "$EVTDIR" ]; then
+        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
+        exit 1
+    fi
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
 fi
 echo "Event dir: $EVTDIR"
 
@@ -67,7 +82,6 @@ else
     TAG_SUFFIX=""
 fi
 
-WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
 mkdir -p "$WORKDIR"
 LOG="$WORKDIR/wct_img_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
 echo "Work dir:  $WORKDIR"

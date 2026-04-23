@@ -1,26 +1,29 @@
 #!/bin/bash
 # Bee conversion + upload for one event.
-# Usage: ./run_bee_img_evt.sh [-a anode] <run> <evt> [subrun]
-# Input:  work/<run>_<evt>/ (from imaging) or input_data event dir as fallback
-# Output: upload_<run>_<evt>.zip  (Bee URL printed to stdout)
+# Usage: ./run_bee_img_evt.sh [-a anode] [-s sel_tag] <run> <evt> [subrun]
+# Input:  work/<run>_<evt>[_sel<TAG>]/ (from imaging) or input_data event dir as fallback
+# Output: upload_<run>_<evt>[_sel<TAG>].zip  (Bee URL printed to stdout)
 
 set -e
 
 PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 ANODE=""
+SEL_TAG=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
+        -s) SEL_TAG="$2"; shift 2 ;;
+        -s*) SEL_TAG="${1#-s}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -49,7 +52,11 @@ find_evtdir() {
     return 1
 }
 
-WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+if [ -n "$SEL_TAG" ]; then
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+else
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
+fi
 
 # prefer work dir (post-imaging), fall back to input_data
 CLUS_INPUT=""
@@ -89,7 +96,8 @@ else
     done
 fi
 
-ZIPNAME="upload_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.zip"
+SEL_SUFFIX="${SEL_TAG:+_${SEL_TAG}}"
+ZIPNAME="upload_${RUN_PADDED}_${EVT}${SEL_SUFFIX}${TAG_SUFFIX}.zip"
 
 cd "$PDVD_DIR"
 # shellcheck disable=SC2086

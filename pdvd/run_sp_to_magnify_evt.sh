@@ -1,8 +1,9 @@
 #!/bin/bash
 # Convert SP frame archives for one event to per-anode Magnify ROOT files.
-# Usage: ./run_sp_to_magnify_evt.sh <run> <evt> [subrun]
+# Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <run> <evt> [subrun]
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
-# Output: work/<run>_<evt>/magnify-run<RUN>-evt<EVT>-anode<N>.root  (one per anode)
+#   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
+# Output: work/<run>_<evt>[_sel<TAG>]/magnify-run<RUN>-evt<EVT>-anode<N>.root  (one per anode)
 
 set -e
 
@@ -11,8 +12,19 @@ PDVD_DIR=$(cd "$(dirname "$0")" && pwd)
 WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 
+SEL_TAG=""
+_args=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -s) SEL_TAG="$2"; shift 2 ;;
+        -s*) SEL_TAG="${1#-s}"; shift ;;
+        *) _args+=("$1"); shift ;;
+    esac
+done
+set -- "${_args[@]}"
+
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-s sel_tag] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -41,10 +53,21 @@ find_evtdir() {
     return 1
 }
 
-EVTDIR=$(find_evtdir)
-if [ -z "$EVTDIR" ]; then
-    echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
-    exit 1
+if [ -n "$SEL_TAG" ]; then
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+    EVTDIR="$WORKDIR/input"
+    if [ ! -d "$EVTDIR" ]; then
+        echo "ERROR: selection dir not found: $EVTDIR" >&2
+        echo "  Run: ./run_select_evt.sh $RUN $EVT $SEL_TAG" >&2
+        exit 1
+    fi
+else
+    EVTDIR=$(find_evtdir)
+    if [ -z "$EVTDIR" ]; then
+        echo "ERROR: cannot find event dir for run=$RUN evt=$EVT under $PDVD_DIR/input_data/" >&2
+        exit 1
+    fi
+    WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
 fi
 echo "Event dir: $EVTDIR"
 
@@ -62,7 +85,6 @@ if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
 fi
 echo "Art event number: $EVENT_NO"
 
-WORKDIR="$PDVD_DIR/work/${RUN_PADDED}_${EVT}"
 mkdir -p "$WORKDIR"
 echo "Work dir: $WORKDIR"
 
