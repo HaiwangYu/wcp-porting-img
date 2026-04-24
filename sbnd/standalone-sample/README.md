@@ -1,10 +1,12 @@
 # standalone-sample
 
+## check SP results
 ```bash
 lar -n 10 -c wcls-sp-dump.fcl -s 2025f-mc.root --no-output
-wirecell-plot frame -t gauss -o sp-frames.pdf sp-frames.tar.bz2
+wirecell-plot frame -t dnnsp -o sp-frames.pdf sp-frames.tar.bz2
 ```
 
+## standalone files
 ```bash
 # Part A: dump image clusters
 lar -n 1 -c wcls-img-dump.fcl 2025f-mc.root
