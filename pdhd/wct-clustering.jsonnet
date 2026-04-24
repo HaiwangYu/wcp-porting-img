@@ -5,17 +5,23 @@ local wc = import "wirecell.jsonnet";
 local io = import 'pgrapher/common/fileio.jsonnet';
 local tools_maker = import 'pgrapher/common/tools.jsonnet';
 
-local input = std.extVar('input');
-
 local reality = 'data';
 local data_params = import 'pgrapher/experiment/pdhd/params.jsonnet';
 local simu_params = import 'pgrapher/experiment/pdhd/simparams.jsonnet';
 local params = if reality == 'data' then data_params else simu_params;
-local tools_maker = import 'pgrapher/common/tools.jsonnet';
-local tools = tools_maker(params);
-local anodes = tools.anodes;
-local nanodes = std.length(tools.anodes);
+local tools_all = tools_maker(params);
 
+// Top-level function: parameters overridable via --tla-str / --tla-code
+function(
+    input = ".",
+    // Indices into tools_all.anodes to process; default = all
+    anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
+    // Directory for output mabc-*.zip and bee data files ('' means current directory)
+    output_dir = ''
+)
+
+local anodes = [tools_all.anodes[i] for i in anode_indices];
+local nanodes = std.length(anodes);
 
 local cluster_source(fname) = g.pnode({
     type: "ClusterFileSource",
@@ -31,9 +37,8 @@ local active_clusters = [cluster_source(f) for f in active_files];
 local masked_clusters = [cluster_source(f) for f in masked_files];
 
 local clus = import 'clus.jsonnet';
-local clus_maker = clus();
-// local clus_pipes = [clus_maker.per_face(tools.anodes[n]) for n in std.range(0, std.length(tools.anodes) - 1)];
-local clus_pipes = [clus_maker.per_apa(tools.anodes[n], dump=false) for n in std.range(0, std.length(tools.anodes) - 1)];
+local clus_maker = clus(output_dir=output_dir);
+local clus_pipes = [clus_maker.per_apa(anodes[n], dump=false) for n in std.range(0, nanodes - 1)];
 
 local img_clus_pipe = [g.intern(
     innodes = active_clusters + masked_clusters,
@@ -44,20 +49,9 @@ local img_clus_pipe = [g.intern(
         g.edge(masked_clusters[n], clus_pipes[n], 0, 1),
     ]
 )
-for n in std.range(0, std.length(tools.anodes) - 1)];
+for n in std.range(0, nanodes - 1)];
 
-local clus_all_apa = clus_maker.all_apa(tools.anodes);
-
-local parallel_graph = 
- {
-    local begin = img_clus_pipe,
-    local end = clus_maker.all_apa(tools.anodes),
-    ret :: g.intern(
-        innodes=[begin],
-        outnodes=[end],
-        edges=[g.edge(begin, end, i, i) for i in std.range(0, nanodes-1)]
-    ),
-}.ret;
+local clus_all_apa = clus_maker.all_apa(anodes);
 
 local graph = g.intern(
     innodes=img_clus_pipe,
@@ -66,7 +60,7 @@ local graph = g.intern(
 );
 
 local app = {
-  type: 'Pgrapher', //Pgrapher, TbbFlow
+  type: 'Pgrapher',
   data: {
     edges: g.edges(graph),
   },
@@ -81,5 +75,3 @@ local cmdline = {
 };
 
 [cmdline] + g.uses(graph) + [app]
-// img_clus_pipe
-// clus_maker.all_apa(tools.anodes)

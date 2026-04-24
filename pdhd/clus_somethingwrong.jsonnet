@@ -563,7 +563,7 @@ local clus_all_apa (
 }.ret;
 
 
-function (output_dir='') {
+function () {
     per_face(anode, face=0, dump=true) :: clus_per_face(anode, face=face, dump=dump),
     per_apa(anode, dump=true) :: clus_per_apa(anode, dump=dump),
     all_apa(anodes, dump=true) :: clus_all_apa(anodes, dump=dump),

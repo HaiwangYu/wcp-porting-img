@@ -27,8 +27,9 @@ local tools_maker = import 'pgrapher/common/tools.jsonnet';
 local tools_all = tools_maker(params);
 
 function(
-  orig_prefix   = 'protodunehd-orig-frames',  // input prefix; reads {prefix}-anode{N}.tar.bz2
-  sp_prefix     = 'protodunehd-sp-frames',    // output prefix for SP frames
+  orig_prefix   = 'protodunehd-orig-frames',    // input prefix; reads {prefix}-anode{N}.tar.bz2
+  raw_prefix    = 'protodunehd-sp-frames-raw',  // output prefix for NF (raw) frames
+  sp_prefix     = 'protodunehd-sp-frames',      // output prefix for SP frames
   anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
 )
 
@@ -56,7 +57,7 @@ function(
         type: 'FrameFileSink',
         name: 'rawframesink%d' % n,
         data: {
-          outname: 'protoduneh-raw-frames-anode%d.tar.bz2' % n,
+          outname: '%s-anode%d.tar.bz2' % [raw_prefix, n],
           tags: ['raw%d' % n],
           digitize: false,
           masks: true,  // save bad chanmask for downstream use
@@ -77,7 +78,7 @@ function(
             'wiener%d' % n,
           ],
           digitize: false,
-          masks: true,
+          masks: true,  // lf_noisy mask confuses FrameFileSource in imaging; only 'bad' is needed downstream
         },
       }, nin=1, nout=0),
       'spframetap%d' % n);
@@ -89,7 +90,7 @@ function(
       name: 'origframesrc%d' % n,
       data: {
         inname: '%s-anode%d.tar.bz2' % [orig_prefix, n],
-        tags: [],  // untagged traces saved by orig_frame_tap in wcls-nf-sp-out.jsonnet
+        tags: [],  // load all traces regardless of tag
       },
     }, nin=0, nout=1);
 
