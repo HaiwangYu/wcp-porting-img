@@ -7,7 +7,14 @@
 //
 // When include_raw=true, the raw frame archive (protodunehd-sp-frames-raw-anode{N}.tar.bz2)
 // is also read and hu/hv/hw_raw<N> TH2F histograms are appended to the same file.
-// Both pipelines run in the same wire-cell process to avoid MagnifySink::create_file()
+//
+// When include_orig=true, the pre-NF orig frame archive
+// (protodunehd-orig-frames-anode{N}.tar.bz2) is also read and
+// hu/hv/hw_orig<N> TH2F histograms are appended to the same file.
+// The orig archives carry trace tag '*' (literal asterisk); a Retagger with
+// regex key '\\*' renames it to 'orig<N>' per anode to avoid collisions.
+//
+// All pipelines run in the same wire-cell process to avoid MagnifySink::create_file()
 // wiping the output file between passes.
 //
 // Typical usage (called from run_sp_to_magnify_evt.sh):
@@ -18,9 +25,11 @@
 //     --tla-code run=27409 --tla-code subrun=0 --tla-code event=339870 \
 //     -c wct-sp-to-magnify.jsonnet
 //
-// With raw:
+// With raw and orig:
 //   wire-cell ... --tla-code include_raw=true \
 //     --tla-str raw_input_prefix=/path/to/protodunehd-sp-frames-raw \
+//     --tla-code include_orig=true \
+//     --tla-str orig_input_prefix=/path/to/protodunehd-orig-frames \
 //     -c wct-sp-to-magnify.jsonnet
 
 local g = import 'pgraph.jsonnet';
@@ -42,7 +51,9 @@ function(
   // tick count extracted from frame_gauss0_*.npy.
   nticks            = 6000,
   include_raw       = true,
-  raw_input_prefix  = 'protodunehd-sp-frames-raw'
+  raw_input_prefix  = 'protodunehd-sp-frames-raw',
+  include_orig      = false,
+  orig_input_prefix = 'protodunehd-orig-frames'
 )
   local anodes  = [tools_all.anodes[i] for i in anode_indices];
   local nanodes = std.length(anodes);
@@ -118,16 +129,60 @@ function(
     }, nin=1, nout=0);
     g.pipeline([src, sink, dump], 'raw_graph_anode%d' % aid);
 
+  // Per-anode orig pipeline: FrameFileSource(orig) → Retagger('*'→'orig<N>')
+  // → MagnifySink(UPDATE) → DumpFrames.
+  // The upstream tag in the archive is the literal string '*' (pdhd ChannelSelector
+  // convention: frame_*_<ident>.npy), so the Retagger maps '*' → 'orig<N>' per anode.
+  local orig_anode_graph(anode) =
+    local aid = anode.data.ident;
+    local src = g.pnode({
+      type: 'FrameFileSource',
+      name: 'orig_source_anode%d' % aid,
+      data: {
+        inname: '%s-anode%d.tar.bz2' % [orig_input_prefix, aid],
+        tags: ['*'],
+      },
+    }, nin=0, nout=1);
+    local retag = g.pnode({
+      type: 'Retagger',
+      name: 'orig_retagger_anode%d' % aid,
+      data: {
+        tag_rules: [{
+          frame: { '.*': '' },
+          trace: { '\\*': 'orig%d' % aid },  // '\\*' is regex for literal asterisk tag
+        }],
+      },
+    }, nin=1, nout=1);
+    local sink = g.pnode({
+      type: 'MagnifySink',
+      name: 'magorig%d' % aid,
+      data: {
+        output_filename: output_file,
+        root_file_mode: 'UPDATE',
+        frames: ['orig%d' % aid],
+        trace_has_tag: true,
+        anode: wc.tn(anode),
+      },
+    }, nin=1, nout=1, uses=[anode]);
+    local dump = g.pnode({
+      type: 'DumpFrames',
+      name: 'origdump_anode%d' % aid,
+    }, nin=1, nout=0);
+    g.pipeline([src, retag, sink, dump], 'orig_graph_anode%d' % aid);
+
   local decon_graphs = [per_anode_graph(n, anodes[n])
                         for n in std.range(0, nanodes - 1)];
-  local raw_graphs   = if include_raw then [raw_anode_graph(anodes[n])
-                                            for n in std.range(0, nanodes - 1)]
+  local raw_graphs   = if include_raw  then [raw_anode_graph(anodes[n])
+                                             for n in std.range(0, nanodes - 1)]
                        else [];
-  // Raw graphs must come FIRST so their nodes get lower instance numbers.
-  // Graph::execute() iterates Kahn-sort in reverse, so higher-instance
-  // (decon) nodes run first (RECREATE), then lower-instance (raw) nodes
-  // run second (UPDATE).
-  local graphs = raw_graphs + decon_graphs;
+  local orig_graphs  = if include_orig then [orig_anode_graph(anodes[n])
+                                             for n in std.range(0, nanodes - 1)]
+                       else [];
+  // Node ordering controls execution order via reverse Kahn-sort:
+  //   orig_graphs (lowest instance) → run LAST  (UPDATE)
+  //   raw_graphs  (middle instance) → run SECOND (UPDATE)
+  //   decon_graphs (highest instance) → run FIRST (RECREATE, creates the file)
+  local graphs = orig_graphs + raw_graphs + decon_graphs;
 
   local all_edges = std.foldl(function(acc, gr) acc + g.edges(gr), graphs, []);
   local all_uses  = std.foldl(function(acc, gr) acc + g.uses(gr),  graphs, []);

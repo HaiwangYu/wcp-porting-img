@@ -1,7 +1,9 @@
 #!/bin/bash
 # Run imaging for one event.
-# Usage: ./run_img_evt.sh [-a anode] [-S] [-s sel_tag] <run> <evt>
-# Input:  input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode{0..3}.tar.bz2
+# Usage: ./run_img_evt.sh [-I] [-a anode] [-S] [-s sel_tag] <run> <evt>
+# Input:  work/<RUN_PADDED>_<EVT>/protodunehd-sp-frames-anode{0..3}.tar.bz2  (preferred)
+#         input_data/<run_dir>/<evt_dir>/protodunehd-sp-frames-anode{0..3}.tar.bz2  (fallback)
+#   -I:  force loading SP frames from input_data even if work dir has them
 #   By default the dense archive is used.  If the dense archive for an anode is
 #   missing and a sparse variant (*-sparseon.tar.bz2) exists, the sparse variant
 #   is used automatically as a fallback.
@@ -19,9 +21,11 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 ANODE=""
 SEL_TAG=""
 FORCE_SPARSE=false
+FORCE_INPUT_DATA=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
+        -I) FORCE_INPUT_DATA=1; shift ;;
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
         -s) SEL_TAG="$2"; shift 2 ;;
@@ -33,7 +37,7 @@ done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-S] [-s sel_tag] <run> <evt>" >&2
+    echo "Usage: $0 [-I] [-a anode] [-S] [-s sel_tag] <run> <evt>" >&2
     exit 1
 fi
 RUN=$1
@@ -92,6 +96,13 @@ fi
 
 mkdir -p "$WORKDIR"
 
+# Prefer SP frames produced locally in work dir; -I forces input_data.
+if [ -z "$SEL_TAG" ] && [ -z "$FORCE_INPUT_DATA" ] && \
+   ls "$WORKDIR/protodunehd-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+    INPUT_PREFIX="${WORKDIR}/protodunehd-sp-frames"
+    echo "SP prefix: $INPUT_PREFIX"
+else
+
 # Determine per-anode archive: dense by default; sparse if forced (-S) or
 # dense is missing (automatic fallback).  Staging is only created when at
 # least one anode uses a sparse archive (whose filename differs from the
@@ -131,6 +142,8 @@ if $NEED_STAGE; then
 else
     INPUT_PREFIX="${EVTDIR}/protodunehd-sp-frames"
 fi
+
+fi  # end workdir-preference block
 
 LOG="$WORKDIR/wct_img_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
 echo "Work dir:  $WORKDIR"
