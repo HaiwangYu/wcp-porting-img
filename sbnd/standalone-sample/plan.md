@@ -22,3 +22,19 @@ source /exp/sbnd/app/users/yuhw/setup.sh
 ```
 - ask me if anyting is not clear
 - do not auto-commit
+
+# write wcls-sp-dump.fcl wcls-sp-dump.jsonnet in sbnd/standalone-sample
+- read in artROOT file and read the configurable recob::Wire objects into IFrame with configurable trace tags. Then dump them into wire-cell standalone files using the sio/src/FrameFileSink.cxx
+- reference: /exp/sbnd/app/users/yuhw/wcp-porting-img/sbnd, /nashome/y/yuhw/sbnd/wire-cell-toolkit/gen/test/check_pdsp_sim.jsonnet
+- To setup testing enviroment:
+```bash
+sl7 () 
+{ 
+    /cvmfs/oasis.opensciencegrid.org/mis/apptainer/current/bin/apptainer shell --shell=/bin/bash -B /cvmfs,/exp,/nashome,${1},/opt,/run/user,/etc/hostname,/etc/hosts,/etc/krb5.conf --ipc --pid /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-dev-sl7:latest;
+    source /nashome/y/yuhw/.bash_profile;
+    export PS1=(app)$PS1
+}
+source /exp/sbnd/app/users/yuhw/setup.sh
+```
+- ask me if anyting is not clear
+- do not auto-commit

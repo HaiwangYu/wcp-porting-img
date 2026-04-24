@@ -1,0 +1,55 @@
+#include "simulationservices_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "detsim_drops.fcl"
+#include "opdetdigitizer_sbnd.fcl"
+
+process_name: wclsspdump
+
+services:
+{
+  TFileService: { fileName: "tf-default.root" }
+  @table::sbnd_detsim_services
+  AuxDetGeometry: @local::sbnd_auxdetgeo
+  @table::sbnd_geometry_services
+}
+
+source: {
+   module_type: RootInput
+}
+
+physics: {
+   producers: {
+
+      spdump: {
+         module_type: WireCellToolkit
+         wcls_main: {
+            tool_type: WCLS
+            apps: ["Pgrapher"]
+
+            logsinks: ["stdout"]
+            loglevels: ["debug"]
+
+            plugins: ["WireCellGen", "WireCellPgraph", "WireCellSio", "WireCellRoot", "WireCellLarsoft"]
+
+            inputers: ["wclsCookedFrameSource:sigs"]
+
+            configs: ["wcls-sp-dump.jsonnet"]
+
+            params: {
+                outname: "sp-frames.tar.bz2"
+            }
+            structs: {
+                recobwire_tags:   "[\"simtpc2d:dnnsp\", \"simtpc2d:dnnsp\"]"
+                trace_tags:       "[\"gauss\", \"wiener\"]"
+                summary_tags:     "[\"\", \"simtpc2d:wienersummary\"]"
+                input_mask_tags:  "[\"simtpc2d:badmasks\"]"
+                output_mask_tags: "[\"bad\"]"
+            }
+         }
+      }
+   }
+
+   p1: [ spdump ]
+   trigger_paths: [ p1 ]
+
+}
