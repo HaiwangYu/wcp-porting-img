@@ -4,7 +4,8 @@ local f = import 'pgrapher/common/funcs.jsonnet';
 local clus = import "pgrapher/common/clus.jsonnet";
 
 
-local time_offset = -250 * wc.us;
+// local time_offset = -250 * wc.us;
+local time_offset = -2000 * wc.us;
 local drift_speed = 1.6 * wc.mm / wc.us;
 local bee_zip = "mabc.zip";
 
@@ -121,7 +122,7 @@ local bs_live_face(apa, face) = {
         drift_speed: drift_speed,
         time_offset: time_offset,
         strategy: ["stepped"],
-        extra: [".*wire_index", "wpid"]
+        extra: [".*wire_index", "wpid", ".*charge_val", ".*charge_unc"]
     }
 };
 local bs_dead_face(apa, face) = {
@@ -459,7 +460,7 @@ local clus_all_apa (
             //    },
             {
                     name: "clustering",         // Name of the bee points set
-                    detector: "protodUNEvd",         // Detector name
+                    detector: "protodunevd",         // Detector name
                     algorithm: "clustering",    // Algorithm identifier
                     pcname: "3d",           // Which scope to use
                     coords: ["x_t0cor", "y", "z"],    // Coordinates to use

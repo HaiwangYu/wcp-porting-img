@@ -29,6 +29,7 @@ local tools_all = tools_maker(params);
 
 function(
   orig_prefix   = 'protodune-orig-frames',  // input prefix; reads {prefix}-anode{N}.tar.bz2
+  raw_prefix    = 'protodune-sp-frames-raw',   // output prefix for NF (raw) frames
   sp_prefix     = 'protodune-sp-frames',    // output prefix for SP frames
   use_resampler = 'true',                   // 'true' to resample bottom anodes (n<4)
   sigoutform    = 'dense',                 // 'sparse' or 'dense'
@@ -63,7 +64,7 @@ function(
         type: 'FrameFileSink',
         name: 'rawframesink%d' % anode_ident,
         data: {
-          outname: 'protodune-raw-frames-anode%d.tar.bz2' % anode_ident,
+          outname: '%s-anode%d.tar.bz2' % [raw_prefix, anode_ident],
           tags: ['raw%d' % anode_ident],
           digitize: false,
           masks: false,
