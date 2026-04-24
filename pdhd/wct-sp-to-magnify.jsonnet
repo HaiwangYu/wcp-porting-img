@@ -11,8 +11,11 @@
 // When include_orig=true, the pre-NF orig frame archive
 // (protodunehd-orig-frames-anode{N}.tar.bz2) is also read and
 // hu/hv/hw_orig<N> TH2F histograms are appended to the same file.
-// The orig archives carry trace tag '*' (literal asterisk); a Retagger with
-// regex key '\\*' renames it to 'orig<N>' per anode to avoid collisions.
+// pdhd orig archives store frames as frame_*_<evt>.npy (literal '*' in the tag
+// slot). WCT FrameFileSource treats '*' the same as empty string — both are
+// "untagged" — so no trace tag is attached.  Because there is nothing to rename,
+// no Retagger is used; MagnifySink is configured with trace_has_tag:false so it
+// writes h[uvw]_orig<N> from all traces in the frame keyed only by the frames label.
 //
 // All pipelines run in the same wire-cell process to avoid MagnifySink::create_file()
 // wiping the output file between passes.
@@ -129,10 +132,10 @@ function(
     }, nin=1, nout=0);
     g.pipeline([src, sink, dump], 'raw_graph_anode%d' % aid);
 
-  // Per-anode orig pipeline: FrameFileSource(orig) → Retagger('*'→'orig<N>')
-  // → MagnifySink(UPDATE) → DumpFrames.
-  // The upstream tag in the archive is the literal string '*' (pdhd ChannelSelector
-  // convention: frame_*_<ident>.npy), so the Retagger maps '*' → 'orig<N>' per anode.
+  // Per-anode orig pipeline: FrameFileSource(orig) → MagnifySink(UPDATE) → DumpFrames.
+  // pdhd orig archives have literal '*' in the filename tag slot, which WCT treats as
+  // "untagged" — no trace tags are attached.  Use trace_has_tag:false so MagnifySink
+  // writes h[uvw]_orig<N> from all traces without needing a trace-tag lookup.
   local orig_anode_graph(anode) =
     local aid = anode.data.ident;
     local src = g.pnode({
@@ -140,19 +143,9 @@ function(
       name: 'orig_source_anode%d' % aid,
       data: {
         inname: '%s-anode%d.tar.bz2' % [orig_input_prefix, aid],
-        tags: ['*'],
+        tags: [],  // load all traces regardless of tag (pdhd uses literal '*' as tag)
       },
     }, nin=0, nout=1);
-    local retag = g.pnode({
-      type: 'Retagger',
-      name: 'orig_retagger_anode%d' % aid,
-      data: {
-        tag_rules: [{
-          frame: { '.*': '' },
-          trace: { '\\*': 'orig%d' % aid },  // '\\*' is regex for literal asterisk tag
-        }],
-      },
-    }, nin=1, nout=1);
     local sink = g.pnode({
       type: 'MagnifySink',
       name: 'magorig%d' % aid,
@@ -160,7 +153,7 @@ function(
         output_filename: output_file,
         root_file_mode: 'UPDATE',
         frames: ['orig%d' % aid],
-        trace_has_tag: true,
+        trace_has_tag: false,  // pdhd '*'-tagged traces carry no trace tag; take all traces
         anode: wc.tn(anode),
       },
     }, nin=1, nout=1, uses=[anode]);
@@ -168,7 +161,7 @@ function(
       type: 'DumpFrames',
       name: 'origdump_anode%d' % aid,
     }, nin=1, nout=0);
-    g.pipeline([src, retag, sink, dump], 'orig_graph_anode%d' % aid);
+    g.pipeline([src, sink, dump], 'orig_graph_anode%d' % aid);
 
   local decon_graphs = [per_anode_graph(n, anodes[n])
                         for n in std.range(0, nanodes - 1)];
