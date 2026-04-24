@@ -70,9 +70,19 @@ function(
     for n in std.range(0, nanodes - 1)
   ];
 
-  // Per-anode subgraph: Retagger(dnnsp<N>→[dnnsp<N>,threshold<N>]) → MagnifySink → DumpFrames
+  // Per-anode subgraph: ChannelSelector → Retagger(dnnsp<N>→[dnnsp<N>,threshold<N>]) → MagnifySink → DumpFrames
   local per_anode_pipe(n) =
     local aid = anodes[n].data.ident;
+    // Filter to only this anode's channels before MagnifySink (which throws on foreign channels).
+    // SBND has 5638 channels per anode: anode0 → 0..5637, anode1 → 5638..11275.
+    local chsel = g.pnode({
+      type: 'ChannelSelector',
+      name: 'chsel%d' % aid,
+      data: {
+        channels: std.range(5638 * aid, 5638 * (aid + 1) - 1),
+        tags: ['dnnsp%d' % aid],
+      },
+    }, nin=1, nout=1, uses=[anodes[n]]);
     local retag = g.pnode({
       type: 'Retagger',
       name: 'retagger_anode%d' % aid,
@@ -89,7 +99,7 @@ function(
       type: 'DumpFrames',
       name: 'dump_anode%d' % aid,
     }, nin=1, nout=0);
-    g.pipeline([retag, mag.decon_pipe[n], dump],
+    g.pipeline([chsel, retag, mag.decon_pipe[n], dump],
                'magnify_branch_anode%d' % aid);
 
   local per_anode_pipes = [per_anode_pipe(n) for n in std.range(0, nanodes - 1)];

@@ -72,8 +72,8 @@ else
         echo "Extracting event $EVT_ID from $SOURCE_TAR ..."
         mkdir -p "$WORKDIR"
         TMPDIR_EXTRACT=$(mktemp -d /home/xqian/tmp/sbnd_extract_XXXXXX)
-        tar -xjf "$SOURCE_TAR" --wildcards "*_${EVT_ID}.npy" -C "$TMPDIR_EXTRACT"
-        tar -cjf "$SP_ARCHIVE" -C "$TMPDIR_EXTRACT" .
+        tar -xjf "$SOURCE_TAR" -C "$TMPDIR_EXTRACT" --wildcards "*_${EVT_ID}.npy"
+        (cd "$TMPDIR_EXTRACT" && tar -cjf "$SP_ARCHIVE" *.npy)
         rm -rf "$TMPDIR_EXTRACT"
         echo "  → $SP_ARCHIVE"
     else
