@@ -1,7 +1,9 @@
 #!/bin/bash
 # Run imaging for one event.
-# Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <run> <evt>
-# Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
+# Usage: ./run_img_evt.sh [-I] [-a anode] [-s sel_tag] <run> <evt>
+# Input:  work/<RUN_PADDED>_<EVT>/protodune-sp-frames-anode{0..7}.tar.bz2  (preferred)
+#         input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2  (fallback)
+#   -I:  force loading SP frames from input_data even if work dir has them
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
 # Output: work/<run>_<evt>[_sel<TAG>]/clusters-apa-anode{N}-ms-{active,masked}.tar.gz
 
@@ -14,9 +16,11 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 
 ANODE=""
 SEL_TAG=""
+FORCE_INPUT_DATA=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
+        -I) FORCE_INPUT_DATA=1; shift ;;
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
         -s) SEL_TAG="$2"; shift 2 ;;
@@ -27,7 +31,7 @@ done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt>" >&2
+    echo "Usage: $0 [-I] [-a anode] [-s sel_tag] <run> <evt>" >&2
     exit 1
 fi
 RUN=$1
@@ -74,6 +78,15 @@ else
 fi
 echo "Event dir: $EVTDIR"
 
+# Prefer SP frames produced locally in work dir; -I forces input_data.
+if [ -z "$SEL_TAG" ] && [ -z "$FORCE_INPUT_DATA" ] && \
+   ls "$WORKDIR/protodune-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+    SP_PREFIX="$WORKDIR/protodune-sp-frames"
+else
+    SP_PREFIX="$EVTDIR/protodune-sp-frames"
+fi
+echo "SP prefix: $SP_PREFIX"
+
 if [ -n "$ANODE" ]; then
     ANODE_CODE="[$ANODE]"
     TAG_SUFFIX="_a${ANODE}"
@@ -93,7 +106,7 @@ wire-cell \
     -l stderr \
     -l "${LOG}:debug" \
     -L debug \
-    --tla-str "input_prefix=${EVTDIR}/protodune-sp-frames" \
+    --tla-str "input_prefix=${SP_PREFIX}" \
     --tla-code "anode_indices=${ANODE_CODE}" \
     --tla-str "output_dir=${WORKDIR}" \
     -c wct-img-all.jsonnet

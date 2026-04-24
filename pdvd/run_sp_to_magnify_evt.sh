@@ -1,7 +1,9 @@
 #!/bin/bash
 # Convert SP frame archives for one event to per-anode Magnify ROOT files.
-# Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <run> <evt> [subrun]
-# Input:  input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2
+# Usage: ./run_sp_to_magnify_evt.sh [-I] [-s sel_tag] <run> <evt> [subrun]
+# Input:  work/<RUN_PADDED>_<EVT>/protodune-sp-frames-anode{0..7}.tar.bz2  (preferred)
+#         input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2  (fallback)
+#   -I:  force loading SP/raw frames from input_data even if work dir has them
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
 # Output: work/<run>_<evt>[_sel<TAG>]/magnify-run<RUN>-evt<EVT>-anode<N>.root  (one per anode)
 
@@ -13,9 +15,11 @@ WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
 
 SEL_TAG=""
+FORCE_INPUT_DATA=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
+        -I) FORCE_INPUT_DATA=1; shift ;;
         -s) SEL_TAG="$2"; shift 2 ;;
         -s*) SEL_TAG="${1#-s}"; shift ;;
         *) _args+=("$1"); shift ;;
@@ -24,7 +28,7 @@ done
 set -- "${_args[@]}"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-s sel_tag] <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-I] [-s sel_tag] <run> <evt> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -71,9 +75,18 @@ else
 fi
 echo "Event dir: $EVTDIR"
 
+# Prefer SP/raw frames produced locally in work dir; -I forces input_data.
+if [ -z "$SEL_TAG" ] && [ -z "$FORCE_INPUT_DATA" ] && \
+   ls "$WORKDIR/protodune-sp-frames-anode"*.tar.bz2 >/dev/null 2>&1; then
+    SP_DIR="$WORKDIR"
+else
+    SP_DIR="$EVTDIR"
+fi
+echo "SP frames from: $SP_DIR"
+
 # Extract the art event number from the anode0 archive filename suffix.
 # e.g. frame_gauss0_339870.npy  →  339870
-ANODE0_ARCHIVE="$EVTDIR/protodune-sp-frames-anode0.tar.bz2"
+ANODE0_ARCHIVE="$SP_DIR/protodune-sp-frames-anode0.tar.bz2"
 if [ ! -s "$ANODE0_ARCHIVE" ]; then
     echo "ERROR: missing or empty $ANODE0_ARCHIVE" >&2
     exit 1
@@ -93,7 +106,7 @@ cd "$PDVD_DIR"
 # Process each anode independently → one ROOT file per anode.
 PROCESSED=0
 for N in 0 1 2 3 4 5 6 7; do
-    f="$EVTDIR/protodune-sp-frames-anode${N}.tar.bz2"
+    f="$SP_DIR/protodune-sp-frames-anode${N}.tar.bz2"
     if [ ! -s "$f" ]; then
         echo "Skipping anode ${N} (missing or empty $f)"
         continue
@@ -104,10 +117,16 @@ for N in 0 1 2 3 4 5 6 7; do
     echo "--- Anode ${N}: $OUTPUT"
     rm -f "$LOG"
 
-    RAW_ARCHIVE="$EVTDIR/protodune-sp-frames-raw-anode${N}.tar.bz2"
+    if [ -z "$SEL_TAG" ] && [ -z "$FORCE_INPUT_DATA" ] && \
+       [ -s "$WORKDIR/protodune-sp-frames-raw-anode${N}.tar.bz2" ]; then
+        RAW_ARCHIVE="$WORKDIR/protodune-sp-frames-raw-anode${N}.tar.bz2"
+    else
+        RAW_ARCHIVE="$EVTDIR/protodune-sp-frames-raw-anode${N}.tar.bz2"
+    fi
     if [ -s "$RAW_ARCHIVE" ]; then
+        RAW_DIR=$(dirname "$RAW_ARCHIVE")
         echo "    + raw: $RAW_ARCHIVE"
-        RAW_ARGS="--tla-code include_raw=true --tla-str raw_input_prefix=${EVTDIR}/protodune-sp-frames-raw"
+        RAW_ARGS="--tla-code include_raw=true --tla-str raw_input_prefix=${RAW_DIR}/protodune-sp-frames-raw"
     else
         RAW_ARGS="--tla-code include_raw=false"
     fi
@@ -116,7 +135,7 @@ for N in 0 1 2 3 4 5 6 7; do
         -l stderr \
         -l "${LOG}:debug" \
         -L debug \
-        --tla-str  "input_prefix=${EVTDIR}/protodune-sp-frames" \
+        --tla-str  "input_prefix=${SP_DIR}/protodune-sp-frames" \
         --tla-code "anode_indices=[${N}]" \
         --tla-str  "output_file=${OUTPUT}" \
         --tla-code "run=${RUN_STRIPPED}" \
