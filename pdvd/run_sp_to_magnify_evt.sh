@@ -5,6 +5,8 @@
 #         input_data/<run_dir>/<evt_dir>/protodune-sp-frames-anode{0..7}.tar.bz2  (fallback)
 #   -I:  force loading SP/raw frames from input_data even if work dir has them
 #   -s:  work/<RUN_PADDED>_<EVT>_sel<TAG>/input/ (from run_select_evt.sh)
+# Orig frames (protodune-orig-frames-anode{N}.tar.bz2) are always sourced from
+# input_data when present, producing hu/hv/hw_orig<N> histograms in Magnify.
 # Output: work/<run>_<evt>[_sel<TAG>]/magnify-run<RUN>-evt<EVT>-anode<N>.root  (one per anode)
 
 set -e
@@ -131,6 +133,15 @@ for N in 0 1 2 3 4 5 6 7; do
         RAW_ARGS="--tla-code include_raw=false"
     fi
 
+    # Orig frames always come from input_data, unaffected by -I or WORKDIR preference.
+    ORIG_ARCHIVE="$EVTDIR/protodune-orig-frames-anode${N}.tar.bz2"
+    if [ -s "$ORIG_ARCHIVE" ]; then
+        echo "    + orig: $ORIG_ARCHIVE"
+        ORIG_ARGS="--tla-code include_orig=true --tla-str orig_input_prefix=${EVTDIR}/protodune-orig-frames"
+    else
+        ORIG_ARGS="--tla-code include_orig=false"
+    fi
+
     wire-cell \
         -l stderr \
         -l "${LOG}:debug" \
@@ -142,6 +153,7 @@ for N in 0 1 2 3 4 5 6 7; do
         --tla-code "subrun=${SUBRUN}" \
         --tla-code "event=${EVENT_NO}" \
         ${RAW_ARGS} \
+        ${ORIG_ARGS} \
         -c wct-sp-to-magnify.jsonnet
 
     echo "    done -> $OUTPUT"
