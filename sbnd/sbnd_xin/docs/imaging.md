@@ -430,3 +430,22 @@ print(list(d.keys())[:10])   # e.g. ['cluster_0_nodes', 'cluster_0_edges', ...]
   length were both production bugs in the shared configs that have been
   fixed on this branch. See
   [geometry-and-timing.md](geometry-and-timing.md) for details.
+
+- **2-plane active tiling was silently disabled** (`img.jsonnet:342`,
+  fixed 2026-04-25) — `imgpipe()` in the shared SBND config contained
+  the condition `if multi_slicing == "multi-2view"` to select the
+  4-branch `multi_active_slicing_tiling` fanpipe (branches for 3-view,
+  U+V, V+W, U+W). Both call sites (`sbnd_xin/wct-img-all.jsonnet:37`
+  and `cfg/pgrapher/experiment/sbnd/wcls-img-clus.jsonnet:50`) pass
+  `"multi-3view"`, so the condition always fell through to the `else`
+  — a single 3-plane branch. The 2-plane active branches ([0,1], [1,2],
+  [0,2]) never ran, making the active output blind to tracks crossing
+  dead wire regions. Symptom: tracks visible in U+V but crossing a
+  W-dead band were absent from the active cluster file. The bad-channel
+  mask (`chanmask_bad_<evt>.npy`) was correct — all 93 dead channels
+  for evt2, including the prominent 32-channel W run at channels
+  4160–4191, were properly flagged. The fix extends the condition to
+  `if multi_slicing == "multi-2view" || multi_slicing == "multi-3view"`.
+  Active blob count for evt2 / APA0 increased from 3,114 to 4,260 after
+  the fix. The identical bug was present and fixed in
+  `cfg/pgrapher/experiment/dune-vd/img.jsonnet:324`.

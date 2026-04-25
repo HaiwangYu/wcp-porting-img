@@ -328,6 +328,52 @@ The decision is left for a follow-up once the pipeline is validated end-to-end.
 
 ---
 
+## Shared cfg vs workspace — active-fork design difference
+
+The **workspace** `pdvd/img.jsonnet` and the **shared toolkit cfg**
+`cfg/pgrapher/experiment/dune-vd/img.jsonnet` implement the same
+conceptual pipeline but differ in how `imgpipe()` selects the active fork:
+
+**Workspace `pdvd/img.jsonnet` (lines 333–344)** — bug-free design:
+```jsonnet
+else {
+    local active_fork = g.pipeline([
+        img.multi_active_slicing_tiling(...),   // always 4-branch
+        img.solving(...),
+        ...
+    ]),
+    ...
+```
+Any `pipe_type` value that does not match `"single"`, `"pdhd1"`,
+`"active"`, or `"masked"` falls to the `else` and unconditionally runs
+`multi_active_slicing_tiling`. The default `"multi"` always lands here.
+No string comparison gates the 4-branch active fork.
+
+**Shared `cfg/pgrapher/experiment/dune-vd/img.jsonnet` (line 324,
+fixed 2026-04-25)** — was buggy:
+```jsonnet
+// BEFORE (buggy):
+local st = if multi_slicing == "multi-2view"
+    then img.multi_active_slicing_tiling(...)
+    else g.pipeline([img.slicing(..., active_planes=[0,1,2]), img.tiling(...)]),
+```
+The call site `cfg/pgrapher/experiment/dune-vd/wct-depo-sim-img-fans.jsonnet:102`
+passes `"multi-3view"`, which failed the `== "multi-2view"` test and
+silently fell through to the single 3-plane `else` branch. All 2-plane
+active variants (U+V, V+W, U+W) were never built, so tracks crossing a
+dead-wire region were absent from the active cluster output.
+
+**Fix**: condition extended to
+`if multi_slicing == "multi-2view" || multi_slicing == "multi-3view"`.
+Unaffected call sites in `wct-sim-fans.jsonnet` and
+`wcls-sim-drift-simchannel-nf-sp-img.jsonnet` use the default
+`"single"` mode and were not affected.
+
+The identical bug and fix were applied to
+`cfg/pgrapher/experiment/sbnd/img.jsonnet:342` in the same commit.
+
+---
+
 ## Quick reference: key file/line index
 
 | What | File | Lines |
