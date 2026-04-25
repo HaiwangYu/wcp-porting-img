@@ -26,9 +26,13 @@ pdvd/
 ├── wcls-nf-sp-out.jsonnet   ← ART/LArSoft NF+SP → frame tarballs (upstream step)
 ├── wct-sim-check-track.jsonnet  ← single-track simulation check
 │
+├── _runlib.sh               ← shared helper library sourced by all run_*.sh scripts
 ├── run_evt.pl               ← main per-(run,event) dispatcher
 ├── run_img_evt.sh           ← imaging only
 ├── run_clus_evt.sh          ← clustering only
+├── run_nf_sp_evt.sh         ← standalone NF+SP (no LArSoft)
+├── run_sp_to_magnify_evt.sh ← SP frames → per-anode Magnify ROOT files
+├── run_select_evt.sh        ← interactive Woodpecker region-of-interest crop
 ├── run_bee_img_evt.sh       ← Bee conversion + upload, from IMAGING output (no clustering)
 ├── run_img.sh               ← original manual recipe (commented examples)
 ├── unzip.pl                 ← extract mabc*.zip into data/ (Path B Bee upload)
@@ -155,6 +159,43 @@ No — the two steps are separate `wire-cell` invocations.  Use
 All scripts are run from the `pdvd/` directory.  Outputs go to
 `work/<run>_<evt>/` (6-digit zero-padded run, e.g. `work/039324_1/`).
 
+### Common conventions
+
+Every `run_*.sh` script shares three ergonomic features provided by `_runlib.sh`:
+
+**No-arg listing** — run any script with no arguments to list available runs:
+```sh
+./run_img_evt.sh
+# Available runs under .../pdvd/input_data:
+#   run039324     events: 0 1 2 ...
+#   run040475     events: 0 1
+#   run41189      (flat layout — specify event number explicitly)
+```
+
+**`EVT=all` parallel mode** — pass `all` as the event number to process every
+discovered event for that run in parallel:
+```sh
+./run_img_evt.sh 040475 all
+./run_clus_evt.sh 040475 all
+```
+Events are discovered from `input_data/run<N>/evt_*` subdirectories and from
+existing `work/<RUN_PADDED>_<EVT>/` directories.  Jobs run concurrently up to
+`$(nproc)` (override with `PDVD_MAX_JOBS=N`).  Each event's output is written
+to its own log at `work/.batch_<script>_<run>_<evt>.log`.  A summary is printed
+at the end showing ok / failed counts and the list of failed event ids.
+
+**Skip-on-missing** — when running in `all` mode, an event whose required input
+files are absent (e.g., no SP frames, no cluster tarballs, or a `-s sel_tag`
+directory that doesn't exist) is skipped with a one-line note rather than
+aborting the whole batch.  In single-event mode, the same conditions still exit
+non-zero (exit code 2 for a skip, 1 for a hard failure).
+
+**Concurrency cap** — controlled by the `PDVD_MAX_JOBS` environment variable
+(default: `nproc`):
+```sh
+PDVD_MAX_JOBS=4 ./run_img_evt.sh 040475 all   # cap at 4 simultaneous jobs
+```
+
 ### `perl run_evt.pl [-a anode] <run> <evt> [stage]`
 
 Main dispatcher.  `stage` is one of:
@@ -177,13 +218,30 @@ argument list (before or after `<run>`, `<evt>`, etc.).
 
 Logs: `work/039324_1/wct_img_039324_1.log`, `work/039324_1/wct_clus_039324_1.log`
 
-### `./run_img_evt.sh [-a anode] <run> <evt>`
+### `./run_nf_sp_evt.sh [-a anode] <run> <evt|all>`
 
-Reads SP frames from `input_data/` event dir, writes cluster tarballs to
-`work/<run>_<evt>/`.  Use `-a N` (0–7) to process only anode `N`; without it
-all 8 are processed.
+Runs standalone NF+SP signal processing (no LArSoft).  Reads
+`protodune-orig-frames-anode{N}.tar.bz2` from `input_data/`, writes
+`protodune-sp-frames{,-raw}-anode{N}.tar.bz2` to `work/<run>_<evt>/`.
+Use `-a N` (0–7) to process a single anode; without it all 8 are processed.
 
-### `./run_clus_evt.sh [-a anode] <run> <evt> [subrun]`
+### `./run_sp_to_magnify_evt.sh [-I] [-s sel_tag] <run> <evt|all> [subrun]`
+
+Converts SP frame archives to per-anode Magnify ROOT files for waveform
+inspection.  Reads from `work/<run>_<evt>/` (preferred) or `input_data/`.
+Outputs `magnify-run<R>-evt<E>-anode<N>.root` per anode.  Orig frames from
+`input_data/` are included when available (adds `hu/hv/hw_orig<N>` histograms).
+`-I` forces reading from `input_data/` even when a work-dir copy exists.
+`-s sel_tag` reads from a Woodpecker selection dir (see `run_select_evt.sh`).
+
+### `./run_img_evt.sh [-I] [-a anode] [-s sel_tag] <run> <evt|all>`
+
+Reads SP frames from `input_data/` event dir (or work dir if present), writes
+cluster tarballs to `work/<run>_<evt>/`.  Use `-a N` (0–7) to process only
+anode `N`; without it all 8 are processed.  `-I` forces reading from
+`input_data/`.  `-s sel_tag` reads from a Woodpecker selection dir.
+
+### `./run_clus_evt.sh [-a anode] [-s sel_tag] <run> <evt|all> [subrun]`
 
 Reads cluster tarballs from `work/<run>_<evt>/` (after imaging) or falls back
 to the pre-computed tarballs in `input_data/` event dir.  Writes Bee zips to
@@ -192,14 +250,32 @@ it all 8 are processed.  The Art event number is parsed automatically from the
 cluster-tarball filenames and embedded in the Bee output.  The optional
 `[subrun]` arg sets the subRun number (default `0`).
 
-### `./run_bee_img_evt.sh [-a anode] <run> <evt>`
+### `./run_bee_img_evt.sh [-a anode] [-s sel_tag] <run> <evt|all> [subrun]`
 
 Converts imaging cluster tarballs (`clusters-apa-anode{N}-ms-active.tar.gz`,
 produced by `run_img_evt.sh`) directly to Bee JSON via `wirecell-img bee-blobs`
 — does **not** run clustering/MABC.  Reads from `work/<run>_<evt>/` if imaging
-has been run, otherwise from `input_data/` event dir.  Produces
-`upload_<run>_<evt>.zip` and prints the Bee URL.  Use `-a N` (0–7) to convert
-only that anode; the resulting zip contains a single `0-apa{N}.json`.
+has been run, otherwise from `input_data/` event dir.
+
+**Single-event mode** (`EVT` is a number): produces `upload_<run>_<evt>.zip`
+and prints the Bee URL.  Use `-a N` (0–7) to convert only that anode.
+
+**`EVT=all` mode**: processes every discovered event for the run, combining all
+events into a single zip (`upload-batch-run<RUN_PADDED>.zip`) and uploading
+once.  Per-event Bee data is staged in `data/0/`, `data/1/`, … so each event
+occupies its own Bee event-list slot.  `wct-img-2-bee.py` is bypassed for this
+path (it hardcodes `data/0/`); `wirecell-img bee-blobs` is called directly with
+the correct subdirectory per event.  The drift-speed / x0 geometry constants
+must stay in sync between `wct-img-2-bee.py` and the shell `all`-path in
+`run_bee_img_evt.sh`.
+
+### `./run_select_evt.sh [-a anode] <run> <evt> <sel_tag>`
+
+Opens an interactive Woodpecker browser GUI to select a tick/channel region of
+interest.  Produces masked SP frame archives in
+`work/<run>_<evt>_<sel_tag>/input/`.  Pass `-s <sel_tag>` to the downstream
+pipeline scripts to use the selection.  This script does **not** support
+`EVT=all` (GUI is interactive).
 
 ---
 
@@ -261,9 +337,11 @@ https://www.phy.bnl.gov/twister/bee/set/<UUID>/event/list/
   `detector: "protodunehd"` / `bee_detector: "sbnd"`.  Not used by current entry
   points; kept for reference.
 
-- **`wct-img-2-bee.py` clears `data/` on each run**: running multiple events
-  sequentially overwrites the previous event's Bee JSON.  Each run produces a
-  persistent `upload_<run>_<evt>.zip` file.
+- **`wct-img-2-bee.py` clears `data/` on each run**: in single-event mode,
+  running `run_bee_img_evt.sh` sequentially for multiple events would overwrite
+  `data/0/` each time; each run produces a persistent `upload_<run>_<evt>.zip`.
+  Use `EVT=all` mode to combine multiple events into a single zip automatically
+  (it stages events in `data/0/`, `data/1/`, … without overwriting).
 
 - **`run_clus_evt.sh -a N` shrinks the clustering topology to a single APA**:
   detector volumes, `PointTreeMerging` multiplicity, and MABC's anode list all
