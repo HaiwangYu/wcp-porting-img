@@ -58,18 +58,42 @@ else
     WORKDIR="$SBND_DIR/work/evt${EVT_ID}"
 fi
 
-# Check that at least one input cluster file exists
-if ! ls "$WORKDIR/icluster-apa"*"-active.npz" >/dev/null 2>&1; then
-    echo "ERROR: no icluster-apa*-active.npz found in $WORKDIR" >&2
+# True if the .npz exists, is nonempty on disk, AND contains at least one
+# array. A "no clusters" run produces a 22-byte zip header (no .npy inside),
+# which makes ClusterFileSource hit EOS at call=0 and stalls the all-apa
+# PointTreeMerging fan-in (multiplicity expects every branch to deliver).
+npz_has_content() {
+    [ -s "$1" ] || return 1
+    python3 -c "import numpy as np,sys; sys.exit(0 if len(np.load(sys.argv[1]).files)>0 else 1)" "$1" 2>/dev/null
+}
+
+if [ -n "$ANODE" ]; then
+    candidates=("$ANODE")
+else
+    candidates=(0 1)
+fi
+
+KEEP=()
+for a in "${candidates[@]}"; do
+    npz="$WORKDIR/icluster-apa${a}-active.npz"
+    if npz_has_content "$npz"; then
+        KEEP+=("$a")
+    else
+        echo "WARNING: skipping anode $a — $npz is missing or has no active clusters" >&2
+    fi
+done
+
+if [ ${#KEEP[@]} -eq 0 ]; then
+    echo "ERROR: no non-empty icluster-apa*-active.npz files found in $WORKDIR" >&2
     echo "  Run: ./run_img_evt.sh $IDX" >&2
     exit 1
 fi
 
-if [ -n "$ANODE" ]; then
-    ANODE_CODE="[$ANODE]"
-    TAG_SUFFIX="_a${ANODE}"
+ANODE_CODE="[$(IFS=,; echo "${KEEP[*]}")]"
+
+if [ ${#KEEP[@]} -eq 1 ]; then
+    TAG_SUFFIX="_a${KEEP[0]}"
 else
-    ANODE_CODE="[0,1]"
     TAG_SUFFIX=""
 fi
 

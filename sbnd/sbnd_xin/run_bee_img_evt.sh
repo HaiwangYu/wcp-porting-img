@@ -58,23 +58,40 @@ else
     SEL_SUFFIX=""
 fi
 
+# True if the .npz exists, is nonempty on disk, AND contains at least one array.
+# A "no clusters" run still produces a 22-byte zip header, which would crash
+# wirecell-img bee-blobs on `list(tap.load(...))[0]` -- skip those.
+npz_has_content() {
+    [ -s "$1" ] || return 1
+    python3 -c "import numpy as np,sys; sys.exit(0 if len(np.load(sys.argv[1]).files)>0 else 1)" "$1" 2>/dev/null
+}
+
 # Build list of anode_idx:path pairs
 if [ -n "$ANODE" ]; then
     TAG_SUFFIX="_a${ANODE}"
-    ANODE_PAIRS="${ANODE}:${WORKDIR}/icluster-apa${ANODE}-active.npz"
+    npz="$WORKDIR/icluster-apa${ANODE}-active.npz"
+    if ! npz_has_content "$npz"; then
+        echo "ERROR: $npz is missing or has no clusters" >&2
+        echo "  The active-path imaging found no blobs for this anode/selection." >&2
+        echo "  Try widening the selection in run_select_evt.sh or the other anode." >&2
+        exit 1
+    fi
+    ANODE_PAIRS="${ANODE}:${npz}"
 else
     TAG_SUFFIX=""
     ANODE_PAIRS=""
     for i in 0 1; do
         npz="$WORKDIR/icluster-apa${i}-active.npz"
-        if [ -s "$npz" ]; then
+        if npz_has_content "$npz"; then
             ANODE_PAIRS="$ANODE_PAIRS ${i}:${npz}"
+        else
+            echo "WARNING: skipping empty/missing $npz (no active clusters)"
         fi
     done
 fi
 
 if [ -z "$ANODE_PAIRS" ]; then
-    echo "ERROR: no icluster-apa*-active.npz files found in $WORKDIR" >&2
+    echo "ERROR: no non-empty icluster-apa*-active.npz files found in $WORKDIR" >&2
     echo "  Run: ./run_img_evt.sh $IDX" >&2
     exit 1
 fi

@@ -7,6 +7,7 @@
 #   -s:      use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2 (from run_select_evt.sh)
 # Input:   input_files/2025f-mc-sp-frames.tar.bz2  (extracted to work/evt<ID>/ on first use)
 # Output:  work/evt<ID>[_<SEL_TAG>]/magnify-evt<ID>-anode{0,1}.root
+#           work/evt<ID>[_<SEL_TAG>]/sbnd-sp-frames-anode{0,1}.tar.bz2  (for run_select_evt.sh)
 
 set -e
 
@@ -86,10 +87,13 @@ mkdir -p "$WORKDIR"
 OUTPUT_PREFIX="$WORKDIR/magnify-evt${EVT_ID}"
 LOG="$WORKDIR/wct_magnify_evt${EVT_ID}.log"
 
+SP_FRAME_PREFIX="$WORKDIR/sbnd-sp-frames"
+
 echo "Event index:  $IDX → EVT_ID=$EVT_ID"
 echo "Work dir:     $WORKDIR"
 echo "Input:        $SP_ARCHIVE"
 echo "Output:       ${OUTPUT_PREFIX}-anode{0,1}.root"
+echo "              ${SP_FRAME_PREFIX}-anode{0,1}.tar.bz2"
 echo "Log:          $LOG"
 
 cd "$SBND_DIR"
@@ -101,6 +105,7 @@ wire-cell \
     --tla-str  "input=${SP_ARCHIVE}" \
     --tla-code "anode_indices=[0,1]" \
     --tla-str  "output_file_prefix=${OUTPUT_PREFIX}" \
+    --tla-str  "sp_frame_prefix=${SP_FRAME_PREFIX}" \
     --tla-code "run=${RUN}" \
     --tla-code "subrun=${SUBRUN}" \
     --tla-code "event=${EVT_ID}" \
@@ -109,3 +114,6 @@ wire-cell \
 echo "Magnify done:"
 echo "  ${OUTPUT_PREFIX}-anode0.root"
 echo "  ${OUTPUT_PREFIX}-anode1.root"
+echo "SP frame archives (for woodpecker):"
+echo "  ${SP_FRAME_PREFIX}-anode0.tar.bz2"
+echo "  ${SP_FRAME_PREFIX}-anode1.tar.bz2"
