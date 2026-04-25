@@ -37,10 +37,10 @@ function(
   local img_pipes = [img_maker.per_anode(anodes[n], 'multi-3view', add_dump=false)
                      for n in std.range(0, nanodes - 1)];
 
-  // img.jsonnet's internal ChannelSelector uses 5632*ident (production constant), but the
-  // real SBND per-APA count is 5638. Without this pre-filter, APA1's branch receives channels
-  // 5632..5637 (which belong to APA0), causing ChargeErrorFrameEstimator to crash when it
-  // calls anode->channel() on a foreign channel and gets nullptr.
+  // Defensive per-anode filter: ensures the FrameFanout output for branch N contains only
+  // channels owned by APA N (5638 channels: 5638*N .. 5638*N+5637). With the 5638 fix in
+  // img.jsonnet's internal chsel_pipes this is redundant, but the explicit pre-filter keeps
+  // the branch independent of any future regression to the shared production constant.
   local chsel_correct(n) = g.pnode({
     type: 'ChannelSelector',
     name: 'chsel_correct%d' % anodes[n].data.ident,

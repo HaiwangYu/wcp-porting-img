@@ -22,7 +22,7 @@ its canonical source, any local override, and the reason for the override.
 | Cathode X (APA1 side) | +0.45 cm |
 | Max drift distance | ≈ 201 cm |
 | Channels per APA (real) | 5638 |
-| Frame length | 3400 ticks |
+| Frame length | 3427 ticks |
 | Tick period | 0.5 µs |
 
 ---
@@ -133,21 +133,22 @@ Final `wct-img-2-bee.py` arguments (correct values on this branch):
 
 ## Per-APA channel count
 
-**Real value:** 5638 channels per APA (confirmed by wire geometry file).
+**Real value:** 5638 channels per APA = 1984 U + 1984 V + 1670 W (confirmed by
+`wirecell-util wires-info sbnd-wires-geometry-v0202.json.bz2`).
 
-**Upstream bug:** `cfg/pgrapher/experiment/sbnd/img.jsonnet` uses 5632
-(off by 6 W-plane wires per APA). This is a production-affecting bug tracked
-separately — the shared config is not modified here.
+**Previously a production bug:** `cfg/pgrapher/experiment/sbnd/img.jsonnet:47`
+used `5632*ident`, dropping the last 6 W-plane wires of APA0 and the last 12
+W-plane wires of APA1 (because the chsel_correct local filter and the shared
+chsel_pipes filter were applied in series, intersecting to `[0,5631]` for APA0
+and `[5638,11263]` for APA1).
 
-**Local workaround:**
+**Fixed (this branch):**
 
-| File | Line | Fix |
+| File | Line | Value |
 |---|---|---|
-| `wct-img-all.jsonnet` | 48–49 | `ChannelSelector` with `std.range(5638*N, 5638*(N+1)-1)` inserted before `img.per_anode` |
+| `cfg/pgrapher/experiment/sbnd/img.jsonnet` | 47 | `std.range(5638*ident, 5638*(ident+1)-1)` |
+| `wct-img-all.jsonnet` | 48–49 | `std.range(5638*N, 5638*(N+1)-1)` (defensive pre-filter; redundant after the shared fix but kept against regressions) |
 | `wct-sp-to-magnify.jsonnet` | 118 | Same `ChannelSelector` before `MagnifySink` |
-
-Without the corrective selector, APA1's imaging branch would receive 6 channels
-that belong to APA0, causing `ChargeErrorFrameEstimator` to crash.
 
 ---
 
@@ -155,9 +156,14 @@ that belong to APA0, causing `ChargeErrorFrameEstimator` to crash.
 
 | Constant | Value | Source |
 |---|---|---|
-| `nticks` | 3400 | `wct-sp-to-magnify.jsonnet:45` TLA default; passed to `MagnifySink` `runinfo.total_time_bin` |
+| `nticks` | 3427 | `wct-sp-to-magnify.jsonnet:45` TLA default; passed to `MagnifySink` `runinfo.total_time_bin`. Matches actual SP-frame readout window (input frames are 11276 × 3427). |
 | tick period | 0.5 µs | `clus.jsonnet:38` `tick: 0.5 * wc.us` |
 | `tick_drift` | `drift_speed * tick` | `clus.jsonnet:39` (= 0.78 µm per tick at 1.56 mm/µs) |
+
+**Imaging tick clipping (also fixed on this branch):**
+`cfg/pgrapher/experiment/sbnd/img.jsonnet` previously hardcoded `MaskSlices.max_tbin: 3400`
+(line 145) and `CMMModifier.org_hlimit: [3400]` (line 89), silently dropping the last
+27 ticks of every event. Both raised to 3427.
 
 ---
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 # Convert SBND SP frames for one event to per-anode Magnify ROOT files.
-# Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <idx> [run] [subrun]
+# Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <idx|all> [run] [subrun]
 #   idx:     1-based event index (1..10) — maps to event IDs: 2 9 11 12 14 18 31 35 41 42
+#   all:     process all 10 events in parallel (up to 24 simultaneous jobs)
 #   run:     run number stored in ROOT Trun tree (default 0 for MC)
 #   subrun:  subrun number (default 0)
 #   -s:      use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2 (from run_select_evt.sh)
@@ -42,13 +43,63 @@ done
 set -- "${_args[@]}"
 
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 [-s sel_tag] <idx> [run] [subrun]" >&2
+    echo "Usage: $0 [-s sel_tag] <idx|all> [run] [subrun]" >&2
     exit 1
 fi
 
 IDX=$1
 RUN=${2:-0}
 SUBRUN=${3:-0}
+
+# --- "all" mode: launch every event index in parallel ---
+if [ "$IDX" = "all" ]; then
+    MAX_PARALLEL=24
+    N=${#SBND_EVENTS[@]}
+    pids=()
+    idx_arr=()
+    failed_idxs=()
+
+    for ((i=1; i<=N; i++)); do
+        # Throttle: wait for a slot when at the parallel limit
+        while [ "${#pids[@]}" -ge "$MAX_PARALLEL" ]; do
+            new_pids=(); new_idxs=()
+            for j in "${!pids[@]}"; do
+                if kill -0 "${pids[$j]}" 2>/dev/null; then
+                    new_pids+=("${pids[$j]}"); new_idxs+=("${idx_arr[$j]}")
+                else
+                    wait "${pids[$j]}" || failed_idxs+=("${idx_arr[$j]}")
+                fi
+            done
+            pids=("${new_pids[@]}"); idx_arr=("${new_idxs[@]}")
+            [ "${#pids[@]}" -ge "$MAX_PARALLEL" ] && sleep 0.3
+        done
+
+        EVTID="${SBND_EVENTS[$((i-1))]}"
+        LOG_ALL="$SBND_DIR/work/evt${EVTID}${SEL_TAG:+_${SEL_TAG}}/run_all.log"
+        mkdir -p "$(dirname "$LOG_ALL")"
+        echo "[all] Launching index $i → EVT_ID=$EVTID"
+        if [ -n "$SEL_TAG" ]; then
+            "$0" -s "$SEL_TAG" "$i" "$RUN" "$SUBRUN" >"$LOG_ALL" 2>&1 &
+        else
+            "$0" "$i" "$RUN" "$SUBRUN" >"$LOG_ALL" 2>&1 &
+        fi
+        pids+=($!); idx_arr+=("$i")
+    done
+
+    # Wait for all remaining jobs
+    for j in "${!pids[@]}"; do
+        wait "${pids[$j]}" || failed_idxs+=("${idx_arr[$j]}")
+    done
+
+    if [ "${#failed_idxs[@]}" -gt 0 ]; then
+        echo "ERROR: Failed event indices: ${failed_idxs[*]}" >&2
+        echo "  Check logs under work/evt<ID>/run_all.log" >&2
+        exit 1
+    fi
+    echo "All $N events completed successfully."
+    exit 0
+fi
+# --------------------------------------------------------
 
 EVT_ID=$(lookup_evt_id "$IDX")
 

@@ -184,10 +184,18 @@ to Bee manually or via `upload-to-bee.sh <zipfile>`.
 
 ## Known gotchas
 
-- **5638 vs 5632 per-APA channels** — the shared `cfg/pgrapher/experiment/sbnd/img.jsonnet`
-  hardcodes `5632` per APA, dropping 6 W-plane wires. `wct-img-all.jsonnet` inserts
-  a corrective `ChannelSelector` (5638-wide) to work around this. This is a known
-  upstream bug tracked separately.
+- **5638 vs 5632 per-APA channels** — the shared
+  `cfg/pgrapher/experiment/sbnd/img.jsonnet:47` previously used `5632*ident`, dropping
+  the last 6 W-plane wires of APA0 and the last 12 of APA1 (the local `chsel_correct`
+  pre-filter and the shared filter were applied in series, intersecting to
+  `[0,5631]` / `[5638,11263]`). Patched to `5638*ident` in the local toolkit clone.
+  The `chsel_correct` block in `wct-img-all.jsonnet` is kept as a defensive guard
+  against regression of the shared constant.
+
+- **Imaging tick clipping** — `cfg/pgrapher/experiment/sbnd/img.jsonnet` previously
+  hardcoded `MaskSlices.max_tbin: 3400` (line 145) and `CMMModifier.org_hlimit: [3400]`
+  (line 89), silently dropping the last 27 ticks of every event. Both raised to 3427
+  to match the actual SP-frame readout window (input frames are 11276 × 3427).
 
 - **Bee x0 / speed / t0 sign** — `wct-img-2-bee.py` uses `--t0 "200*us"` (positive)
   even though `clus.jsonnet` defines `time_offset = -200*us`. The sign flip is

@@ -198,7 +198,7 @@ and per-anode `gauss<N>`-tagged frame archives for Woodpecker.
 | `output_file_prefix` | str | `'magnify'` | prefix for `.root` outputs |
 | `sp_frame_prefix` | str | `'sbnd-sp-frames'` | prefix for `.tar.bz2` outputs |
 | `run` / `subrun` / `event` | code | 0 / 0 / 0 | stored in ROOT Trun tree |
-| `nticks` | code | 3400 | total ticks passed to MagnifySink |
+| `nticks` | code | 3427 | total ticks (matches actual SP-frame readout); written to `Trun.total_time_bin` |
 
 **Pipeline per anode:**
 ```
@@ -232,7 +232,7 @@ Runs 3D imaging on both anodes, writing active and masked cluster arrays.
 ```
 FrameFileSource(dnnsp)
   → FrameFanout (rename dnnsp→gauss<N> and wiener<N>)
-  → ChannelSelector(5638*N .. 5638*(N+1)-1)   ← corrects upstream 5632 bug
+  → ChannelSelector(5638*N .. 5638*(N+1)-1)   ← defensive per-anode filter
   → img.per_anode(anode, 'multi-3view')
     ├─ port 0 → ClusterFileSink(icluster-apa<N>-active.npz)
     └─ port 1 → ClusterFileSink(icluster-apa<N>-masked.npz)

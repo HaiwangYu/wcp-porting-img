@@ -42,7 +42,7 @@ function(
   run                = 0,
   subrun             = 0,
   event              = 0,
-  nticks             = 3400,
+  nticks             = 3427,
 )
   local anodes  = [tools_all.anodes[i] for i in anode_indices];
   local nanodes = std.length(anodes);
