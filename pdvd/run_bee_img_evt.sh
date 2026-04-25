@@ -211,7 +211,7 @@ for _e in "${_all_events[@]}"; do
                 -g protodunevd -s uniform -d 1 \
                 --rse "$RUN_STRIPPED" "$SUBRUN" "$_event_no" \
                 $_geo_args \
-                -o "data/${_bee_idx}/0-apa${_j}.json" \
+                -o "data/${_bee_idx}/${_bee_idx}-apa${_j}.json" \
                 "$_f"
         ) &
         BATCH_PIDS[$!]="evt${_e}_apa${_j}"
@@ -240,6 +240,7 @@ if [ "$_bee_idx" -eq 0 ]; then
 fi
 
 _zipname="upload-batch-run${RUN_PADDED}.zip"
+rm -f "$_zipname"
 zip -r "$_zipname" data
 echo "Uploading $_zipname ($_bee_idx event(s)) ..."
 ./upload-to-bee.sh "$_zipname"
