@@ -2,6 +2,8 @@
 
 > For per-script details see **[scripts.md](scripts.md)**.
 > For geometry / timing constants see **[geometry-and-timing.md](geometry-and-timing.md)**.
+> For the imaging algorithm deep-dive see **[imaging.md](imaging.md)**.
+> For the clustering algorithm deep-dive see **[clustering.md](clustering.md)**.
 
 ## Provenance
 
