@@ -3,11 +3,30 @@
 All scripts are run from `sbnd_xin/`. Each sets `WIRECELL_PATH` to include
 `toolkit/cfg` and `wire-cell-data` — no manual export needed.
 
-> For the end-to-end pipeline overview and quick start see **[sbnd.md](sbnd.md)**.
+> For the end-to-end pipeline overview, quick start, and common conventions
+> (no-arg listing, `IDX=all` parallel mode, `SBND_MAX_JOBS`) see **[sbnd.md](sbnd.md)**.
 
 ---
 
 ## Shell scripts (pipeline order)
+
+### `_runlib.sh`
+
+Shared helper library sourced by every `run_*.sh` script. Provides:
+
+| Function | Description |
+|---|---|
+| `list_events` | Print the 10 idx→EVT_ID mappings; called on no-arg invocation |
+| `lookup_evt_id <idx>` | Resolve 1-based index to event ID; error + table on bad input |
+| `discover_event_indices` | Print `1 2 … 10`; used in `all`-mode loops |
+| `batch_init` | Initialise counters and `BATCH_PIDS` assoc array |
+| `batch_wait_slot` | Block until fewer than `SBND_MAX_JOBS` (default `nproc`) jobs are running |
+| `batch_drain` | Wait for all remaining background jobs |
+| `batch_summary` | Print ok/failed counts; returns 0 if at least one event succeeded |
+
+Not invoked directly.
+
+---
 
 ### `run_sp_to_magnify_evt.sh`
 
@@ -16,11 +35,13 @@ All scripts are run from `sbnd_xin/`. Each sets `WIRECELL_PATH` to include
 for `run_select_evt.sh` / Woodpecker).
 
 ```
-Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <idx> [run] [subrun]
-  idx:     1-based event index (1..10)
-  run:     run number stored in ROOT Trun tree (default 0)
-  subrun:  subrun number (default 0)
-  -s:      use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2 instead of work/evt<ID>/
+Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <idx|all> [run] [subrun]
+  (no args)  list available events
+  idx:       1-based event index (1..10)
+  all:       process all 10 events in parallel
+  run:       run number stored in ROOT Trun tree (default 0)
+  subrun:    subrun number (default 0)
+  -s:        use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2 instead of work/evt<ID>/
 ```
 
 **Input:** `input_files/2025f-mc-sp-frames.tar.bz2` (extracted to
@@ -36,7 +57,7 @@ Usage: ./run_sp_to_magnify_evt.sh [-s sel_tag] <idx> [run] [subrun]
 
 **Jsonnet driven:** `wct-sp-to-magnify.jsonnet`
 
-**Log:** `work/evt<ID>/wct_magnify_evt<ID>.log`
+**Log:** `work/evt<ID>/wct_magnify_evt<ID>.log`; in `all` mode `work/.batch_magnify_evt<ID>.log`
 
 ---
 
@@ -78,9 +99,11 @@ Sets `MPLBACKEND=WebAgg`; prints SSH port-forward instructions.
 cluster `.npz` files.
 
 ```
-Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <idx>
-  -a:  restrict to one anode (0 or 1)
-  -s:  use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2
+Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <idx|all>
+  (no args)  list available events
+  all:       process all 10 events in parallel
+  -a:        restrict to one anode (0 or 1)
+  -s:        use work/evt<ID>_<SEL_TAG>/input/sp-frames.tar.bz2
 ```
 
 **Input:** `work/evt<ID>[_<SEL_TAG>]/sp-frames.tar.bz2`
@@ -102,7 +125,7 @@ Usage: ./run_img_evt.sh [-a anode] [-s sel_tag] <idx>
 | `anode_indices` | code | `[0,1]` or `[<N>]` with `-a` |
 | `output_dir` | str | `work/evt<ID>[_<SEL_TAG>]/` |
 
-**Log:** `work/evt<ID>/wct_img_evt<ID>[_a<N>].log`
+**Log:** `work/evt<ID>/wct_img_evt<ID>[_a<N>].log`; in `all` mode `work/.batch_img_evt<ID>.log`
 
 ---
 
@@ -113,7 +136,9 @@ Pre-validates `.npz` files and skips anodes with no active clusters so
 `PointTreeMerging` does not stall.
 
 ```
-Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <idx> [run] [subrun]
+Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <idx|all> [run] [subrun]
+  (no args)      list available events
+  all:           process all 10 events in parallel
   run / subrun:  stored in Bee RSE metadata (default 0)
   -a:            restrict to one anode; skips all-APA stage
   -s:            use work/evt<ID>_<SEL_TAG>/ as working directory
@@ -145,7 +170,7 @@ Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <idx> [run] [subrun]
 | `lifetime` | code | 10 | electron lifetime (ms) |
 | `driftSpeed` | code | 1.565 | drift speed (mm/µs) |
 
-**Log:** `work/evt<ID>/wct_clus_evt<ID>[_a<N>].log`
+**Log:** `work/evt<ID>/wct_clus_evt<ID>[_a<N>].log`; in `all` mode `work/.batch_clus_evt<ID>.log`
 
 ---
 
@@ -155,20 +180,30 @@ Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <idx> [run] [subrun]
 anode), package as a zip, and upload to the Bee event-display server.
 
 ```
-Usage: ./run_bee_img_evt.sh [-a anode] [-s sel_tag] <idx> [run] [subrun]
-  -a:  restrict to one anode
-  -s:  use work/evt<ID>_<SEL_TAG>/ as working directory
+Usage: ./run_bee_img_evt.sh [-a anode] [-s sel_tag] <idx|all> [run] [subrun]
+  (no args)  list available events
+  all:       combine all events into one upload zip and do a single Bee upload
+  -a:        restrict to one anode
+  -s:        use work/evt<ID>_<SEL_TAG>/ as working directory
 ```
 
 **Input:** `work/evt<ID>[_<SEL_TAG>]/icluster-apa{0,1}-active.npz` (skips
 empty/22-byte files automatically).
 
-**Commands executed:**
+**Single-event path** (`idx` is a number):
 1. `python wct-img-2-bee.py <run> <subrun> <evt> <N>:<path> ...` → `data/0/0-apa<N>.json` + `upload.zip`
 2. `mv upload.zip upload_evt<ID>[_<SEL>][_a<N>].zip`
 3. `./upload-to-bee.sh <zipname>`
 
-**Output:** `upload_evt<ID>[_<SEL_TAG>][_a<N>].zip` in `sbnd_xin/`
+**`all`-mode path**:
+- Invokes `wirecell-img bee-blobs` directly for each anode in parallel.
+- Writes `data/<bee_idx>/<bee_idx>-apa<N>.json` (filename prefix matches
+  directory index — required by Bee's `parse_pathname` to distinguish events).
+- Produces `upload-batch.zip` and does a single upload.
+
+**Output:**
+- Single-event: `upload_evt<ID>[_<SEL_TAG>][_a<N>].zip` in `sbnd_xin/`
+- All-mode: `upload-batch.zip` in `sbnd_xin/`
 
 ---
 
@@ -312,7 +347,9 @@ Geometry arguments passed to `wirecell-img bee-blobs`:
 Note `--t0 "200*us"` is the **positive** value even though `clus.jsonnet`
 defines `time_offset = -200*us`. See [geometry-and-timing.md](geometry-and-timing.md).
 
-**Output:** `data/0/0-apa<N>.json` (one per anode), then `upload.zip`.
+**Output:** `data/0/0-apa<N>.json` (one per anode), then `upload.zip`. Used only
+by the single-event path of `run_bee_img_evt.sh`; the `all`-mode path calls
+`wirecell-img bee-blobs` directly to achieve correct per-event filename prefixes.
 
 ### `merge_sel_archives.py`
 

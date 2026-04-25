@@ -5,6 +5,44 @@
 > For the imaging algorithm deep-dive see **[imaging.md](imaging.md)**.
 > For the clustering algorithm deep-dive see **[clustering.md](clustering.md)**.
 
+## Common conventions
+
+Every `run_*.sh` script (except `run_select_evt.sh`, which is interactive)
+shares three ergonomic features provided by `_runlib.sh`:
+
+**No-arg listing** — run any script with no arguments to list all valid events:
+```bash
+./run_img_evt.sh
+# Available SBND events (1-based index → event ID):
+#   idx 1   → evt 2
+#   idx 2   → evt 9
+#   ...
+#   idx 10  → evt 42
+```
+
+**`IDX=all` parallel mode** — pass `all` as the event index to process every
+event in parallel:
+```bash
+./run_sp_to_magnify_evt.sh all
+./run_img_evt.sh all
+./run_clus_evt.sh all
+./run_bee_img_evt.sh all
+```
+Jobs run concurrently up to `$(nproc)` (override with `SBND_MAX_JOBS=N`).
+Per-event logs go to `work/.batch_<stage>_evt<ID>.log`. A summary at the end
+shows ok / failed counts.
+
+**Skip-on-missing** — in `all` mode, an event whose required inputs are absent
+is skipped with a one-line note instead of aborting the whole batch. In
+single-event mode the same condition exits non-zero.
+
+**Concurrency cap:**
+```bash
+SBND_MAX_JOBS=4 ./run_img_evt.sh all   # cap at 4 simultaneous jobs
+```
+
+---
+
 ## Provenance
 
 Ported from the LArSoft-coupled configuration in `wcp-porting-img/sbnd/`.
@@ -22,6 +60,7 @@ Reference configs used as a template are in `input_files/` (symlink to
 
 ```
 sbnd_xin/
+├── _runlib.sh                 # shared helpers: list_events, lookup_evt_id, batch_*
 ├── run_sp_to_magnify_evt.sh   # stage 1: SP frames → Magnify ROOT + per-anode archives
 ├── run_select_evt.sh          # stage 1b (optional): Woodpecker GUI tick/channel selection
 ├── run_img_evt.sh             # stage 2: SP frames → imaging cluster .npz files
