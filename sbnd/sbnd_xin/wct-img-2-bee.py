@@ -10,12 +10,15 @@ import os
 
 
 def anode_args(idx):
-    # anode 0: bottom drift (negative x direction)
-    # anode 1: top drift (positive x direction)
+    # SBND anode planes: APA0 at x=-201.45 cm, APA1 at x=+201.45 cm
+    # (params.jsonnet uplane_right/uplane_left). Drift speed 1.563 mm/us
+    # (simparams.jsonnet). t0 sign is flipped from clus.jsonnet's
+    # time_offset=-200us because BlobSampler adds time_offset while
+    # `wirecell-img bee-blobs` subtracts --t0.
     if idx == 0:
-        return '--speed "-1.6*mm/us" --t0 "-200*us" --x0 "0*cm"'
+        return '--speed "-1.563*mm/us" --t0 "200*us" --x0 "-201.45*cm"'
     else:
-        return '--speed "1.6*mm/us" --t0 "-200*us" --x0 "0*cm"'
+        return '--speed "1.563*mm/us" --t0 "200*us" --x0 "201.45*cm"'
 
 
 def main(run, subrun, event, pairs):
