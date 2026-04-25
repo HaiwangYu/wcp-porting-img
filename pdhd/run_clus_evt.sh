@@ -1,6 +1,11 @@
 #!/bin/bash
 # Run clustering for one event.
-# Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <run> <evt> [subrun]
+# Usage: ./run_clus_evt.sh [-a anode] [-s sel_tag] <run> <evt|all> [subrun]
+#        ./run_clus_evt.sh               # list available runs
+#
+# EVT may be 'all' to run every discovered event in parallel (capped at nproc,
+# override with PDHD_MAX_JOBS=N).  Events with missing inputs are skipped.
+#
 # Input:  work/<run>_<evt>[_sel<TAG>]/ (from imaging) or input_data event dir as fallback
 # Output: work/<run>_<evt>[_sel<TAG>]/mabc-apa{N}.zip, mabc-all-apa.zip
 
@@ -10,6 +15,8 @@ PDHD_DIR=$(cd "$(dirname "$0")" && pwd)
 
 WCT_BASE=/nfs/data/1/xqian/toolkit-dev
 export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECELL_PATH}
+
+. "$PDHD_DIR/_runlib.sh"
 
 ANODE=""
 SEL_TAG=""
@@ -25,8 +32,12 @@ while [ $# -gt 0 ]; do
 done
 set -- "${_args[@]}"
 
+if [ $# -eq 0 ]; then
+    list_runs; exit 0
+fi
+
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt> [subrun]" >&2
+    echo "Usage: $0 [-a anode] [-s sel_tag] <run> <evt|all> [subrun]" >&2
     exit 1
 fi
 RUN=$1
@@ -55,65 +66,94 @@ find_evtdir() {
     return 1
 }
 
-if [ -n "$SEL_TAG" ]; then
-    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
-else
-    WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}"
-fi
-mkdir -p "$WORKDIR"
+process_event() {
+    local RUN=$1 EVT=$2
+    local RUN_STRIPPED RUN_PADDED WORKDIR EVTDIR CLUS_INPUT ANODE_CODE TAG_SUFFIX LOG
+    local APA0_CLUS EVENT_NO
+    RUN_STRIPPED=$(echo "$RUN" | sed 's/^0*//')
+    [ -z "$RUN_STRIPPED" ] && RUN_STRIPPED=0
+    RUN_PADDED=$(printf '%06d' "$RUN_STRIPPED")
 
-# prefer work dir (post-imaging output), fall back to input_data
-CLUS_INPUT=""
-if ls "$WORKDIR/clusters-apa-apa"*"-ms-active.tar.gz" >/dev/null 2>&1; then
-    CLUS_INPUT="$WORKDIR"
-else
-    EVTDIR=$(find_evtdir)
-    if [ -n "$EVTDIR" ] && ls "$EVTDIR/clusters-apa-apa"*"-ms-active.tar.gz" >/dev/null 2>&1; then
-        CLUS_INPUT="$EVTDIR"
+    if [ -n "$SEL_TAG" ]; then
+        WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}_${SEL_TAG}"
+    else
+        WORKDIR="$PDHD_DIR/work/${RUN_PADDED}_${EVT}"
     fi
-fi
+    mkdir -p "$WORKDIR"
 
-if [ -z "$CLUS_INPUT" ]; then
-    echo "ERROR: no cluster tarballs found for run=$RUN evt=$EVT" >&2
-    echo "  Tried: $WORKDIR and input_data/ event dirs" >&2
-    exit 1
-fi
-echo "Cluster input: $CLUS_INPUT"
-echo "Work dir:      $WORKDIR"
+    CLUS_INPUT=""
+    if ls "$WORKDIR/clusters-apa-apa"*"-ms-active.tar.gz" >/dev/null 2>&1; then
+        CLUS_INPUT="$WORKDIR"
+    else
+        EVTDIR=$(find_evtdir) || EVTDIR=""
+        if [ -n "$EVTDIR" ] && ls "$EVTDIR/clusters-apa-apa"*"-ms-active.tar.gz" >/dev/null 2>&1; then
+            CLUS_INPUT="$EVTDIR"
+        fi
+    fi
 
-# Extract the art event number from the first available cluster tarball.
-# e.g. cluster_40896_graph.json  →  40896
-APA0_CLUS=$(ls "$CLUS_INPUT/clusters-apa-apa"*"-ms-active.tar.gz" 2>/dev/null | head -1)
-EVENT_NO=$(tar tzf "$APA0_CLUS" | head -1 | sed -E 's/.*cluster_([0-9]+)_.*/\1/')
-if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
-    echo "ERROR: could not parse event number from $APA0_CLUS (got: '$EVENT_NO')" >&2
-    exit 1
-fi
-echo "Art event number: $EVENT_NO"
+    if [ -z "$CLUS_INPUT" ]; then
+        echo "[skip] run=$RUN evt=$EVT: no cluster tarballs found" >&2
+        return 2
+    fi
+    echo "Cluster input: $CLUS_INPUT"
+    echo "Work dir:      $WORKDIR"
 
-if [ -n "$ANODE" ]; then
-    ANODE_CODE="[$ANODE]"
-    TAG_SUFFIX="_a${ANODE}"
+    APA0_CLUS=$(ls "$CLUS_INPUT/clusters-apa-apa"*"-ms-active.tar.gz" 2>/dev/null | head -1)
+    EVENT_NO=$(tar tzf "$APA0_CLUS" | head -1 | sed -E 's/.*cluster_([0-9]+)_.*/\1/')
+    if ! echo "$EVENT_NO" | grep -qE '^[0-9]+$'; then
+        echo "ERROR: could not parse event number from $APA0_CLUS (got: '$EVENT_NO')" >&2
+        return 1
+    fi
+    echo "Art event number: $EVENT_NO"
+
+    if [ -n "$ANODE" ]; then
+        ANODE_CODE="[$ANODE]"
+        TAG_SUFFIX="_a${ANODE}"
+    else
+        ANODE_CODE="[0,1,2,3]"
+        TAG_SUFFIX=""
+    fi
+
+    LOG="$WORKDIR/wct_clus_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
+    echo "Log:           $LOG"
+
+    cd "$PDHD_DIR"
+    rm -f "$LOG"
+    wire-cell \
+        -l stderr \
+        -l "${LOG}:debug" \
+        -L debug \
+        --tla-str "input=${CLUS_INPUT}" \
+        --tla-code "anode_indices=${ANODE_CODE}" \
+        --tla-str "output_dir=${WORKDIR}" \
+        --tla-code "run=${RUN_STRIPPED}" \
+        --tla-code "subrun=${SUBRUN}" \
+        --tla-code "event=${EVENT_NO}" \
+        -c wct-clustering.jsonnet
+
+    echo "Clustering done -> $WORKDIR"
+}
+
+mkdir -p "$PDHD_DIR/work"
+if [ "$EVT" = "all" ]; then
+    batch_init
+    mapfile -t _events < <(discover_events "$RUN" "$RUN_PADDED")
+    if [ ${#_events[@]} -eq 0 ]; then
+        echo "no events found for run=$RUN under input_data/ or work/" >&2; exit 1
+    fi
+    echo "Found ${#_events[@]} event(s) for run=$RUN: ${_events[*]}"
+    echo "Parallel jobs: $BATCH_MAX"
+    for _e in "${_events[@]}"; do
+        _blogfile="$PDHD_DIR/work/.batch_clus_${RUN_PADDED}_${_e}.log"
+        batch_wait_slot
+        ( process_event "$RUN" "$_e" ) > "$_blogfile" 2>&1 &
+        BATCH_PIDS[$!]=$_e
+        echo "  [start] evt=$_e  log: $_blogfile"
+    done
+    batch_drain
+    batch_summary
+    exit $?
 else
-    ANODE_CODE="[0,1,2,3]"
-    TAG_SUFFIX=""
+    ( process_event "$RUN" "$EVT" )
+    exit $?
 fi
-
-LOG="$WORKDIR/wct_clus_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
-echo "Log:           $LOG"
-
-cd "$PDHD_DIR"
-rm -f "$LOG"
-wire-cell \
-    -l stderr \
-    -l "${LOG}:debug" \
-    -L debug \
-    --tla-str "input=${CLUS_INPUT}" \
-    --tla-code "anode_indices=${ANODE_CODE}" \
-    --tla-str "output_dir=${WORKDIR}" \
-    --tla-code "run=${RUN_STRIPPED}" \
-    --tla-code "subrun=${SUBRUN}" \
-    --tla-code "event=${EVENT_NO}" \
-    -c wct-clustering.jsonnet
-
-echo "Clustering done -> $WORKDIR"
