@@ -1,10 +1,14 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-g elecGain] <run> <evt|all>
 #        ./run_nf_sp_evt.sh                # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
 # override with PDHD_MAX_JOBS=N).  Events with missing inputs are skipped.
+#
+#   -g elecGain   FE amplifier gain in mV/fC (default: 14).
+#                 Use 7.8 for low-gain data.  Selects the matching noise
+#                 spectrum file automatically (params.jsonnet:165-166).
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodunehd-orig-frames-anode{0..3}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodunehd-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -19,11 +23,14 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 . "$PDHD_DIR/_runlib.sh"
 
 ANODE=""
+ELEC_GAIN="14"
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
+        -g) ELEC_GAIN="$2"; shift 2 ;;
+        -g*) ELEC_GAIN="${1#-g}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -34,7 +41,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt|all>" >&2
+    echo "Usage: $0 [-a anode] [-g elecGain] <run> <evt|all>" >&2
     exit 1
 fi
 RUN=$1
@@ -93,8 +100,9 @@ process_event() {
 
     mkdir -p "$WORKDIR"
     LOG="$WORKDIR/wct_nfsp_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
-    echo "Work dir: $WORKDIR"
-    echo "Log:      $LOG"
+    echo "Work dir:  $WORKDIR"
+    echo "elecGain:  ${ELEC_GAIN} mV/fC"
+    echo "Log:       $LOG"
 
     cd "$PDHD_DIR"
     rm -f "$LOG"
@@ -103,6 +111,7 @@ process_event() {
         -l stderr \
         -l "${LOG}:debug" \
         -L debug \
+        -V "elecGain=${ELEC_GAIN}" \
         --tla-str orig_prefix="${EVTDIR}/protodunehd-orig-frames" \
         --tla-str raw_prefix="${WORKDIR}/protodunehd-sp-frames-raw" \
         --tla-str sp_prefix="${WORKDIR}/protodunehd-sp-frames" \

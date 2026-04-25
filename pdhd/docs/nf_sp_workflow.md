@@ -35,6 +35,7 @@ are checked into `input_data/` and are the fixed starting point.
 | `<run>` | Run number (any zero-padding accepted; internally normalized to 6-digit `RUN_PADDED`) |
 | `<evt>` | Event identifier (as used in the `input_data/` directory layout) |
 | `-a <anode>` | Optional — restrict processing to a single anode (0–3). Omit to process all four APAs. |
+| `-g <elecGain>` | FE amplifier gain in mV/fC (default: `14`). Use `7.8` for low-gain data. Automatically selects the matching noise-spectrum file (`params.jsonnet:165–166`). |
 
 ### Event-directory lookup (`find_evtdir`)
 
@@ -93,8 +94,9 @@ With `-a 0` only anode 0 archives are written; the log gets the
 `run_nf_sp_evt.sh` invokes `wire-cell` with these top-level arguments (TLAs)
 that configure `wct-nf-sp.jsonnet`:
 
-| TLA | CLI flag | Value set by script | Role |
-|-----|----------|---------------------|------|
+| Parameter | CLI flag | Value set by script | Role |
+|-----------|----------|---------------------|------|
+| `elecGain` | `-V` (extVar) | `-g` flag value (default `14`) | FE gain in mV/fC; selects noise-spectrum file automatically |
 | `orig_prefix` | `--tla-str` | `<EVTDIR>/protodunehd-orig-frames` | Prefix for reading orig-frame archives |
 | `raw_prefix` | `--tla-str` | `<WORKDIR>/protodunehd-sp-frames-raw` | Prefix for writing NF output archives |
 | `sp_prefix` | `--tla-str` | `<WORKDIR>/protodunehd-sp-frames` | Prefix for writing SP output archives |
@@ -155,8 +157,12 @@ are **not** in the sink's `tags` list and are therefore dropped.
 ## Quick-start examples
 
 ```bash
-# Process all four APAs for run 27409, event 1
+# Process all four APAs for run 27409, event 1 (14 mV/fC gain, default)
 ./run_nf_sp_evt.sh 27409 1
+
+# Explicitly specify gain (required; default is 14 mV/fC)
+./run_nf_sp_evt.sh -g 14 27409 1       # high-gain
+./run_nf_sp_evt.sh -g 7.8 027409 1    # low-gain data
 
 # Process only APA 0 (faster for iteration)
 ./run_nf_sp_evt.sh -a 0 27409 1
