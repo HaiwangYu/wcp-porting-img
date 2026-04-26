@@ -42,7 +42,7 @@ Condition: `wct-nf-sp.jsonnet:111`
 
 **Type**: `PDVDOneChannelNoise`
 **C++ class**: `WireCell::SigProc::PDVD::OneChannelNoise`
-**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (~lines 780–883)
+**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: lines 807–878)
 **Config in**: `toolkit/cfg/pgrapher/experiment/protodunevd/nf.jsonnet:8–15`
 
 ### What it does (in order)
@@ -52,61 +52,138 @@ Condition: `wct-nf-sp.jsonnet:111`
 2. **6σ-clipped median baseline** — computes the median of the waveform
    after iteratively excluding samples more than 6σ from the running
    median. Subtracts the result to pedestal-centre the trace.
-3. **Adaptive baseline for partial channels** — for channels flagged as
-   `is_partial` (stuck-RC / RC-coupling artefact), runs
-   `SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags` to
-   robustly subtract a slowly-varying baseline.
+3. **Adaptive baseline for partial channels** — the code block
+   (`ProtoduneVD.cxx:843–860`) that would call
+   `SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags` is
+   **dead in PDVD**: `is_partial` is hard-coded to `false` at line 816
+   (the `m_check_partial(spectrum)` call is commented out at line 817).
+   Therefore no adaptive baseline runs and no `lf_noisy` tag is emitted
+   (see [lf_noisy section](#lf_noisy-tagging) below).
 4. **Noisy-channel tagging** via `NoisyFilterAlg`:
-   computes the per-channel RMS after baseline subtraction; if
-   `rms < min_rms_cut` or `rms > max_rms_cut` the channel is tagged
-   `noisy`.
+   `PDVD::SignalFilter(signal)` + `PDVD::NoisyFilterAlg(signal, min_rms, max_rms)`
+   + `PDVD::RemoveFilterFlags(signal)` run at lines 867–869 (these are live).
+   If `rms < min_rms_cut` or `rms > max_rms_cut` the channel is tagged
+   `noisy` (line 874).
 
 ### Tunable knobs
 
 These live in `chndb-base.jsonnet` `channel_info` defaults
-(`chndb-base.jsonnet:406–442`) and can be overridden per channel:
+(`chndb-base.jsonnet:413–440`) and can be overridden per channel:
 
 | Knob | Default | Effect |
 |------|---------|--------|
-| `nominal_baseline` | `2048.0` ADC | Starting baseline value; the algorithm corrects away from this |
-| `min_rms_cut` | `1.0` | Channels with RMS below this → flagged `noisy` (dead-channel proxy) |
-| `max_rms_cut` | `60.0` | Channels with RMS above this → flagged `noisy` (high-noise proxy) |
-| `rcrc` | `1.1 ms` | RC-RC time constant used to build the spectral correction filter (1.1 for collection, 3.3 for induction; RC correction is currently commented out in ProtoduneVD.cxx:820–823) |
-| `rc_layers` | `0` | Number of RC filter layers (0 = disabled) |
-| `reconfig` | `{}` | Override per-channel spectral masking |
-| `freqmasks` | `[]` | List of frequency-band masks to zero out (e.g., narrow-band noise lines) |
+| `nominal_baseline` | `2048.0` ADC | Starting baseline value |
+| `min_rms_cut` | `1.0` ADC | Channels with RMS below this → flagged `noisy` (dead-channel proxy) |
+| `max_rms_cut` | `60.0` ADC | Channels with RMS above this → flagged `noisy` (high-noise proxy) |
+| `rcrc` | `1.1 ms` | RC-RC time constant — **not applied**: the `m_noisedb->rcrc(ch)` call is commented out (`ProtoduneVD.cxx:820–823`) |
+| `rc_layers` | `0` | Number of RC filter layers — `0` would suppress it even if the call were live |
+| `reconfig` | `{}` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->config(ch)` call in the PDVD per-channel filter; ignored silently) |
+| `freqmasks` | `[]` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->noise(ch)` call; ignored even if non-empty) |
 
-To tighten or relax noisy-channel cuts: edit `min_rms_cut` / `max_rms_cut`
-in `chndb-base.jsonnet:424–425`.
+**RMS cuts are uniform** across all channels, anodes, and planes. The
+`chndb-base.jsonnet` function signature (`line 9`) exposes `rms_cuts=[]`
+for per-channel overrides, but no caller in
+`cfg/pgrapher/experiment/protodunevd/` populates it. There is no
+wire-length-dependent scaling anywhere in `NoisyFilterAlg`
+(`ProtoduneVD.cxx:684–698`).
+
+**RC-RC correction is not applied** to either bottom (TDE) or top
+electronics. There is no top-vs-bottom anode branch for RC correction;
+the single commented-out call (`ProtoduneVD.cxx:821`) would have applied
+the same `rcrc(ch)` spectrum to all channels.
+
+### What is NOT done (compare with ProtoDUNE-SP / MicroBooNE)
+
+- **Sticky-ADC code mitigation** — no `StickyCodeMitig` class exists for
+  PDVD; the strings "sticky" and "ledge" do not appear anywhere in
+  `ProtoduneVD.cxx`.
+- **Ledge identification** — same: no helper, no tag.
+- **RC-RC spectral correction** — commented out at `ProtoduneVD.cxx:820–823`.
+- **Adaptive baseline** (`RawAdaptiveBaselineAlg`) — unreachable (`is_partial = false`).
+- **Electronics reconfiguration** — `m_noisedb->config(ch)` never called.
+- **Per-channel frequency masking** — `m_noisedb->noise(ch)` never called.
+- **Top/bottom electronics split** at the per-channel level — no `ident`
+  test inside `OneChannelNoise::apply`. The only top/bottom branch lives
+  in `nf.jsonnet:60–66` (shield coupling, Step 3).
+- **`lf_noisy` tagging** — see [below](#lf_noisy-tagging).
+
+The `maskmap: {sticky: "bad", ledge: "bad", noisy: "bad"}` in
+`nf.jsonnet:47` declares routing for `sticky` and `ledge` keys that the
+PDVD C++ code never produces. Only the `noisy` key is exercised.
 
 ## Step 2 — PDVDCoherentNoiseSub (group coherent subtraction)
 
 **Type**: `PDVDCoherentNoiseSub`
 **C++ class**: `WireCell::SigProc::PDVD::CoherentNoiseSub`
-**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (~line 885)
+**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: ~lines 885–990)
 **Config in**: `nf.jsonnet:16–24`, groups from `chndb-base.jsonnet:30–391`
 
 ### What it does
 
 For each channel group (typically one FEMB or one CRP conduit):
+
 1. Computes the **median waveform** across all channels in the group
-   (a sample-by-sample median to capture the common-mode shape).
-2. Runs **signal protection** (`SignalProtection`): a low-frequency
-   deconvolution step that identifies samples likely to contain real
-   charge signals and excludes them from the common-mode estimate,
-   preventing signal subtraction.
-3. Subtracts the scaled common-mode median from every channel in the
-   group (`Subtract_WScaling`).
+   (sample-by-sample median to capture the common-mode shape).
+2. Runs **`SignalProtection`** (`ProtoduneVD.cxx:938–940`) which has two
+   internal stages:
+   - **Time-domain ADC stage** (`ProtoduneVD.cxx:319–353`, always active):
+     computes the per-channel RMS and marks bins where
+     `|median - mean| > limit` as signal-bearing, then pads those ROIs.
+     `limit = clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`.
+   - **Deconvolution stage** (`ProtoduneVD.cxx:357–411`, gated):
+     divides the median spectrum by `respec`, applies Gaussian +
+     low-frequency filter, then thresholds positive excursions against
+     `decon_limit`. **This stage is bypassed in PDVD's current
+     configuration** because the guard at line 357 requires
+     `respec.size() > 0` and `res_offset != 0`, but
+     `chndb-base.jsonnet:438` sets `response: {}` (empty) and
+     `chndb-base.jsonnet:417` sets `response_offset: 0.0`.
+3. Runs **`Subtract_WScaling`** (`ProtoduneVD.cxx:982–985`) to subtract
+   the scaled common-mode median from each channel. This also has a
+   deconvolution branch gated by the same `respec` condition
+   (`ProtoduneVD.cxx:144`); it is likewise bypassed in PDVD's current
+   config. The active path is a straightforward
+   `signal[i] -= scaling × median[i]` (`ProtoduneVD.cxx:259`).
 
 ### Tunable knobs
 
 | Knob | Set in | Default | Effect |
 |------|--------|---------|--------|
 | `rms_threshold` | `nf.jsonnet:22` | `0.0` | Groups whose overall RMS is below this are skipped |
-| `decon_limit` | `chndb-base.jsonnet:421` | `0.02` | Signal-protection deconvolution low threshold |
-| `decon_limit1` | `chndb-base.jsonnet:422` | `0.09` | Signal-protection deconvolution high threshold |
-| `adc_limit` | `chndb-base.jsonnet:423` | `15` | ADC amplitude threshold in signal protection |
-| `roi_min_max_ratio` | `chndb-base.jsonnet:423` | `0.8` | Ratio used in ROI protection logic |
+| `adc_limit` | `chndb-base.jsonnet:422` | `15` ADC | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
+| `protection_factor` | `OmniChannelNoiseDB.cxx:43` | `5.0` | Multiplier on per-channel RMS to form the baseline signal-veto threshold |
+| `min_adc_limit` | `OmniChannelNoiseDB.cxx:44` | `50` ADC | Ceiling on the time-domain threshold |
+| `decon_limit` | `chndb-base.jsonnet:420` | `0.02` | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (no `gain×shaping` normalisation). **Currently inactive** — deconvolution branch is bypassed because `respec` is empty (`ProtoduneVD.cxx:381–385`) |
+| `decon_limit1` | `chndb-base.jsonnet:421` | `0.09` | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Currently inactive** — same guard |
+| `roi_min_max_ratio` | `chndb-base.jsonnet:423` | `0.8` | Ratio used in ROI protection logic (min/max asymmetry test) |
+
+### 1D field response for signal protection
+
+`SignalProtection` and `Subtract_WScaling` both receive a 1D response
+spectrum `respec` fetched via `m_noisedb->response(achannel)`
+(`ProtoduneVD.cxx:910`). It is **not synthesised analytically** inside
+`ProtoduneVD.cxx`; the class makes no direct call to `IFieldResponse` or
+`Response::ColdElec`.
+
+`OmniChannelNoiseDB::parse_response` (`OmniChannelNoiseDB.cxx:302–355`)
+builds `respec` by one of three paths (first match wins):
+
+| Condition in channel JSON | What happens |
+|---------------------------|--------------|
+| `wpid` key present | Reads field-response file → `Response::wire_region_average` → sums currents of the named plane → FFT |
+| `waveform` + `waveformid` keys present | FFT of the explicit waveform array |
+| Neither (empty `{}`) | Returns an **empty** spectrum (lines 351–354) |
+
+**PDVD's current configuration uses the third path**: `response: {}` and
+`response_offset: 0.0` in `chndb-base.jsonnet:438,417`. The deconvolution
+branches in `SignalProtection` and `Subtract_WScaling` are therefore
+completely bypassed.
+
+- The field-response file `protodunevd_FR_norminal_260324.json.bz2`
+  (`params.jsonnet:165–167`) is consumed by SP, not by NF.
+- The arrays `u_resp[]` and `v_resp[]` in `chndb-resp.jsonnet:19–101` are
+  **dead code** — no jsonnet in `cfg/pgrapher/experiment/protodunevd/`
+  imports them.
 
 ### Channel groups
 
@@ -146,6 +223,34 @@ top_u_groups:
   [std.range(n*3072, n*3072+475) for n in std.range(2,3)]
   +[std.range(n*3072+476, n*3072+951) for n in std.range(2,3)]
 ```
+Each top anode (n = 2, 3 corresponding to ident 6, 7) contributes two
+half-groups of ~476 channels each (the two halves of the U-plane strip
+layout).
+
+## lf_noisy tagging
+
+`lf_noisy` appears in `ProtoduneVD.cxx` exactly once — at line 854,
+inside the `if (is_partial)` block:
+
+```cpp
+if (iplane != 2) {  // not collection
+    ret["lf_noisy"][ch].push_back(temp_bin_range);
+}
+```
+
+Because `is_partial` is hard-coded to `false` at line 816, this line is
+**unreachable** in PDVD. `PDVD::NoisyFilterAlg` (`ProtoduneVD.cxx:684–698`)
+only emits `noisy`. No coherent- or shield-stage code emits `lf_noisy`.
+PDVD therefore **never produces an `lf_noisy` mask** in production, and the
+`OmnibusNoiseFilter` `maskmap` (`nf.jsonnet:47`) has no `lf_noisy` entry.
+
+For comparison:
+- ProtoDUNE-SP (`Protodune.cxx:772,880–893`) has the same block but with
+  `is_partial = m_check_partial(spectrum)` *live*, so it does emit
+  `lf_noisy` on non-collection partial channels.
+- MicroBooNE has additional `lf_noisy` paths: a chirping-channel branch
+  (`Microboone.cxx:954`) and a dedicated `OneChannelStatus::ID_lf_noisy`
+  (`Microboone.cxx:1299–1346`). PDVD has neither.
 
 ## OmnibusNoiseFilter wrapper
 
@@ -155,7 +260,7 @@ The three filter passes are hosted by a single `OmnibusNoiseFilter` pnode
 | Key | Value | Meaning |
 |-----|-------|---------|
 | `nticks` | `0` | Don't force waveform length; inherit from incoming frame |
-| `maskmap` | `{sticky:"bad", ledge:"bad", noisy:"bad"}` | Merge all per-channel flag types into unified `bad` mask consumed by SP |
+| `maskmap` | `{sticky:"bad", ledge:"bad", noisy:"bad"}` | Merge per-channel flag types into unified `bad` mask consumed by SP. Note: PDVD only ever produces the `noisy` key; the `sticky` and `ledge` entries are inert (PDVD has no code that emits those tags) |
 | `channel_filters` | `[PDVDOneChannelNoise]` | Per-channel pass runs first |
 | `multigroup_chanfilters` | `[{grouped, groups}, ...]` + shield (top only) | Group passes run after per-channel |
 | `grouped_filters` | `[]` | Unused; coherent sub is wired via `multigroup_chanfilters` |
@@ -213,8 +318,10 @@ on the main path after the tap.
 | `wct-nf-sp.jsonnet` (pdvd/) | Top-level pipeline: builds per-anode graphs |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/nf.jsonnet` | Returns OmnibusNoiseFilter pnode per anode |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-base.jsonnet` | Channel DB: groups, bad channels, per-channel defaults |
+| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp.jsonnet` | Hard-coded `u_resp`/`v_resp` arrays (currently unused dead code) |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/params.jsonnet` | Detector parameters (tick, nticks, strip_length file) |
 | `toolkit/cfg/pgrapher/common/resamplers.jsonnet` | Resampler pnode construction |
 | `toolkit/sigproc/src/ProtoduneVD.cxx` | C++ impl of PDVD NF modules |
 | `toolkit/sigproc/inc/WireCellSigProc/ProtoduneVD.h` | PDVD NF class declarations |
 | `toolkit/sigproc/src/OmnibusNoiseFilter.cxx` | OmnibusNoiseFilter driver |
+| `toolkit/sigproc/src/OmniChannelNoiseDB.cxx` | Channel noise DB: parses `response`, `reconfig`, `freqmasks` |
