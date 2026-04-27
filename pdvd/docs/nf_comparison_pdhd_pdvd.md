@@ -46,7 +46,7 @@ All claims below are validated against the actual C++
 | `m_check_partial(spectrum)` (RC heuristic) | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneHD.cxx:817`); `adaptive_baseline` defaults to `false` and is left at default in `pdhd/nf.jsonnet` — PDHD cold electronics is DC-coupled so the IS_RC branch has no physical meaning | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneVD.cxx:819`); `adaptive_baseline` defaults to `false` and is left at default in `protodunevd/nf.jsonnet` — PDVD hardware is DC-coupled so the IS_RC branch has no physical meaning |
 | Adaptive baseline (`SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags`) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDHD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDVD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) |
 | `lf_noisy` tag on induction planes | **Never emitted** — push at `ProtoduneHD.cxx:853` not taken while `adaptive_baseline=false` | **Never emitted** — push at `ProtoduneVD.cxx:857` not taken while `adaptive_baseline=false` |
-| `NoisyFilterAlg` (`min_rms_cut`/`max_rms_cut` test → `noisy` tag) | **Commented out** (`ProtoduneHD.cxx:861–872`) — `min_rms_cut: 1.0` / `max_rms_cut: 30.0` are dead | ✅ **Live** (`ProtoduneVD.cxx:862–875`) — `min_rms_cut: 1.0` / `max_rms_cut: 60.0` actively flag noisy channels |
+| `NoisyFilterAlg` (`min_rms_cut`/`max_rms_cut` test → `noisy` tag) | **Commented out** (`ProtoduneHD.cxx:861–872`) — `min_rms_cut: 1.0` / `max_rms_cut: 30.0` are dead | ✅ **Live** (`ProtoduneVD.cxx:862–875`) — per-anode-group, per-plane cuts active (see RMS threshold table in `pdvd/docs/nf.md`) |
 | `SignalFilter` + `RemoveFilterFlags` around the noisy test | n/a (block commented) | ✅ live (PDVD lines 867, 869) |
 
 **Net effect — what tags each per-channel filter actually produces:**
@@ -54,7 +54,7 @@ All claims below are validated against the actual C++
 | Tag | PDHD | PDVD |
 |-----|------|------|
 | `lf_noisy` | ❌ never produced (`adaptive_baseline=false`) | ❌ never produced |
-| `noisy` | ❌ never produced | ✅ produced when channel RMS is outside `[1.0, 60.0]` ADC |
+| `noisy` | ❌ never produced | ✅ produced when channel RMS is outside per-plane cut (see RMS threshold table in `pdvd/docs/nf.md`) |
 | `sticky` / `ledge` | ❌ neither implemented | ❌ neither implemented |
 
 Both detectors disable IS_RC + adaptive baseline by config (DC-coupled hardware). The only live per-channel tag difference is that **PDVD tags `noisy`** (via `NoisyFilterAlg`) while **PDHD produces no per-channel tags at all** in the current build.
@@ -163,15 +163,16 @@ Compared at `chndb-base.jsonnet` default block (W and global defaults):
 | `roi_min_max_ratio` | 0.8 | **3.0** | **1.5** | 0.8 | 0.8 |
 | `pad_window_front` (ticks) | 10 | 20 | 10 | 10 | 20 |
 | `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 20 |
-| `min_rms_cut` (ADC) | 1.0 *(dead)* | — | — | — | 1.0 *(live)* |
-| `max_rms_cut` (ADC) | 30.0 *(dead)* | — | — | — | 60.0 *(live)* |
+| `min_rms_cut` (ADC) | 1.0 *(dead)* | — | — | — | per-plane: top all planes 8.0; bottom W 5.0; bottom U/V linear-in-wirelength [2.6→6.3] *(live)* |
+| `max_rms_cut` (ADC) | 30.0 *(dead)* | — | — | — | 15.0 all planes *(live)* |
 | `rcrc` | 1.1 ms *(dead)* | — | — | — | 1.1 ms *(dead)* |
 | `rc_layers` | 1 *(dead)* | — | — | — | 0 *(dead)* |
 | `freqmasks` | `[]` default; **U/V notches at bins 169–173, 513–516** *(but dead — `noise(ch)` never called)* | — | — | — | `[]` *(dead — never called)* |
 
 PDHD has **per-plane tuning** (different decon thresholds, different
-`roi_min_max_ratio`, wider U front pad). PDVD applies a **single global
-default to all 3072 channels of all 8 anodes** — no per-plane override.
+`roi_min_max_ratio`, wider U front pad). PDVD now also has **per-plane,
+per-anode-group RMS cuts** (see table in `pdvd/docs/nf.md`), but other
+`channel_info` parameters remain uniform across all channels.
 
 PDHD's higher `adc_limit`/`min_adc_limit` (60/200 vs 15/50) reflect the
 *raised* signal-protection floor needed because PDHD's U/V deconvolution
@@ -256,7 +257,7 @@ two stages operate on different channel partitions.
 | Adaptive baseline (partial channels)? | No (`adaptive_baseline=false` in `nf.jsonnet` — PDHD cold electronics is DC-coupled, so IS_RC gate has no physical meaning; see `Microboone.cxx:963-1047`) | No (`adaptive_baseline=false` in `nf.jsonnet` — intentional; PDVD is DC-coupled so IS_RC gate has no physical meaning) |
 | `lf_noisy` tag emitted? | No (not emitted while `adaptive_baseline=false`) | No |
 | `noisy` tag (RMS cut) emitted? | No (block commented) | Yes |
-| RMS-cut wire-length dependence? | n/a (cuts are dead) | No (uniform `[1, 60]` ADC) |
+| RMS-cut wire-length dependence? | n/a (cuts are dead) | Yes for bottom U/V — `linear_in_wirelength` mode in `OmniChannelNoiseDB` (`OmniChannelNoiseDB.cxx:cache_wire_lengths`) |
 | RC-RC correction applied? | No (commented out) | No (commented out) |
 | Top vs bottom electronics branch in NF? | n/a | Only for *resampler* (n<4) and *shield coupling* (ident>3); not in per-channel or coherent algos |
 | `reconfig` consumed by per-channel filter? | No | No |

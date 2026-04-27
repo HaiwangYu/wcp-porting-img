@@ -80,20 +80,44 @@ These live in `chndb-base.jsonnet` `channel_info` defaults
 | Knob | Default | Effect |
 |------|---------|--------|
 | `nominal_baseline` | `2048.0` ADC | Starting baseline value |
-| `min_rms_cut` | `1.0` ADC | Channels with RMS below this → flagged `noisy` (dead-channel proxy) |
-| `max_rms_cut` | `60.0` ADC | Channels with RMS above this → flagged `noisy` (high-noise proxy) |
+| `min_rms_cut` | per-plane (see below) | Channels with RMS below this → flagged `noisy` (dead-channel proxy) |
+| `max_rms_cut` | per-plane (see below) | Channels with RMS above this → flagged `noisy` (high-noise proxy) |
 | `adaptive_baseline` | `false` | When `true`, enables the IS_RC (`m_check_partial`) partial-RC heuristic to gate the adaptive baseline per channel. **Left at default `false` for PDVD**: hardware is DC-coupled, so the IS_RC test is physically meaningless (compare `Microboone.cxx:963-1047`) |
 | `rcrc` | `1.1 ms` | RC-RC time constant — **not applied**: the `m_noisedb->rcrc(ch)` call is commented out (`ProtoduneVD.cxx:823–826`) |
 | `rc_layers` | `0` | Number of RC filter layers — `0` would suppress it even if the call were live |
 | `reconfig` | `{}` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->config(ch)` call in the PDVD per-channel filter; ignored silently) |
 | `freqmasks` | `[]` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->noise(ch)` call; ignored even if non-empty) |
 
-**RMS cuts are uniform** across all channels, anodes, and planes. The
-`chndb-base.jsonnet` function signature (`line 9`) exposes `rms_cuts=[]`
-for per-channel overrides, but no caller in
-`cfg/pgrapher/experiment/protodunevd/` populates it. There is no
-wire-length-dependent scaling anywhere in `NoisyFilterAlg`
-(`ProtoduneVD.cxx:684–698`).
+#### RMS thresholds (PDVD-specific)
+
+`chndb-base.jsonnet` emits per-anode-group, per-plane `channel_info` overrides
+on top of the fallback global entry (`min_rms_cut: 1.0`, `max_rms_cut: 60.0`).
+The overrides are appended at `chndb-base.jsonnet:443–465` and are last-mention-wins:
+
+| Anode group | Plane | `min_rms_cut` | `max_rms_cut` |
+|-------------|-------|---------------|---------------|
+| Top (4–7) | U | 8.0 ADC (flat) | 15.0 ADC |
+| Top (4–7) | V | 8.0 ADC (flat) | 15.0 ADC |
+| Top (4–7) | W | 8.0 ADC (flat) | 15.0 ADC |
+| Bottom (0–3) | W | 5.0 ADC (flat) | 15.0 ADC |
+| Bottom (0–3) | U | linear in wire length (see below) | 15.0 ADC |
+| Bottom (0–3) | V | linear in wire length (see below) | 15.0 ADC |
+
+**Linear-in-wire-length mode** (`type: 'linear_in_wirelength'`): a new
+`OmniChannelNoiseDB` feature that resolves `min_rms_cut` per channel from
+the channel's total summed wire length in cm. The formula is:
+
+```
+min_rms_cut(ch) = v0 + clamp((L_ch - l0) / (l1 - l0), 0, 1) * (v1 - v0)
+```
+
+with anchor points `(l0=0 cm, v0=2.6 ADC)` and `(l1=180 cm, v1=6.3 ADC)`,
+clamped at both endpoints. Wire length `L_ch` is the sum of
+`ray_length(wire->ray())` in cm over all wire segments for the channel,
+computed from `m_anode->wires(ch)` and cached once per
+`OmniChannelNoiseDB` instance (`OmniChannelNoiseDB.cxx:cache_wire_lengths`).
+The cache is built lazily so detectors that use only scalar RMS cuts
+(PDHD, MicroBooNE, ICARUS) pay no overhead.
 
 **RC-RC correction is not applied** to either bottom (TDE) or top
 electronics. There is no top-vs-bottom anode branch for RC correction;
@@ -291,14 +315,15 @@ filter modules. Key content:
 | `groups` | `chndb-base.jsonnet:30–391` | Coherent-noise groupings (2-D list of channel IDs) |
 | `top_u_groups` | `chndb-base.jsonnet:393–396` | Shield-coupling groups for top U plane |
 | `bad` | `chndb-base.jsonnet:398–401` | Hard-coded bad channels (19 IDs) |
-| `channel_info` | `chndb-base.jsonnet:406–442` | Per-channel defaults + optional per-channel overrides |
+| `channel_info` | `chndb-base.jsonnet:406–466` | Per-channel defaults + per-anode-group/per-plane RMS overrides + optional caller overrides |
 
 To add a new bad channel: append its ID to the `bad` list at
 `chndb-base.jsonnet:399–401`.
 
-To override an individual channel's RMS cuts or decon limits: add an
-entry to `channel_info` after the default block at line 441 with
-`channels: [<id>]` and the override values.
+To override an individual channel's RMS cuts or decon limits: pass an
+entry via the `rms_cuts=[]` argument to `chndb-base.jsonnet` (caller-supplied
+entries are appended last and take highest precedence), or add an entry
+directly after the per-plane overrides block at line 465.
 
 ## Output
 
