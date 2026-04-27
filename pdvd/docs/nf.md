@@ -92,7 +92,7 @@ These live in `chndb-base.jsonnet` `channel_info` defaults
 
 `chndb-base.jsonnet` emits per-anode-group, per-plane `channel_info` overrides
 on top of the fallback global entry (`min_rms_cut: 1.0`, `max_rms_cut: 60.0`).
-The overrides are appended at `chndb-base.jsonnet:443–465` and are last-mention-wins:
+The overrides are appended at `chndb-base.jsonnet:455–478` and are last-mention-wins:
 
 | Anode group | Plane | `min_rms_cut` | `max_rms_cut` |
 |-------------|-------|---------------|---------------|
@@ -118,6 +118,21 @@ computed from `m_anode->wires(ch)` and cached once per
 `OmniChannelNoiseDB` instance (`OmniChannelNoiseDB.cxx:cache_wire_lengths`).
 The cache is built lazily so detectors that use only scalar RMS cuts
 (PDHD, MicroBooNE, ICARUS) pay no overhead.
+
+**Channel selection**: PDVD uses explicit channel-ID lists (`u_chans` / `v_chans` /
+`w_chans`) in the `channel_info` overrides, not the `wpid:` selector. This is
+necessary because each PDVD anode lives in its own APA index, so the simple
+`{wpid: wc.WirePlaneId(wc.Ulayer)}` form (apa=0) matches no channels at runtime.
+The per-plane ID ranges are computed from the known per-CRP layout at the top of
+`chndb-base.jsonnet` (lines 14–21: `crp`, `offset`, `u/v/w_local`, `u/v/w_chans`).
+
+**Debug logging**: with `WIRECELL_LOG_LEVEL=debug`, `PDVDOneChannelNoise` emits
+one line per channel:
+```
+PDVDOneChannelNoise ch=N rms=X.XX min_rms=Y.YY max_rms=Z.ZZ wire_length=L.Lcm noisy=true/false
+```
+This is useful for verifying cut values before and after a config change
+(`ProtoduneVD.cxx:880–887`).
 
 **RC-RC correction is not applied** to either bottom (TDE) or top
 electronics. There is no top-vs-bottom anode branch for RC correction;
@@ -315,7 +330,7 @@ filter modules. Key content:
 | `groups` | `chndb-base.jsonnet:30–391` | Coherent-noise groupings (2-D list of channel IDs) |
 | `top_u_groups` | `chndb-base.jsonnet:393–396` | Shield-coupling groups for top U plane |
 | `bad` | `chndb-base.jsonnet:398–401` | Hard-coded bad channels (19 IDs) |
-| `channel_info` | `chndb-base.jsonnet:406–466` | Per-channel defaults + per-anode-group/per-plane RMS overrides + optional caller overrides |
+| `channel_info` | `chndb-base.jsonnet:418–478` | Per-channel defaults + per-anode-group/per-plane RMS overrides + optional caller overrides |
 
 To add a new bad channel: append its ID to the `bad` list at
 `chndb-base.jsonnet:399–401`.
