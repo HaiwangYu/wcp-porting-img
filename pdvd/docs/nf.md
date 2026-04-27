@@ -42,7 +42,7 @@ Condition: `wct-nf-sp.jsonnet:111`
 
 **Type**: `PDVDOneChannelNoise`
 **C++ class**: `WireCell::SigProc::PDVD::OneChannelNoise`
-**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: lines 807–878)
+**Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: lines 810–881)
 **Config in**: `toolkit/cfg/pgrapher/experiment/protodunevd/nf.jsonnet:8–15`
 
 ### What it does (in order)
@@ -53,12 +53,19 @@ Condition: `wct-nf-sp.jsonnet:111`
    after iteratively excluding samples more than 6σ from the running
    median. Subtracts the result to pedestal-centre the trace.
 3. **Adaptive baseline for partial channels** — the code block
-   (`ProtoduneVD.cxx:843–860`) that would call
+   (`ProtoduneVD.cxx:846–862`) that calls
    `SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags` is
-   **dead in PDVD**: `is_partial` is hard-coded to `false` at line 816
-   (the `m_check_partial(spectrum)` call is commented out at line 817).
-   Therefore no adaptive baseline runs and no `lf_noisy` tag is emitted
-   (see [lf_noisy section](#lf_noisy-tagging) below).
+   gated by `is_partial` which is evaluated as
+   `m_adaptive_baseline ? m_check_partial(spectrum) : false`
+   (line 819). The `adaptive_baseline` config field defaults to `false`
+   in C++ and is intentionally left at that default in PDVD's
+   `nf.jsonnet`: PDVD hardware is **DC-coupled** (no RC capacitors),
+   so the IS_RC heuristic (`m_check_partial`) has no physical meaning
+   here. In MicroBooNE (`Microboone.cxx:963-1047`) IS_RC is the
+   central gate that picks between RCRC deconvolution (intact RC) and
+   adaptive baseline as a fallback (broken RC); both branches presuppose
+   RC exists. Therefore no adaptive baseline runs and no `lf_noisy` tag
+   is emitted (see [lf_noisy section](#lf_noisy-tagging) below).
 4. **Noisy-channel tagging** via `NoisyFilterAlg`:
    `PDVD::SignalFilter(signal)` + `PDVD::NoisyFilterAlg(signal, min_rms, max_rms)`
    + `PDVD::RemoveFilterFlags(signal)` run at lines 867–869 (these are live).
@@ -75,7 +82,8 @@ These live in `chndb-base.jsonnet` `channel_info` defaults
 | `nominal_baseline` | `2048.0` ADC | Starting baseline value |
 | `min_rms_cut` | `1.0` ADC | Channels with RMS below this → flagged `noisy` (dead-channel proxy) |
 | `max_rms_cut` | `60.0` ADC | Channels with RMS above this → flagged `noisy` (high-noise proxy) |
-| `rcrc` | `1.1 ms` | RC-RC time constant — **not applied**: the `m_noisedb->rcrc(ch)` call is commented out (`ProtoduneVD.cxx:820–823`) |
+| `adaptive_baseline` | `false` | When `true`, enables the IS_RC (`m_check_partial`) partial-RC heuristic to gate the adaptive baseline per channel. **Left at default `false` for PDVD**: hardware is DC-coupled, so the IS_RC test is physically meaningless (compare `Microboone.cxx:963-1047`) |
+| `rcrc` | `1.1 ms` | RC-RC time constant — **not applied**: the `m_noisedb->rcrc(ch)` call is commented out (`ProtoduneVD.cxx:823–826`) |
 | `rc_layers` | `0` | Number of RC filter layers — `0` would suppress it even if the call were live |
 | `reconfig` | `{}` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->config(ch)` call in the PDVD per-channel filter; ignored silently) |
 | `freqmasks` | `[]` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->noise(ch)` call; ignored even if non-empty) |
@@ -99,12 +107,14 @@ the same `rcrc(ch)` spectrum to all channels.
   `ProtoduneVD.cxx`.
 - **Ledge identification** — same: no helper, no tag.
 - **RC-RC spectral correction** — commented out at `ProtoduneVD.cxx:820–823`.
-- **Adaptive baseline** (`RawAdaptiveBaselineAlg`) — unreachable (`is_partial = false`).
+- **Adaptive baseline** (`RawAdaptiveBaselineAlg`) — disabled by config (`adaptive_baseline=false` in `nf.jsonnet`). PDVD hardware is DC-coupled so the IS_RC gate that fronts this algorithm (`Microboone.cxx:963-1047`) has no physical meaning.
 - **Electronics reconfiguration** — `m_noisedb->config(ch)` never called.
 - **Per-channel frequency masking** — `m_noisedb->noise(ch)` never called.
 - **Top/bottom electronics split** at the per-channel level — no `ident`
-  test inside `OneChannelNoise::apply`. The only top/bottom branch lives
-  in `nf.jsonnet:60–66` (shield coupling, Step 3).
+  test inside `OneChannelNoise::apply`. The `adaptive_baseline` field in
+  `nf.jsonnet` could be set differently per anode (e.g., `anode.data.ident < 4`),
+  but both groups are left at `false` because PDVD is uniformly DC-coupled.
+  The only top/bottom branch lives in `nf.jsonnet:60–66` (shield coupling, Step 3).
 - **`lf_noisy` tagging** — see [below](#lf_noisy-tagging).
 
 The `maskmap: {sticky: "bad", ledge: "bad", noisy: "bad"}` in
@@ -229,7 +239,7 @@ layout).
 
 ## lf_noisy tagging
 
-`lf_noisy` appears in `ProtoduneVD.cxx` exactly once — at line 854,
+`lf_noisy` appears in `ProtoduneVD.cxx` exactly once — at line 857,
 inside the `if (is_partial)` block:
 
 ```cpp
@@ -238,8 +248,9 @@ if (iplane != 2) {  // not collection
 }
 ```
 
-Because `is_partial` is hard-coded to `false` at line 816, this line is
-**unreachable** in PDVD. `PDVD::NoisyFilterAlg` (`ProtoduneVD.cxx:684–698`)
+Because `is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false`
+(line 819) and `adaptive_baseline` is left at its default `false` in
+`nf.jsonnet`, this line is **currently never taken** in PDVD. `PDVD::NoisyFilterAlg` (`ProtoduneVD.cxx:684–698`)
 only emits `noisy`. No coherent- or shield-stage code emits `lf_noisy`.
 PDVD therefore **never produces an `lf_noisy` mask** in production, and the
 `OmnibusNoiseFilter` `maskmap` (`nf.jsonnet:47`) has no `lf_noisy` entry.

@@ -43,9 +43,9 @@ All claims below are validated against the actual C++
 | FFT + DC bin kill | ✅ live (827) | ✅ live (827) |
 | 6σ-clipped median baseline | ✅ live | ✅ live |
 | RC-RC undershoot correction | **commented out** (`ProtoduneHD.cxx:817–820`) | **commented out** (`ProtoduneVD.cxx:820–823`) |
-| `m_check_partial(spectrum)` (RC heuristic) | ✅ **live**: `bool is_partial = m_check_partial(spectrum)` (`ProtoduneHD.cxx:815`) | ❌ **dead**: `bool is_partial = false; // remove is_partial correction for pdvd` (`ProtoduneVD.cxx:816`); the live call commented out at line 817 |
-| Adaptive baseline (`SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags`) | Runs on partial channels (PDHD lines 853–856) | **Never runs** — gated by the dead `is_partial` branch (PDVD lines 843–860) |
-| `lf_noisy` tag on induction planes | Emitted when `is_partial && iplane != 2` (PDHD line 851) | **Never emitted** — push at PDVD line 854 is unreachable |
+| `m_check_partial(spectrum)` (RC heuristic) | ✅ **live**: `bool is_partial = m_check_partial(spectrum)` (`ProtoduneHD.cxx:815`) | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneVD.cxx:819`); `adaptive_baseline` defaults to `false` and is left at default in `protodunevd/nf.jsonnet` — PDVD hardware is DC-coupled so the IS_RC branch has no physical meaning |
+| Adaptive baseline (`SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags`) | Runs on partial channels (PDHD lines 853–856) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDVD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) |
+| `lf_noisy` tag on induction planes | Emitted when `is_partial && iplane != 2` (PDHD line 851) | **Never emitted** — push at `ProtoduneVD.cxx:857` not taken while `adaptive_baseline=false` |
 | `NoisyFilterAlg` (`min_rms_cut`/`max_rms_cut` test → `noisy` tag) | **Commented out** (`ProtoduneHD.cxx:859–870`) — `min_rms_cut: 1.0` / `max_rms_cut: 30.0` are dead | ✅ **Live** (`ProtoduneVD.cxx:862–875`) — `min_rms_cut: 1.0` / `max_rms_cut: 60.0` actively flag noisy channels |
 | `SignalFilter` + `RemoveFilterFlags` around the noisy test | n/a (block commented) | ✅ live (PDVD lines 867, 869) |
 
@@ -61,12 +61,14 @@ So although PDHD and PDVD share an almost-identical per-channel apply body, **th
 
 **Validation:**
 ```
-$ grep -n "is_partial\|m_check_partial\|NoisyFilterAlg" sigproc/src/Protodune{HD,VD}.cxx
+$ grep -n "is_partial\|m_check_partial\|NoisyFilterAlg\|adaptive_baseline" sigproc/src/Protodune{HD,VD}.cxx
 ProtoduneHD.cxx:815: bool is_partial = m_check_partial(spectrum);  // Xin's "IS_RC()"
 ProtoduneHD.cxx:863: // bool is_noisy = PDHD::NoisyFilterAlg(signal, min_rms, max_rms);
-ProtoduneVD.cxx:816: bool is_partial = false;  // remove is_partial correction for pdvd
-ProtoduneVD.cxx:817: // bool is_partial = m_check_partial(spectrum);  // Xin's "IS_RC()"
-ProtoduneVD.cxx:868: bool is_noisy = PDVD::NoisyFilterAlg(signal, min_rms, max_rms);
+ProtoduneVD.cxx:798: m_adaptive_baseline = get<bool>(cfg, "adaptive_baseline", m_adaptive_baseline);
+ProtoduneVD.cxx:806: cfg["adaptive_baseline"] = false;
+ProtoduneVD.cxx:819: bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false;
+ProtoduneVD.cxx:820: // bool is_partial = m_check_partial(spectrum);  // Xin's "IS_RC()"
+ProtoduneVD.cxx:871: bool is_noisy = PDVD::NoisyFilterAlg(signal, min_rms, max_rms);
 ```
 
 ---
@@ -249,7 +251,7 @@ two stages operate on different channel partitions.
 | Question | PDHD | PDVD |
 |----------|------|------|
 | Sticky / ledge tagging? | No | No |
-| Adaptive baseline (partial channels)? | Yes (live `is_partial`) | No (`is_partial = false` hard-coded) |
+| Adaptive baseline (partial channels)? | Yes (live `is_partial`) | No (`adaptive_baseline=false` in `nf.jsonnet` — intentional; PDVD is DC-coupled so IS_RC gate has no physical meaning) |
 | `lf_noisy` tag emitted? | Yes (induction partial channels) | No |
 | `noisy` tag (RMS cut) emitted? | No (block commented) | Yes |
 | RMS-cut wire-length dependence? | n/a (cuts are dead) | No (uniform `[1, 60]` ADC) |
