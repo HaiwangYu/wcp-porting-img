@@ -29,7 +29,7 @@ All claims below are validated against the actual C++
 **Validation:**
 - PDHD channel-per-anode: `chndb-base.jsonnet:20–22` uses `n×2560 + ...` for U/V/W groups (40/40/48 ch per FEMB × 20 FEMBs).
 - PDVD channel-per-anode: `funcs.jsonnet:24–29` `anode_channels :: function(n) { ret: [x + 3072 * crp for x in channels] }`.
-- PDVD bottom-only resampler: `wct-nf-sp.jsonnet:111` `if use_resampler == 'true' && n < 4 then [resamplers[n]]`.
+- PDVD bottom-only resampler: `wct-nf-sp.jsonnet:111` `if use_resampler && n < 4 then [resamplers[n]]` (where `use_resampler = (reality == 'data')`; pass `-r sim` to skip).
 - PDVD shield coupling restriction: `nf.jsonnet:60` `if anode.data.ident > 3 then [{...shieldcoupling_grouped}] else []`.
 
 ---

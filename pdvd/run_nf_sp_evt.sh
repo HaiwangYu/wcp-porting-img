@@ -1,10 +1,13 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-r reality] <run> <evt|all>
 #        ./run_nf_sp_evt.sh              # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
 # override with PDVD_MAX_JOBS=N).  Events with missing inputs are skipped.
+#
+#   -r reality    'data' (default) inserts the 512->500 ns Resampler on the
+#                 bottom anodes (n<4) before NF. 'sim' skips it.
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-orig-frames-anode{0..7}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodune-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -19,11 +22,14 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 . "$PDVD_DIR/_runlib.sh"
 
 ANODE=""
+REALITY="data"
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
+        -r) REALITY="$2"; shift 2 ;;
+        -r*) REALITY="${1#-r}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -34,7 +40,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] <run> <evt|all>" >&2
+    echo "Usage: $0 [-a anode] [-r reality] <run> <evt|all>" >&2
     exit 1
 fi
 RUN=$1
@@ -94,6 +100,7 @@ process_event() {
     mkdir -p "$WORKDIR"
     LOG="$WORKDIR/wct_nfsp_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
     echo "Work dir: $WORKDIR"
+    echo "reality:  $REALITY"
     echo "Log:      $LOG"
 
     cd "$PDVD_DIR"
@@ -105,7 +112,7 @@ process_event() {
         --tla-str orig_prefix="${EVTDIR}/protodune-orig-frames" \
         --tla-str raw_prefix="${WORKDIR}/protodune-sp-frames-raw" \
         --tla-str sp_prefix="${WORKDIR}/protodune-sp-frames" \
-        --tla-str use_resampler="true" \
+        --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
         -c wct-nf-sp.jsonnet
 

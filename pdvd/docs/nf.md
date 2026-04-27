@@ -26,7 +26,7 @@ continues downstream to SP.
 | Parameter | Value |
 |-----------|-------|
 | Type | `Resampler` |
-| When | `use_resampler == "true"` AND anode index `n < 4` |
+| When | `reality == "data"` AND anode index `n < 4` (pass `-r sim` to skip) |
 | `period` | `500 ns` |
 | `time_pad` | `"linear"` |
 

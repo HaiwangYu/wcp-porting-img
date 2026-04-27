@@ -13,11 +13,16 @@
 //   wire-cell -l stdout -L debug \
 //     --tla-str orig_prefix="protodune-orig-frames" \
 //     --tla-str sp_prefix="protodune-sp-frames" \
-//     --tla-str use_resampler="true" \
+//     --tla-str reality="data" \
 //     -c pgrapher/experiment/protodunevd/wct-nf-sp.jsonnet
 //
 // To process a subset of anodes:
 //   wire-cell ... --tla-code anode_indices='[4,5]' -c wct-nf-sp.jsonnet
+//
+// Data vs simulation:
+//   reality='data' (default) inserts a Resampler (512 ns -> 500 ns) on the
+//   four bottom-drift anodes (n<4) before NF. Pass reality='sim' to skip
+//   resampling for simulated input that is already at 500 ns.
 
 local g = import 'pgraph.jsonnet';
 local wc = import 'wirecell.jsonnet';
@@ -31,12 +36,13 @@ function(
   orig_prefix   = 'protodune-orig-frames',  // input prefix; reads {prefix}-anode{N}.tar.bz2
   raw_prefix    = 'protodune-sp-frames-raw',   // output prefix for NF (raw) frames
   sp_prefix     = 'protodune-sp-frames',    // output prefix for SP frames
-  use_resampler = 'true',                   // 'true' to resample bottom anodes (n<4)
+  reality       = 'data',                   // 'data' enables the 512->500 ns Resampler on bottom anodes (n<4); 'sim' disables it
   sigoutform    = 'dense',                 // 'sparse' or 'dense'
   anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
 )
 
   local tools = tools_all;
+  local use_resampler = (reality == 'data');
 
   local base = import 'pgrapher/experiment/protodunevd/chndb-base.jsonnet';
   local chndb = [{
@@ -108,7 +114,7 @@ function(
 
     g.pipeline(
       [src]
-      + (if use_resampler == 'true' && n < 4 then [resamplers[n]] else [])
+      + (if use_resampler && n < 4 then [resamplers[n]] else [])
       + [nf_pipes[n]]
       + [raw_frame_tap(aid)]
       + [sp_pipes[n]]

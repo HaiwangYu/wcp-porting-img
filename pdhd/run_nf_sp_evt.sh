@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] [-g elecGain] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-g elecGain] [-r reality] <run> <evt|all>
 #        ./run_nf_sp_evt.sh                # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
@@ -9,6 +9,8 @@
 #   -g elecGain   FE amplifier gain in mV/fC (default: 14).
 #                 Use 7.8 for low-gain data.  Selects the matching noise
 #                 spectrum file automatically (params.jsonnet:165-166).
+#   -r reality    'data' (default) inserts the 512->500 ns Resampler before NF.
+#                 'sim' skips it (input already at 500 ns).
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodunehd-orig-frames-anode{0..3}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodunehd-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -24,6 +26,7 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 
 ANODE=""
 ELEC_GAIN="14"
+REALITY="data"
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -31,6 +34,8 @@ while [ $# -gt 0 ]; do
         -a*) ANODE="${1#-a}"; shift ;;
         -g) ELEC_GAIN="$2"; shift 2 ;;
         -g*) ELEC_GAIN="${1#-g}"; shift ;;
+        -r) REALITY="$2"; shift 2 ;;
+        -r*) REALITY="${1#-r}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -41,7 +46,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-g elecGain] <run> <evt|all>" >&2
+    echo "Usage: $0 [-a anode] [-g elecGain] [-r reality] <run> <evt|all>" >&2
     exit 1
 fi
 RUN=$1
@@ -102,6 +107,7 @@ process_event() {
     LOG="$WORKDIR/wct_nfsp_${RUN_PADDED}_${EVT}${TAG_SUFFIX}.log"
     echo "Work dir:  $WORKDIR"
     echo "elecGain:  ${ELEC_GAIN} mV/fC"
+    echo "reality:   ${REALITY}"
     echo "Log:       $LOG"
 
     cd "$PDHD_DIR"
@@ -115,6 +121,7 @@ process_event() {
         --tla-str orig_prefix="${EVTDIR}/protodunehd-orig-frames" \
         --tla-str raw_prefix="${WORKDIR}/protodunehd-sp-frames-raw" \
         --tla-str sp_prefix="${WORKDIR}/protodunehd-sp-frames" \
+        --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
         -c wct-nf-sp.jsonnet
 

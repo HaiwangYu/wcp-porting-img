@@ -22,11 +22,12 @@ The full pipeline from raw data to SP frames is split across two steps:
 ## Usage
 
 ```
-./run_nf_sp_evt.sh [-a anode] <run> <evt>
+./run_nf_sp_evt.sh [-a anode] [-r reality] <run> <evt>
 ```
 
 Options:
 - `-a N` — process only anode `N` (default: all 0–7).
+- `-r reality` — `data` (default) enables the 512→500 ns Resampler on bottom anodes (n<4); `sim` disables it.
 
 The script sets `WIRECELL_PATH` to include `toolkit/cfg` and
 `wire-cell-data`, then calls `wire-cell` with `wct-nf-sp.jsonnet`.
@@ -55,7 +56,7 @@ passes to `wct-nf-sp.jsonnet` (`run_nf_sp_evt.sh:84-93`):
 | `orig_prefix` | `<evtdir>/protodune-orig-frames` | Input archive prefix (reads `{prefix}-anode{N}.tar.bz2`) |
 | `raw_prefix` | `<workdir>/protodune-sp-frames-raw` | Output prefix for NF frames |
 | `sp_prefix` | `<workdir>/protodune-sp-frames` | Output prefix for SP frames |
-| `use_resampler` | `"true"` | Whether to resample bottom-drift anodes 0–3 before NF |
+| `reality` | `"data"` | `"data"` resamples bottom-drift anodes 0–3 (512→500 ns) before NF; `"sim"` skips |
 | `anode_indices` | `[0,1,2,3,4,5,6,7]` or `[N]` if `-a N` | Which anodes to process |
 | `sigoutform` | `"dense"` | SP output format: `"sparse"` or `"dense"` |
 
@@ -66,7 +67,7 @@ passes to `wct-nf-sp.jsonnet` (`run_nf_sp_evt.sh:84-93`):
 ```
 FrameFileSource  (orig frames, tag 'orig')
   │
-  ├─ [Resampler]        only when use_resampler=="true" AND anode index n < 4
+  ├─ [Resampler]        only when reality=="data" AND anode index n < 4
   │
   ├─ OmnibusNoiseFilter (NF pipe)
   │     PDVDOneChannelNoise

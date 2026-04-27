@@ -8,10 +8,10 @@ four bottom-drift anodes (idents 0–3).  For the overall workflow see
 
 ```
 run_nf_sp_evt.sh
-  └─ wire-cell -c wct-nf-sp.jsonnet  (--tla-str use_resampler="true")
+  └─ wire-cell -c wct-nf-sp.jsonnet  (--tla-str reality="data")
        └─ per-anode pipeline  [wct-nf-sp.jsonnet:94-117]
             ├─ FrameFileSource          (orig frames)
-            ├─ Resampler   ← only when use_resampler=="true" AND n < 4
+            ├─ Resampler   ← only when reality=="data" AND n < 4
             ├─ OmnibusNoiseFilter       (NF)
             ├─ FrameFileSink tap        (raw NF frames)
             ├─ OmnibusSigProc           (SP)
@@ -22,8 +22,12 @@ run_nf_sp_evt.sh
 **Gate** (`wct-nf-sp.jsonnet:111`):
 
 ```jsonnet
-+ (if use_resampler == 'true' && n < 4 then [resamplers[n]] else [])
+local use_resampler = (reality == 'data');
+// ...
++ (if use_resampler && n < 4 then [resamplers[n]] else [])
 ```
+
+`reality` is a TLA defaulting to `"data"`; pass `--tla-str reality="sim"` (or `-r sim` via `run_nf_sp_evt.sh`) to skip resampling for simulated input.
 
 Top-CRP anodes (idents 4–7) are already digitized at 500 ns and skip
 this node entirely.
@@ -141,6 +145,7 @@ LArSoft-side config:
 
 ```jsonnet
 // cfg/pgrapher/experiment/protodunevd/wcls-nf-sp-out.jsonnet:81-82
+// (LArSoft-side config — uses its own use_resampler extVar, set by FHiCL)
 tick: if use_resampler == 'true' then 512*wc.ns else 500*wc.ns,
 ```
 

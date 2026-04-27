@@ -17,6 +17,11 @@
 //
 // To process a subset of anodes:
 //   wire-cell ... --tla-code anode_indices='[0,1]' -c pgrapher/experiment/pdhd/wct-nf-sp.jsonnet
+//
+// Data vs simulation:
+//   reality='data' (default) inserts a Resampler (512 ns -> 500 ns) on every
+//   anode before NF, mirroring the LArSoft pdhd config. Pass reality='sim' to
+//   skip resampling for simulated input that is already at 500 ns.
 
 local g = import 'pgraph.jsonnet';
 local wc = import 'wirecell.jsonnet';
@@ -30,10 +35,12 @@ function(
   orig_prefix   = 'protodunehd-orig-frames',    // input prefix; reads {prefix}-anode{N}.tar.bz2
   raw_prefix    = 'protodunehd-sp-frames-raw',  // output prefix for NF (raw) frames
   sp_prefix     = 'protodunehd-sp-frames',      // output prefix for SP frames
+  reality       = 'data',                       // 'data' enables the 512->500 ns Resampler; 'sim' disables it
   anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
 )
 
   local tools = tools_all;
+  local use_resampler = (reality == 'data');
 
   local base = import 'pgrapher/experiment/pdhd/chndb-base.jsonnet';
   local chndb = [{
@@ -49,6 +56,10 @@ function(
   local sp_maker = import 'pgrapher/experiment/pdhd/sp.jsonnet';
   local sp = sp_maker(params, tools, { sparse: false });
   local sp_pipes = [sp.make_sigproc(a) for a in tools.anodes];
+
+  local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
+  local load_resamplers = resamplers_config(g, wc, tools);
+  local resamplers = load_resamplers.resamplers;
 
   // Tap: save NF output (raw) frame per anode
   local raw_frame_tap = function(n)
@@ -98,6 +109,7 @@ function(
 
     g.pipeline(
       [src]
+      + (if use_resampler then [resamplers[n]] else [])
       + [nf_pipes[n]]
       + [raw_frame_tap(n)]
       + [sp_pipes[n]]
