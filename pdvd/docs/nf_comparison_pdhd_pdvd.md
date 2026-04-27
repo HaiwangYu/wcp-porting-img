@@ -38,32 +38,34 @@ All claims below are validated against the actual C++
 
 `OneChannelNoise::apply` body in each detector:
 
-| Step | PDHD (`ProtoduneHD.cxx:806–873`) | PDVD (`ProtoduneVD.cxx:807–878`) |
+| Step | PDHD (`ProtoduneHD.cxx:808–875`) | PDVD (`ProtoduneVD.cxx:807–878`) |
 |------|----------------------------------|-----------------------------------|
-| FFT + DC bin kill | ✅ live (827) | ✅ live (827) |
+| FFT + DC bin kill | ✅ live (829) | ✅ live (827) |
 | 6σ-clipped median baseline | ✅ live | ✅ live |
-| RC-RC undershoot correction | **commented out** (`ProtoduneHD.cxx:817–820`) | **commented out** (`ProtoduneVD.cxx:820–823`) |
-| `m_check_partial(spectrum)` (RC heuristic) | ✅ **live**: `bool is_partial = m_check_partial(spectrum)` (`ProtoduneHD.cxx:815`) | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneVD.cxx:819`); `adaptive_baseline` defaults to `false` and is left at default in `protodunevd/nf.jsonnet` — PDVD hardware is DC-coupled so the IS_RC branch has no physical meaning |
-| Adaptive baseline (`SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags`) | Runs on partial channels (PDHD lines 853–856) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDVD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) |
-| `lf_noisy` tag on induction planes | Emitted when `is_partial && iplane != 2` (PDHD line 851) | **Never emitted** — push at `ProtoduneVD.cxx:857` not taken while `adaptive_baseline=false` |
-| `NoisyFilterAlg` (`min_rms_cut`/`max_rms_cut` test → `noisy` tag) | **Commented out** (`ProtoduneHD.cxx:859–870`) — `min_rms_cut: 1.0` / `max_rms_cut: 30.0` are dead | ✅ **Live** (`ProtoduneVD.cxx:862–875`) — `min_rms_cut: 1.0` / `max_rms_cut: 60.0` actively flag noisy channels |
+| RC-RC undershoot correction | **commented out** (`ProtoduneHD.cxx:819–822`) | **commented out** (`ProtoduneVD.cxx:820–823`) |
+| `m_check_partial(spectrum)` (RC heuristic) | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneHD.cxx:817`); `adaptive_baseline` defaults to `false` and is left at default in `pdhd/nf.jsonnet` — PDHD cold electronics is DC-coupled so the IS_RC branch has no physical meaning | ⚙ **config-gated**: `bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false` (`ProtoduneVD.cxx:819`); `adaptive_baseline` defaults to `false` and is left at default in `protodunevd/nf.jsonnet` — PDVD hardware is DC-coupled so the IS_RC branch has no physical meaning |
+| Adaptive baseline (`SignalFilter` + `RawAdaptiveBaselineAlg` + `RemoveFilterFlags`) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDHD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) | **Never runs** — disabled by config (`adaptive_baseline=false`; PDVD is DC-coupled, see `Microboone.cxx:963-1047` for the IS_RC/adaptive-baseline pairing) |
+| `lf_noisy` tag on induction planes | **Never emitted** — push at `ProtoduneHD.cxx:853` not taken while `adaptive_baseline=false` | **Never emitted** — push at `ProtoduneVD.cxx:857` not taken while `adaptive_baseline=false` |
+| `NoisyFilterAlg` (`min_rms_cut`/`max_rms_cut` test → `noisy` tag) | **Commented out** (`ProtoduneHD.cxx:861–872`) — `min_rms_cut: 1.0` / `max_rms_cut: 30.0` are dead | ✅ **Live** (`ProtoduneVD.cxx:862–875`) — `min_rms_cut: 1.0` / `max_rms_cut: 60.0` actively flag noisy channels |
 | `SignalFilter` + `RemoveFilterFlags` around the noisy test | n/a (block commented) | ✅ live (PDVD lines 867, 869) |
 
 **Net effect — what tags each per-channel filter actually produces:**
 
 | Tag | PDHD | PDVD |
 |-----|------|------|
-| `lf_noisy` | ✅ produced on induction-plane partial channels | ❌ never produced |
+| `lf_noisy` | ❌ never produced (`adaptive_baseline=false`) | ❌ never produced |
 | `noisy` | ❌ never produced | ✅ produced when channel RMS is outside `[1.0, 60.0]` ADC |
 | `sticky` / `ledge` | ❌ neither implemented | ❌ neither implemented |
 
-So although PDHD and PDVD share an almost-identical per-channel apply body, **the live tagging is mutually exclusive**: PDHD tags `lf_noisy` only, PDVD tags `noisy` only.
+Both detectors disable IS_RC + adaptive baseline by config (DC-coupled hardware). The only live per-channel tag difference is that **PDVD tags `noisy`** (via `NoisyFilterAlg`) while **PDHD produces no per-channel tags at all** in the current build.
 
 **Validation:**
 ```
 $ grep -n "is_partial\|m_check_partial\|NoisyFilterAlg\|adaptive_baseline" sigproc/src/Protodune{HD,VD}.cxx
-ProtoduneHD.cxx:815: bool is_partial = m_check_partial(spectrum);  // Xin's "IS_RC()"
-ProtoduneHD.cxx:863: // bool is_noisy = PDHD::NoisyFilterAlg(signal, min_rms, max_rms);
+ProtoduneHD.cxx:796: m_adaptive_baseline = get<bool>(cfg, "adaptive_baseline", m_adaptive_baseline);
+ProtoduneHD.cxx:804: cfg["adaptive_baseline"] = false;
+ProtoduneHD.cxx:817: bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false;
+ProtoduneHD.cxx:865: // bool is_noisy = PDHD::NoisyFilterAlg(signal, min_rms, max_rms);
 ProtoduneVD.cxx:798: m_adaptive_baseline = get<bool>(cfg, "adaptive_baseline", m_adaptive_baseline);
 ProtoduneVD.cxx:806: cfg["adaptive_baseline"] = false;
 ProtoduneVD.cxx:819: bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false;
@@ -77,7 +79,7 @@ ProtoduneVD.cxx:871: bool is_noisy = PDVD::NoisyFilterAlg(signal, min_rms, max_r
 
 | Detector | `maskmap` | Keys actually emitted | Inert keys |
 |----------|-----------|----------------------|------------|
-| PDHD | `{noisy: "bad", lf_noisy: "bad"}` (`pdhd/nf.jsonnet:42`; alt with sticky/ledge commented out at line 41) | `lf_noisy` only | `noisy` (block dead) |
+| PDHD | `{noisy: "bad", lf_noisy: "bad"}` (`pdhd/nf.jsonnet:42`; alt with sticky/ledge commented out at line 41) | **none** (both dormant — `NoisyFilterAlg` commented out, `lf_noisy` not emitted while `adaptive_baseline=false`) | `noisy`, `lf_noisy` |
 | PDVD | `{sticky: "bad", ledge: "bad", noisy: "bad"}` (`protodunevd/nf.jsonnet:47`) | `noisy` only | `sticky`, `ledge` (no PDVD code emits them) |
 
 In both detectors the `maskmap` lists keys that the present C++ never produces — PDHD's `noisy` slot is unused (`NoisyFilterAlg` commented out), PDVD's `sticky`/`ledge` slots are unused (no `StickyCodeMitig` analogue for PDVD).
@@ -251,8 +253,8 @@ two stages operate on different channel partitions.
 | Question | PDHD | PDVD |
 |----------|------|------|
 | Sticky / ledge tagging? | No | No |
-| Adaptive baseline (partial channels)? | Yes (live `is_partial`) | No (`adaptive_baseline=false` in `nf.jsonnet` — intentional; PDVD is DC-coupled so IS_RC gate has no physical meaning) |
-| `lf_noisy` tag emitted? | Yes (induction partial channels) | No |
+| Adaptive baseline (partial channels)? | No (`adaptive_baseline=false` in `nf.jsonnet` — PDHD cold electronics is DC-coupled, so IS_RC gate has no physical meaning; see `Microboone.cxx:963-1047`) | No (`adaptive_baseline=false` in `nf.jsonnet` — intentional; PDVD is DC-coupled so IS_RC gate has no physical meaning) |
+| `lf_noisy` tag emitted? | No (not emitted while `adaptive_baseline=false`) | No |
 | `noisy` tag (RMS cut) emitted? | No (block commented) | Yes |
 | RMS-cut wire-length dependence? | n/a (cuts are dead) | No (uniform `[1, 60]` ADC) |
 | RC-RC correction applied? | No (commented out) | No (commented out) |
@@ -271,9 +273,10 @@ two stages operate on different channel partitions.
 
 - **Output mask semantics differ.** Downstream code that consumes the
   `bad` channel mask will see different populations: in PDHD, `bad`
-  comes from `lf_noisy` (induction RC-undershoot heuristic) plus the
-  hand-curated `bad` list; in PDVD it comes from the `noisy` RMS-cut
-  flag plus the hand-curated `bad` list.
+  comes only from the hand-curated `bad` list (the `lf_noisy` path is
+  dormant now that `adaptive_baseline=false`; any bad-channel info for
+  partial channels must be supplied separately); in PDVD it comes from
+  the `noisy` RMS-cut flag plus the hand-curated `bad` list.
 - **Different sensitivity to wire-region-average response.** PDHD's
   coherent sub on U/V is response-aware: it deconvolves before
   protection and ROI replacement. PDVD's is response-blind: only ADC

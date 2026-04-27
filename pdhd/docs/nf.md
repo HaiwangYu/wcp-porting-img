@@ -11,8 +11,8 @@ See also [sp.md](sp.md) and [nf_sp_workflow.md](nf_sp_workflow.md).
 Each of the four APAs gets its own independent `OmnibusNoiseFilter` pnode.
 Inside that pnode the noise filtering is a two-step composition:
 
-1. **PDHDOneChannelNoise** — per-channel operations (baseline, adaptive
-   baseline, partial/RC-undershoot detection).
+1. **PDHDOneChannelNoise** — per-channel operations (baseline; adaptive
+   baseline and partial/RC-undershoot detection, both disabled by default).
 2. **PDHDCoherentNoiseSub** — grouped coherent subtraction (per-FEMB
    median with signal protection and per-channel scaling).
 
@@ -40,20 +40,29 @@ local single = {
         noisedb: wc.tn(chndbobj),
         anode:   wc.tn(anode),
         dft:     wc.tn(dft),
+        // adaptive_baseline left at C++ default (false): PDHD cold
+        // electronics is DC-coupled, so the IS_RC partial-RC gate that
+        // fronts the adaptive baseline (see Microboone.cxx:963-1047) has
+        // no physical meaning here. Side effect: the lf_noisy mask
+        // emitted under is_partial in ProtoduneHD.cxx is no longer
+        // produced; any bad-channel info will be supplied separately.
     },
 };
 ```
 
-**What it actually does (in order)** (`ProtoduneHD.cxx:806–873`):
+**What it actually does (in order)** (`ProtoduneHD.cxx:808–875`):
 
-1. **FFT** the waveform; run `Diagnostics::Partial` on the spectrum —
-   the "IS_RC" check that detects RC-undershoot-like waveforms (see
-   §[Partial / RC-undershoot detection](#partial--rc-undershoot-detection)).
+1. **FFT** the waveform; evaluate `is_partial = m_adaptive_baseline ?
+   m_check_partial(spectrum) : false` — the IS_RC check
+   (`Diagnostics::Partial`) runs only when `adaptive_baseline=true`
+   (see §[Partial / RC-undershoot detection](#partial--rc-undershoot-detection)).
+   With the current configuration the field is omitted from `nf.jsonnet`,
+   leaving `is_partial` permanently `false`.
 2. **Kill the DC bin** (`spectrum[0] = 0`) and inverse-FFT back to time
    domain.
 3. **Compute a dynamic baseline**: clip the signal at ±6 σ, take the
    binned median, subtract it from the waveform.
-4. **If `is_partial` (RC-undershoot detected)**:
+4. **If `is_partial`** (dormant by default — requires `adaptive_baseline=true`):
    - For induction planes (U, V): tag the channel `lf_noisy`.
    - Run `PDHD::SignalFilter` (mark ±4 σ bins with a large sentinel).
    - Run `PDHD::RawAdapativeBaselineAlg` (sliding-window median, 512-tick
@@ -67,10 +76,11 @@ Several chndb fields are configured but the corresponding code paths in
 
 | Field | Status | Reference |
 |-------|--------|-----------|
-| `nominal_baseline` | **Unused** — subtraction commented out | `ProtoduneHD.cxx:811` |
-| `rcrc` / `rc_layers` | **Unused** — RC undershoot correction commented out | `ProtoduneHD.cxx:817–820` |
+| `adaptive_baseline` | **Disabled by config** (C++ default `false`, omitted from `nf.jsonnet`): PDHD cold electronics is DC-coupled so the IS_RC partial-RC gate has no physical meaning — see `Microboone.cxx:963-1047` where IS_RC selects between RCRC dec and the adaptive-baseline fallback for broken-RC channels | `ProtoduneHD.cxx:817` |
+| `nominal_baseline` | **Unused** — subtraction commented out | `ProtoduneHD.cxx:813` |
+| `rcrc` / `rc_layers` | **Unused** — RC undershoot correction commented out | `ProtoduneHD.cxx:819–822` |
 | `freqmasks` (→ `noise` spectrum) | **Unused** — `noise(ch)` is never called | `PDHDOneChannelNoise::apply` does not query it |
-| `min_rms_cut` / `max_rms_cut` | **Unused** — `NoisyFilterAlg` block commented out | `ProtoduneHD.cxx:859–870` |
+| `min_rms_cut` / `max_rms_cut` | **Unused** — `NoisyFilterAlg` block commented out | `ProtoduneHD.cxx:861–872` |
 | Sticky-bit / ledge detection | **Not implemented** in the PDHD class | `nf.jsonnet:41` (commented-out `maskmap` alternative) |
 
 Consequence: the `maskmap: {noisy: "bad", lf_noisy: "bad"}` entry in
@@ -82,7 +92,13 @@ that mask; `PDHDOneChannelNoise` never produces it.
 
 ## Partial / RC-undershoot detection
 
-**Source**: `sigproc/src/Diagnostics.cxx:15–32`, `ProtoduneHD.cxx:815`
+**Source**: `sigproc/src/Diagnostics.cxx:15–32`, `ProtoduneHD.cxx:817`
+
+The IS_RC check is now config-gated: `ProtoduneHD.cxx:817` evaluates
+
+```cpp
+bool is_partial = m_adaptive_baseline ? m_check_partial(spectrum) : false;
+```
 
 `Diagnostics::Partial` (default constructor: `nfreqs=4`,
 `maxpower=6000`) returns `true` iff **both** conditions hold on the
@@ -92,19 +108,25 @@ frequency-domain spectrum `spec`:
 2. The mean of `|spec[1]|...|spec[5]|` exceeds `maxpower` (= 6000).
 
 This is a heuristic for the spectral signature of an RC-undershoot
-waveform — the original "IS_RC()" diagnostic by Xin Qian.
+waveform — the original "IS_RC()" diagnostic by Xin Qian.  IS_RC is
+meaningful only on detectors with AC-coupled cold electronics, because
+it detects channels where the RC coupling capacitor has degraded; see
+`Microboone.cxx:963-1047` where IS_RC is the if/else that selects
+between RCRC deconvolution (intact RC) and the adaptive-baseline
+fallback (broken RC).  **PDHD cold electronics is DC-coupled; the IS_RC
+heuristic has no physical meaning here**, so `adaptive_baseline` is
+left at its C++ default (`false`) and `is_partial` is always `false`.
 
-When `is_partial == true`:
+**Consequence**: the whole `if (is_partial)` block at
+`ProtoduneHD.cxx:842–859` is dormant.  In particular:
 
-- **Induction planes (U, V)**: the full tick-range `[0, nticks)` is
-  tagged `lf_noisy`, which the `OmnibusNoiseFilter` maskmap converts to
-  `bad` (data zeroed after NF).
-- **All planes**: `RawAdapativeBaselineAlg` runs with a 512-tick sliding
-  window to remove the slowly-drifting baseline from the RC-undershoot
-  tail.
+- `lf_noisy` is **not emitted** by `PDHDOneChannelNoise` (induction-plane
+  partial channels will not be tagged; any bad-channel info must be
+  supplied by a separate mechanism).
+- `RawAdapativeBaselineAlg` does **not run**.
 
-So `lf_noisy` ≡ "induction channel with an RC-undershoot-like spectrum
-on which adaptive baseline correction was applied".
+The code block is intentionally left in place so that `adaptive_baseline`
+can be set to `true` in future configurations where IS_RC is meaningful.
 
 ---
 
@@ -215,7 +237,7 @@ local obnf = g.pnode({
 | Knob | Set in | Default | Effect |
 |------|--------|---------|--------|
 | `nticks` | `nf.jsonnet:37` | `0` | Force waveform length in ticks. `0` = inherit from input frame. |
-| `maskmap` | `nf.jsonnet:42` | `{noisy:"bad", lf_noisy:"bad"}` | In the current build only `lf_noisy` is ever produced by `PDHDOneChannelNoise`. A richer alternative `{sticky:"bad", ledge:"bad", noisy:"bad"}` is commented out. |
+| `maskmap` | `nf.jsonnet:42` | `{noisy:"bad", lf_noisy:"bad"}` | In the current build (with `adaptive_baseline=false`) neither `lf_noisy` nor `noisy` is produced by `PDHDOneChannelNoise`; the maskmap entry is effectively inert. A richer alternative `{sticky:"bad", ledge:"bad", noisy:"bad"}` is commented out. |
 | `intraces` | `nf.jsonnet:54` | `''` (wildcard) | Input frame tag selector. |
 | `outtraces` | `nf.jsonnet:55` | `'raw%d' % n` | Tag written on the output traces (e.g. `raw0`). Must match `rawframesink{N}` in `wct-nf-sp.jsonnet:62`. |
 
@@ -430,6 +452,6 @@ These fields are present in `chndb-base.jsonnet` and will take effect
 | `cfg/pgrapher/experiment/pdhd/chndb-resp.jsonnet` | Hard-coded response waveforms | L19 (`u_resp`, 200 samples); L61 (`v_resp`, 200 samples) |
 | `cfg/pgrapher/experiment/pdhd/params.jsonnet` | Detector parameters | L96 (`nticks=6000`); L150 (wires file); L163–166 (noise spectrum, gain-dependent) |
 | `cfg/pgrapher/common/params.jsonnet` | Inherited defaults | `nf.nsamples = daq.nticks`; `daq.tick = 0.5 µs` |
-| `sigproc/src/ProtoduneHD.cxx` | **Implementation** | L806–873 (`OneChannelNoise::apply`); L889–964 (`CoherentNoiseSub::apply`); L281–467 (`SignalProtection`); L58–279 (`Subtract_WScaling`); L514–641 (adaptive-baseline helpers) |
+| `sigproc/src/ProtoduneHD.cxx` | **Implementation** | L808–875 (`OneChannelNoise::apply`); L891–966 (`CoherentNoiseSub::apply`); L281–467 (`SignalProtection`); L58–279 (`Subtract_WScaling`); L514–641 (adaptive-baseline helpers) |
 | `sigproc/src/Diagnostics.cxx` | Partial/RC detector | L15–32 (`Partial::operator()`) |
 | `sigproc/inc/WireCellSigProc/Diagnostics.h` | Partial API | L27–37 (default `nfreqs=4`, `maxpower=6000`) |
