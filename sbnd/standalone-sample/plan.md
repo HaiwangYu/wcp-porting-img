@@ -38,3 +38,22 @@ source /exp/sbnd/app/users/yuhw/setup.sh
 ```
 - ask me if anyting is not clear
 - do not auto-commit
+
+
+# extract as plain 2D array and plot the sim::SimChannels_simtpc2d_simpleSC_DetSim from artROOT file
+- use of python prefered.
+- the 2D plot should be x-axis: channel, y-axis: TDC, z-axis: charge.
+- example file standalone-sample/2025f-mc.root
+- ref: https://code-doc.larsoft.org/docs/latest/html/classsim_1_1SimChannel.html
+- test enviroment setup:
+```bash
+sl7 () 
+{ 
+    /cvmfs/oasis.opensciencegrid.org/mis/apptainer/current/bin/apptainer shell --shell=/bin/bash -B /cvmfs,/exp,/nashome,${1},/opt,/run/user,/etc/hostname,/etc/hosts,/etc/krb5.conf --ipc --pid /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-dev-sl7:latest;
+    source /nashome/y/yuhw/.bash_profile;
+    export PS1=(app)$PS1
+}
+source /exp/sbnd/app/users/yuhw/setup.sh
+```
+- ask me if anyting is not clear
+- do not auto-commit
