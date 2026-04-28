@@ -75,7 +75,7 @@ Condition: `wct-nf-sp.jsonnet:111`
 ### Tunable knobs
 
 These live in `chndb-base.jsonnet` `channel_info` defaults
-(`chndb-base.jsonnet:413–440`) and can be overridden per channel:
+(`chndb-base.jsonnet:466–500`) and can be overridden per channel:
 
 | Knob | Default | Effect |
 |------|---------|--------|
@@ -92,7 +92,7 @@ These live in `chndb-base.jsonnet` `channel_info` defaults
 
 `chndb-base.jsonnet` emits per-anode-group, per-plane `channel_info` overrides
 on top of the fallback global entry (`min_rms_cut: 1.0`, `max_rms_cut: 60.0`).
-The overrides are appended at `chndb-base.jsonnet:455–478` and are last-mention-wins:
+The overrides are appended at `chndb-base.jsonnet:513–529` and are last-mention-wins:
 
 | Anode group | Plane | `min_rms_cut` | `max_rms_cut` |
 |-------------|-------|---------------|---------------|
@@ -173,7 +173,7 @@ PDVD C++ code never produces. Only the `noisy` key is exercised.
 **Type**: `PDVDCoherentNoiseSub`
 **C++ class**: `WireCell::SigProc::PDVD::CoherentNoiseSub`
 **Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: ~lines 885–990)
-**Config in**: `nf.jsonnet:16–24`, groups from `chndb-base.jsonnet:30–391`
+**Config in**: `nf.jsonnet:16–24`, groups from `chndb-base.jsonnet:49–410`
 
 ### What it does
 
@@ -193,8 +193,8 @@ For each channel group (typically one FEMB or one CRP conduit):
      `decon_limit`. **This stage is bypassed in PDVD's current
      configuration** because the guard at line 357 requires
      `respec.size() > 0` and `res_offset != 0`, but
-     `chndb-base.jsonnet:438` sets `response: {}` (empty) and
-     `chndb-base.jsonnet:417` sets `response_offset: 0.0`.
+     `chndb-base.jsonnet:498` sets `response: {}` (empty) and
+     `chndb-base.jsonnet:477` sets `response_offset: 0.0`.
 3. Runs **`Subtract_WScaling`** (`ProtoduneVD.cxx:982–985`) to subtract
    the scaled common-mode median from each channel. This also has a
    deconvolution branch gated by the same `respec` condition
@@ -207,12 +207,12 @@ For each channel group (typically one FEMB or one CRP conduit):
 | Knob | Set in | Default | Effect |
 |------|--------|---------|--------|
 | `rms_threshold` | `nf.jsonnet:22` | `0.0` | Groups whose overall RMS is below this are skipped |
-| `adc_limit` | `chndb-base.jsonnet:422` | `15` ADC | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
+| `adc_limit` | `chndb-base.jsonnet:482` | `15` ADC | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
 | `protection_factor` | `OmniChannelNoiseDB.cxx:43` | `5.0` | Multiplier on per-channel RMS to form the baseline signal-veto threshold |
 | `min_adc_limit` | `OmniChannelNoiseDB.cxx:44` | `50` ADC | Ceiling on the time-domain threshold |
-| `decon_limit` | `chndb-base.jsonnet:420` | `0.02` | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (no `gain×shaping` normalisation). **Currently inactive** — deconvolution branch is bypassed because `respec` is empty (`ProtoduneVD.cxx:381–385`) |
-| `decon_limit1` | `chndb-base.jsonnet:421` | `0.09` | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Currently inactive** — same guard |
-| `roi_min_max_ratio` | `chndb-base.jsonnet:423` | `0.8` | Ratio used in ROI protection logic (min/max asymmetry test) |
+| `decon_limit` | `chndb-base.jsonnet:480` | `0.02` | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (no `gain×shaping` normalisation). **Currently inactive** — deconvolution branch is bypassed because `respec` is empty (`ProtoduneVD.cxx:381–385`) |
+| `decon_limit1` | `chndb-base.jsonnet:481` | `0.09` | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Currently inactive** — same guard |
+| `roi_min_max_ratio` | `chndb-base.jsonnet:483` | `0.8` | Ratio used in ROI protection logic (min/max asymmetry test) |
 
 ### 1D field response for signal protection
 
@@ -232,7 +232,7 @@ builds `respec` by one of three paths (first match wins):
 | Neither (empty `{}`) | Returns an **empty** spectrum (lines 351–354) |
 
 **PDVD's current configuration uses the third path**: `response: {}` and
-`response_offset: 0.0` in `chndb-base.jsonnet:438,417`. The deconvolution
+`response_offset: 0.0` in `chndb-base.jsonnet:498,477`. The deconvolution
 branches in `SignalProtection` and `Subtract_WScaling` are therefore
 completely bypassed.
 
@@ -244,7 +244,7 @@ completely bypassed.
 
 ### Channel groups
 
-`chndb-base.jsonnet:30–391` contains a hardcoded 2-D list of channel
+`chndb-base.jsonnet:49–410` contains a hardcoded 2-D list of channel
 groups (`groups`). Each sub-list is one coherent-noise group (16–48
 channels corresponding to a FEMB/CRP conduit). These groups are the
 primary place to update if hardware changes alter which channels share
@@ -272,9 +272,9 @@ subtraction correctly for strips of different geometry.
 |------|--------|---------|--------|
 | `rms_threshold` | `nf.jsonnet:33` | `0.0` | Skip group if RMS below threshold |
 | `strip_length` | `nf.jsonnet:32` / `params.jsonnet:158` | `PDVD_strip_length.json.bz2` | Per-strip length weighting file |
-| `top_u_groups` | `chndb-base.jsonnet:393–396` | Two channel ranges per top anode | Which channels form the top-U groups subject to shield coupling removal |
+| `top_u_groups` | `chndb-base.jsonnet:412–417` | Two channel ranges per top anode | Which channels form the top-U groups subject to shield coupling removal |
 
-`top_u_groups` at `chndb-base.jsonnet:393–396`:
+`top_u_groups` at `chndb-base.jsonnet:412–417`:
 ```jsonnet
 top_u_groups:
   [std.range(n*3072, n*3072+475) for n in std.range(2,3)]
@@ -335,18 +335,18 @@ filter modules. Key content:
 |-------|----------|-------------|
 | `tick` | `params.daq.tick` = 500 ns | Sampling period |
 | `nsamples` | `params.nf.nsamples` = 6000 | FFT size (must equal waveform length) |
-| `groups` | `chndb-base.jsonnet:30–391` | Coherent-noise groupings (2-D list of channel IDs) |
-| `top_u_groups` | `chndb-base.jsonnet:393–396` | Shield-coupling groups for top U plane |
-| `bad` | `chndb-base.jsonnet:398–401` | Hard-coded bad channels (19 IDs) |
-| `channel_info` | `chndb-base.jsonnet:418–478` | Per-channel defaults + per-anode-group/per-plane RMS overrides + optional caller overrides |
+| `groups` | `chndb-base.jsonnet:49–410` | Coherent-noise groupings (2-D list of channel IDs) |
+| `top_u_groups` | `chndb-base.jsonnet:412–417` | Shield-coupling groups for top U plane |
+| `bad` | `chndb-base.jsonnet:420–461` | Hard-coded bad channels |
+| `channel_info` | `chndb-base.jsonnet:466–529` | Per-channel defaults + per-anode-group/per-plane RMS overrides + optional caller overrides |
 
 To add a new bad channel: append its ID to the `bad` list at
-`chndb-base.jsonnet:399–401`.
+`chndb-base.jsonnet:420–461`.
 
 To override an individual channel's RMS cuts or decon limits: pass an
 entry via the `rms_cuts=[]` argument to `chndb-base.jsonnet` (caller-supplied
 entries are appended last and take highest precedence), or add an entry
-directly after the per-plane overrides block at line 465.
+directly after the per-plane overrides block at line 513.
 
 ## Output
 
