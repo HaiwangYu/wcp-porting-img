@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         "--out-prefix",
         default="simchannels_entry0",
-        help="output prefix for .npy, .json, and .png files",
+        help="output prefix for .npy, .json, and .pdf files",
     )
     parser.add_argument("--channel-min", type=int, default=None, help="minimum channel to include")
     parser.add_argument("--channel-max", type=int, default=None, help="maximum channel to include")
@@ -35,6 +35,11 @@ def parse_args():
     parser.add_argument("--tdc-max", type=int, default=None, help="maximum TDC to include")
     parser.add_argument("--vmin", type=float, default=None, help="plot color minimum")
     parser.add_argument("--vmax", type=float, default=None, help="plot color maximum")
+    parser.add_argument(
+        "--cmap",
+        default="YlOrRd",
+        help="matplotlib color map for the plot; default has low values close to white",
+    )
     parser.add_argument(
         "--vmax-percentile",
         type=float,
@@ -157,14 +162,14 @@ def build_array(channels_seen, deposits, args):
     return charge, (channel_min, channel_max), (tdc_min, tdc_max)
 
 
-def plot_array(charge, channel_range, tdc_range, args, png_name):
+def plot_array(charge, channel_range, tdc_range, args, plot_name):
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     nonzero = charge[charge > 0.0]
-    vmin = args.vmin
+    vmin = 0.0 if args.vmin is None else args.vmin
     vmax = args.vmax
     if vmax is None and nonzero.size:
         vmax = float(np.percentile(nonzero, args.vmax_percentile))
@@ -187,6 +192,7 @@ def plot_array(charge, channel_range, tdc_range, args, png_name):
         aspect="auto",
         interpolation="nearest",
         extent=extent,
+        cmap=args.cmap,
         vmin=vmin,
         vmax=vmax,
     )
@@ -195,7 +201,7 @@ def plot_array(charge, channel_range, tdc_range, args, png_name):
     ax.set_title("SimChannel charge, entry %d" % args.entry)
     colorbar = fig.colorbar(mesh, ax=ax)
     colorbar.set_label("Charge [electrons]")
-    fig.savefig(png_name, dpi=150)
+    fig.savefig(plot_name, dpi=150)
     plt.close(fig)
 
 
@@ -206,7 +212,7 @@ def write_metadata(json_name, args, entries, charge, channel_range, tdc_range, n
         "events_entries": entries,
         "branch": args.branch,
         "array_file": os.path.abspath(args.out_prefix + ".npy"),
-        "plot_file": os.path.abspath(args.out_prefix + ".png"),
+        "plot_file": os.path.abspath(args.out_prefix + ".pdf"),
         "shape": list(charge.shape),
         "dtype": str(charge.dtype),
         "axis_mapping": {
@@ -256,11 +262,11 @@ def main():
 
     npy_name = args.out_prefix + ".npy"
     json_name = args.out_prefix + ".json"
-    png_name = args.out_prefix + ".png"
+    pdf_name = args.out_prefix + ".pdf"
 
     np.save(npy_name, charge)
     write_metadata(json_name, args, entries, charge, channel_range, tdc_range, nonzero_deposits)
-    plot_array(charge, channel_range, tdc_range, args, png_name)
+    plot_array(charge, channel_range, tdc_range, args, pdf_name)
 
     print("Nonzero deposits read: %d" % nonzero_deposits)
     print("Dense array shape: %s [channel, TDC]" % (charge.shape,))
@@ -270,7 +276,7 @@ def main():
         print("Sample deposit: channel=%d tdc=%d charge=%g" % (channel, tdc, value))
     print("Wrote %s" % npy_name)
     print("Wrote %s" % json_name)
-    print("Wrote %s" % png_name)
+    print("Wrote %s" % pdf_name)
 
     root_file.Close()
 
