@@ -34,7 +34,7 @@ function(
   local img = import 'pgrapher/experiment/sbnd/img.jsonnet';
   local img_maker = img();
 
-  local img_pipes = [img_maker.per_anode(anodes[n], 'multi-3view', add_dump=false)
+  local img_pipes = [img_maker.per_anode(anodes[n], 'active3view+masked1view', add_dump=false)
                      for n in std.range(0, nanodes - 1)];
 
   // Defensive per-anode filter: ensures the FrameFanout output for branch N contains only
