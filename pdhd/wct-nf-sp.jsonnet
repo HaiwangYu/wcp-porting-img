@@ -36,7 +36,8 @@ function(
   raw_prefix    = 'protodunehd-sp-frames-raw',  // output prefix for NF (raw) frames
   sp_prefix     = 'protodunehd-sp-frames',      // output prefix for SP frames
   reality       = 'data',                       // 'data' enables the 512->500 ns Resampler; 'sim' disables it
-  anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
+  anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
+  use_freqmask  = true,                         // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
 )
 
   local tools = tools_all;
@@ -46,7 +47,7 @@ function(
   local chndb = [{
     type: 'OmniChannelNoiseDB',
     name: 'ocndbperfect%d' % n,
-    data: base(params, tools.anodes[n], tools.field, n) { dft: wc.tn(tools.dft) },
+    data: base(params, tools.anodes[n], tools.field, n, use_freqmask=use_freqmask) { dft: wc.tn(tools.dft) },
     uses: [tools.anodes[n], tools.field, tools.dft],
   } for n in std.range(0, std.length(tools.anodes) - 1)];
 
