@@ -86,7 +86,7 @@ These live in `chndb-base.jsonnet` `channel_info` defaults
 | `rcrc` | `1.1 ms` | RC-RC time constant — **not applied**: the `m_noisedb->rcrc(ch)` call is commented out (`ProtoduneVD.cxx:823–826`) |
 | `rc_layers` | `0` | Number of RC filter layers — `0` would suppress it even if the call were live |
 | `reconfig` | `{}` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->config(ch)` call in the PDVD per-channel filter; ignored silently) |
-| `freqmasks` | `[]` | Parsed by `OmniChannelNoiseDB` but **never consumed** by `PDVDOneChannelNoise` (no `m_noisedb->noise(ch)` call; ignored even if non-empty) |
+| `freqmasks` | `[]` | Per-channel frequency-domain notch filter. Multiplied into the channel spectrum at `ProtoduneVD.cxx:835–854` via `m_noisedb->noise(ch)` (skipped silently when the channel's mask is empty, the default). Use `wc.freqmasks_phys([f...], delta)` in jsonnet to specify physical frequencies; bins are resolved at runtime from `m_tick`/`m_nsamples` and conjugate-mirrored automatically. With `WIRECELL_LOG_LEVEL=debug`, emits `PDVDfreqmask ch=N zeroed K/N bins` per masked channel. |
 
 #### RMS thresholds (PDVD-specific)
 
@@ -147,6 +147,30 @@ electronics. There is no top-vs-bottom anode branch for RC correction;
 the single commented-out call (`ProtoduneVD.cxx:821`) would have applied
 the same `rcrc(ch)` spectrum to all channels.
 
+#### Frequency masks (PDVD-specific)
+
+Per-channel notch filters are emitted by `chndb-base.jsonnet` and applied
+to the channel FFT in `ProtoduneVD.cxx:835–854` (see `freqmasks` knob
+above). They are gated by the `use_freqmask` TLA (default `true`) and by
+anode index so each block fires only on the anodes that need it:
+
+| Anode group | Channels | Notches |
+|-------------|----------|---------|
+| Anode 0 (bottom CRP-0) | W chans `2188–2195` + `2480–2485` | 47, 70.5, 94, 117.5, 141, 164.5, 188, 211.5, 235, 258.5, 282 kHz (ΔF = ±1 kHz) |
+| Anodes 4–7 (all top CRPs) | all U+V+W of each anode | 23.5 kHz (±0.5 kHz) and 711 kHz (±2 kHz) |
+| Anodes 1, 2, 3 | — | (none) |
+
+Frequencies are specified in physical units via the
+`wc.freqmasks_phys([f…], delta)` helper (`cfg/wirecell.jsonnet:422`) and
+resolved to FFT bins at runtime, so the same config works for the 6400-
+and 8000-tick frame sizes both seen in PDVD data. Each notch is
+auto-mirrored onto the conjugate (negative-frequency) bins so the inverse
+real-FFT stays real-valued.
+
+The lines were diagnosed from `magnify-…orig.rms.root` FFT histograms
+on run 040475 evt 0; see `chndb-base.jsonnet:505–551` for the
+diagnosis-to-config trail.
+
 ### What is NOT done (compare with ProtoDUNE-SP / MicroBooNE)
 
 - **Sticky-ADC code mitigation** — no `StickyCodeMitig` class exists for
@@ -156,7 +180,6 @@ the same `rcrc(ch)` spectrum to all channels.
 - **RC-RC spectral correction** — commented out at `ProtoduneVD.cxx:820–823`.
 - **Adaptive baseline** (`RawAdaptiveBaselineAlg`) — disabled by config (`adaptive_baseline=false` in `nf.jsonnet`). PDVD hardware is DC-coupled so the IS_RC gate that fronts this algorithm (`Microboone.cxx:963-1047`) has no physical meaning.
 - **Electronics reconfiguration** — `m_noisedb->config(ch)` never called.
-- **Per-channel frequency masking** — `m_noisedb->noise(ch)` never called.
 - **Top/bottom electronics split** at the per-channel level — no `ident`
   test inside `OneChannelNoise::apply`. The `adaptive_baseline` field in
   `nf.jsonnet` could be set differently per anode (e.g., `anode.data.ident < 4`),
