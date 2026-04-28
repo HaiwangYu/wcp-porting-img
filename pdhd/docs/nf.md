@@ -260,15 +260,25 @@ Instantiated once per anode as `OmniChannelNoiseDB` named
 
 ### Coherent groups
 
-**Source**: `chndb-base.jsonnet:20–22`
+**Source**: `chndb-base.jsonnet:27–39`
 
 60 groups per anode, one per FEMB:
 
 | Plane | Groups | Channels per group | Global channel range (anode `n`) |
 |-------|--------|--------------------|----------------------------------|
-| U | 20 | 40 | `n×2560 + u×40 .. n×2560 + (u+1)×40 − 1` |
-| V | 20 | 40 | `n×2560 + 800 + v×40 .. n×2560 + 800 + (v+1)×40 − 1` |
+| U | 20 | 40 | cyclic: `n×2560 + (40u + shift + j) mod 800` for `j ∈ [0,39]` |
+| V | 20 | 40 | cyclic: `n×2560 + 800 + (40v + shift + j) mod 800` for `j ∈ [0,39]` |
 | W | 20 | 48 | `n×2560 + 1600 + w×48 .. n×2560 + 1600 + (w+1)×48 − 1` |
+
+`shift` is controlled by the `coh_group_shift` parameter (default **3**).
+The +3 offset corrects a FEMB-edge channel misassignment identified in
+the run-027409 evt-0 APA-0 coherent-noise audit: the first 3 offline
+channels of each FEMB block carry the bulk common mode of the
+*previous* block, not their own.  Setting `coh_group_shift=0` recovers
+the original (pre-fix) grouping.  W is unchanged (audit confirmed W is
+clean).  The cyclic `mod 800` wrap is only active for group `u=19`
+(offline channels 763–799 and 0–2); all other groups are contiguous and
+identical to the shift=0 case for those group indices.
 
 ### Hard-coded bad channels
 
@@ -424,7 +434,7 @@ The NF output frame then flows directly into the SP pipeline.
 | 8 | `maskmap` | `nf.jsonnet:42` | Uncomment `sticky`/`ledge` mappings if those artefact types are enabled in the future. |
 | 9 | Response waveforms (`u_resp`, `v_resp`) | `chndb-resp.jsonnet:19, 61` | Re-derive when a new field-response calculation is adopted. |
 | 10 | `response_offset` | `chndb-base.jsonnet:80, 99` | Must be re-tuned with new response waveforms. |
-| 11 | `groups` | `chndb-base.jsonnet:20–22` | Only if FEMB-to-channel mapping changes in hardware. |
+| 11 | `coh_group_shift` | `chndb-base.jsonnet` (function signature) | Controls the cyclic offset of U/V FEMB group boundaries. Default 3 (corrected); set to 0 to revert to the original grouping. |
 
 ### Configured but currently inert
 
