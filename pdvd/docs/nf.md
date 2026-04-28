@@ -96,12 +96,20 @@ The overrides are appended at `chndb-base.jsonnet:455–478` and are last-mentio
 
 | Anode group | Plane | `min_rms_cut` | `max_rms_cut` |
 |-------------|-------|---------------|---------------|
-| Top (4–7) | U | 8.0 ADC (flat) | 15.0 ADC |
-| Top (4–7) | V | 8.0 ADC (flat) | 15.0 ADC |
-| Top (4–7) | W | 8.0 ADC (flat) | 15.0 ADC |
+| Top (4–7) | U | 8.0 ADC (flat) | 30.0 ADC |
+| Top (4–7) | V | 8.0 ADC (flat) | 30.0 ADC |
+| Top (4–7) | W | 8.0 ADC (flat) | 30.0 ADC |
 | Bottom (0–3) | W | 5.0 ADC (flat) | 15.0 ADC |
 | Bottom (0–3) | U | linear in wire length (see below) | 15.0 ADC |
 | Bottom (0–3) | V | linear in wire length (see below) | 15.0 ADC |
+
+**Gain scaling**: all cut values above (and the fallback global `decon_limit`,
+`decon_limit1`, `adc_limit`) are tuned for the **bottom** FE amplifier gain of
+7.8 mV/fC (`params.elecs[0].gain`). A `gain_scale = params.elec.gain / (7.8 mV/fC)`
+factor is applied to all thresholds for bottom anodes (0–3), so they track the
+configured gain linearly. Top electronics (anodes 4–7) gain is fixed by an external
+response file (`elecs[1]`, `JsonElecResponse`); accordingly `gain_scale ≡ 1.0` for
+top anodes and their cut values are gain-invariant (`chndb-base.jsonnet:27`).
 
 **Linear-in-wire-length mode** (`type: 'linear_in_wirelength'`): a new
 `OmniChannelNoiseDB` feature that resolves `min_rms_cut` per channel from
