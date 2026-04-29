@@ -136,16 +136,11 @@ $ grep -n "response:\|response_offset" cfg/pgrapher/experiment/pdhd/chndb-base.j
    98:        response: { waveform: handmade.v_resp, waveformid: wc.Vlayer },
    99:        response_offset: 124,
 ```
-```
-$ grep -n "response:\|response_offset" cfg/pgrapher/experiment/protodunevd/chndb-base.jsonnet
-   417:        response_offset: 0.0,
-   438:        response: {},
-   # no per-plane override anywhere in the file
-```
-
-The PDVD file `chndb-resp.jsonnet:19,61` does define `u_resp`/`v_resp`
-arrays, but no jsonnet imports them (verified by grep). They are dead
-code, in contrast to PDHD where the same-named arrays are live.
+PDVD now wires U/V FR⊗ER kernels per anode: `n < 4` (bottom CRP) uses
+`chndb-resp-bot.jsonnet`; `n >= 4` (top CRP) uses `chndb-resp-top.jsonnet`.
+The `response_offset` values are 239/245 (bottom U/V) and 240/243 (top U/V).
+The kernel is scaled by `gain_scale = if n >= 4 then 1.0 else params.elec.gain
+/ (7.8 * wc.mV / wc.fC)` to propagate runtime FE gain overrides.
 
 ---
 
@@ -176,10 +171,10 @@ per-anode-group RMS cuts** (see table in `pdvd/docs/nf.md`), but other
 
 PDHD's higher `adc_limit`/`min_adc_limit` (60/200 vs 15/50) reflect the
 *raised* signal-protection floor needed because PDHD's U/V deconvolution
-branch is active and the ADC-floor only matters for W. In PDVD, since
-the deconvolution branch is dormant for all planes, the ADC-domain
-threshold is the *only* signal-protection threshold and it stays at the
-lower default.
+branch is active and the ADC-floor only matters for W. PDVD now also has
+U/V deconvolution active; the decon thresholds (`decon_limit`,
+`roi_min_max_ratio`) have not yet been per-plane tuned for PDVD, so they
+remain at the global defaults — tuning is a deferred follow-up step.
 
 **Validation:** see `pdhd/chndb-base.jsonnet:38–118` and
 `protodunevd/chndb-base.jsonnet:413–440`.
@@ -204,15 +199,15 @@ experience.
 | Detector | File | Used by |
 |----------|------|---------|
 | PDHD | `np04hd-garfield-6paths-mcmc-bestfit.json.bz2` (`pdhd/params.jsonnet:153`) | SP **and indirectly NF** (it backs `Diagnostics::Partial` only via the spectrum check; `u_resp`/`v_resp` in NF are *baked-in* arrays in `chndb-resp.jsonnet`, not reread) |
-| PDVD | `protodunevd_FR_norminal_260324.json.bz2` (`protodunevd/params.jsonnet:165–166`) | SP only — NF never consumes it (since `response: {}` everywhere) |
+| PDVD | `protodunevd_FR_norminal_260324.json.bz2` (`protodunevd/params.jsonnet:165–166`) | SP and NF (NF U/V `response` kernels derived via `wirecell-sigproc track-response` with `output_window=160 µs`; native FR length ~132.5 µs) |
 
-PDHD also bakes the U/V wire-region-averaged 1D response into
-`chndb-resp.jsonnet` as `u_resp` (200 samples, line 19) and `v_resp`
-(line 61). The header comment at `chndb-resp.jsonnet:1–17` documents
-that these were derived from `fravg.planes[2]` of `np04hd-garfield-...`
-in `OmnibusSigproc.cxx`; they must be re-derived if the field-response
-file is updated. PDVD has the analogous arrays in
-`protodunevd/chndb-resp.jsonnet:19,61` but they are unused.
+PDHD bakes the U/V wire-region-averaged 1D response into `chndb-resp.jsonnet`
+as `u_resp` (200 samples, line 19) and `v_resp` (line 61). PDVD now has the
+analogous arrays split across `chndb-resp-bot.jsonnet` and
+`chndb-resp-top.jsonnet` (320 samples each, reflecting the 160 µs
+convolution window). The 160 µs window is required because the PDVD FR file
+native length (~132.5 µs) is shorter than the bipolar induction tail; without
+zero-padding the FFT-based convolution wraps the tail into the early bins.
 
 ---
 
@@ -262,9 +257,9 @@ two stages operate on different channel partitions.
 | Top vs bottom electronics branch in NF? | n/a | Only for *resampler* (n<4) and *shield coupling* (ident>3); not in per-channel or coherent algos |
 | `reconfig` consumed by per-channel filter? | No | No |
 | `freqmasks` consumed by per-channel filter? | No | No |
-| 1D field response source for coherent sub | Hard-coded `u_resp`/`v_resp` arrays (active U/V) | Empty `{}` everywhere — decon branch dormant |
-| `adc_limit` role | ADC-floor of signal-protection threshold (used mostly on W) | ADC-floor of signal-protection threshold (sole active path) |
-| `decon_limit` / `decon_limit1` active? | Yes on U/V; W only via `decon_limit1` if `respec` were set (it isn't on W) | Configured but unused — `respec` empty everywhere |
+| 1D field response source for coherent sub | Hard-coded `u_resp`/`v_resp` arrays (active U/V) | FR⊗ER kernels from `chndb-resp-{bot,top}.jsonnet` (active U/V; W still empty `{}`) |
+| `adc_limit` role | ADC-floor of signal-protection threshold (used mostly on W) | ADC-floor for W; decon branch now active on U/V |
+| `decon_limit` / `decon_limit1` active? | Yes on U/V; W only via `decon_limit1` if `respec` were set (it isn't on W) | Active on U/V (thresholds at global defaults — per-plane tuning deferred); W still dormant |
 | Shield coupling? | No | Yes — top anodes, U-plane only |
 | Resampler? | No | Yes — bottom anodes only |
 
@@ -289,11 +284,11 @@ two stages operate on different channel partitions.
   PDVD top anodes.
 - **Resampling exists only on PDVD bottom anodes.** PDHD does not need
   the 500 ns alignment step; SP field-response files are uniform.
-- **Tuning surfaces are not portable.** PDHD's per-plane overrides
-  (`u_resp`, `v_resp`, `response_offset 120/124`, `roi_min_max_ratio
-  3.0/1.5`) have no PDVD equivalents in current production. Adding
-  PDVD per-plane response would require populating
-  `protodunevd/chndb-base.jsonnet` and re-deriving response waveforms.
+- **Tuning surfaces are not fully portable.** PDHD's per-plane threshold
+  overrides (`roi_min_max_ratio 3.0/1.5`, `decon_limit` U/V/W splits) have
+  no equivalents in PDVD's current configuration; PDVD's per-plane U/V
+  `response` waveforms and `response_offset` are now populated, but
+  coherent-NF threshold tuning (decon/roi knobs) for PDVD is deferred.
 
 ---
 
@@ -304,7 +299,8 @@ two stages operate on different channel partitions.
 | Top-level NF+SP driver | `pdhd/wct-nf-sp.jsonnet` | `pdvd/wct-nf-sp.jsonnet` |
 | NF pnode factory | `cfg/pgrapher/experiment/pdhd/nf.jsonnet` | `cfg/pgrapher/experiment/protodunevd/nf.jsonnet` |
 | Channel DB | `cfg/pgrapher/experiment/pdhd/chndb-base.jsonnet` | `cfg/pgrapher/experiment/protodunevd/chndb-base.jsonnet` |
-| Hard-coded 1D response | `cfg/pgrapher/experiment/pdhd/chndb-resp.jsonnet` (live) | `cfg/pgrapher/experiment/protodunevd/chndb-resp.jsonnet` (unused) |
+| FR⊗ER kernel (bottom CRP) | `cfg/pgrapher/experiment/pdhd/chndb-resp.jsonnet` (live) | `cfg/pgrapher/experiment/protodunevd/chndb-resp-bot.jsonnet` (live) |
+| FR⊗ER kernel (top CRP) | — | `cfg/pgrapher/experiment/protodunevd/chndb-resp-top.jsonnet` (live) |
 | Detector params | `cfg/pgrapher/experiment/pdhd/params.jsonnet` | `cfg/pgrapher/experiment/protodunevd/params.jsonnet` |
 | C++ NF impl | `sigproc/src/ProtoduneHD.cxx` | `sigproc/src/ProtoduneVD.cxx` |
 | Field-response file | `np04hd-garfield-6paths-mcmc-bestfit.json.bz2` | `protodunevd_FR_norminal_260324.json.bz2` |

@@ -48,7 +48,7 @@ Source: `sigproc/src/OmniChannelNoiseDB.cxx:46`
 | parameter | uBooNE U | uBooNE V | uBooNE W | SBND U | SBND V | SBND W | PDVD bottom U | PDVD bottom V | PDVD bottom W | PDVD top U | PDVD top V | PDVD top W | PDHD U | PDHD V | PDHD W |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `nominal_baseline` (ADC) | 2048 | 2048 | **400** | 2001 | 2001 | **650** | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | **400** |
-| `response_offset` (ticks) | **79** | **82** | 0 | **120** | **124** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | **127** | **132** | 0 |
+| `response_offset` (ticks) | **79** | **82** | 0 | **120** | **124** | 0 | **239** | **245** | 0 | **240** | **243** | 0 | **127** | **132** | 0 |
 | `pad_window_front` (ticks) | **20** | 10 | 10 | **20** | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
 | `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
 | `decon_limit` | 0.02 | **0.025** | **0.05** | 0.02 | **0.01** | **0.05** | 0.02 *gs* | 0.02 *gs* | 0.02 *gs* | 0.02 | 0.02 | 0.02 | **0.01** *gs†* | **0.01** *gs†* | **0.05** *gs†* |
@@ -89,6 +89,18 @@ Notes:
   respec[0]!=(1,0) && res_offset!=0` becomes false).  The other
   thresholds (`decon_limit`, `decon_limit1`, `roi_min_max_ratio`,
   RMS cuts) remain at the V-plane values.
+- **PDVD FR⊗ER convolution window**: the PDVD FR file
+  (`protodunevd_FR_norminal_260324.json.bz2`) has a native length of
+  ~132.5 µs, shorter than the bipolar induction tail of either PDVD
+  electronics set.  Without padding, the FFT-based convolution in
+  `wirecell-sigproc track-response` wraps the slow recovery tail back
+  into the early bins.  Both `pdvd-bottom` and `pdvd-top` defaults set
+  `output_window: "160*us"` (in `track_response_defaults.jsonnet`),
+  which zero-pads FR/ER to 320 ADC ticks (160 µs / 500 ns) before
+  convolving.  The negative-peak position is unaffected by padding,
+  so the table `response_offset` values (bot 239/245, top 240/243)
+  hold for both the original 132.5 µs and the new 160 µs kernels;
+  only the kernel content (especially the slow tail) is corrected.
 
 ### `roi_min_max_ratio` — what it controls
 
@@ -253,16 +265,16 @@ recommendations — pick the ones worth investigating.
      Collection-plane signals are larger; a higher `decon_limit`
      protects the median from being polluted by collection signals.
    - `response_offset`: uBooNE sets 79/82 ticks (U/V); PDHD sets 127/132;
-     PDVD has 0 everywhere. Without a per-plane response offset, the
-     deconvolution alignment used by `SignalProtection` has no anchor.
+     PDVD now sets 239/245 (bottom) and 240/243 (top), derived from the
+     argmin of the respective FR⊗ER kernels in `chndb-resp-bot.jsonnet`
+     and `chndb-resp-top.jsonnet`.
 
-2. **`response: {}` everywhere in the default block**. uBooNE, SBND,
-   and PDHD set per-plane `response: { waveform: handmade.[uv]_resp, ...}`
-   in the U/V overrides. PDVD has no per-plane `response` waveform set,
-   so the median deconvolution in `SignalProtection` runs with an
-   empty response spectrum (effectively a delta — only the LF cutoff
-   and adc thresholds protect the median). This is likely the single
-   biggest gap between PDVD and the other experiments.
+2. **Per-plane FR⊗ER response waveform now set for PDVD**. The U and V
+   planes now have `response: { waveform: scale_resp(u/v_resp_arr), ... }`
+   entries in `chndb-base.jsonnet`, selecting between `chndb-resp-bot.jsonnet`
+   (bottom CRP, anodes 0–3) and `chndb-resp-top.jsonnet` (top CRP, anodes
+   4–7) depending on `n`. W planes retain `response: {}` (collection plane,
+   no deconvolution needed).
 
 3. **`decon_lf_cutoff` not set**. uBooNE customises this (0.06 for V).
    PDVD and PDHD inherit the C++ default (0.08).

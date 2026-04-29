@@ -254,16 +254,24 @@ builds `respec` by one of three paths (first match wins):
 | `waveform` + `waveformid` keys present | FFT of the explicit waveform array |
 | Neither (empty `{}`) | Returns an **empty** spectrum (lines 351–354) |
 
-**PDVD's current configuration uses the third path**: `response: {}` and
-`response_offset: 0.0` in `chndb-base.jsonnet:498,477`. The deconvolution
-branches in `SignalProtection` and `Subtract_WScaling` are therefore
-completely bypassed.
+**PDVD now uses the second path** for U and V planes via per-plane
+`channel_info` entries in `chndb-base.jsonnet` that wire FR⊗ER kernels from
+two split files:
 
-- The field-response file `protodunevd_FR_norminal_260324.json.bz2`
-  (`params.jsonnet:165–167`) is consumed by SP, not by NF.
-- The arrays `u_resp[]` and `v_resp[]` in `chndb-resp.jsonnet:19–101` are
-  **dead code** — no jsonnet in `cfg/pgrapher/experiment/protodunevd/`
-  imports them.
+- `chndb-resp-bot.jsonnet` — bottom CRP (cold ER, gain 7.8 mV/fC, postgain
+  1.1365, ADC/mV 11.70): `response_offset` = 239 (U) / 245 (V).
+- `chndb-resp-top.jsonnet` — top CRP (JsonElecResponse, postgain 1.52,
+  ADC/mV 8.192): `response_offset` = 240 (U) / 243 (V).
+
+The selection is gated on the anode index `n`: `n < 4` ⇒ bottom, `n >= 4`
+⇒ top. The kernel is scaled by `gain_scale = if n >= 4 then 1.0 else
+params.elec.gain / (7.8 * wc.mV / wc.fC)` so a runtime FE gain override
+propagates correctly (top uses a fixed JsonElecResponse with no scalar gain
+knob). The field-response file `protodunevd_FR_norminal_260324.json.bz2`
+(`params.jsonnet:165–167`) is consumed by SP; the NF kernels were derived
+from it via `wirecell-sigproc track-response` with a 160 µs convolution
+window (the FR native length of ~132.5 µs is shorter than the bipolar
+induction tail, so zero-padding is required to avoid FFT circular wraparound).
 
 ### Channel groups
 
@@ -400,7 +408,8 @@ on the main path after the tap.
 | `wct-nf-sp.jsonnet` (pdvd/) | Top-level pipeline: builds per-anode graphs |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/nf.jsonnet` | Returns OmnibusNoiseFilter pnode per anode |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-base.jsonnet` | Channel DB: groups, bad channels, per-channel defaults |
-| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp.jsonnet` | Hard-coded `u_resp`/`v_resp` arrays (currently unused dead code) |
+| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp-bot.jsonnet` | FR⊗ER kernel for bottom CRP (cold ER, gain 7.8 mV/fC); wired into `chndb-base.jsonnet` |
+| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp-top.jsonnet` | FR⊗ER kernel for top CRP (JsonElecResponse, postgain 1.52); wired into `chndb-base.jsonnet` |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/params.jsonnet` | Detector parameters (tick, nticks, strip_length file) |
 | `toolkit/cfg/pgrapher/common/resamplers.jsonnet` | Resampler pnode construction |
 | `toolkit/sigproc/src/ProtoduneVD.cxx` | C++ impl of PDVD NF modules |
