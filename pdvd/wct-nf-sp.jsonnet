@@ -38,7 +38,8 @@ function(
   sp_prefix     = 'protodune-sp-frames',    // output prefix for SP frames
   reality       = 'data',                   // 'data' enables the 512->500 ns Resampler on bottom anodes (n<4); 'sim' disables it
   sigoutform    = 'dense',                 // 'sparse' or 'dense'
-  anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
+  anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
+  use_freqmask  = true,                    // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
 )
 
   local tools = tools_all;
@@ -48,7 +49,7 @@ function(
   local chndb = [{
     type: 'OmniChannelNoiseDB',
     name: 'ocndbperfect%d' % n,
-    data: base(params, tools.anodes[n], tools.field, tools.anodes[n].data.ident) { dft: wc.tn(tools.dft) },
+    data: base(params, tools.anodes[n], tools.field, tools.anodes[n].data.ident, use_freqmask=use_freqmask) { dft: wc.tn(tools.dft) },
     uses: [tools.anodes[n], tools.field, tools.dft],
   } for n in std.range(0, std.length(tools.anodes) - 1)];
 
