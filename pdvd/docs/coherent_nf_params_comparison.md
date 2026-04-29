@@ -48,7 +48,7 @@ Source: `sigproc/src/OmniChannelNoiseDB.cxx:46`
 | parameter | uBooNE U | uBooNE V | uBooNE W | SBND U | SBND V | SBND W | PDVD bottom U | PDVD bottom V | PDVD bottom W | PDVD top U | PDVD top V | PDVD top W | PDHD U | PDHD V | PDHD W |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `nominal_baseline` (ADC) | 2048 | 2048 | **400** | 2001 | 2001 | **650** | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | **400** |
-| `response_offset` (ticks) | **79** | **82** | 0 | **120** | **124** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | **120** | **124** | 0 |
+| `response_offset` (ticks) | **79** | **82** | 0 | **120** | **124** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | **127** | **132** | 0 |
 | `pad_window_front` (ticks) | **20** | 10 | 10 | **20** | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
 | `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
 | `decon_limit` | 0.02 | **0.025** | **0.05** | 0.02 | **0.01** | **0.05** | 0.02 *gs* | 0.02 *gs* | 0.02 *gs* | 0.02 | 0.02 | 0.02 | **0.01** *gs†* | **0.01** *gs†* | **0.05** *gs†* |
@@ -252,7 +252,7 @@ recommendations — pick the ones worth investigating.
    - `decon_limit` for W in PDVD is 0.02 vs 0.05 in uBooNE/SBND/PDHD.
      Collection-plane signals are larger; a higher `decon_limit`
      protects the median from being polluted by collection signals.
-   - `response_offset`: uBooNE sets 79/82 ticks (U/V); PDHD sets 120/124;
+   - `response_offset`: uBooNE sets 79/82 ticks (U/V); PDHD sets 127/132;
      PDVD has 0 everywhere. Without a per-plane response offset, the
      deconvolution alignment used by `SignalProtection` has no anchor.
 
