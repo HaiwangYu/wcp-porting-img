@@ -135,15 +135,24 @@ can be set to `true` in future configurations where IS_RC is meaningful.
 **Source**: `nf.jsonnet:19–29`, `ProtoduneHD.cxx:889–964`
 
 ```jsonnet
+local sp_filters = import 'pgrapher/experiment/pdhd/sp-filters.jsonnet';
+// ...
 local grouped = {
     type: 'PDHDCoherentNoiseSub',
     name: name,
-    uses: [dft, chndbobj, anode],
+    uses: [dft, chndbobj, anode] + sp_filters,  // registers HfFilter/LfFilter instances
     data: {
-        noisedb:       wc.tn(chndbobj),
-        anode:         wc.tn(anode),
-        dft:           wc.tn(dft),
-        rms_threshold: 0.0,
+        noisedb:           wc.tn(chndbobj),
+        anode:             wc.tn(anode),
+        dft:               wc.tn(dft),
+        rms_threshold:     0.0,
+        // Per-plane SP Wiener filter for deconvolution; APA 0 uses _APA1 variants.
+        time_filters:
+          if anode.data.ident == 0
+          then ['Wiener_tight_U_APA1', 'Wiener_tight_V_APA1', 'Wiener_tight_W_APA1']
+          else ['Wiener_tight_U', 'Wiener_tight_V', 'Wiener_tight_W'],
+        lf_tighter_filter: 'ROI_tighter_lf',  // SignalProtection (median deconv)
+        lf_loose_filter:   'ROI_loose_lf',    // Subtract_WScaling (per-channel deconv)
     },
 };
 ```
@@ -175,7 +184,16 @@ defaults this gives `limit = min(max(5·rms, 60), 200)`.
 
 - Deconvolve the median by `respec` (the hard-coded 1D field response;
   see §[Per-channel response waveforms](#per-channel-response-waveforms)).
-- Apply `filter_time(freq) × filter_low(freq, decon_lf_cutoff)`.
+- Apply `HfFilter Wiener_tight_{U,V,W}(freq) × LfFilter ROI_tighter_lf(freq)`.
+  On APA 0 (`anode.data.ident == 0`) the Wiener instances are the `_APA1`
+  variants (`Wiener_tight_U_APA1`, etc.), matching the SP filter used on that
+  anode.  The plane index is resolved via `m_anode->resolve(ch).index()`
+  (0=U, 1=V, 2=W).  Both filter waveforms are fetched from the SP
+  `IFilterWaveform` factory — the same shared instances already used by
+  `OmnibusSigProc`.  **The four hardcoded MicroBooNE-era notch bands
+  (≈107 / 178 / 214 / 250 kHz) previously zero-ed in `filter_low` are
+  removed**; if specific lines appear in PDHD data they should be handled via
+  per-channel `freqmasks_phys` entries in `chndb-base.jsonnet`.
 - IFFT; mark bins where the deconvolved height exceeds
   `max(protection_factor·rms, decon_limit)`, shifted by `res_offset` and
   padded as above.
@@ -192,7 +210,9 @@ For each channel in the group:
    Renormalize to the group-mean `ave_coef`.  Clip to `[0, 1.5]`.
 
 2. For U/V (non-empty `respec`): repeat the deconvolution on the
-   channel-local signal using `filter_low_loose`.  An ROI is deemed
+   channel-local signal using `HfFilter Wiener_tight_{U,V,W}(freq) ×
+   LfFilter ROI_loose_lf(freq)` (same SP factory instances, plane-resolved
+   as in Sub-step B).  An ROI is deemed
    "real signal" if `max_val > decon_limit1 && |min_val| < max_val ×
    roi_min_max_ratio`.  The median is replaced by linear interpolation
    across such ROIs before subtraction.
@@ -207,7 +227,10 @@ For each channel in the group:
 
 | Knob | Set in | Value | Effect |
 |------|--------|-------|--------|
-| `rms_threshold` | `nf.jsonnet:27` | `0.0` | Channels whose RMS exceeds this are excluded from the group-median computation. `0.0` = no exclusion; also disables adaptive `decon_limit1`. |
+| `rms_threshold` | `nf.jsonnet` `data.rms_threshold` | `0.0` | Channels whose RMS exceeds this are excluded from the group-median computation. `0.0` = no exclusion; also disables adaptive `decon_limit1`. |
+| `time_filters` | `nf.jsonnet` `data.time_filters` | `['Wiener_tight_U[_APA1]', 'Wiener_tight_V[_APA1]', 'Wiener_tight_W[_APA1]']` | Per-plane SP `HfFilter` instance names [U, V, W] for the coherent-sub deconvolution filter. APA 0 (`ident==0`) uses the `_APA1` variants. Defined in `sp-filters.jsonnet`. |
+| `lf_tighter_filter` | `nf.jsonnet` `data.lf_tighter_filter` | `'ROI_tighter_lf'` | SP `LfFilter` instance for `SignalProtection` (median deconvolution pass; τ=0.08 MHz). Replaces the old `filter_low(freq, decon_lf_cutoff)` helper. |
+| `lf_loose_filter` | `nf.jsonnet` `data.lf_loose_filter` | `'ROI_loose_lf'` | SP `LfFilter` instance for `Subtract_WScaling` (per-channel ROI deconvolution pass; τ=0.002 MHz). Replaces the old `filter_low_loose`. |
 
 ---
 
@@ -394,7 +417,7 @@ All knobs below are consumed by `PDHDCoherentNoiseSub` only.
 |------|---------|------------------|--------------|--------|
 | `decon_limit` | `SignalProtection` | U:0.02, V:0.01, W:0.05 | 0.02 | Threshold on deconvolved median height to flag a bin as "signal" in the ADC→ROI pass. |
 | `decon_limit1` | `Subtract_WScaling` | U:0.07, V:0.08, W:0.08 (default: 0.09) | 0.08 | Per-channel deconv ROI gate — peak must exceed this to be deemed real signal. |
-| `decon_lf_cutoff` | `SignalProtection` | not set (C++ fallback) | 0.08 | Low-frequency cutoff used in `filter_low(freq, decon_lf_cutoff)` during median deconvolution. |
+| `decon_lf_cutoff` | ~~`SignalProtection`~~ | *(not set — C++ default 0.08, unused)* | 0.08 | **No longer consumed by `PDHDCoherentNoiseSub`** after the `IFilterWaveform` refactor. The low-frequency cutoff is now encoded in `LfFilter ROI_tighter_lf` (τ=0.08 MHz in `sp-filters.jsonnet`). The chndb field and C++ accessor remain for MicroBooNE/SBND compatibility. |
 | `adc_limit` | `SignalProtection` | 60 (raised from default 0) | 0.0 | Upper bound on the ADC-domain protection limit: `max(protection_factor·rms, adc_limit)`. |
 | `min_adc_limit` | `SignalProtection` | 200 (raised from 50) | 50 | Hard cap: `limit = min(limit, min_adc_limit)`. |
 | `protection_factor` | `SignalProtection` | not set (C++ fallback) | 5.0 | Multiplier on median RMS for the ADC-domain threshold. |

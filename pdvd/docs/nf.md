@@ -197,7 +197,31 @@ PDVD C++ code never produces. Only the `noisy` key is exercised.
 **Type**: `PDVDCoherentNoiseSub`
 **C++ class**: `WireCell::SigProc::PDVD::CoherentNoiseSub`
 **Source**: `toolkit/sigproc/src/ProtoduneVD.cxx` (apply body: ~lines 885–990)
-**Config in**: `nf.jsonnet:16–24`, groups from `chndb-base.jsonnet:49–410`
+**Config in**: `nf.jsonnet` (`PDVDCoherentNoiseSub` block), groups from `chndb-base.jsonnet:49–410`
+
+```jsonnet
+local sp_filters = import 'pgrapher/experiment/protodunevd/sp-filters.jsonnet';
+// ...
+local grouped = {
+  type: 'PDVDCoherentNoiseSub',
+  name: name,
+  uses: [chndbobj, anode] + sp_filters,  // registers HfFilter/LfFilter instances
+  data: {
+    noisedb: wc.tn(chndbobj),
+    anode:   wc.tn(anode),
+    rms_threshold: 0.0,
+    // Both bottom (ident<4) and top (ident>=4) CRPs currently share the same
+    // Wiener_tight_* instances; jsonnet dispatch is in place so per-CRP
+    // divergence is a one-line change once new HfFilter instances are defined.
+    time_filters:
+      if anode.data.ident < 4
+      then ['Wiener_tight_U', 'Wiener_tight_V', 'Wiener_tight_W']
+      else ['Wiener_tight_U', 'Wiener_tight_V', 'Wiener_tight_W'],
+    lf_tighter_filter: 'ROI_tighter_lf',  // SignalProtection (median deconv)
+    lf_loose_filter:   'ROI_loose_lf',    // Subtract_WScaling (per-channel deconv)
+  },
+};
+```
 
 ### What it does
 
@@ -212,25 +236,36 @@ For each channel group (typically one FEMB or one CRP conduit):
      `|median - mean| > limit` as signal-bearing, then pads those ROIs.
      `limit = clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`.
    - **Deconvolution stage** (`ProtoduneVD.cxx:357–411`, gated):
-     divides the median spectrum by `respec`, applies Gaussian +
-     low-frequency filter, then thresholds positive excursions against
-     `decon_limit`. **Active on U and V planes** — the guard at line 357
-     requires `respec.size() > 0` and `res_offset != 0`, both of which
-     are satisfied by the per-plane U/V `channel_info` entries in
-     `chndb-base.jsonnet`. W plane remains bypassed (`response: {}`
-     and `response_offset: 0.0` in the default block).
+     divides the median spectrum by `respec`, applies
+     `HfFilter Wiener_tight_{U,V,W}(freq) × LfFilter ROI_tighter_lf(freq)`
+     (τ=0.06 MHz for PDVD), then thresholds positive excursions against
+     `decon_limit`. The plane index is resolved via
+     `m_anode->resolve(ch).index()` (0=U, 1=V, 2=W) to pick the
+     per-plane Wiener. Both filters are fetched from the SP
+     `IFilterWaveform` factory — the same shared instances used by
+     `OmnibusSigProc` (defined in `sp-filters.jsonnet`). **Active on U
+     and V planes** — the guard at `ProtoduneVD.cxx:357` requires
+     `respec.size() > 0` and `res_offset != 0`, both satisfied by the
+     per-plane U/V `channel_info` entries in `chndb-base.jsonnet`. W
+     plane remains bypassed (`response: {}` and `response_offset: 0.0`
+     in the default block).
 3. Runs **`Subtract_WScaling`** (`ProtoduneVD.cxx:982–985`) to subtract
-   the scaled common-mode median from each channel. This also has a
-   deconvolution branch gated by the same `respec` condition
-   (`ProtoduneVD.cxx:144`); it is likewise bypassed in PDVD's current
-   config. The active path is a straightforward
-   `signal[i] -= scaling × median[i]` (`ProtoduneVD.cxx:259`).
+   the scaled common-mode median from each channel. For U/V channels
+   (non-empty `respec`) this also runs a per-channel deconvolution branch
+   using `HfFilter Wiener_tight_{U,V,W}(freq) × LfFilter ROI_loose_lf(freq)`
+   (τ=0.002 MHz) to qualify ROIs before median replacement — the "loose"
+   filter preserves unipolar signal shape. W channels skip the decon branch
+   (`respec` empty) and use the direct path: `signal[i] -= scaling × median[i]`
+   (`ProtoduneVD.cxx:259`).
 
 ### Tunable knobs
 
 | Knob | Set in | Default | Effect |
 |------|--------|---------|--------|
-| `rms_threshold` | `nf.jsonnet:22` | `0.0` | Groups whose overall RMS is below this are skipped |
+| `rms_threshold` | `nf.jsonnet` `data.rms_threshold` | `0.0` | Groups whose overall RMS is below this are skipped |
+| `time_filters` | `nf.jsonnet` `data.time_filters` | `['Wiener_tight_U', 'Wiener_tight_V', 'Wiener_tight_W']` | Per-plane SP `HfFilter` instance names [U, V, W] for coherent-sub deconvolution. Both bottom (ident<4) and top (ident≥4) CRPs currently use the same instances; the jsonnet dispatch is in place for future per-CRP divergence. |
+| `lf_tighter_filter` | `nf.jsonnet` `data.lf_tighter_filter` | `'ROI_tighter_lf'` | SP `LfFilter` for `SignalProtection` (median deconv pass; τ=0.06 MHz on PDVD). Replaces the old `filter_low(freq, decon_lf_cutoff)` helper. |
+| `lf_loose_filter` | `nf.jsonnet` `data.lf_loose_filter` | `'ROI_loose_lf'` | SP `LfFilter` for `Subtract_WScaling` (per-channel ROI deconv pass; τ=0.002 MHz). Replaces the old `filter_low_loose`. |
 | `adc_limit` | `chndb-base.jsonnet:495` | `60 * gain_scale` | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
 | `protection_factor` | `OmniChannelNoiseDB.cxx:43` | `5.0` | Multiplier on per-channel RMS to form the baseline signal-veto threshold |
 | `min_adc_limit` | `chndb-base.jsonnet:496` | `200 * gain_scale` | Ceiling on the time-domain threshold |

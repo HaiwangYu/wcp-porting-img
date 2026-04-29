@@ -53,7 +53,7 @@ Source: `sigproc/src/OmniChannelNoiseDB.cxx:46`
 | `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
 | `decon_limit` | 0.02 | **0.025** | **0.05** | 0.02 | **0.01** | **0.05** | **0.01** | **0.01** | **0.05** | 0.02 | 0.02 | **0.05** | **0.01** | **0.01** | **0.05** |
 | `decon_limit1` | 0.09 | **0.08** | **0.08** | **0.07** | 0.08 | 0.08 | **0.07** | **0.07** | 0.08 | **0.07** | **0.07** | 0.08 | **0.07** | **0.07** | 0.08 |
-| `decon_lf_cutoff` | 0.08 | **0.06** | 0.08 | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) |
+| `decon_lf_cutoff` | 0.08 | **0.06** | 0.08 | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* | ~~(C++ 0.08)~~ *n/a* |
 | `adc_limit` (ADC) | 15 | 15 | 15 | 15 | 15 | 15 | **60** *gs* | **60** *gs* | **60** *gs* | **60** | **60** | **60** | **60** *gs†* | **60** *gs†* | **60** *gs†* |
 | `protection_factor` | **5** | 5 | 5 | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) |
 | `min_adc_limit` (ADC) | **50** | 50 | 50 | (C++ 50) | (C++ 50) | (C++ 50) | **200** *gs* | **200** *gs* | **200** *gs* | **200** | **200** | **200** | **200** *gs†* | **200** *gs†* | **200** *gs†* |
@@ -276,8 +276,13 @@ recommendations — pick the ones worth investigating.
    4–7) depending on `n`. W planes retain `response: {}` (collection plane,
    no deconvolution needed).
 
-3. **`decon_lf_cutoff` not set**. uBooNE customises this (0.06 for V).
-   PDVD and PDHD inherit the C++ default (0.08).
+3. **`decon_lf_cutoff` no longer consumed by PDVD or PDHD NF**. uBooNE
+   customises this (0.06 for V); MicroBooNE/SBND still use it.  After the
+   `IFilterWaveform` refactor in `PDHDCoherentNoiseSub` /
+   `PDVDCoherentNoiseSub`, the low-frequency cutoff is encoded in
+   `LfFilter ROI_tighter_lf` (τ=0.08 MHz for PDHD; τ=0.06 MHz for PDVD)
+   defined in each detector's `sp-filters.jsonnet`.  The chndb field and
+   C++ accessor remain for MicroBooNE/SBND compatibility.
 
 4. **`min_adc_limit` and `protection_factor`**. PDHD and PDVD both set
    `min_adc_limit = 200·gs` (PDHD: gs† anchored to 14 mV/fC; PDVD bottom:
