@@ -49,14 +49,14 @@ Source: `sigproc/src/OmniChannelNoiseDB.cxx:46`
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `nominal_baseline` (ADC) | 2048 | 2048 | **400** | 2001 | 2001 | **650** | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | 2048 | **400** |
 | `response_offset` (ticks) | **79** | **82** | 0 | **120** | **124** | 0 | **239** | **245** | 0 | **240** | **243** | 0 | **127** | **132** | 0 |
-| `pad_window_front` (ticks) | **20** | 10 | 10 | **20** | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
-| `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | 10 | 20 | 20 | 20 | 20 | 20 | 20 | 10 | 10 | 10 |
-| `decon_limit` | 0.02 | **0.025** | **0.05** | 0.02 | **0.01** | **0.05** | 0.02 *gs* | 0.02 *gs* | 0.02 *gs* | 0.02 | 0.02 | 0.02 | **0.01** *gs†* | **0.01** *gs†* | **0.05** *gs†* |
-| `decon_limit1` | 0.09 | **0.08** | **0.08** | **0.07** | 0.08 | 0.08 | 0.09 *gs* | 0.09 *gs* | 0.09 *gs* | 0.09 | 0.09 | 0.09 | **0.07** *gs†* | **0.07** *gs†* | 0.08 *gs†* |
+| `pad_window_front` (ticks) | **20** | 10 | 10 | **20** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| `decon_limit` | 0.02 | **0.025** | **0.05** | 0.02 | **0.01** | **0.05** | **0.01** | **0.01** | **0.05** | 0.02 | 0.02 | **0.05** | **0.01** | **0.01** | **0.05** |
+| `decon_limit1` | 0.09 | **0.08** | **0.08** | **0.07** | 0.08 | 0.08 | **0.07** | **0.07** | 0.08 | **0.07** | **0.07** | 0.08 | **0.07** | **0.07** | 0.08 |
 | `decon_lf_cutoff` | 0.08 | **0.06** | 0.08 | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) | (C++ 0.08) |
-| `adc_limit` (ADC) | 15 | 15 | 15 | 15 | 15 | 15 | 15 *gs* | 15 *gs* | 15 *gs* | 15 | 15 | 15 | **60** *gs†* | **60** *gs†* | **60** *gs†* |
+| `adc_limit` (ADC) | 15 | 15 | 15 | 15 | 15 | 15 | **60** *gs* | **60** *gs* | **60** *gs* | **60** | **60** | **60** | **60** *gs†* | **60** *gs†* | **60** *gs†* |
 | `protection_factor` | **5** | 5 | 5 | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) | (C++ 5) |
-| `min_adc_limit` (ADC) | **50** | 50 | 50 | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | (C++ 50) | **200** *gs†* | **200** *gs†* | **200** *gs†* |
+| `min_adc_limit` (ADC) | **50** | 50 | 50 | (C++ 50) | (C++ 50) | (C++ 50) | **200** *gs* | **200** *gs* | **200** *gs* | **200** | **200** | **200** | **200** *gs†* | **200** *gs†* | **200** *gs†* |
 | `roi_min_max_ratio` | 0.8 | 0.8 | 0.8 | **3.0** | **1.5** | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 | 0.8 |
 
 Notes:
@@ -73,13 +73,15 @@ Notes:
 - "(C++ X)" means the chndb does not set the field, so the C++
   ChannelInfo default applies.
 - Where uBooNE, SBND, and PDHD override per-plane values, the override
-  is in the per-plane `channel_info[]` entries; PDVD uses a single
-  default-block entry that covers all planes (the per-plane
-  induction-vs-collection tuning seen in the other experiments has not
-  been carried over).
-- PDHD is unique in setting `adc_limit = 60·gs†` and
-  `min_adc_limit = 200·gs†` (4× the 15 / 50 used elsewhere), reflecting
-  the finer ADC step of the 14-bit DUNE electronics (see Section 3).
+  is in the per-plane `channel_info[]` entries; PDVD now also applies
+  per-plane U/V overrides for `decon_limit` and `decon_limit1`
+  (see PDVD U/V override column above).
+- PDHD and PDVD both set `adc_limit = 60·gs` (PDVD bottom uses *gs*
+  anchored to 7.8 mV/fC; PDVD top gain_scale=1 so the value is 60
+  directly), reflecting that the finer ADC step of the 14-bit DUNE
+  electronics requires a raised raw-ADC threshold to stay at a similar
+  charge floor (see Section 3). `min_adc_limit` is likewise raised to
+  200·gs (bottom) / 200 (top) for PDVD, matching PDHD.
 - **PDHD APA 0 V-plane hardware override**: in PDHD APA 0 the V plane
   is hardware-faulty and behaves as a collection plane.  The chndb
   function in `cfg/pgrapher/experiment/pdhd/chndb-base.jsonnet` sets
@@ -167,7 +169,7 @@ ADC_per_fC  =  elec.gain  ×  postgain  ×  (ADC counts per mV)
 ```
 
 so every doubling of `elec.gain` halves the *charge* equivalent of a
-fixed ADC threshold like `adc_limit = 15`. PDVD's `gain_scale`
+fixed ADC threshold like `adc_limit = 60`. PDVD's `gain_scale`
 multiplier on bottom-anode chndb thresholds re-anchors them to a
 constant *charge* threshold when `params.elec.gain` is varied away
 from the 7.8 mV/fC reference. PDHD uses the same technique anchored
@@ -202,20 +204,18 @@ than the 14-bit DUNE experiments, so an ADC-domain threshold of
 
 (1 fC ≈ 6242 e-)
 
-PDHD's chndb sets `adc_limit = 60·gs†` (not 15), so the actual
-configured threshold at gain 14 mV/fC is:
-60 ADC × 0.08545 mV/ADC = **5.13 mV** = 0.366 fC = **2.29 ke-** —
-comparable in charge to SBND's 15-ADC threshold.  `min_adc_limit` is
-similarly scaled to 200·gs† (vs 50 elsewhere; at gain 14 mV/fC:
-200 × 0.08545 mV = 17.1 mV, close to uBooNE's 50 × 0.4884 mV = 24.4 mV).
+PDHD and PDVD both set `adc_limit = 60·gs` (PDHD: *gs†* anchored to
+14.0 mV/fC; PDVD bottom: *gs* anchored to 7.8 mV/fC; PDVD top: 60
+directly since gain_scale=1).  At the reference gain for each:
+60 ADC × 0.08545 mV/ADC (PDHD) = **5.13 mV** = 0.366 fC = **2.29 ke-**
+60 ADC × 0.08547 mV/ADC (PDVD bottom) = **5.13 mV** = 0.658 fC = **4.11 ke-**
+60 ADC × 0.1221 mV/ADC (PDVD top) = **7.32 mV** ≈ **2.73 ke-**
 
-So `adc_limit = 15` is **roughly 3× tighter in PDVD bottom** and
-**~5× tighter in PDVD top** than in uBooNE/SBND, when expressed in
-charge units. The PDVD bottom chndb compensates partially via
-`gain_scale` (which scales `decon_limit*`, `adc_limit`, RMS cuts);
-the PDVD top has no such gain compensation and the threshold is
-already very tight. PDHD raises the raw ADC threshold to 60 to
-achieve a charge equivalent closer to uBooNE/SBND.
+PDHD and PDVD both set `min_adc_limit = 200·gs` (anchored to 14 mV/fC
+and 7.8 mV/fC respectively; PDVD top gain_scale=1 so the value is 200
+directly). At reference gain for each:
+200 × 0.08545 mV/ADC (PDHD) = 17.1 mV, close to uBooNE's
+50 × 0.4884 mV = 24.4 mV.  uBooNE/SBND use 50 (C++ default).
 
 ---
 
@@ -261,9 +261,9 @@ recommendations — pick the ones worth investigating.
      PDVD's 0.8 across all planes matches the latest PDHD setting and
      lets more induction-plane "noise ROIs" through into the
      median-protection step than the SBND-style induction tuning would.
-   - `decon_limit` for W in PDVD is 0.02 vs 0.05 in uBooNE/SBND/PDHD.
-     Collection-plane signals are larger; a higher `decon_limit`
-     protects the median from being polluted by collection signals.
+   - `decon_limit` for W is 0.05 across PDVD/PDHD/uBooNE W, matching
+     uBooNE's collection-plane setting. U/V use 0.01 (bot) / 0.02 (top),
+     aligned with PDHD's induction setting of 0.01.
    - `response_offset`: uBooNE sets 79/82 ticks (U/V); PDHD sets 127/132;
      PDVD now sets 239/245 (bottom) and 240/243 (top), derived from the
      argmin of the respective FR⊗ER kernels in `chndb-resp-bot.jsonnet`
@@ -279,13 +279,12 @@ recommendations — pick the ones worth investigating.
 3. **`decon_lf_cutoff` not set**. uBooNE customises this (0.06 for V).
    PDVD and PDHD inherit the C++ default (0.08).
 
-4. **`min_adc_limit` and `protection_factor`** are explicitly set in
-   uBooNE (50 / 5.0) and PDHD (200·gs† / C++5); PDVD inherits the C++
-   defaults (50 / 5.0). For PDVD's finer ADC-per-mV (≈11.7 vs ≈2.05 for
-   uBooNE), `min_adc_limit = 50` ADC ≈ 4.27 mV is a much lower mV
-   threshold than uBooNE's ≈ 24.4 mV — the PDVD protection floor in mV
-   is ~6× lower. PDHD addresses this by setting `min_adc_limit = 200·gs†`
-   (≈ 17 mV at gain 14 mV/fC), which is closer to uBooNE's floor in mV.
+4. **`min_adc_limit` and `protection_factor`**. PDHD and PDVD both set
+   `min_adc_limit = 200·gs` (PDHD: gs† anchored to 14 mV/fC; PDVD bottom:
+   gs anchored to 7.8 mV/fC; PDVD top: 200 directly). At reference gain
+   200 × 0.08545 mV/ADC ≈ 17 mV, matching uBooNE's 50 × 0.4884 mV ≈ 24 mV
+   within a factor ≈ 1.4. uBooNE/SBND use the C++ default of 50.
+   `protection_factor` remains at the C++ default (5) for all detectors.
 
 5. **`adc_limit` in raw ADC** has very different mV/charge meaning across
    experiments (table above). PDVD's `gain_scale` multiplier helps for
@@ -299,11 +298,10 @@ recommendations — pick the ones worth investigating.
    to be *looser* (less protective) in PDVD than in uBooNE/SBND/PDHD,
    not tighter.
 
-7. **`pad_window_front/back`**. PDVD uses 20 ticks symmetrically;
-   uBooNE/SBND/PDHD use 10 ticks (default) and bump *front* to 20 only
-   on induction. The asymmetric induction padding reflects the bipolar
-   induction response — the negative pre-lobe needs more leading
-   padding. PDVD's uniform 20/20 padding overcovers collection signals.
+7. **`pad_window_front/back`**. PDVD uses 10 ticks symmetrically (same
+   as the PDHD default). uBooNE and SBND bump *front* to 20 on induction
+   to accommodate the bipolar pre-lobe; PDVD's wider-pitch induction
+   response does not require this extra leading padding.
 
 ---
 

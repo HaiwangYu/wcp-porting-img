@@ -103,13 +103,14 @@ The overrides are appended at `chndb-base.jsonnet:513–529` and are last-mentio
 | Bottom (0–3) | U | linear in wire length (see below) | 15.0 ADC |
 | Bottom (0–3) | V | linear in wire length (see below) | 15.0 ADC |
 
-**Gain scaling**: all cut values above (and the fallback global `decon_limit`,
-`decon_limit1`, `adc_limit`) are tuned for the **bottom** FE amplifier gain of
-7.8 mV/fC (`params.elecs[0].gain`). A `gain_scale = params.elec.gain / (7.8 mV/fC)`
-factor is applied to all thresholds for bottom anodes (0–3), so they track the
-configured gain linearly. Top electronics (anodes 4–7) gain is fixed by an external
-response file (`elecs[1]`, `JsonElecResponse`); accordingly `gain_scale ≡ 1.0` for
-top anodes and their cut values are gain-invariant (`chndb-base.jsonnet:27`).
+**Gain scaling**: ADC-domain thresholds (`min_rms_cut`, `max_rms_cut`,
+`adc_limit`, `min_adc_limit`) are tuned for the **bottom** FE amplifier gain of
+7.8 mV/fC and scaled by `gain_scale = params.elec.gain / (7.8 mV/fC)` for
+bottom anodes (0–3). Deconvolved-domain thresholds (`decon_limit`,
+`decon_limit1`) operate on the gain-normalised deconvolved output and are not
+gain-scaled. Top electronics (anodes 4–7) use an external response file
+(`elecs[1]`, `JsonElecResponse`); `gain_scale ≡ 1.0` for top anodes
+(`chndb-base.jsonnet:27`).
 
 **Linear-in-wire-length mode** (`type: 'linear_in_wirelength'`): a new
 `OmniChannelNoiseDB` feature that resolves `min_rms_cut` per channel from
@@ -213,11 +214,11 @@ For each channel group (typically one FEMB or one CRP conduit):
    - **Deconvolution stage** (`ProtoduneVD.cxx:357–411`, gated):
      divides the median spectrum by `respec`, applies Gaussian +
      low-frequency filter, then thresholds positive excursions against
-     `decon_limit`. **This stage is bypassed in PDVD's current
-     configuration** because the guard at line 357 requires
-     `respec.size() > 0` and `res_offset != 0`, but
-     `chndb-base.jsonnet:498` sets `response: {}` (empty) and
-     `chndb-base.jsonnet:477` sets `response_offset: 0.0`.
+     `decon_limit`. **Active on U and V planes** — the guard at line 357
+     requires `respec.size() > 0` and `res_offset != 0`, both of which
+     are satisfied by the per-plane U/V `channel_info` entries in
+     `chndb-base.jsonnet`. W plane remains bypassed (`response: {}`
+     and `response_offset: 0.0` in the default block).
 3. Runs **`Subtract_WScaling`** (`ProtoduneVD.cxx:982–985`) to subtract
    the scaled common-mode median from each channel. This also has a
    deconvolution branch gated by the same `respec` condition
@@ -230,11 +231,11 @@ For each channel group (typically one FEMB or one CRP conduit):
 | Knob | Set in | Default | Effect |
 |------|--------|---------|--------|
 | `rms_threshold` | `nf.jsonnet:22` | `0.0` | Groups whose overall RMS is below this are skipped |
-| `adc_limit` | `chndb-base.jsonnet:482` | `15` ADC | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
+| `adc_limit` | `chndb-base.jsonnet:495` | `60 * gain_scale` | **Floor of the time-domain signal-veto threshold** (raw ADC counts) in `SignalProtection`. Not a saturation cut. Effective threshold = `clamp_above(max(protection_factor × rms, adc_limit), min_adc_limit)`. The currently-active signal-protection path uses this (`ProtoduneVD.cxx:319–328`) |
 | `protection_factor` | `OmniChannelNoiseDB.cxx:43` | `5.0` | Multiplier on per-channel RMS to form the baseline signal-veto threshold |
-| `min_adc_limit` | `OmniChannelNoiseDB.cxx:44` | `50` ADC | Ceiling on the time-domain threshold |
-| `decon_limit` | `chndb-base.jsonnet:480` | `0.02` | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (no `gain×shaping` normalisation). **Currently inactive** — deconvolution branch is bypassed because `respec` is empty (`ProtoduneVD.cxx:381–385`) |
-| `decon_limit1` | `chndb-base.jsonnet:481` | `0.09` | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Currently inactive** — same guard |
+| `min_adc_limit` | `chndb-base.jsonnet:496` | `200 * gain_scale` | Ceiling on the time-domain threshold |
+| `decon_limit` | `chndb-base.jsonnet:493` | W: `0.05`; U/V: `0.01` (bot) / `0.02` (top) | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (not gain-scaled). **Active on U/V** via per-plane `channel_info` entries; W bypassed (`respec` empty) |
+| `decon_limit1` | `chndb-base.jsonnet:494` | W: `0.08`; U/V: `0.07` (both) | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Active on U/V**; W bypassed — same guard |
 | `roi_min_max_ratio` | `chndb-base.jsonnet:483` | `0.8` | Ratio used in ROI protection logic (min/max asymmetry test) |
 
 ### 1D field response for signal protection

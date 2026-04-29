@@ -146,35 +146,33 @@ The kernel is scaled by `gain_scale = if n >= 4 then 1.0 else params.elec.gain
 
 ## 6. Coherent-noise default knob values
 
-Compared at `chndb-base.jsonnet` default block (W and global defaults):
+Compared at `chndb-base.jsonnet` default block (W values) and per-plane U/V overrides:
 
-| Knob | PDHD default | PDHD U override | PDHD V override | PDHD W override | PDVD (single block) |
-|------|--------------|-----------------|-----------------|-----------------|---------------------|
-| `nominal_baseline` (ADC) | 2048 | — | — | 400 | 2048 |
-| `decon_limit` | 0.02 | 0.02 | 0.01 | 0.05 | 0.02 |
-| `decon_limit1` | 0.09 | 0.07 | 0.08 | 0.08 | 0.09 |
-| `adc_limit` (ADC) | **60** (raised from 15) | — | — | — | **15** |
-| `min_adc_limit` (ADC) | **200** (raised from 50) | — | — | — | **50** (C++ default) |
-| `roi_min_max_ratio` | 0.8 | **3.0** | **1.5** | 0.8 | 0.8 |
-| `pad_window_front` (ticks) | 10 | 20 | 10 | 10 | 20 |
-| `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 20 |
-| `min_rms_cut` (ADC) | 1.0 *(dead)* | — | — | — | per-plane: top all planes 8.0; bottom W 5.0; bottom U/V linear-in-wirelength [2.6→6.3] *(live)* |
-| `max_rms_cut` (ADC) | 30.0 *(dead)* | — | — | — | 15.0 all planes *(live)* |
-| `rcrc` | 1.1 ms *(dead)* | — | — | — | 1.1 ms *(dead)* |
-| `rc_layers` | 1 *(dead)* | — | — | — | 0 *(dead)* |
-| `freqmasks` | `[]` default; **U/V notches at bins 169–173, 513–516** *(but dead — `noise(ch)` never called)* | — | — | — | `[]` *(dead — never called)* |
+| Knob | PDHD default | PDHD U override | PDHD V override | PDHD W override | PDVD default/W | PDVD U/V override |
+|------|--------------|-----------------|-----------------|-----------------|----------------|-------------------|
+| `nominal_baseline` (ADC) | 2048 | — | — | 400 | 2048 | — |
+| `decon_limit` | 0.02 | 0.02 | **0.01** | **0.05** | **0.05** | **0.01** (bot) / 0.02 (top) |
+| `decon_limit1` | 0.09 | **0.07** | 0.08 | 0.08 | 0.08 | **0.07** (both) |
+| `adc_limit` (ADC) | **60** (raised from 15) | — | — | — | **60** *gs* (bot) / **60** (top) | — |
+| `min_adc_limit` (ADC) | **200** (raised from 50) | — | — | — | **200** *gs* (bot) / **200** (top) | — |
+| `roi_min_max_ratio` | 0.8 | **3.0** | **1.5** | 0.8 | 0.8 | — |
+| `pad_window_front` (ticks) | 10 | 20 | 10 | 10 | 10 | — |
+| `pad_window_back` (ticks) | 10 | 10 | 10 | 10 | 10 | — |
+| `min_rms_cut` (ADC) | 1.0 *(dead)* | — | — | — | per-plane: top all planes 8.0; bottom W 5.0; bottom U/V linear-in-wirelength [2.6→6.3] *(live)* | — |
+| `max_rms_cut` (ADC) | 30.0 *(dead)* | — | — | — | 15.0 all planes *(live)* | — |
+| `rcrc` | 1.1 ms *(dead)* | — | — | — | 1.1 ms *(dead)* | — |
+| `rc_layers` | 1 *(dead)* | — | — | — | 0 *(dead)* | — |
+| `freqmasks` | `[]` default; **U/V notches at bins 169–173, 513–516** *(but dead — `noise(ch)` never called)* | — | — | — | `[]` *(dead — never called)* | — |
 
 PDHD has **per-plane tuning** (different decon thresholds, different
-`roi_min_max_ratio`, wider U front pad). PDVD now also has **per-plane,
-per-anode-group RMS cuts** (see table in `pdvd/docs/nf.md`), but other
-`channel_info` parameters remain uniform across all channels.
+`roi_min_max_ratio`, wider U front pad). PDVD now also applies **per-plane
+U/V overrides** for `decon_limit` and `decon_limit1`, in addition to the
+**per-anode-group RMS cuts** (see table in `pdvd/docs/nf.md`).
+`roi_min_max_ratio` and `pad_window_front/back` remain uniform.
 
-PDHD's higher `adc_limit`/`min_adc_limit` (60/200 vs 15/50) reflect the
-*raised* signal-protection floor needed because PDHD's U/V deconvolution
-branch is active and the ADC-floor only matters for W. PDVD now also has
-U/V deconvolution active; the decon thresholds (`decon_limit`,
-`roi_min_max_ratio`) have not yet been per-plane tuned for PDVD, so they
-remain at the global defaults — tuning is a deferred follow-up step.
+PDVD's `adc_limit` and `min_adc_limit` have been raised to match PDHD's
+signal-protection floor (**60**/**200** *gs* for bottom, **60**/**200** for
+top CRP), now that U/V deconvolution is active.
 
 **Validation:** see `pdhd/chndb-base.jsonnet:38–118` and
 `protodunevd/chndb-base.jsonnet:413–440`.
@@ -259,7 +257,7 @@ two stages operate on different channel partitions.
 | `freqmasks` consumed by per-channel filter? | No | No |
 | 1D field response source for coherent sub | Hard-coded `u_resp`/`v_resp` arrays (active U/V) | FR⊗ER kernels from `chndb-resp-{bot,top}.jsonnet` (active U/V; W still empty `{}`) |
 | `adc_limit` role | ADC-floor of signal-protection threshold (used mostly on W) | ADC-floor for W; decon branch now active on U/V |
-| `decon_limit` / `decon_limit1` active? | Yes on U/V; W only via `decon_limit1` if `respec` were set (it isn't on W) | Active on U/V (thresholds at global defaults — per-plane tuning deferred); W still dormant |
+| `decon_limit` / `decon_limit1` active? | Yes on U/V; W only via `decon_limit1` if `respec` were set (it isn't on W) | Active on U/V with per-plane thresholds (U/V: 0.01/0.07 bot, 0.02/0.07 top; W: 0.05/0.08); W `respec` still empty |
 | Shield coupling? | No | Yes — top anodes, U-plane only |
 | Resampler? | No | Yes — bottom anodes only |
 
@@ -275,20 +273,18 @@ two stages operate on different channel partitions.
   the `noisy` RMS-cut flag plus the hand-curated `bad` list.
 - **Different sensitivity to wire-region-average response.** PDHD's
   coherent sub on U/V is response-aware: it deconvolves before
-  protection and ROI replacement. PDVD's is response-blind: only ADC
-  amplitudes drive signal protection. Consequently, PDVD's `adc_limit`
-  is the dominant tuning lever, while PDHD's per-plane decon thresholds
-  are.
+  protection and ROI replacement. PDVD now also has per-plane `decon_limit`
+  and `decon_limit1` tuned for each CRP type; `roi_min_max_ratio` tuning
+  is a deferred follow-up step.
 - **Shield coupling is a PDVD-specific stage.** Any tool that processes
   both detectors must be aware that the third NF pass exists only on
   PDVD top anodes.
 - **Resampling exists only on PDVD bottom anodes.** PDHD does not need
   the 500 ns alignment step; SP field-response files are uniform.
-- **Tuning surfaces are not fully portable.** PDHD's per-plane threshold
-  overrides (`roi_min_max_ratio 3.0/1.5`, `decon_limit` U/V/W splits) have
-  no equivalents in PDVD's current configuration; PDVD's per-plane U/V
-  `response` waveforms and `response_offset` are now populated, but
-  coherent-NF threshold tuning (decon/roi knobs) for PDVD is deferred.
+- **Tuning surfaces partially portable.** PDHD's `roi_min_max_ratio`
+  overrides (3.0/1.5 U/V) have no PDVD equivalents yet. PDVD's per-plane
+  U/V `decon_limit`/`decon_limit1` splits now mirror PDHD's structure;
+  `roi_min_max_ratio` per-plane tuning is deferred.
 
 ---
 
