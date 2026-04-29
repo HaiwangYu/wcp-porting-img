@@ -30,6 +30,7 @@ function(
   orig_prefix   = 'protodunehd-orig-frames',    // input prefix; reads {prefix}-anode{N}.tar.bz2
   raw_prefix    = 'protodunehd-sp-frames-raw',  // output prefix for NF (raw) frames
   sp_prefix     = 'protodunehd-sp-frames',      // output prefix for SP frames
+  use_resampler = 'true',                        // 'true' to resample all anodes
   anode_indices = std.range(0, std.length(tools_all.anodes) - 1)
 )
 
@@ -49,6 +50,9 @@ function(
   local sp_maker = import 'pgrapher/experiment/pdhd/sp.jsonnet';
   local sp = sp_maker(params, tools, { sparse: false });
   local sp_pipes = [sp.make_sigproc(a) for a in tools.anodes];
+
+  local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
+  local resamplers = resamplers_config(g, wc, tools).resamplers;
 
   // Tap: save NF output (raw) frame per anode
   local raw_frame_tap = function(n)
@@ -98,6 +102,7 @@ function(
 
     g.pipeline(
       [src]
+      + (if use_resampler == 'true' then [resamplers[n]] else [])
       + [nf_pipes[n]]
       + [raw_frame_tap(n)]
       + [sp_pipes[n]]
