@@ -27,6 +27,31 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 
 . "$PDHD_DIR/_runlib.sh"
 
+usage() {
+    cat <<'EOF'
+Usage: ./run_nf_sp_evt.sh [options] <run> <evt|all>
+       ./run_nf_sp_evt.sh          # list available runs
+
+Options:
+  -a <anode>     Anode index to process (default: all, i.e. 0-3).
+  -g <elecGain>  FE amplifier gain in mV/fC (default: 14).
+                 Use 7.8 for low-gain data.
+  -r <reality>   'data' (default): inserts 512->500 ns Resampler before NF.
+                 'sim': skips Resampler (input already at 500 ns).
+  -d <dump_dir>  Enable PDHDCoherentNoiseSub debug dump (default: OFF).
+                 Per-group .npz files are written to
+                 <dump_dir>/<RUN_PADDED>_<EVT>/apa<N>/.
+                 View with: cd nf_plot && ./serve_coherent_viewer.sh <dump_dir>
+  -h             Show this help message and exit.
+
+EVT may be 'all' to run every discovered event in parallel
+(capped at nproc; override with PDHD_MAX_JOBS=N).
+
+Input:  input_data/<run_dir>/<evt_dir>/protodunehd-orig-frames-anode{0..3}.tar.bz2
+Output: work/<RUN_PADDED>_<EVT>/protodunehd-sp-frames{,-raw}-anode{N}.tar.bz2
+EOF
+}
+
 ANODE=""
 ELEC_GAIN="14"
 REALITY="data"
@@ -34,6 +59,7 @@ DUMP_ROOT=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
+        -h|--help) usage; exit 0 ;;
         -a) ANODE="$2"; shift 2 ;;
         -a*) ANODE="${1#-a}"; shift ;;
         -g) ELEC_GAIN="$2"; shift 2 ;;
@@ -52,7 +78,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 [-a anode] [-g elecGain] [-r reality] <run> <evt|all>" >&2
+    echo "Usage: $0 [-a anode] [-g elecGain] [-r reality] [-d dump_dir] <run> <evt|all>  (use -h for help)" >&2
     exit 1
 fi
 RUN=$1
