@@ -43,6 +43,11 @@ CHNDB_RESP_FILE = ('/nfs/data/1/xqian/toolkit-dev/toolkit/cfg/pgrapher'
                    '/experiment/protodunevd/chndb-resp-bot.jsonnet')
 CHNDB_TICK_US = 0.5      # chndb-resp arrays sampled at 500 ns
 
+SIM_DIR      = '/nfs/data/1/xning/wirecell-working/data/sim/'
+SIM_FILE_FMT = ('protodune-sp-frames-sim-vd-anode0-{P}-anode0'
+                '.tar.bz2.{P}-waveform.npy')
+SIM_TICK_US  = 0.5
+
 ADC_TICK_NS = 500.0      # PDVD daq tick = 0.5 µs (params.jsonnet inherits common)
 
 # Working window for FR⊗ER convolution. PDVD's FR file is ~132.5 µs which
@@ -76,6 +81,15 @@ def parse_chndb_resp(path):
         nums = re.findall(r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?', m.group(1))
         result[key] = np.array([float(x) for x in nums])
     return result
+
+
+def load_sim_overlay(plane_label):
+    path = os.path.join(SIM_DIR, SIM_FILE_FMT.format(P=plane_label))
+    if not os.path.exists(path):
+        return None
+    y = np.load(path)
+    j = int(np.argmax(np.abs(y)))
+    return path, y, j
 
 
 def line_source_response(plane):
@@ -120,8 +134,7 @@ def line_source_response(plane):
     return integral / pitch
 
 
-def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath):
-    """Two-panel plot: ADC waveform at ADC tick (top) + |FFT| (bottom)."""
+def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath, sim=None):
     N = len(wave_adc)
     t_us      = np.arange(N) * tick_us
     freqs_mhz = np.fft.rfftfreq(N, d=tick_us)
@@ -129,7 +142,6 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
     pk_pos = wave_adc[np.argmax(wave_adc)]
     pk_neg = wave_adc[np.argmin(wave_adc)]
 
-    # Align chndb_ref negative peak to our trough.
     i_neg_adc   = int(np.argmin(wave_adc))
     t_neg_us    = t_us[i_neg_adc]
     i_neg_chndb = int(np.argmin(chndb_ref))
@@ -152,6 +164,17 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
             label=f'FR ⊗ ER (digitized at {tick_us*1000:.0f} ns)  [{params_str}]')
     ax.plot(t_chndb, chndb_scaled, 'b--', lw=1.5,
             label=f'chndb-resp.jsonnet — SBND placeholder copy  (×{scale:.3g}, aligned at neg. peak)')
+    if sim is not None:
+        sim_path, y_sim, j_sim = sim
+        sim_basename = os.path.basename(sim_path)
+        i_model = int(np.argmax(wave_adc)) if y_sim[j_sim] > 0 else int(np.argmin(wave_adc))
+        y_model = wave_adc[i_model]
+        sim_scale = y_model / y_sim[j_sim]
+        t_sim = t_us[i_model] + (np.arange(len(y_sim)) - j_sim) * SIM_TICK_US
+        align_lbl = '+peak' if y_sim[j_sim] > 0 else '−trough'
+        ax.plot(t_sim, y_sim * sim_scale, 'g--', lw=1.5,
+                label=(f'sim: {sim_basename}  (×{sim_scale:.3g}, aligned at {align_lbl})'
+                       f'\n  [sim @ ~50 cm drift, mean ADC over channels >5·RMS]'))
     ax.axhline(0, color='gray', lw=0.5)
     ax.set_xlabel('time (µs)')
     ax.set_ylabel('ADC')
@@ -167,6 +190,9 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
     ax.plot(freqs_mhz, np.abs(np.fft.rfft(wave_adc)), 'r-', lw=1.5, label='FR ⊗ ER')
     freqs_chndb = np.fft.rfftfreq(len(chndb_scaled), d=CHNDB_TICK_US)
     ax.plot(freqs_chndb, np.abs(np.fft.rfft(chndb_scaled)), 'b--', lw=1.5, label='chndb-resp (SBND placeholder)')
+    if sim is not None:
+        freqs_sim = np.fft.rfftfreq(len(y_sim), d=SIM_TICK_US)
+        ax.plot(freqs_sim, np.abs(np.fft.rfft(y_sim * sim_scale)), 'g--', lw=1.5, label='sim')
     ax.set_xlabel('frequency (MHz)')
     ax.set_ylabel('|FFT| (ADC)')
     ax.set_title('Frequency spectrum')
@@ -254,8 +280,16 @@ def run():
         print(f'  chndb-resp neg peak at sample {i_neg_c}  '
               f'({i_neg_c * CHNDB_TICK_US:.1f} µs),  scale = {scale:.4g}')
 
+        sim = load_sim_overlay(label)
+        if sim is not None:
+            sim_path, y_sim, j_sim = sim
+            i_model = int(np.argmax(wave_adc)) if y_sim[j_sim] > 0 else int(np.argmin(wave_adc))
+            sim_scale = wave_adc[i_model] / y_sim[j_sim]
+            print(f'  sim overlay: {os.path.basename(sim_path)}  '
+                  f'peak|y|={abs(y_sim[j_sim]):.2f} at idx {j_sim},  scale={sim_scale:.4g}')
+
         outpath = os.path.join(WORKDIR, f'track_response_pdvd_bottom_{label}.png')
-        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath)
+        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, sim=sim)
 
 
 if __name__ == '__main__':

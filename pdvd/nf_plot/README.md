@@ -47,3 +47,55 @@ for the full reference.
   bottom-CRP and top-CRP groups to the same `Wiener_tight_*` set;
   if that ever diverges the viewer will simply show different
   filters in the header bar — no viewer change needed.
+
+---
+
+## Track response + sim overlay
+
+`track_response_{pdhd,pdvd_top,pdvd_bottom}.py` compute the analytic
+FR ⊗ ER perpendicular-line-track response for U and V planes and overlay
+a WireCell simulation waveform from
+`/nfs/data/1/xning/wirecell-working/data/sim/`.
+
+### Scripts and detector mapping
+
+| Script | Detector | FR file | Electronics | Sim anode |
+|--------|----------|---------|-------------|-----------|
+| `track_response_pdhd.py` | PDHD APAs 1/2/3 | `dune-garfield-1d565.json.bz2` | cold 14 mV/fC, 2.2 µs | HD anode 1 |
+| `track_response_pdvd_bottom.py` | PDVD bottom CRP (anodes 0–3) | `protodunevd_FR_norminal_260324.json.bz2` | cold 7.8 mV/fC, 2.2 µs, postgain 1.1365 | VD anode 0 |
+| `track_response_pdvd_top.py` | PDVD top CRP (anodes 4–7) | `protodunevd_FR_norminal_260324.json.bz2` | `JsonElecResponse` (peak ≈ 7.2 mV/fC), postgain 1.52 | VD anode 4 |
+
+### How to run
+
+```bash
+cd pdvd/nf_plot
+/nfs/data/1/xning/wirecell-working/.direnv/python-3.11.9/bin/python3 track_response_pdhd.py
+/nfs/data/1/xning/wirecell-working/.direnv/python-3.11.9/bin/python3 track_response_pdvd_bottom.py
+/nfs/data/1/xning/wirecell-working/.direnv/python-3.11.9/bin/python3 track_response_pdvd_top.py
+```
+
+Each script writes two PNGs in this directory: `track_response_<det>_U.png` and
+`track_response_<det>_V.png`.  Each PNG has two panels:
+
+- **Top** — ADC waveform vs. time.  Three overlaid lines:
+  - **Red solid** — analytic FR ⊗ ER model (digitised at 500 ns).
+  - **Blue dashed** — `chndb-resp.jsonnet` reference (SBND placeholder; shape only, rescaled to model trough).
+  - **Green dashed** — simulation waveform from the npy file (rescaled to the model's dominant extremum; scaling factor shown in legend).
+- **Bottom** — |FFT| of all three waveforms.
+
+### Sim overlay details
+
+The sim npy files are 400-sample mean-ADC traces (500 ns/tick) produced by
+`wct-sim-check-track.jsonnet` — a perpendicular MIP track at 50 cm drift,
+averaged over channels above 5·RMS.  The dominant extremum (largest |ADC|)
+sits at sample 200.  The overlay aligns that extremum to the same-sign
+extremum of the analytic model and rescales to match its amplitude;
+the scaling factor printed in the legend and on stdout reflects the
+model-vs-sim amplitude ratio at that extremum.
+
+Expected scale factors are 1.0–1.15.  The model is at the response plane
+(no drift), so it is slightly larger than the sim, which accumulates
+binomial lifetime attenuation (< 0.1%), transverse diffusion smearing, and
+upward channel-selection bias from the 5·RMS threshold.  See
+`/nfs/data/1/xning/wirecell-working/data/sim/sim-assumptions.md` for a
+full breakdown.  Discrepancies beyond ~20% warrant investigation.
