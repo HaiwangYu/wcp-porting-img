@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] [-r reality] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-r reality] [-d dump_root] <run> <evt|all>
 #        ./run_nf_sp_evt.sh              # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
@@ -8,6 +8,9 @@
 #
 #   -r reality    'data' (default) inserts the 512->500 ns Resampler on the
 #                 bottom anodes (n<4) before NF. 'sim' skips it.
+#   -d dump_root  Enable PDVDCoherentNoiseSub debug dump (default: OFF).
+#                 Per-group .npz files are written to
+#                 <dump_root>/<RUN_PADDED>_<EVT>/apa<N>/.
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-orig-frames-anode{0..7}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodune-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -23,6 +26,7 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 
 ANODE=""
 REALITY="data"
+DUMP_ROOT=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -30,6 +34,8 @@ while [ $# -gt 0 ]; do
         -a*) ANODE="${1#-a}"; shift ;;
         -r) REALITY="$2"; shift 2 ;;
         -r*) REALITY="${1#-r}"; shift ;;
+        -d) DUMP_ROOT="$2"; shift 2 ;;
+        -d*) DUMP_ROOT="${1#-d}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -105,6 +111,20 @@ process_event() {
 
     cd "$PDVD_DIR"
     rm -f "$LOG"
+
+    local DUMP_TLA=()
+    if [ -n "$DUMP_ROOT" ]; then
+        local DUMP_DIR_ABS
+        case "$DUMP_ROOT" in
+            /*) DUMP_DIR_ABS="$DUMP_ROOT" ;;
+            *)  DUMP_DIR_ABS="$PDVD_DIR/$DUMP_ROOT" ;;
+        esac
+        DUMP_DIR_ABS="${DUMP_DIR_ABS}/${RUN_PADDED}_${EVT}"
+        mkdir -p "$DUMP_DIR_ABS"
+        DUMP_TLA=(--tla-str debug_dump_path="$DUMP_DIR_ABS")
+        echo "Dump dir: $DUMP_DIR_ABS"
+    fi
+
     wire-cell \
         -l stderr \
         -l "${LOG}:debug" \
@@ -114,6 +134,7 @@ process_event() {
         --tla-str sp_prefix="${WORKDIR}/protodune-sp-frames" \
         --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
+        "${DUMP_TLA[@]}" \
         -c wct-nf-sp.jsonnet
 
     echo "NF+SP done -> $WORKDIR"

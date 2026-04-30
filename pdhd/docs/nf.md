@@ -231,6 +231,26 @@ For each channel in the group:
 | `time_filters` | `nf.jsonnet` `data.time_filters` | `['Wiener_tight_U[_APA1]', 'Wiener_tight_V[_APA1]', 'Wiener_tight_W[_APA1]']` | Per-plane SP `HfFilter` instance names [U, V, W] for the coherent-sub deconvolution filter. APA 0 (`ident==0`) uses the `_APA1` variants. Defined in `sp-filters.jsonnet`. |
 | `lf_tighter_filter` | `nf.jsonnet` `data.lf_tighter_filter` | `'ROI_tighter_lf'` | SP `LfFilter` instance for `SignalProtection` (median deconvolution pass; τ=0.08 MHz). Replaces the old `filter_low(freq, decon_lf_cutoff)` helper. |
 | `lf_loose_filter` | `nf.jsonnet` `data.lf_loose_filter` | `'ROI_loose_lf'` | SP `LfFilter` instance for `Subtract_WScaling` (per-channel ROI deconvolution pass; τ=0.002 MHz). Replaces the old `filter_low_loose`. |
+| `debug_dump_path` | `nf.jsonnet` `data.debug_dump_path` (TLA `debug_dump_path` on `wct-nf-sp.jsonnet`) | `''` | When non-empty, `PDHDCoherentNoiseSub::apply()` emits one `.npz` per group under `<path>/apa<N>/<plane>_g<gid>.npz` capturing `median`, `medians_decon_aligned`, `signal_bool`, ROI list, per-ROI median scalars (`max/min/ratio_obs/accepted`), per-(channel, ROI) accept matrix, and every knob in scope. Default `''` is **bit-identical** to the pre-instrumentation hot path (one `.empty()` check per group). |
+| `debug_dump_groups` | `nf.jsonnet` `data.debug_dump_groups` | `[]` | Optional whitelist of group ids (= first-channel idents); `[]` = all groups. |
+
+### Validation: opt-in NPZ dump + Bokeh viewer
+
+Run with `-d <dump_root>`:
+
+```bash
+./run_nf_sp_evt.sh 027409 0 -a 1 -d work/dbg
+# → work/dbg/027409_0/apa1/{U,V,W}_g<gid>.npz
+```
+
+then serve the browser viewer (`pdhd/nf_plot/serve_coherent_viewer.sh
+work/dbg`) and SSH-tunnel to the workstation. Each group's dump
+includes the chosen ADC threshold, the `decon_threshold_chosen`, the
+`decon_limit1` line, the `roi_min_max_ratio` test, and the per-ROI
+accept distribution across channels — the data needed to judge
+whether the chosen knobs are well tuned. See
+[`../nf_plot/README.md`](../nf_plot/README.md) for usage, NPZ schema,
+and tuning workflow.
 
 ---
 

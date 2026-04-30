@@ -272,6 +272,23 @@ For each channel group (typically one FEMB or one CRP conduit):
 | `decon_limit` | `chndb-base.jsonnet:493` | W: `0.05`; U/V: `0.01` (bot) / `0.02` (top) | Floor threshold on the **deconvolved median** waveform (positive excursions) in `SignalProtection`. Units: dimensionless amplitude in deconvolved space (not gain-scaled). **Active on U/V** via per-plane `channel_info` entries; W bypassed (`respec` empty) |
 | `decon_limit1` | `chndb-base.jsonnet:494` | W: `0.08`; U/V: `0.07` (both) | Threshold on the deconvolved per-channel ROI peak in `Subtract_WScaling` (`ProtoduneVD.cxx:228`); combined with `roi_min_max_ratio` to decide whether to interpolate-replace the median before subtraction. Same units as `decon_limit`. **Active on U/V**; W bypassed — same guard |
 | `roi_min_max_ratio` | `chndb-base.jsonnet:483` | `0.8` | Ratio used in ROI protection logic (min/max asymmetry test) |
+| `debug_dump_path` | `nf.jsonnet` `data.debug_dump_path` (TLA `debug_dump_path` on `wct-nf-sp.jsonnet`) | `''` | When non-empty, `PDVDCoherentNoiseSub::apply()` emits one `.npz` per group under `<path>/apa<N>/<plane>_g<gid>.npz` capturing `median`, `medians_decon_aligned`, `signal_bool`, ROI list, per-ROI median scalars (`max/min/ratio_obs/accepted`), per-(channel, ROI) accept matrix, and every knob in scope. Default `''` is **bit-identical** to the pre-instrumentation hot path. |
+| `debug_dump_groups` | `nf.jsonnet` `data.debug_dump_groups` | `[]` | Optional whitelist of group ids; `[]` = all groups. |
+
+### Validation: opt-in NPZ dump + Bokeh viewer
+
+Run with `-d <dump_root>`:
+
+```bash
+./run_nf_sp_evt.sh 039324 0 -a 0 -d work/dbg     # bottom anode 0
+./run_nf_sp_evt.sh 039324 0 -a 4 -d work/dbg     # top anode 4 (same dir)
+```
+
+then serve the browser viewer (`pdvd/nf_plot/serve_coherent_viewer.sh
+work/dbg`) and SSH-tunnel to the workstation. The viewer is shared
+with PDHD (top/bot anodes both flow into the same Bokeh app via
+APA-keyed dropdown). See [`../nf_plot/README.md`](../nf_plot/README.md)
+for usage and NPZ schema.
 
 ### 1D field response for signal protection
 

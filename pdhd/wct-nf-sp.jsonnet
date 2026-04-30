@@ -38,6 +38,8 @@ function(
   reality       = 'data',                       // 'data' enables the 512->500 ns Resampler; 'sim' disables it
   anode_indices = std.range(0, std.length(tools_all.anodes) - 1),
   use_freqmask  = true,                         // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
+  debug_dump_path = '',                         // when non-empty, PDHDCoherentNoiseSub dumps per-group .npz under this dir (default OFF)
+  debug_dump_groups = [],                       // optional whitelist of group ids (= first-channel idents). [] = all groups
 )
 
   local tools = tools_all;
@@ -52,7 +54,9 @@ function(
   } for n in std.range(0, std.length(tools.anodes) - 1)];
 
   local nf_maker = import 'pgrapher/experiment/pdhd/nf.jsonnet';
-  local nf_pipes = [nf_maker(params, tools.anodes[n], chndb[n], n, name='nf%d' % n) for n in std.range(0, std.length(tools.anodes) - 1)];
+  local nf_pipes = [nf_maker(params, tools.anodes[n], chndb[n], n, name='nf%d' % n,
+                             debug_dump_path=debug_dump_path, debug_dump_groups=debug_dump_groups)
+                    for n in std.range(0, std.length(tools.anodes) - 1)];
 
   local sp_maker = import 'pgrapher/experiment/pdhd/sp.jsonnet';
   local sp = sp_maker(params, tools, { sparse: false });

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] [-g elecGain] [-r reality] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-g elecGain] [-r reality] [-d dump_root] <run> <evt|all>
 #        ./run_nf_sp_evt.sh                # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
@@ -11,6 +11,9 @@
 #                 spectrum file automatically (params.jsonnet:165-166).
 #   -r reality    'data' (default) inserts the 512->500 ns Resampler before NF.
 #                 'sim' skips it (input already at 500 ns).
+#   -d dump_root  Enable PDHDCoherentNoiseSub debug dump (default: OFF).
+#                 Per-group .npz files are written to
+#                 <dump_root>/<RUN_PADDED>_<EVT>/apa<N>/.
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodunehd-orig-frames-anode{0..3}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodunehd-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -27,6 +30,7 @@ export WIRECELL_PATH=${WCT_BASE}/toolkit/cfg:${WCT_BASE}/wire-cell-data:${WIRECE
 ANODE=""
 ELEC_GAIN="14"
 REALITY="data"
+DUMP_ROOT=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -36,6 +40,8 @@ while [ $# -gt 0 ]; do
         -g*) ELEC_GAIN="${1#-g}"; shift ;;
         -r) REALITY="$2"; shift 2 ;;
         -r*) REALITY="${1#-r}"; shift ;;
+        -d) DUMP_ROOT="$2"; shift 2 ;;
+        -d*) DUMP_ROOT="${1#-d}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -113,6 +119,19 @@ process_event() {
     cd "$PDHD_DIR"
     rm -f "$LOG"
 
+    local DUMP_TLA=()
+    if [ -n "$DUMP_ROOT" ]; then
+        local DUMP_DIR_ABS
+        case "$DUMP_ROOT" in
+            /*) DUMP_DIR_ABS="$DUMP_ROOT" ;;
+            *)  DUMP_DIR_ABS="$PDHD_DIR/$DUMP_ROOT" ;;
+        esac
+        DUMP_DIR_ABS="${DUMP_DIR_ABS}/${RUN_PADDED}_${EVT}"
+        mkdir -p "$DUMP_DIR_ABS"
+        DUMP_TLA=(--tla-str debug_dump_path="$DUMP_DIR_ABS")
+        echo "Dump dir:  $DUMP_DIR_ABS"
+    fi
+
     wire-cell \
         -l stderr \
         -l "${LOG}:debug" \
@@ -123,6 +142,7 @@ process_event() {
         --tla-str sp_prefix="${WORKDIR}/protodunehd-sp-frames" \
         --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
+        "${DUMP_TLA[@]}" \
         -c wct-nf-sp.jsonnet
 
     echo "NF+SP done -> $WORKDIR"
