@@ -175,6 +175,43 @@ Output in `work/027409_1/`.
 
 ---
 
+## Run-to-run reproducibility
+
+Two consecutive runs with identical inputs now produce **bit-identical**
+NF and SP archives. This workflow was the primary reproducer for the
+bug: NF output drifted at the ULP level (≈ 0.1 ADC rms, max ≈ 26 ADC)
+and SP output showed structural differences up to ≈ 434 ADC between
+runs — even with ASLR disabled (`setarch x86_64 -R`), SP would still
+diverge.
+
+Root cause was in `aux/src/FftwDFT.cxx`: the FFTW plan-cache key
+included a `bool aligned = (src&15)|(dst&15)` bit derived from runtime
+heap addresses. Heap addresses vary between processes (under ASLR, and
+even without it due to allocator-state variance after NF finishes),
+toggling that bit between cached plans → different FFTW codelets
+(SIMD vs scalar) → ULP drift in NF and amplified differences through
+SP deconvolution FFTs.
+
+Fix (toolkit commit `47d16673`): add `FFTW_UNALIGNED` to all
+plan-creation calls and remove `aligned` from the cache key — a single
+plan now serves any buffer alignment. No config or jsonnet change.
+
+To verify reproducibility on this workflow:
+```bash
+WORK=/tmp/repro && mkdir -p $WORK/r1 $WORK/r2
+rm -rf work/027409_0
+./run_nf_sp_evt.sh -a 0 027409 0
+cp work/027409_0/protodunehd-sp-frames*.tar.bz2 $WORK/r1/
+rm -rf work/027409_0
+./run_nf_sp_evt.sh -a 0 027409 0
+cp work/027409_0/protodunehd-sp-frames*.tar.bz2 $WORK/r2/
+# Compare inner .npy arrays (tarball bytes always differ — timestamps):
+python3 /home/xqian/tmp/wct_nondet/pdhd_diff.py $WORK/r1 $WORK/r2
+# Both NF(raw) and SP rows should report equal=True.
+```
+
+---
+
 ## Downstream
 
 After `run_nf_sp_evt.sh` completes, the SP frames in `work/` are consumed by:
