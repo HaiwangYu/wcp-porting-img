@@ -1,0 +1,32 @@
+[
+  {
+    "cluster_id": 0,
+    "n_points": 2,
+    "source_file": "generated/vd-anode2-W",
+    "total_charge": 1.0,
+    "centroid": [
+      -291.55,
+      252.45,
+      74.51
+    ],
+    "direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "length_cm": 148.41,
+    "start": [
+      -291.55,
+      252.45,
+      148.715
+    ],
+    "end": [
+      -291.55,
+      252.45,
+      0.30499999999999544
+    ],
+    "linearity": 1.0,
+    "theta_deg": 180.0,
+    "phi_deg": 0.0
+  }
+]

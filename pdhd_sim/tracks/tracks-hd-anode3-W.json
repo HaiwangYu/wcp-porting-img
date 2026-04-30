@@ -1,0 +1,32 @@
+[
+  {
+    "cluster_id": 0,
+    "n_points": 2,
+    "source_file": "generated/hd-anode3-W",
+    "total_charge": 1.0,
+    "centroid": [
+      303.00199999999984,
+      306.805,
+      347.3035
+    ],
+    "direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "length_cm": 229.537,
+    "start": [
+      303.00199999999984,
+      306.805,
+      462.072
+    ],
+    "end": [
+      303.00199999999984,
+      306.805,
+      232.535
+    ],
+    "linearity": 1.0,
+    "theta_deg": 180.0,
+    "phi_deg": 0.0
+  }
+]
