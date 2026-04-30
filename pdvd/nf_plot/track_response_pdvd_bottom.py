@@ -87,9 +87,7 @@ def load_sim_overlay(plane_label):
     path = os.path.join(SIM_DIR, SIM_FILE_FMT.format(P=plane_label))
     if not os.path.exists(path):
         return None
-    y = np.load(path)
-    j = int(np.argmax(np.abs(y)))
-    return path, y, j
+    return path, np.load(path)
 
 
 def line_source_response(plane):
@@ -165,15 +163,14 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
     ax.plot(t_chndb, chndb_scaled, 'b--', lw=1.5,
             label=f'chndb-resp.jsonnet — SBND placeholder copy  (×{scale:.3g}, aligned at neg. peak)')
     if sim is not None:
-        sim_path, y_sim, j_sim = sim
+        sim_path, y_sim = sim
         sim_basename = os.path.basename(sim_path)
-        i_model = int(np.argmax(wave_adc)) if y_sim[j_sim] > 0 else int(np.argmin(wave_adc))
-        y_model = wave_adc[i_model]
-        sim_scale = y_model / y_sim[j_sim]
+        j_sim = int(np.argmax(y_sim))
+        i_model = int(np.argmax(wave_adc))
+        sim_scale = wave_adc[i_model] / y_sim[j_sim]
         t_sim = t_us[i_model] + (np.arange(len(y_sim)) - j_sim) * SIM_TICK_US
-        align_lbl = '+peak' if y_sim[j_sim] > 0 else '−trough'
         ax.plot(t_sim, y_sim * sim_scale, 'g--', lw=1.5,
-                label=(f'sim: {sim_basename}  (×{sim_scale:.3g}, aligned at {align_lbl})'
+                label=(f'sim: {sim_basename}  (×{sim_scale:.3g}, aligned at pos. peak)'
                        f'\n  [sim @ ~50 cm drift, mean ADC over channels >5·RMS]'))
     ax.axhline(0, color='gray', lw=0.5)
     ax.set_xlabel('time (µs)')
@@ -274,6 +271,14 @@ def run():
         print(f'                             '
               f'negative trough {pk_neg_adc:+.2f} ADC at {t_neg:.2f} µs')
 
+        sum_pos = float(wave_adc[wave_adc > 0].sum()) * tick_us
+        sum_neg = float(wave_adc[wave_adc < 0].sum()) * tick_us
+        net     = sum_pos + sum_neg
+        total   = sum_pos - sum_neg
+        balance = net / total
+        print(f'  bipolar balance:  ∫+ = {sum_pos:+.2f}  ∫- = {sum_neg:+.2f}  '
+              f'net = {net:+.2f}  total = {total:.2f}  balance = {balance:+.4f} (ADC·µs)')
+
         chndb_ref = chndb[chndb_keys[pid]]
         i_neg_c   = int(np.argmin(chndb_ref))
         scale     = pk_neg_adc / chndb_ref[i_neg_c]
@@ -282,11 +287,11 @@ def run():
 
         sim = load_sim_overlay(label)
         if sim is not None:
-            sim_path, y_sim, j_sim = sim
-            i_model = int(np.argmax(wave_adc)) if y_sim[j_sim] > 0 else int(np.argmin(wave_adc))
-            sim_scale = wave_adc[i_model] / y_sim[j_sim]
+            sim_path, y_sim = sim
+            j_sim = int(np.argmax(y_sim))
+            sim_scale = wave_adc[np.argmax(wave_adc)] / y_sim[j_sim]
             print(f'  sim overlay: {os.path.basename(sim_path)}  '
-                  f'peak|y|={abs(y_sim[j_sim]):.2f} at idx {j_sim},  scale={sim_scale:.4g}')
+                  f'pos peak={y_sim[j_sim]:.2f} at idx {j_sim},  scale={sim_scale:.4g}')
 
         outpath = os.path.join(WORKDIR, f'track_response_pdvd_bottom_{label}.png')
         make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, sim=sim)
