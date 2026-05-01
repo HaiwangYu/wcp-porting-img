@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run standalone NF+SP for one event (no art/LArSoft).
-# Usage: ./run_nf_sp_evt.sh [-a anode] [-r reality] [-d dump_root] <run> <evt|all>
+# Usage: ./run_nf_sp_evt.sh [-a anode] [-r reality] [-d dump_root] [-c calib_root] <run> <evt|all>
 #        ./run_nf_sp_evt.sh              # list available runs
 #
 # EVT may be 'all' to run every discovered event in parallel (capped at nproc,
@@ -11,6 +11,9 @@
 #   -d dump_root  Enable PDVDCoherentNoiseSub debug dump (default: OFF).
 #                 Per-group .npz files are written to
 #                 <dump_root>/<RUN_PADDED>_<EVT>/apa<N>/.
+#   -c calib_root Enable L1SPFilterPD calibration dump (default: OFF).
+#                 Per-event NPZ files with per-ROI asymmetry quantities are written to
+#                 <calib_root>/<RUN_PADDED>_<EVT>/ (one file per anode per call).
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-orig-frames-anode{0..7}.tar.bz2
 # Output: work/<RUN_PADDED>_<EVT>/protodune-sp-frames{,-raw}-anode{N}.tar.bz2
@@ -30,15 +33,19 @@ Usage: ./run_nf_sp_evt.sh [options] <run> <evt|all>
        ./run_nf_sp_evt.sh          # list available runs
 
 Options:
-  -a <anode>     Anode index to process (default: all, i.e. 0-7).
-                 Bottom CRP: 0-3; top CRP: 4-7.
-  -r <reality>   'data' (default): inserts 512->500 ns Resampler on bottom
-                 anodes (n<4) before NF. 'sim': skips Resampler.
-  -d <dump_dir>  Enable PDVDCoherentNoiseSub debug dump (default: OFF).
-                 Per-group .npz files are written to
-                 <dump_dir>/<RUN_PADDED>_<EVT>/apa<N>/.
-                 View with: cd nf_plot && ./serve_coherent_viewer.sh <dump_dir>
-  -h             Show this help message and exit.
+  -a <anode>      Anode index to process (default: all, i.e. 0-7).
+                  Bottom CRP: 0-3; top CRP: 4-7.
+  -r <reality>    'data' (default): inserts 512->500 ns Resampler on bottom
+                  anodes (n<4) before NF. 'sim': skips Resampler.
+  -d <dump_dir>   Enable PDVDCoherentNoiseSub debug dump (default: OFF).
+                  Per-group .npz files are written to
+                  <dump_dir>/<RUN_PADDED>_<EVT>/apa<N>/.
+                  View with: cd nf_plot && ./serve_coherent_viewer.sh <dump_dir>
+  -c <calib_dir>  Enable L1SPFilterPD calibration dump (default: OFF).
+                  Per-event NPZ files with per-ROI asymmetry quantities are
+                  written to <calib_dir>/<RUN_PADDED>_<EVT>/.
+                  Load with: np.load('<calib_dir>/.../apa<N>_NNNN_IIII.npz')
+  -h              Show this help message and exit.
 
 EVT may be 'all' to run every discovered event in parallel
 (capped at nproc; override with PDVD_MAX_JOBS=N).
@@ -51,6 +58,7 @@ EOF
 ANODE=""
 REALITY="data"
 DUMP_ROOT=""
+CALIB_ROOT=""
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -61,6 +69,8 @@ while [ $# -gt 0 ]; do
         -r*) REALITY="${1#-r}"; shift ;;
         -d) DUMP_ROOT="$2"; shift 2 ;;
         -d*) DUMP_ROOT="${1#-d}"; shift ;;
+        -c) CALIB_ROOT="$2"; shift 2 ;;
+        -c*) CALIB_ROOT="${1#-c}"; shift ;;
         *) _args+=("$1"); shift ;;
     esac
 done
@@ -150,6 +160,20 @@ process_event() {
         echo "Dump dir: $DUMP_DIR_ABS"
     fi
 
+    local CALIB_TLA=()
+    if [ -n "$CALIB_ROOT" ]; then
+        local CALIB_DIR_ABS
+        case "$CALIB_ROOT" in
+            /*) CALIB_DIR_ABS="$CALIB_ROOT" ;;
+            *)  CALIB_DIR_ABS="$PDVD_DIR/$CALIB_ROOT" ;;
+        esac
+        CALIB_DIR_ABS="${CALIB_DIR_ABS}/${RUN_PADDED}_${EVT}"
+        mkdir -p "$CALIB_DIR_ABS"
+        CALIB_TLA=(--tla-str l1sp_pd_mode=dump
+                   --tla-str l1sp_pd_dump_path="$CALIB_DIR_ABS")
+        echo "L1SP calib dir: $CALIB_DIR_ABS"
+    fi
+
     wire-cell \
         -l stderr \
         -l "${LOG}:debug" \
@@ -160,6 +184,7 @@ process_event() {
         --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
         "${DUMP_TLA[@]}" \
+        "${CALIB_TLA[@]}" \
         -c wct-nf-sp.jsonnet
 
     echo "NF+SP done -> $WORKDIR"

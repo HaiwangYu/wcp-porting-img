@@ -42,6 +42,9 @@ function(
   use_freqmask  = true,                    // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
   debug_dump_path = '',                    // when non-empty, PDVDCoherentNoiseSub dumps per-group .npz under this dir (default OFF)
   debug_dump_groups = [],                  // optional whitelist of group ids (= first-channel idents). [] = all groups
+  l1sp_pd_mode = '',                       // '' (OFF) / 'dump' (calib) / 'process' (not yet enabled)
+  l1sp_pd_dump_path = '',                  // dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
+  l1sp_pd_planes = [0, 1],                 // plane indices to process (0=U, 1=V; skip W)
 )
 
   local tools = tools_all;
@@ -62,7 +65,11 @@ function(
 
   local sp_maker = import 'pgrapher/experiment/protodunevd/sp.jsonnet';
   local sp = sp_maker(params, tools, { sparse: sigoutform == 'sparse' });
-  local sp_pipes = [sp.make_sigproc(a) for a in tools.anodes];
+  local sp_pipes = [sp.make_sigproc(a,
+                                    l1sp_pd_mode=l1sp_pd_mode,
+                                    l1sp_pd_dump_path=l1sp_pd_dump_path,
+                                    l1sp_pd_planes=l1sp_pd_planes)
+                    for a in tools.anodes];
 
   local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
   local load_resamplers = resamplers_config(g, wc, tools);
