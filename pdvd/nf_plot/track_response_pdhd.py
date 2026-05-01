@@ -39,7 +39,8 @@ from wirecell import units
 from wirecell.util.fileio import wirecell_path
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
-FR_FILE = 'dune-garfield-1d565.json.bz2'   # APA 1/2/3 nominal (params.jsonnet:159)
+FR_FILE      = 'dune-garfield-1d565.json.bz2'                  # APA 1/2/3 nominal (params.jsonnet:159)
+FR_FILE_APA0 = 'np04hd-garfield-6paths-mcmc-bestfit.json.bz2'  # APA 0 (params.jsonnet:157)
 
 CHNDB_RESP_FILE = ('/nfs/data/1/xqian/toolkit-dev/toolkit/cfg/pgrapher'
                    '/experiment/pdhd/chndb-resp.jsonnet')
@@ -127,7 +128,7 @@ def line_source_response(plane):
     return integral / pitch
 
 
-def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath, sim=None):
+def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath, sim=None, wave_apa0=None):
     N = len(wave_adc)
     t_us      = np.arange(N) * tick_us
     freqs_mhz = np.fft.rfftfreq(N, d=tick_us)
@@ -153,6 +154,10 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
     fig, axes = plt.subplots(2, 1, figsize=(12, 8))
 
     ax = axes[0]
+    if wave_apa0 is not None:
+        t_us_a0 = np.arange(len(wave_apa0)) * tick_us
+        ax.plot(t_us_a0, wave_apa0, color='#888888', lw=1.0, ls='--',
+                label='APA0 FR (np04hd-garfield-6paths-mcmc-bestfit)')
     ax.plot(t_us, wave_adc, 'r-', lw=1.5,
             label=f'FR ⊗ ER (digitized at {tick_us*1000:.0f} ns)  [{params_str}]')
     ax.plot(t_chndb, chndb_scaled, 'b--', lw=1.5,
@@ -200,6 +205,9 @@ def run():
     print(f'Loading {FR_FILE} ...')
     fr = persist.load(FR_FILE, paths=wirecell_path())
     print(f'FR period = {fr.period} ns,  tstart = {fr.tstart}')
+    print(f'Loading {FR_FILE_APA0} for APA0 comparison ...')
+    fr_apa0 = persist.load(FR_FILE_APA0, paths=wirecell_path())
+    apa0_planes = {pl.planeid: pl for pl in fr_apa0.planes}
 
     period_ns = fr.period
     N_fr = len(fr.planes[0].paths[0].current)
@@ -264,6 +272,31 @@ def run():
         print(f'  bipolar balance:  ∫+ = {sum_pos:+.2f}  ∫- = {sum_neg:+.2f}  '
               f'net = {net:+.2f}  total = {total:.2f}  balance = {balance:+.4f} (ADC·µs)')
 
+        # APA0 FR comparison — U plane only (V is collection-like for APA0)
+        wave_adc_apa0 = None
+        if label == 'U':
+            pl_a0 = apa0_planes[pid]
+            N_fr_a0 = len(pl_a0.paths[0].current)
+            times_a0 = np.arange(N_fr_a0, dtype=float) * period_ns
+            er_a0 = np.asarray(wc_resp.electronics(times_a0, peak_gain=GAIN, shaping=SHAPING,
+                                                    elec_type='cold'), dtype=float)
+            N_adc_a0 = int(round(N_fr_a0 * period_ns / ADC_TICK_NS))
+            fr_line_a0 = line_source_response(pl_a0)
+            wave_adc_apa0 = sp_resample(
+                -(wc_resp.convolve(fr_line_a0, er_a0) * period_ns * n_mip(pl_a0.pitch) / units.mV * POSTGAIN),
+                N_adc_a0) * ADC_PER_MV
+            sp_a0 = float(wave_adc_apa0[wave_adc_apa0 > 0].sum()) * tick_us
+            sn_a0 = float(wave_adc_apa0[wave_adc_apa0 < 0].sum()) * tick_us
+            net_a0 = sp_a0 + sn_a0; tot_a0 = sp_a0 - sn_a0
+            print(f'  --- APA0 imbalance comparison (U only) ---')
+            print(f'  {"":18s}  {"nominal APA1-3":>16s}  {"APA0 mcmc-bestfit":>18s}')
+            print(f'  {"pos peak (ADC)":18s}  {pk_pos_adc:>16.2f}  {wave_adc_apa0[np.argmax(wave_adc_apa0)]:>18.2f}')
+            print(f'  {"neg trough (ADC)":18s}  {pk_neg_adc:>16.2f}  {wave_adc_apa0[np.argmin(wave_adc_apa0)]:>18.2f}')
+            print(f'  {"∫+ (ADC·µs)":18s}  {sum_pos:>16.2f}  {sp_a0:>18.2f}')
+            print(f'  {"∫- (ADC·µs)":18s}  {sum_neg:>16.2f}  {sn_a0:>18.2f}')
+            print(f'  {"net (ADC·µs)":18s}  {net:>+16.4f}  {net_a0:>+18.4f}')
+            print(f'  {"balance":18s}  {balance:>+16.4f}  {net_a0/tot_a0:>+18.4f}')
+
         chndb_ref = chndb[chndb_keys[pid]]
         i_neg_c   = int(np.argmin(chndb_ref))
         scale     = pk_neg_adc / chndb_ref[i_neg_c]
@@ -279,7 +312,8 @@ def run():
                   f'pos peak={y_sim[j_sim]:.2f} at idx {j_sim},  scale={sim_scale:.4g}')
 
         outpath = os.path.join(WORKDIR, f'track_response_pdhd_{label}.png')
-        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, sim=sim)
+        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, sim=sim,
+                  wave_apa0=wave_adc_apa0)
 
 
 if __name__ == '__main__':

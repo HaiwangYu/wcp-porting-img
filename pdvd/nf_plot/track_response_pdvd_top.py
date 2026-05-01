@@ -43,7 +43,8 @@ from wirecell import units
 from wirecell.util.fileio import wirecell_path
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
-FR_FILE = 'protodunevd_FR_norminal_260324.json.bz2'
+FR_FILE_NOMINAL = 'protodunevd_FR_norminal_260324.json.bz2'
+FR_FILE         = 'protodunevd_FR_imbalance3p_260501.json.bz2'
 ER_FILE = 'dunevd-coldbox-elecresp-top-psnorm_400.json.bz2'
 
 CHNDB_RESP_FILE = ('/nfs/data/1/xqian/toolkit-dev/toolkit/cfg/pgrapher'
@@ -150,7 +151,7 @@ def line_source_response(plane):
     return integral / pitch
 
 
-def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath, er_info, sim=None):
+def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, outpath, er_info, sim=None, wave_nominal=None):
     N = len(wave_adc)
     t_us      = np.arange(N) * tick_us
     freqs_mhz = np.fft.rfftfreq(N, d=tick_us)
@@ -175,6 +176,10 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
     fig, axes = plt.subplots(2, 1, figsize=(12, 8))
 
     ax = axes[0]
+    if wave_nominal is not None:
+        t_us_nom = np.arange(len(wave_nominal)) * tick_us
+        ax.plot(t_us_nom, wave_nominal, color='#888888', lw=1.0, ls='--',
+                label='nominal FR (260324)')
     ax.plot(t_us, wave_adc, 'r-', lw=1.5,
             label=f'FR ⊗ ER  (digitized at {tick_us*1000:.0f} ns)  [{params_str}]')
     ax.plot(t_chndb, chndb_scaled, 'b--', lw=1.5,
@@ -221,6 +226,9 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, pitch_mm, n_mip_pl, out
 def run():
     print(f'Loading {FR_FILE} ...')
     fr = persist.load(FR_FILE, paths=wirecell_path())
+    print(f'Loading {FR_FILE_NOMINAL} for comparison ...')
+    fr_nom = persist.load(FR_FILE_NOMINAL, paths=wirecell_path())
+    nom_planes = {pl.planeid: pl for pl in fr_nom.planes}
     period_ns = fr.period
     N_fr_native = len(fr.planes[0].paths[0].current)
     if OUTPUT_WINDOW_NS > N_fr_native * period_ns:
@@ -314,6 +322,26 @@ def run():
         print(f'  bipolar balance:  ∫+ = {sum_pos:+.2f}  ∫- = {sum_neg:+.2f}  '
               f'net = {net:+.2f}  total = {total:.2f}  balance = {balance:+.4f} (ADC·µs)')
 
+        # Compute nominal FR response for imbalance comparison (same ER as new FR)
+        pl_nom = nom_planes[pid]
+        fr_line_nom = line_source_response(pl_nom)
+        if N_fr > len(fr_line_nom):
+            _pad = np.zeros(N_fr); _pad[:len(fr_line_nom)] = fr_line_nom; fr_line_nom = _pad
+        wave_adc_nom = sp_resample(
+            -(wc_resp.convolve(fr_line_nom, er) * period_ns * n_mip(pl_nom.pitch) / units.mV * POSTGAIN),
+            N_adc) * ADC_PER_MV
+        sp_nom = float(wave_adc_nom[wave_adc_nom > 0].sum()) * tick_us
+        sn_nom = float(wave_adc_nom[wave_adc_nom < 0].sum()) * tick_us
+        net_nom = sp_nom + sn_nom; tot_nom = sp_nom - sn_nom
+        print(f'  --- imbalance comparison ---')
+        print(f'  {"":18s}  {"nominal 260324":>16s}  {"imbalance3p 260501":>20s}')
+        print(f'  {"pos peak (ADC)":18s}  {wave_adc_nom[np.argmax(wave_adc_nom)]:>16.2f}  {pk_pos_adc:>20.2f}')
+        print(f'  {"neg trough (ADC)":18s}  {wave_adc_nom[np.argmin(wave_adc_nom)]:>16.2f}  {pk_neg_adc:>20.2f}')
+        print(f'  {"∫+ (ADC·µs)":18s}  {sp_nom:>16.2f}  {sum_pos:>20.2f}')
+        print(f'  {"∫- (ADC·µs)":18s}  {sn_nom:>16.2f}  {sum_neg:>20.2f}')
+        print(f'  {"net (ADC·µs)":18s}  {net_nom:>+16.4f}  {net:>+20.4f}')
+        print(f'  {"balance":18s}  {net_nom/tot_nom:>+16.4f}  {balance:>+20.4f}')
+
         chndb_ref = chndb[chndb_keys[pid]]
         i_neg_c   = int(np.argmin(chndb_ref))
         scale     = pk_neg_adc / chndb_ref[i_neg_c]
@@ -329,7 +357,8 @@ def run():
                   f'pos peak={y_sim[j_sim]:.2f} at idx {j_sim},  scale={sim_scale:.4g}')
 
         outpath = os.path.join(WORKDIR, f'track_response_pdvd_top_{label}.png')
-        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, er_info, sim=sim)
+        make_plot(wave_adc, chndb_ref, tick_us, label, pl.pitch, n_mip_pl, outpath, er_info, sim=sim,
+                  wave_nominal=wave_adc_nom)
 
 
 if __name__ == '__main__':
