@@ -199,3 +199,34 @@ python3 compare_trigger_vs_iter7.py \
 
 V-plane validation: APA0 V is anomalous and should be skipped; use
 APA1/2/3 V as the references when validating `--plane V`.
+
+---
+
+## L1SP smearing-kernel validation
+
+| File | Purpose |
+|------|---------|
+| `plot_l1sp_smearing_kernel.py` | Validates the auto-derived time-domain smearing kernel used by `L1SPFilterPD`. Standalone — requires only numpy and matplotlib; no WCT dependency. |
+| `l1sp_smearing_kernel_validation.png` | Pre-generated output (500 ns tick, σ = 0.12 MHz PDHD). |
+
+The script reproduces `HfFilter::filter_waveform(N)` in Python, IFFTs it via
+`np.fft.ifft`, then applies the same amplitude-threshold truncation and
+sum-normalisation as `L1SPFilterPD::configure()`.
+
+Two panels:
+
+1. **MicroBooNE**: IFFT-derived kernel overlaid on the hardcoded 21-tap JSON
+   array from `cfg/pgrapher/experiment/uboone/sp.jsonnet`.  Residual panel
+   below; max |Δ| ≈ 5×10⁻⁶, confirming bit-equivalence.
+2. **PDHD**: IFFT-derived kernel (σ = 0.12 MHz, tick = 500 ns, post-resampler)
+   overlaid on the analytic-Gaussian reference using the same normalisation
+   convention — continuous Gaussian sampled at Δt and discrete-sum-normalised:
+   `g(t) = (Δt / (σ_t · √(2π))) · exp(−½(t/σ_t)²)`.
+
+Usage:
+
+```bash
+python plot_l1sp_smearing_kernel.py            # saves PNG next to script
+python plot_l1sp_smearing_kernel.py --show     # interactive window
+python plot_l1sp_smearing_kernel.py -o /path/to/out.png
+```
