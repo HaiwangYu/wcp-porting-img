@@ -333,8 +333,12 @@ wire-cell-data/pdhd_l1sp_kernels.json.bz2
 ```
 
 Contains per-plane (U=0, V=1) bipolar + positive/negative unipolar kernels
-with W peak shifts calibrated to each plane's bipolar zero crossing.
-Regenerate if the field response or electronics parameters change — see
+with W peak shifts calibrated to each plane's bipolar zero crossing, plus
+a global `meta.frame_origin_us` (= V-plane bipolar zero-crossing) used as
+the LASSO frame origin so that β LASSO output is in the same time frame as
+the gauss decon it replaces.  Regenerate with PDHD calibration
+(`postgain=1.0`, `adc-per-mv=16384/1400`) if the field response or
+electronics parameters change — see
 `toolkit/sigproc/docs/l1sp/L1SPFilterPD.md` for the `gen-l1sp-kernels`
 invocation.
 

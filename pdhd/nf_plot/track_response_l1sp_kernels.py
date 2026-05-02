@@ -37,24 +37,30 @@ from wirecell.sigproc.l1sp import (
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
 
-# Constructor defaults of L1SPFilterPD (unchanged by PDHD sp.jsonnet).
+# FE/ADC calibration is detector-specific.  postgain/adc_per_mv MUST match
+# the values used to generate the kernel JSON file (and used at runtime by
+# L1SPFilterPD via cfg/.../sp.jsonnet); otherwise the --from-file rebuild
+# cross-check below is meaningless.  See pdhd params.jsonnet (resolution=14,
+# fullscale=[0.2V,1.6V] → adc_per_mv = 16384/1400 ≈ 11.702; postgain=1.0).
 GAIN_MV_PER_FC   = 14.0
 SHAPING_US       = 2.2
-POSTGAIN         = 1.2
-ADC_PER_MV       = 4096 / 2000.0      # 2.048
 COARSE_TOFF_US   = -8.0
 FINE_TOFF_US     =  0.0
 
 UB = dict(
-    fr_file  = 'ub-10-half.json.bz2',
-    pitch_cm = 0.300,
-    label    = 'uBooNE',
+    fr_file    = 'ub-10-half.json.bz2',
+    pitch_cm   = 0.300,
+    label      = 'uBooNE',
+    postgain   = 1.2,
+    adc_per_mv = 4096 / 2000.0,          # 2.048  (12-bit, 2V fullscale)
 )
 PD = dict(
     # APA1/2/3 baseline (APA0 is anomalous on V — see params.jsonnet:156-161).
-    fr_file  = 'dune-garfield-1d565.json.bz2',
-    pitch_cm = 0.471,
-    label    = 'PDHD (APA1/2/3 baseline)',
+    fr_file    = 'dune-garfield-1d565.json.bz2',
+    pitch_cm   = 0.471,
+    label      = 'PDHD (APA1/2/3 baseline)',
+    postgain   = 1.0,
+    adc_per_mv = 16384 / 1400.0,         # 11.703 (14-bit, 1.4V fullscale)
 )
 PLOT_XLIM = (-8, 10)
 
@@ -87,8 +93,8 @@ def build_for_detector(det):
         fr_file               = det['fr_file'],
         gain                  = GAIN_MV_PER_FC * units.mV / units.fC,
         shaping               = SHAPING_US * units.us,
-        postgain              = POSTGAIN,
-        adc_per_mv            = ADC_PER_MV,
+        postgain              = det['postgain'],
+        adc_per_mv            = det['adc_per_mv'],
         coarse_time_offset_us = COARSE_TOFF_US,
         fine_time_offset_us   = FINE_TOFF_US,
     )
