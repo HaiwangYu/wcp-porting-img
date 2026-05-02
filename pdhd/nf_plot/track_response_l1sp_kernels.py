@@ -164,10 +164,14 @@ def plot_uboone(data, outpath):
     print(f'  → {outpath}')
 
 
-def plot_pdhd_plane(data, plane_idx, outpath):
+def plot_pdhd_plane(data, plane_idx, outpath, ref_data=None):
     """PDHD positive (top) + negative (bottom).  t-axis offset = V zero
     crossing (shared across U/V).  W shift is per-plane: W peak lands at
-    each plane's own bipolar zero crossing."""
+    each plane's own bipolar zero crossing.
+
+    If ref_data is provided (e.g. the in-memory FR rebuild), its curves are
+    drawn as thin dashed lines underneath the main curves so the two sources
+    can be visually compared."""
     plane_label = {0: 'U', 1: 'V'}[plane_idx]
     k_bip = data['kU'] if plane_idx == 0 else data['kV']
     t  = data['t_us']
@@ -185,12 +189,21 @@ def plot_pdhd_plane(data, plane_idx, outpath):
 
     # positive case: bipolar + W (collection-on-induction)
     ax = axes[0]
+    if ref_data is not None:
+        r_bip = ref_data['kU'] if plane_idx == 0 else ref_data['kV']
+        r_shift = ref_data['planes'][plane_idx]['positive']['unipolar_time_offset_us']
+        ax.plot(t_plot, r_bip * Nm, color='steelblue', lw=4, alpha=0.35, ls='-',
+                label='_bipolar (rebuilt from FR)')
+        ax.plot(t_plot + r_shift, ref_data['kW'] * Nm, color='darkorange', lw=4, alpha=0.35, ls='-',
+                label='_unipolar (rebuilt from FR)')
     ax.plot(t_plot, k_bip * Nm, color='steelblue', lw=1.5,
             label=f'{plane_label}-plane bipolar (×{Nm:.0f} e⁻/pitch)  '
                   f'[zero-crossing at {zc_in_plot:+.2f} µs]')
     ax.plot(t_plot + shift_W, data['kW'] * Nm, color='darkorange', lw=1.5,
             label=f'W-plane unipolar  '
                   f'(W-peak ↔ {plane_label}-zero-crossing; raw shift {shift_W:+.2f} µs)')
+    if ref_data is not None:
+        ax.plot([], [], color='gray', lw=4, alpha=0.35, label='thick band = rebuilt from FR')
     ax.axhline(0, color='gray', lw=0.5, ls=':')
     ax.set_xlim(PLOT_XLIM)
     ax.set_ylabel('ADC (×N_MIP)')
@@ -201,11 +214,19 @@ def plot_pdhd_plane(data, plane_idx, outpath):
 
     # negative case
     ax = axes[1]
+    if ref_data is not None:
+        r_bip = ref_data['kU'] if plane_idx == 0 else ref_data['kV']
+        ax.plot(t_plot, r_bip * Nm, color='steelblue', lw=4, alpha=0.35, ls='-',
+                label='_bipolar (rebuilt from FR)')
+        ax.plot(t_plot, negative_half(r_bip) * Nm, color='forestgreen', lw=4, alpha=0.35, ls='-',
+                label='_neg-half (rebuilt from FR)')
     ax.plot(t_plot, k_bip * Nm, color='steelblue', lw=1.5,
             label=f'{plane_label}-plane bipolar (×{Nm:.0f} e⁻/pitch)  '
                   f'[zero-crossing at {zc_in_plot:+.2f} µs]')
     ax.plot(t_plot, negative_half(k_bip) * Nm, color='forestgreen', lw=1.5, ls='--',
             label=f'neg-half({plane_label}) — anode-induction unipolar (no shift)')
+    if ref_data is not None:
+        ax.plot([], [], color='gray', lw=4, alpha=0.35, label='thick band = rebuilt from FR')
     ax.axhline(0, color='gray', lw=0.5, ls=':')
     ax.set_xlim(PLOT_XLIM)
     ax.set_ylabel('ADC (×N_MIP)')
@@ -215,9 +236,12 @@ def plot_pdhd_plane(data, plane_idx, outpath):
                  f'(anode-induction)', fontsize=9)
 
     axes[-1].set_xlabel('time (µs, relative to V-plane zero crossing)')
+    overlay_note = '  [thick band = rebuilt from FR; thin line = from file — bit-identical]' \
+                   if ref_data is not None else ''
     fig.suptitle(f'PDHD L1SPFilterPD — {plane_label} plane  '
-                 f'(N_MIP/pitch={Nm:.0f} e⁻;  V-zero-crossing @ {t_zc_V:+.2f} µs)',
-                 fontsize=11)
+                 f'(N_MIP/pitch={Nm:.0f} e⁻;  V-zero-crossing @ {t_zc_V:+.2f} µs)'
+                 f'{overlay_note}',
+                 fontsize=10)
     plt.savefig(outpath, dpi=150, bbox_inches='tight')
     plt.close()
     print(f'  → {outpath}')
@@ -276,8 +300,12 @@ def main():
     pd = _kernels_to_data(pd_kernels, PD)
     report(PD['label'], pd)
 
-    plot_pdhd_plane(pd, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdhd_U.png'))
-    plot_pdhd_plane(pd, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdhd_V.png'))
+    # ref_pd: the in-memory FR rebuild, passed to plot functions for visual overlay.
+    # Only available when --from-file + rebuild; None otherwise (no overlay shown).
+    ref_pd = _kernels_to_data(ref, PD) if (args.from_file and not args.no_rebuild) else None
+
+    plot_pdhd_plane(pd, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdhd_U.png'), ref_data=ref_pd)
+    plot_pdhd_plane(pd, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdhd_V.png'), ref_data=ref_pd)
 
     # ── uBooNE reference (always rebuilt from FR; legacy detector, no JSON file) ──
     ub_kernels = build_for_detector(UB)
