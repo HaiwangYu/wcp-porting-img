@@ -343,6 +343,7 @@ invocation.
 | Key | Value | Meaning |
 |-----|-------|---------|
 | `kernels_file` | `"pdhd_l1sp_kernels.json.bz2"` | Pre-built response kernels (WIRECELL_PATH-resolved) |
+| `kernels_scale` | `gain_scale` | Amplitude multiplier on loaded kernels; corrects for FE gain ≠ 14 mV/fC |
 | `process_planes` | `[0]` (APA0) / `[0,1]` (APA1-3) | Induction planes in scope |
 | `gauss_filter` | `'HfFilter:Gaus_wide'` | Smearing kernel source (auto-derived by C++) |
 | `l1_raw_asym_eps` / `raw_ROI_th_adclimit` / `adc_sum_threshold` | scaled by `gain_scale` | Raw-ADC knobs at the 14 mV/fC reference; auto-scaled at runtime |
