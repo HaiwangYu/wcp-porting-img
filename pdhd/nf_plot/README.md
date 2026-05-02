@@ -155,3 +155,47 @@ out-pointer. Verified: dump-OFF and dump-ON inner `*.npy` are
 `np.array_equal` true across adjacent toolkit runs (the toolkit's
 own run-to-run drift, ≈ rms 0.11 ADC, is the entire delta and
 unchanged by the toggle).
+
+---
+
+## L1SP trigger validation scripts
+
+Independent of the coherent-NF dump viewer above.  These tools
+support tuning the `L1SPFilterPD::decide_trigger()` per-ROI gate
+(toolkit `sigproc/src/L1SPFilterPD.cxx`) against an offline reference
+detector.  See `sigproc/docs/l1sp/L1SPFilterPD.md` for the trigger
+algorithm itself.
+
+| File | Purpose |
+|------|---------|
+| `find_long_decon_artifacts.py` | iter-7 offline detector — Python reference. Walks `\|gauss\| > g_thr=50` runs in the SP frame, computes the same six per-ROI features the C++ trigger uses, and applies the four-arm `cluster_pass()` rule.  Emits per-event/per-APA cluster CSVs. |
+| `compare_trigger_vs_iter7.py` | Compares C++ `flag_l1` (from L1SP calib NPZ dumps) against iter-7 cluster CSVs over multi-event/multi-APA aggregates.  Reports per-APA `recall = matched/iter7` and `extras = unmatched_cpp/cpp_fired`.  Use `--show-misses` / `--show-extras` to spot-check.  `--use-cpp-flag` reads `flag_l1` from the dump; without it, re-applies the gate offline using the per-ROI features in the NPZ for what-if threshold sweeps. |
+| `eval_l1sp_trigger.py` | Compares C++ `flag_l1` against a hand-scan CSV of (run,evt,apa,plane,ch_lo,ch_hi,t_lo,t_hi) ground-truth boxes.  Used for the initial threshold seed. |
+| `handscan_27409.csv` | Hand-scan ground truth, 63 rows, R=27409 evts 0–8 U-plane.  Format: `run,evt,plane,ch_lo,ch_hi,t_lo,t_hi,asym,type,real`. |
+
+Typical workflow:
+
+```bash
+# 1. Re-emit C++ dumps with the trigger live (cfg has dump_mode=true).
+#    NPZ written to <calib_root>/<RUN_PADDED>_<EVT>/apa<N>_*.npz
+
+# 2. Run the iter-7 reference once per (evt, apa) into CSVs.
+for E in 0 1 2 3 4 5 6 7 12; do
+  for A in 0 1 2 3; do
+    python3 find_long_decon_artifacts.py \
+        --root <sp_frames_root> --run 27409 --evt $E --apa $A --plane U \
+        --csv-out /tmp/iter7_csv/run27409_evt${E}_apa${A}_U.csv
+  done
+done
+
+# 3. Aggregate comparison — what the trigger tuning was validated against.
+python3 compare_trigger_vs_iter7.py \
+    --calib-root <calib_root> \
+    --iter7-csv-glob '/tmp/iter7_csv/run27409_evt%E_apa%A_U.csv' \
+    --run 27409 --evts 0,1,2,3,4,5,6,7,12 --apas 0,1,2,3 --plane U \
+    --use-cpp-flag
+# Final v5 numbers: recall 90.0%, extras 7.7%.
+```
+
+V-plane validation: APA0 V is anomalous and should be skipped; use
+APA1/2/3 V as the references when validating `--plane V`.
