@@ -299,6 +299,56 @@ for pattern recognition.
 
 ---
 
+## L1SPFilterPD — unipolar-induction correction
+
+`L1SPFilterPD` is wired downstream of `OmnibusSigProc` inside `make_sigproc`
+when `l1sp_pd_mode != ''`.  It applies a per-ROI LASSO fit using pre-built
+bipolar + unipolar response bases to correct induction-plane channels that
+carry unipolar signals from anode-induction or collection-on-induction physics.
+
+### Enabling
+
+Pass `-c <dir>` to `run_nf_sp_evt.sh` to enable with calibration dump:
+
+```bash
+./run_nf_sp_evt.sh -c /path/to/calib 27409 0 -a 1
+```
+
+The mode is controlled by `l1sp_pd_mode` in `wct-nf-sp.jsonnet` (default
+`''` = OFF).  The `-c` flag sets it to `'dump'`, which both runs the L1SP
+fit and writes per-ROI feature NPZs to `<calib_dir>/<RUN>_<EVT>/apa<N>_*.npz`.
+
+### Per-APA plane selection
+
+APA0 V-plane is anomalous; L1SP is restricted to U only there.  APAs 1–3
+process both U and V.  This is the default in `sp.jsonnet:make_sigproc`;
+no override is needed.
+
+### Kernel file
+
+Response kernels are pre-built and loaded from `wire-cell-data`:
+
+```
+wire-cell-data/pdhd_l1sp_kernels.json.bz2
+```
+
+Contains per-plane (U=0, V=1) bipolar + positive/negative unipolar kernels
+with W peak shifts calibrated to each plane's bipolar zero crossing.
+Regenerate if the field response or electronics parameters change — see
+`toolkit/sigproc/docs/l1sp/L1SPFilterPD.md` for the `gen-l1sp-kernels`
+invocation.
+
+### Key config knobs (in `sp.jsonnet`)
+
+| Key | Value | Meaning |
+|-----|-------|---------|
+| `kernels_file` | `"pdhd_l1sp_kernels.json.bz2"` | Pre-built response kernels (WIRECELL_PATH-resolved) |
+| `process_planes` | `[0]` (APA0) / `[0,1]` (APA1-3) | Induction planes in scope |
+| `gauss_filter` | `'HfFilter:Gaus_wide'` | Smearing kernel source (auto-derived by C++) |
+| `l1_raw_asym_eps` / `raw_ROI_th_adclimit` / `adc_sum_threshold` | scaled by `gain_scale` | Raw-ADC knobs at the 14 mV/fC reference; auto-scaled at runtime |
+
+---
+
 ## Source file index
 
 | File | Role | Key lines |

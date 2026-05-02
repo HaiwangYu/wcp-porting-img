@@ -42,7 +42,7 @@ function(
   debug_dump_groups = [],                       // optional whitelist of group ids (= first-channel idents). [] = all groups
   l1sp_pd_mode = '',                            // '' (OFF) / 'dump' (calib) / 'process' (not yet enabled)
   l1sp_pd_dump_path = '',                       // dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
-  l1sp_pd_planes = [0, 1],                      // plane indices to process (0=U, 1=V; skip W)
+  // l1sp_pd_planes is not exposed here: sp.jsonnet defaults to APA0→[0], APA1-3→[0,1].
 )
 
   local tools = tools_all;
@@ -65,8 +65,7 @@ function(
   local sp = sp_maker(params, tools, { sparse: false });
   local sp_pipes = [sp.make_sigproc(a,
                                     l1sp_pd_mode=l1sp_pd_mode,
-                                    l1sp_pd_dump_path=l1sp_pd_dump_path,
-                                    l1sp_pd_planes=l1sp_pd_planes)
+                                    l1sp_pd_dump_path=l1sp_pd_dump_path)
                     for a in tools.anodes];
 
   local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
