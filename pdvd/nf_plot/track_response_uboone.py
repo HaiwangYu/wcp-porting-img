@@ -61,7 +61,24 @@ ADC_PER_MV  = 2.048
 #   1.8 MeV/cm × 0.3 cm × 0.7 (recombination) / 23.6 eV per ion pair
 N_MIP_PER_PITCH = (1.8e6 * 0.3 * 0.7) / 23.6   # ≈ 16017 e-
 
+# L1SPFilter (uBooNE) default time offsets — from L1SPFilter.h default params
+L1SP_COARSE_TIME_OFFSET_US  = -8.0   # m_coarse_time_offset
+L1SP_FINE_TIME_OFFSET_US    =  0.0   # m_fine_time_offset
+L1SP_COLLECT_TIME_OFFSET_US = +3.0   # collect_time_offset (W-basis arg shift in L1_fit)
+
 # ---------------------------------------------------------------------------
+
+def l1sp_response(fr_line, er, period_ns):
+    """Reproduce L1SPFilter::init_resp() for one plane.
+
+    Returns the kernel sampled at period_ns (ADC per single electron),
+    matching lin_V / lin_W before the x250 conditioning inside L1_fit.
+    Uses circular FFT — same as the C++ FFT helper.
+    """
+    ewave = -1.0 * POSTGAIN * (ADC_PER_MV / units.mV) * er
+    S = np.fft.rfft(fr_line) * np.fft.rfft(ewave) * period_ns
+    return np.fft.irfft(S, n=len(fr_line))
+
 
 def parse_chndb_resp(path):
     """Extract u_resp and v_resp float arrays from chndb-resp.jsonnet."""
@@ -119,7 +136,8 @@ def line_source_response(plane):
     return integral / pitch
 
 
-def make_plot(wave_adc, chndb_ref, tick_us, plane_label, outpath):
+def make_plot(wave_adc, chndb_ref, tick_us, plane_label, outpath,
+              resp_l1_mip=None, t_l1sp_us=None):
     """Two-panel plot: ADC waveform at 0.5 µs tick (top) + |FFT| (bottom)."""
     N = len(wave_adc)
     t_us      = np.arange(N) * tick_us
@@ -152,6 +170,14 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, outpath):
             label=f'FR ⊗ ER (digitized at {tick_us*1000:.0f} ns)  [{params_str}]')
     ax.plot(t_chndb, chndb_scaled, 'b--', lw=1.5,
             label=f'chndb-resp.jsonnet  (scaled ×{scale:.3g}, aligned at neg. peak)')
+    if resp_l1_mip is not None and t_l1sp_us is not None:
+        i_neg_l1 = int(np.argmin(resp_l1_mip))
+        t_l1sp_aligned = t_l1sp_us + (t_neg_us - t_l1sp_us[i_neg_l1])
+        l1_pk = resp_l1_mip[np.argmax(resp_l1_mip)]
+        l1_tr = resp_l1_mip[i_neg_l1]
+        ax.plot(t_l1sp_aligned, resp_l1_mip, color='green', lw=1.0, alpha=0.85,
+                label=(f'L1SP kernel × N_MIP  (100 ns, trough-aligned)  '
+                       f'pk={l1_pk:.1f}  trough={l1_tr:.1f} ADC'))
     ax.axhline(0, color='gray', lw=0.5)
     ax.set_xlabel('time (µs)')
     ax.set_ylabel('ADC')
@@ -166,6 +192,11 @@ def make_plot(wave_adc, chndb_ref, tick_us, plane_label, outpath):
     ax.plot(freqs_mhz, np.abs(np.fft.rfft(wave_adc)), 'r-', lw=1.5, label='FR ⊗ ER')
     freqs_chndb = np.fft.rfftfreq(len(chndb_scaled), d=CHNDB_TICK_US)   # MHz
     ax.plot(freqs_chndb, np.abs(np.fft.rfft(chndb_scaled)), 'b--', lw=1.5, label='chndb-resp')
+    if resp_l1_mip is not None and t_l1sp_us is not None:
+        fine_tick_us = t_l1sp_us[1] - t_l1sp_us[0]
+        freqs_l1 = np.fft.rfftfreq(len(resp_l1_mip), d=fine_tick_us)
+        ax.plot(freqs_l1, np.abs(np.fft.rfft(resp_l1_mip)), color='green',
+                lw=1.0, alpha=0.85, label='L1SP kernel × N_MIP')
     ax.set_xlabel('frequency (MHz)')
     ax.set_ylabel('|FFT| (ADC)')
     ax.set_title('Frequency spectrum')
@@ -251,8 +282,49 @@ def run():
         scale     = pk_neg_adc / chndb_ref[i_neg_c]
         print(f'  chndb-resp neg peak at sample {i_neg_c}  ({i_neg_c * CHNDB_TICK_US:.1f} µs),  scale = {scale:.4g}')
 
+        # L1SP kernel (ADC/electron at fine period) and numerical verification
+        resp_l1     = l1sp_response(fr_line, er, period_ns)
+        resp_l1_mip = resp_l1 * N_MIP_PER_PITCH
+        wave_adc_fine = wave_mv * ADC_PER_MV
+        maxdiff  = np.max(np.abs(resp_l1_mip - wave_adc_fine))
+        allclose = np.allclose(resp_l1_mip, wave_adc_fine, atol=1.0)
+        print(f'  L1SP kernel vs fine-period FR⊗ER: allclose(atol=1)={allclose}'
+              f'  max_abs_diff={maxdiff:.3e} ADC')
+
+        # Time axis for the L1SP linterp (x0 convention from L1SPFilter::init_resp)
+        intrinsic_toff_ns = fr.origin / fr.speed
+        intrinsic_toff_us = intrinsic_toff_ns / units.us
+        x0_us = (-intrinsic_toff_us
+                 - L1SP_COARSE_TIME_OFFSET_US
+                 + L1SP_FINE_TIME_OFFSET_US)
+        t_l1sp_us = x0_us + np.arange(N_fr) * (period_ns / 1000.0)
+
+        adc_mv_wc  = ADC_PER_MV / units.mV
+        kern_peak  = np.max(np.abs(resp_l1))
+        print(f'\nL1SP normalization chain ({label} plane):')
+        print(f'  postgain                    = {POSTGAIN}')
+        print(f'  ADC_PER_MV (count/mV)       = {ADC_PER_MV}')
+        print(f'  units.mV (WC unit value)    = {units.mV:.6g}')
+        print(f'  ADC_MV_WC = ADC_PER_MV/mV  = {adc_mv_wc:.6g}  count/(WC-mV)')
+        print(f'  fine_period (ns)            = {period_ns}')
+        print(f'  sign                        = -1')
+        print(f'  kernel |peak| (ADC/e)       = {kern_peak:.4g}')
+        print(f'  kernel |peak| × N_MIP (ADC) = {kern_peak * N_MIP_PER_PITCH:.2f}')
+        print(f'\nL1SP time-offset chain ({label} plane):')
+        print(f'  fr.origin (WC length)       = {fr.origin:.6g}')
+        print(f'  fr.speed  (WC velocity)     = {fr.speed:.6g}')
+        print(f'  intrinsic_toff (µs)         = {intrinsic_toff_us:.4f}')
+        print(f'  coarse_time_offset (µs)     = {L1SP_COARSE_TIME_OFFSET_US}')
+        print(f'  fine_time_offset (µs)       = {L1SP_FINE_TIME_OFFSET_US}')
+        print(f'  x0 for lin_{label}(t) (µs)   = {x0_us:.4f}')
+        print(f'  inside L1_fit:')
+        print(f'    overall_time_offset (µs)  = 0.0  (uBooNE default)')
+        print(f'    collect_time_offset (µs)  = {L1SP_COLLECT_TIME_OFFSET_US:+.1f}  (W-basis arg shift; V unshifted)')
+        print(f'    output placement          = start_tick + j  (no shift)')
+
         outpath = os.path.join(WORKDIR, f'track_response_uboone_{label}.png')
-        make_plot(wave_adc, chndb_ref, tick_us, label, outpath)
+        make_plot(wave_adc, chndb_ref, tick_us, label, outpath,
+                  resp_l1_mip=resp_l1_mip, t_l1sp_us=t_l1sp_us)
 
 
 if __name__ == '__main__':
