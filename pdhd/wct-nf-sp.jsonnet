@@ -40,7 +40,7 @@ function(
   use_freqmask  = true,                         // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
   debug_dump_path = '',                         // when non-empty, PDHDCoherentNoiseSub dumps per-group .npz under this dir (default OFF)
   debug_dump_groups = [],                       // optional whitelist of group ids (= first-channel idents). [] = all groups
-  l1sp_pd_mode = '',                            // '' (OFF) / 'dump' (calib) / 'process'
+  l1sp_pd_mode = 'process',                     // 'process' (default, ON) / 'dump' (calib bypass) / '' (OFF)
   l1sp_pd_dump_path = '',                       // scalar dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
   l1sp_pd_wf_dump_path = '',                    // waveform dump directory (used when l1sp_pd_mode='process'); pass via -w flag
   // l1sp_pd_planes is not exposed here: sp.jsonnet defaults to APA0→[0], APA1-3→[0,1].

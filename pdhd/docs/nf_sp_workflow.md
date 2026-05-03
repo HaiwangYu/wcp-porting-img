@@ -122,8 +122,9 @@ FrameFileSource
        │      → protodunehd-sp-frames-raw-anode{N}.tar.bz2
        │        tags=[raw{N}], digitize=false, masks=true
        ▼
-  sp_pipe{N}            ← OmnibusSigProc       [sp.jsonnet]
-       │  tags: gauss{N}, wiener{N}
+  sp_pipe{N}            ← OmnibusSigProc → L1SPFilterPD → FrameMerger
+                          [sp.jsonnet; L1SP ON by default]
+       │  tags: gauss{N}, wiener{N}   (both carry the L1SP-fitted waveform)
        ├──► spframesink{N}
        │      → protodunehd-sp-frames-anode{N}.tar.bz2
        │        tags=[gauss{N}, wiener{N}], digitize=false, masks=true
@@ -131,7 +132,10 @@ FrameFileSource
   DumpFrames{N}
 ```
 
-Source: `wct-nf-sp.jsonnet:87–106`.  The tap nodes (`raw_frame_tap`,
+Source: `wct-nf-sp.jsonnet:87–106`.  L1SP defaults to `process` mode
+(`sp.jsonnet:29`, `wct-nf-sp.jsonnet:43`); see [sp.md](sp.md#l1spfilterpd--unipolar-induction-correction)
+for override flags (`-c` calibration dump, `-w` waveform dump, or
+`--tla-str l1sp_pd_mode=''` to bypass).  The tap nodes (`raw_frame_tap`,
 `frame_tap`) are `FrameFanout`-based — the main data stream passes through
 while a copy is written to disk.
 
@@ -142,8 +146,8 @@ while a copy is written to disk.
 | Archive | Tag(s) | Encoding | Description |
 |---------|--------|----------|-------------|
 | `protodunehd-sp-frames-raw-anode{N}.tar.bz2` | `raw{N}` | float (no digitize) | NF-output waveforms with channel masks |
-| `protodunehd-sp-frames-anode{N}.tar.bz2` | `gauss{N}` | float (no digitize) | Gaussian-filter SP output (charge estimate used by imaging) |
-| | `wiener{N}` | float (no digitize) | Wiener-filter SP output (SNR-weighted, used by ROI seeding) |
+| `protodunehd-sp-frames-anode{N}.tar.bz2` | `gauss{N}` | float (no digitize) | SP charge estimate.  With L1SP default-on (`l1sp_pd_mode='process'`), the L1SP-fitted waveform is emitted under this tag for L1SP-processed planes (APA0 U; APA1-3 U+V). |
+| | `wiener{N}` | float (no digitize) | SP SNR-weighted output.  With L1SP default-on, also carries the L1SP fit (byte-identical to `gauss{N}` on processed planes). |
 
 `digitize: false` means traces are stored as 32-bit floats, preserving
 the deconvolved-charge scale.  `masks: true` means channel-status and ROI

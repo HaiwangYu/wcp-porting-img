@@ -308,15 +308,19 @@ carry unipolar signals from anode-induction or collection-on-induction physics.
 
 ### Enabling
 
-Pass `-c <dir>` to `run_nf_sp_evt.sh` to enable with calibration dump:
+L1SP is **ON by default** across the PDHD configuration chain:
+`sp.jsonnet:make_sigproc` defaults `l1sp_pd_mode='process'`, and
+`wct-nf-sp.jsonnet:43` mirrors that default.  Plain
+`./run_nf_sp_evt.sh 27409 0` runs L1SP and emits the L1SP-fitted waveform
+under both `gauss{N}` and `wiener{N}`.
 
-```bash
-./run_nf_sp_evt.sh -c /path/to/calib 27409 0 -a 1
-```
-
-The mode is controlled by `l1sp_pd_mode` in `wct-nf-sp.jsonnet` (default
-`''` = OFF).  The `-c` flag sets it to `'dump'`, which both runs the L1SP
-fit and writes per-ROI feature NPZs to `<calib_dir>/<RUN>_<EVT>/apa<N>_*.npz`.
+To override:
+- `-c <dir>` switches L1SP to `'dump'` (scalar bypass) mode and writes
+  per-ROI feature NPZs to `<calib_dir>/<RUN>_<EVT>/apa<N>_*.npz`.
+- `-w <dir>` keeps `'process'` mode and adds per-triggered-ROI waveform
+  NPZs under `<wf_dir>/<RUN>_<EVT>/<dump_tag>_<frame_ident>/`.
+- Pass `--tla-str l1sp_pd_mode=''` to `wire-cell` for a bypass run that
+  emits the bare `OmnibusSigProc` gauss/wiener (no L1SP, no merger).
 
 ### Per-APA plane selection
 

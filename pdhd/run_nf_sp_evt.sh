@@ -14,7 +14,9 @@
 #   -d dump_root  Enable PDHDCoherentNoiseSub debug dump (default: OFF).
 #                 Per-group .npz files are written to
 #                 <dump_root>/<RUN_PADDED>_<EVT>/apa<N>/.
-#   -c calib_root Enable L1SPFilterPD calibration dump (default: OFF).
+#   L1SP processing is ON by default (l1sp_pd_mode=process). -c and -w
+#   adjust the L1SP variant:
+#   -c calib_root Switch L1SP to scalar calibration dump (bypass) mode.
 #                 Per-event NPZ files with per-ROI asymmetry quantities are written to
 #                 <calib_root>/<RUN_PADDED>_<EVT>/ (one file per anode per call).
 #
@@ -45,11 +47,14 @@ Options:
                   Per-group .npz files are written to
                   <dump_dir>/<RUN_PADDED>_<EVT>/apa<N>/.
                   View with: cd nf_plot && ./serve_coherent_viewer.sh <dump_dir>
-  -c <calib_dir>  Enable L1SPFilterPD calibration dump (default: OFF).
+
+  L1SP processing is ON by default (l1sp_pd_mode=process). -c and -w
+  adjust the L1SP variant:
+  -c <calib_dir>  Switch L1SP to scalar calibration dump (bypass) mode.
                   Per-event NPZ files with per-ROI asymmetry quantities are
                   written to <calib_dir>/<RUN_PADDED>_<EVT>/.
                   Load with: np.load('<calib_dir>/.../apa<N>_NNNN_IIII.npz')
-  -w <wf_dir>     Enable L1SPFilterPD waveform dump (default: OFF).
+  -w <wf_dir>     Enable L1SPFilterPD per-ROI waveform dump (process mode).
                   Per-triggered-ROI NPZ files (raw/decon/lasso/smeared) written to
                   <wf_dir>/<RUN_PADDED>_<EVT>/<dump_tag>_<frame_ident>/.
                   View with: cd nf_plot && ./serve_l1sp_roi_viewer.sh <wf_dir>
@@ -175,26 +180,14 @@ process_event() {
         echo "Dump dir:  $DUMP_DIR_ABS"
     fi
 
-    local CALIB_TLA=()
-    if [ -n "$CALIB_ROOT" ]; then
-        local CALIB_DIR_ABS
-        case "$CALIB_ROOT" in
-            /*) CALIB_DIR_ABS="$CALIB_ROOT" ;;
-            *)  CALIB_DIR_ABS="$PDHD_DIR/$CALIB_ROOT" ;;
-        esac
-        CALIB_DIR_ABS="${CALIB_DIR_ABS}/${RUN_PADDED}_${EVT}"
-        mkdir -p "$CALIB_DIR_ABS"
-        CALIB_TLA=(--tla-str l1sp_pd_mode=dump
-                   --tla-str l1sp_pd_dump_path="$CALIB_DIR_ABS")
-        echo "L1SP calib dir:  $CALIB_DIR_ABS"
-    fi
-
-    local WF_TLA=()
+    # L1SP is ON by default in wct-nf-sp.jsonnet (l1sp_pd_mode='process').
+    # -c switches L1SP to scalar dump (bypass) mode. -w adds a per-ROI
+    # waveform dump while staying in process mode. -w wins over -c.
+    local L1SP_TLA=()
     if [ -n "$WF_ROOT" ]; then
         if [ -n "$CALIB_ROOT" ]; then
             echo "Note: -c (scalar dump) uses bypass mode; -w waveform dump requires process mode." >&2
             echo "      Scalar dump disabled; using process mode for waveform dump." >&2
-            CALIB_TLA=()
         fi
         local WF_DIR_ABS
         case "$WF_ROOT" in
@@ -203,9 +196,19 @@ process_event() {
         esac
         WF_DIR_ABS="${WF_DIR_ABS}/${RUN_PADDED}_${EVT}"
         mkdir -p "$WF_DIR_ABS"
-        WF_TLA=(--tla-str l1sp_pd_mode=process
-                --tla-str l1sp_pd_wf_dump_path="$WF_DIR_ABS")
+        L1SP_TLA=(--tla-str l1sp_pd_wf_dump_path="$WF_DIR_ABS")
         echo "L1SP waveform dir: $WF_DIR_ABS"
+    elif [ -n "$CALIB_ROOT" ]; then
+        local CALIB_DIR_ABS
+        case "$CALIB_ROOT" in
+            /*) CALIB_DIR_ABS="$CALIB_ROOT" ;;
+            *)  CALIB_DIR_ABS="$PDHD_DIR/$CALIB_ROOT" ;;
+        esac
+        CALIB_DIR_ABS="${CALIB_DIR_ABS}/${RUN_PADDED}_${EVT}"
+        mkdir -p "$CALIB_DIR_ABS"
+        L1SP_TLA=(--tla-str l1sp_pd_mode=dump
+                  --tla-str l1sp_pd_dump_path="$CALIB_DIR_ABS")
+        echo "L1SP calib dir:  $CALIB_DIR_ABS"
     fi
 
     wire-cell \
@@ -219,8 +222,7 @@ process_event() {
         --tla-str reality="${REALITY}" \
         --tla-code anode_indices="${ANODE_CODE}" \
         "${DUMP_TLA[@]}" \
-        "${CALIB_TLA[@]}" \
-        "${WF_TLA[@]}" \
+        "${L1SP_TLA[@]}" \
         -c wct-nf-sp.jsonnet
 
     echo "NF+SP done -> $WORKDIR"
