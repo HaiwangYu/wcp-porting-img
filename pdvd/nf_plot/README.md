@@ -50,6 +50,64 @@ for the full reference.
 
 ---
 
+## L1SP filter workflow (PDVD)
+
+PDVD's nf+sp graph wires `L1SPFilterPD` after `OmnibusSigProc` with per-region
+parameters (bottom = anodes 0–3, top = anodes 4–7).  See
+[`../../sigproc/docs/l1sp/L1SPFilterPD.md`](../../sigproc/docs/l1sp/L1SPFilterPD.md)
+for the algorithm.
+
+The default mode is `dump`: the ROI tagger runs and writes per-event NPZ
+calibration records, but the LASSO fit + replacement (the parts that need
+the per-region kernel files) are bypassed.  This lets the user validate the
+tagger before generating kernels.
+
+```bash
+# A) Smearing-kernel sanity check (already validated; rerun any time):
+cd ../sp_plot
+python plot_l1sp_smearing_kernel.py
+# Produces l1sp_smearing_kernel_validation.png.
+
+# B) Tagger validation via dump-mode NPZ (default behaviour):
+cd ..
+./run_nf_sp_evt.sh 039324 0
+# Calib NPZs land under work/039324_0/l1sp_calib/apa<N>_<run>_<evt>.npz.
+# Inspect ROI asymmetry distributions per plane per region (np.load).
+
+# C) (Future, after kernel generation) Switch to process mode + per-ROI dump:
+#    1. Build pdvd_l1sp_kernels_{b,t}.json.bz2 with
+#         wirecell-sigproc gen-l1sp-kernels <FR> <out>.json.bz2
+#       and place them under WIRECELL_PATH.
+#    2. Populate the kernels_file string in
+#         cfg/pgrapher/experiment/protodunevd/sp.jsonnet
+#       (search for the 'TODO: generate per-region kernel JSON' comment).
+#    3. Run with -w to enable process mode + waveform dump:
+./run_nf_sp_evt.sh 039324 0 -w work/wf
+# Triggered-ROI NPZs (raw/decon/lasso/smeared) land under
+# work/wf/039324_0/<dump_tag>_<frame_ident>/.
+
+# D) Event-display ROI point-check:
+cd nf_plot
+./serve_l1sp_roi_viewer.sh ../work/wf
+ssh -L 5007:localhost:5007 user@workstation     # from laptop
+# open http://localhost:5007/l1sp_roi_viewer
+```
+
+The viewer code is shared with PDHD (verbatim copy of
+`pdhd/nf_plot/l1sp_roi_viewer.py`); it discovers APA index from the
+`apa<N>_<run>_<evt>` dump-tag prefix and so handles the full PDVD anode
+range (0–7) without further changes.
+
+**First-time process-mode sanity check.**  After step C above, before
+trusting the L1SP-modified output, run the same event with `-x` to get
+an L1SP-disabled baseline, then compare the `gauss<N>`/`wiener<N>` tags
+between the two runs.  If L1SP truly fired, the diff should be non-zero
+on at least the channels reported as triggered in step B's calib NPZs;
+if the diff is empty, the final-merger wiring is wrong (regression
+on `cfg/pgrapher/experiment/protodunevd/sp.jsonnet`'s `final_merger`).
+
+---
+
 ## Track response + sim overlay
 
 `track_response_{pdhd,pdvd_top,pdvd_bottom}.py` compute the analytic

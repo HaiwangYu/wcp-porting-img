@@ -42,9 +42,16 @@ function(
   use_freqmask  = true,                    // apply per-channel frequency mask in NF; override with --tla-code use_freqmask=false
   debug_dump_path = '',                    // when non-empty, PDVDCoherentNoiseSub dumps per-group .npz under this dir (default OFF)
   debug_dump_groups = [],                  // optional whitelist of group ids (= first-channel idents). [] = all groups
-  l1sp_pd_mode = '',                       // '' (OFF) / 'dump' (calib) / 'process' (not yet enabled)
+  // L1SP defaults: tagger ON in dump mode, LASSO writeback OFF.  Users can
+  // validate the ROI tagger via per-event NPZ dumps before the per-region
+  // kernel files are generated.  Switch to 'process' (with kernels_file
+  // populated in cfg/.../protodunevd/sp.jsonnet) for full L1SP replacement.
+  l1sp_pd_mode = 'dump',                   // 'dump' (default; tagger only) / 'process' (full L1SP) / '' (OFF)
   l1sp_pd_dump_path = '',                  // dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
+  l1sp_pd_wf_dump_path = '',               // per-ROI waveform dump dir (process mode); pass via -w flag
   l1sp_pd_planes = [0, 1],                 // plane indices to process (0=U, 1=V; skip W)
+  l1sp_pd_adj_enable = true,               // cross-channel adjacency expansion (default ON)
+  l1sp_pd_adj_max_hops = 3,                // adjacency hop cap (default 3 = +/-3 channels from any donor)
 )
 
   local tools = tools_all;
@@ -68,7 +75,10 @@ function(
   local sp_pipes = [sp.make_sigproc(a,
                                     l1sp_pd_mode=l1sp_pd_mode,
                                     l1sp_pd_dump_path=l1sp_pd_dump_path,
-                                    l1sp_pd_planes=l1sp_pd_planes)
+                                    l1sp_pd_wf_dump_path=l1sp_pd_wf_dump_path,
+                                    l1sp_pd_planes=l1sp_pd_planes,
+                                    l1sp_pd_adj_enable=l1sp_pd_adj_enable,
+                                    l1sp_pd_adj_max_hops=l1sp_pd_adj_max_hops)
                     for a in tools.anodes];
 
   local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
