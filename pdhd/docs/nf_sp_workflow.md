@@ -139,14 +139,20 @@ for override flags (`-c` calibration dump, `-w` waveform dump, or
 `frame_tap`) are `FrameFanout`-based — the main data stream passes through
 while a copy is written to disk.
 
-The cross-channel adjacency expansion runs by default.  It promotes a
-sub-threshold ROI's LASSO eligibility to that of an originally-triggered
-neighbour (±1 channel, same plane) when their tick windows overlap,
-lengths are similar, and the candidate's own raw asymmetry / decon
-`gmax` look L1SP-shaped.  Pass `--tla-code l1sp_pd_adj_enable=false` to
-disable it and recover the pre-2026-05-02 output.  See
+The cross-channel adjacency expansion runs by default and is iterative
+(BFS layer by layer, capped at `l1sp_pd_adj_max_hops=3`).  It promotes
+a sub-threshold ROI's LASSO eligibility to that of an adjacent
+neighbour (±1 channel, same plane) whose own polarity has been
+determined in an earlier hop, when their tick windows overlap, lengths
+are similar, and the candidate's own raw asymmetry / decon `gmax`
+look L1SP-shaped.  Each link in a multi-hop chain re-applies the
+loose preconditions, so promotion only spreads through ROIs that
+each independently look unipolar.  Pass
+`--tla-code l1sp_pd_adj_enable=false` to disable it (pre-2026-05-02
+output), or `--tla-code l1sp_pd_adj_max_hops=1` to restrict to a
+single hop (pre-2026-05-03 output).  See
 [`sigproc/docs/l1sp/L1SPFilterPD.md`](https://github.com/WireCell/wire-cell-toolkit/blob/apply-pointcloud/sigproc/docs/l1sp/L1SPFilterPD.md#cross-channel-adjacency-expansion)
-for the gate criteria and the verification on event 027409:0 APA0.
+for the gate criteria and verification on events 027409:0 APA0/APA1.
 
 ---
 

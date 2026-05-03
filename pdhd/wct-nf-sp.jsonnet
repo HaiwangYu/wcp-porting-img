@@ -44,6 +44,7 @@ function(
   l1sp_pd_dump_path = '',                       // scalar dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
   l1sp_pd_wf_dump_path = '',                    // waveform dump directory (used when l1sp_pd_mode='process'); pass via -w flag
   l1sp_pd_adj_enable = true,                    // cross-channel adjacency expansion; default ON (see sigproc/docs/l1sp/L1SPFilterPD.md). Pass false to recover pre-2026-05-02 behaviour.
+  l1sp_pd_adj_max_hops = 3,                     // iterative-expansion hop cap (default 3 ⇔ ±3 channels). Pass 1 to recover pre-2026-05-03 non-transitive behaviour.
   // l1sp_pd_planes is not exposed here: sp.jsonnet defaults to APA0→[0], APA1-3→[0,1].
 )
 
@@ -69,7 +70,8 @@ function(
                                     l1sp_pd_mode=l1sp_pd_mode,
                                     l1sp_pd_dump_path=l1sp_pd_dump_path,
                                     l1sp_pd_wf_dump_path=l1sp_pd_wf_dump_path,
-                                    l1sp_pd_adj_enable=l1sp_pd_adj_enable)
+                                    l1sp_pd_adj_enable=l1sp_pd_adj_enable,
+                                    l1sp_pd_adj_max_hops=l1sp_pd_adj_max_hops)
                     for a in tools.anodes];
 
   local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
