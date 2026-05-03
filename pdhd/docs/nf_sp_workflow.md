@@ -139,6 +139,14 @@ for override flags (`-c` calibration dump, `-w` waveform dump, or
 `frame_tap`) are `FrameFanout`-based — the main data stream passes through
 while a copy is written to disk.
 
+The cross-channel adjacency expansion (default OFF) can be enabled with
+`--tla-code l1sp_pd_adj_enable=true`.  It promotes a sub-threshold ROI's
+LASSO eligibility to that of an originally-triggered neighbour (±1 channel,
+same plane) when their tick windows overlap, lengths are similar, and the
+candidate's own raw asymmetry / decon `gmax` look L1SP-shaped.  See
+[`sigproc/docs/l1sp/L1SPFilterPD.md`](https://github.com/WireCell/wire-cell-toolkit/blob/apply-pointcloud/sigproc/docs/l1sp/L1SPFilterPD.md#cross-channel-adjacency-expansion)
+for the gate criteria and the verification on event 027409:0 APA0.
+
 ---
 
 ## Trace tags in the output archives

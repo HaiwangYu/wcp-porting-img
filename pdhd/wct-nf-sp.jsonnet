@@ -43,6 +43,7 @@ function(
   l1sp_pd_mode = 'process',                     // 'process' (default, ON) / 'dump' (calib bypass) / '' (OFF)
   l1sp_pd_dump_path = '',                       // scalar dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
   l1sp_pd_wf_dump_path = '',                    // waveform dump directory (used when l1sp_pd_mode='process'); pass via -w flag
+  l1sp_pd_adj_enable = false,                   // cross-channel adjacency expansion; default OFF (see sigproc/docs/l1sp/L1SPFilterPD.md)
   // l1sp_pd_planes is not exposed here: sp.jsonnet defaults to APA0→[0], APA1-3→[0,1].
 )
 
@@ -67,7 +68,8 @@ function(
   local sp_pipes = [sp.make_sigproc(a,
                                     l1sp_pd_mode=l1sp_pd_mode,
                                     l1sp_pd_dump_path=l1sp_pd_dump_path,
-                                    l1sp_pd_wf_dump_path=l1sp_pd_wf_dump_path)
+                                    l1sp_pd_wf_dump_path=l1sp_pd_wf_dump_path,
+                                    l1sp_pd_adj_enable=l1sp_pd_adj_enable)
                     for a in tools.anodes];
 
   local resamplers_config = import 'pgrapher/common/resamplers.jsonnet';
