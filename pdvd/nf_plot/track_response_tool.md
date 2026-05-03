@@ -159,12 +159,28 @@ To build an L1SP kernel for PDHD or PDVD, replace these parameters:
 | FR file                | `ub-10-half.json.bz2`                    | PDHD/PDVD field-response file         |
 | `gain`                 | 14.0 mV/fC                              | per-detector FE gain                  |
 | `shaping`              | 2.2 µs                                  | per-detector FE shaping               |
-| `postgain`             | 1.2                                     | per-detector postgain                 |
+| `postgain`             | 1.2                                     | per-detector postgain ‡               |
 | `ADC_PER_MV`           | 2.048  (12-bit, 0–2 V)                  | per-detector ADC fullscale            |
 | `coarse_time_offset`   | −8.0 µs                                 | tune from PDHD/PDVD hardware timing   |
 | basis 0 (induction)    | bipolar V  (V-plane FR, `lin_V`)         | bipolar induction (any induction plane)|
 | basis 1 (collection)   | W with `collect_time_offset = +3 µs`    | unipolar ± with `unipolar_time_offset` (default +3 µs, `L1SPFilterPD.h:114`) |
 | output basis weights   | `l1_col_scale=1.15`, `l1_ind_scale=0.50` | `l1_basis0_scale`, `l1_basis1_scale`  |
+
+> **‡ PDVD `postgain` is provisional — revisit when the PDVD FR is
+> fixed.**  The current values
+> (PDVD-bottom = 1.1365, PDVD-top = 1.52) were calibrated through the
+> W (collection) plane against an FR file that under-normalises the
+> W-plane line-source integrand by ~12% (an all-zero "sentinel" path
+> at pp=0 on W; see `pdvd/sp_plot/illustrate_pdvd_w_sentinel_path_bug.py`).
+> The calibration absorbs that deficit into `postgain`, so when the
+> corrected FR lands the postgain values are expected to drop:
+> PDVD-bottom → 1.0 (matches PDHD, with which it shares electronics);
+> PDVD-top → ≈ 1.36 (re-derive from the new calibration).  Update the
+> `POSTGAIN` constants in `track_response_pdvd_{bottom,top}.py`, the
+> `postgain` entries in
+> `wire-cell-python/wirecell/sigproc/track_response_defaults.jsonnet`,
+> and regenerate `wire-cell-data/pdvd_{bottom,top}_l1sp_kernels.json.bz2`
+> via `wirecell-sigproc gen-l1sp-kernels -d pdvd-{bottom,top}`.
 
 The `l1sp_response()` function in `track_response_uboone.py` is detector-agnostic — pass
 the PDHD FR line, PDHD ER, and period; the rest is the same FFT product.
