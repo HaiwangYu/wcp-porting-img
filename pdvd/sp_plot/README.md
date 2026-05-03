@@ -1,4 +1,73 @@
-# cmd_plot_frames.py — Usage Guide
+# pdvd/sp_plot — PDVD signal-processing inspection scripts
+
+Three families of scripts live here; each is documented below.
+
+| Script | Purpose |
+|---|---|
+| `cmd_plot_frames.py` | U/V/W frame views from a `FrameFileSink` archive |
+| `track_response_l1sp_pdvd.py` | Validator for the PDVD L1SPFilterPD kernel JSONs (top + bottom) |
+| `illustrate_pdvd_w_sentinel_path_bug.py` | Diagnostic plot for the all-zero sentinel-path bug in the PDVD W FR |
+
+---
+
+## `track_response_l1sp_pdvd.py` — kernel validator
+
+Loads `pdvd_top_l1sp_kernels.json.bz2` and `pdvd_bottom_l1sp_kernels.json.bz2`
+(via `WIRECELL_PATH`) and produces five inspection PNGs in this directory:
+
+```
+track_response_l1sp_pdvd_top_U.png
+track_response_l1sp_pdvd_top_V.png
+track_response_l1sp_pdvd_bottom_U.png
+track_response_l1sp_pdvd_bottom_V.png
+track_response_l1sp_pdvd_compare.png    # top vs bottom overlay
+```
+
+Each per-plane PNG has two stacked panels: positive ROI (bipolar +
+W shifted to land at the bipolar zero crossing) on top, negative ROI
+(bipolar + neg-half(bipolar), no shift) on bottom.  The compare PNG
+overlays top and bottom on a shared time axis (relative to each
+detector's V-plane zero crossing) so the relative W shift between
+the two CRPs is visible at a glance.
+
+```bash
+python track_response_l1sp_pdvd.py
+# --top-file / --bottom-file override the defaults
+```
+
+Mirrors the PDHD validator at
+`pdhd/nf_plot/track_response_l1sp_kernels.py`; uses the PDVD U/V wire
+pitch (7.65 mm) for the `×N_MIP` ADC scaling.
+
+---
+
+## `illustrate_pdvd_w_sentinel_path_bug.py` — sentinel-path diagnostic
+
+Documents an all-zero "sentinel" path at `pp=0` on the W plane of
+`protodunevd_FR_imbalance3p_260501.json.bz2`.  Before the fix in
+`wire-cell-python` commit `b1249b8`, `wirecell.sigproc.{l1sp,
+track_response}.line_source_response` treated this entry as
+legitimate data and pinned the trapezoidal integrator's central
+weight to zero, under-normalising the W collection peak by ~12%
+(integral −0.823 e → −0.920 e per electron, closer to the canonical
+−1).  PDHD/uBooNE/SBND/PDVD-U/PDVD-V are unaffected.
+
+The fix is one line: skip identically-zero paths in the input
+loop.  No interpolation, no per-detector special case — the
+trapezoidal weights at the surviving samples (pp=±0.51 mm here)
+naturally widen to fill the gap.
+
+```bash
+python illustrate_pdvd_w_sentinel_path_bug.py
+# writes pdvd_w_sentinel_path_bug.png — 3×3 grid:
+#   row 0: PDVD U/V/W central-wire path currents (W column flagged ← SENTINEL)
+#   row 1: PDHD U/V/W central-wire path currents (control: pp=0 always real)
+#   row 2: line_source_response buggy vs fixed; U/V identical, W shows Δ
+```
+
+---
+
+## `cmd_plot_frames.py` — frame viewer
 
 Draws U, V, W wire-plane views from a WireCell `FrameFileSink` archive (`.tar.bz2`).
 Each output is a single PNG with three stacked panels — one per plane.
