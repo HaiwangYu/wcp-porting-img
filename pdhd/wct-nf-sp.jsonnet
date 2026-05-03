@@ -43,7 +43,7 @@ function(
   l1sp_pd_mode = 'process',                     // 'process' (default, ON) / 'dump' (calib bypass) / '' (OFF)
   l1sp_pd_dump_path = '',                       // scalar dump directory (used when l1sp_pd_mode='dump'); pass via -c flag
   l1sp_pd_wf_dump_path = '',                    // waveform dump directory (used when l1sp_pd_mode='process'); pass via -w flag
-  l1sp_pd_adj_enable = false,                   // cross-channel adjacency expansion; default OFF (see sigproc/docs/l1sp/L1SPFilterPD.md)
+  l1sp_pd_adj_enable = true,                    // cross-channel adjacency expansion; default ON (see sigproc/docs/l1sp/L1SPFilterPD.md). Pass false to recover pre-2026-05-02 behaviour.
   // l1sp_pd_planes is not exposed here: sp.jsonnet defaults to APA0→[0], APA1-3→[0,1].
 )
 
