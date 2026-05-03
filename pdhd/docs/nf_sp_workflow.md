@@ -200,6 +200,30 @@ Fix (toolkit commit `47d16673`): add `FFTW_UNALIGNED` to all
 plan-creation calls and remove `aligned` from the cache key — a single
 plan now serves any buffer alignment. No config or jsonnet change.
 
+### L1SPFilterPD re-verification (2026-05-02)
+
+After `L1SPFilterPD` was added to the SP graph (with the
+`FrameSplitter`/`FrameMerger` wiring that routes the LASSO-fit gauss
+into both the `gauss{N}` and `wiener{N}` output tags), reproducibility
+was re-verified on event 027409:0 with `setarch -R`.  Two consecutive
+runs each on APA0 and APA1 produced **bit-identical** inner `.npy`
+arrays (`frame_gauss{N}`, `frame_wiener{N}`, `frame_raw0`,
+`channels_*`, `tickinfo_*`).  L1SP was confirmed active in every run
+(`Timer: WireCell::SigProc::L1SPFilterPD ≈ 0.14 s` on APA0, ≈ 0.29 s
+on APA1).  Tarball byte sizes still differ by tens of bytes between
+runs — that is bz2/tar metadata, not data.
+
+The L1SP-side path has no internal source of run-to-run drift.  Static
+read of `sigproc/src/L1SPFilterPD.cxx`, `util/src/LassoModel.cxx`, and
+`util/src/ElasticNetModel.cxx` shows: no RNG, no threading, no hash-
+keyed containers (only `std::map<int,…>` / `std::set<int>` keyed on
+channel/tick), a fresh `LassoModel` constructed per ROI, and Eigen
+running single-threaded (no MKL / OpenBLAS / TBB / `libgomp` linked
+into `libWireCellSigProc.so` or `libWireCellUtil.so`, no `-fopenmp`
+in the build flags).  The FFTW inside L1SP rides on the same
+`FFTW_ESTIMATE | FFTW_UNALIGNED` settings that the 2026-04-29 fix
+established.
+
 To verify reproducibility on this workflow:
 ```bash
 WORK=/tmp/repro && mkdir -p $WORK/r1 $WORK/r2
