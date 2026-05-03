@@ -154,6 +154,19 @@ single hop (pre-2026-05-03 output).  See
 [`sigproc/docs/l1sp/L1SPFilterPD.md`](https://github.com/WireCell/wire-cell-toolkit/blob/apply-pointcloud/sigproc/docs/l1sp/L1SPFilterPD.md#cross-channel-adjacency-expansion)
 for the gate criteria and verification on events 027409:0 APA0/APA1.
 
+The trigger gate has a fifth "very-long" arm enabled by PDHD's
+`sp.jsonnet` at `(l1_len_very_long=140, l1_asym_very_long=0.35)`.
+It catches long sub-windows whose per-sub-window asymmetry sits below
+the existing 0.40 mod-arm cutoff but whose great length still indicates
+a unipolar artifact — e.g. 027409:0 APA3 V ch 8753
+(`core_length=144, |craw|=0.36`).  C++ default keeps the arm OFF, so
+other experiments using `L1SPFilterPD` without overrides inherit the
+prior four-arm behaviour bit-identically.  Multi-event scan over
+027409 events 0–7 measured ~1 new trigger/event globally on a baseline
+of ~74 (concentrated in APA0 U and APA3 V).  See
+[`sigproc/docs/l1sp/L1SPFilterPD.md`](https://github.com/WireCell/wire-cell-toolkit/blob/apply-pointcloud/sigproc/docs/l1sp/L1SPFilterPD.md#trigger-logic)
+§ Trigger logic for the full per-arm description.
+
 ---
 
 ## Trace tags in the output archives
