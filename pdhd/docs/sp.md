@@ -342,6 +342,16 @@ electronics parameters change — see
 `toolkit/sigproc/docs/l1sp/L1SPFilterPD.md` for the `gen-l1sp-kernels`
 invocation.
 
+### Output wiring: gauss and wiener both carry the L1SP result
+
+After the LASSO solve, a `FrameMerger` (`l1spfinal{N}`) replaces the
+`gauss{N}` and `wiener{N}` traces in the final SP frame with the L1SP-
+modified gauss waveform.  Both tags carry identical, post-L1SP traces;
+the untouched `OmnibusSigProc` gauss/wiener are routed only into the
+merger as the second input and are never persisted.  This means the
+magnify file (`spframesink{N}`) shows the L1SP result on both
+`gauss{N}` and `wiener{N}` panels.
+
 ### Key config knobs (in `sp.jsonnet`)
 
 | Key | Value | Meaning |
