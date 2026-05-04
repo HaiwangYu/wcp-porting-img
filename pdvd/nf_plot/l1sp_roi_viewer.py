@@ -169,6 +169,15 @@ def main(argv):
 
     def update_roi_options():
         paths = selected_paths()
+        if not paths:
+            # Auto-switch to the first plane that has ROIs for this event/APA.
+            run_evt_apa = event_select.value
+            run_evt, apa_part = run_evt_apa.split("/")
+            apa = int(apa_part[len("apa"):])
+            for p in [0, 1, 2]:
+                if roi_index.get((run_evt, apa), {}).get(p, []):
+                    plane_radio.active = p  # triggers on_plane_change → update_roi_options
+                    return
         opts = [roi_label(p) for p in paths]
         roi_select.options = opts
         if opts and (roi_select.value not in opts):
@@ -188,15 +197,20 @@ def main(argv):
         npz_path = paths[labels.index(label)]
         try:
             z = np.load(npz_path)
+            raw    = z["raw"].astype(float)
+            decon  = z["decon"].astype(float)
+            lasso  = z["lasso"].astype(float)
+            smear  = z["smeared"].astype(float)
         except Exception as e:
             info_div.text = f"<b>Error loading {npz_path}:</b> {e}"
+            for src in (src_raw, src_decon, src_lasso, src_smear):
+                src.data = dict(x=[], y=[])
             return
-
-        raw    = z["raw"].astype(float)
-        decon  = z["decon"].astype(float)
-        lasso  = z["lasso"].astype(float)
-        smear  = z["smeared"].astype(float)
         nbin   = len(raw)
+        # lasso is empty when LASSO declined (sum_beta below threshold); pad
+        # with zeros so all four ColumnDataSources get the same length.
+        if len(lasso) != nbin:
+            lasso = np.zeros(nbin)
         start  = int(z["start_tick"][0])
         end    = int(z["end_tick"][0])
         ch     = int(z["channel"][0])
@@ -217,10 +231,11 @@ def main(argv):
 
         plane_name = ["U", "V", "W"][plane] if plane < 3 else str(plane)
         pol_str = "positive (collection-on-induction)" if pol > 0 else "negative (anode-induction)"
+        lasso_note = "" if int(z["lasso"].size) > 0 else " &nbsp; <i>(LASSO declined — sum_beta below threshold)</i>"
         info_div.text = (
             f"<b>ch={ch} &nbsp; plane={plane_name} &nbsp; ticks=[{start},{end}) "
             f"nbin={nbin}</b><br>"
-            f"polarity: {pol_str}<br>"
+            f"polarity: {pol_str}{lasso_note}<br>"
             f"frame_ident={frame} &nbsp; call_count={call}"
         )
 

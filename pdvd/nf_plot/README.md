@@ -93,10 +93,24 @@ ssh -L 5007:localhost:5007 user@workstation     # from laptop
 # open http://localhost:5007/l1sp_roi_viewer
 ```
 
-The viewer code is shared with PDHD (verbatim copy of
-`pdhd/nf_plot/l1sp_roi_viewer.py`); it discovers APA index from the
-`apa<N>_<run>_<evt>` dump-tag prefix and so handles the full PDVD anode
-range (0–7) without further changes.
+The viewer started as a verbatim copy of
+`pdhd/nf_plot/l1sp_roi_viewer.py`; the PDVD copy has since added the
+auto-plane-switch and LASSO-declined handling described below and is
+the canonical version (port the changes back to PDHD when next
+needed).  It discovers APA index from the `apa<N>_<run>_<evt>`
+dump-tag prefix and so handles the full PDVD anode range (0–7)
+without further changes.
+
+When a triggered ROI's LASSO is declined (the cxx writes back zeros
+because `sum_beta` did not pass the admit threshold), the dump still
+saves the entry with an empty `lasso` array.  The viewer pads it back
+to ROI length, draws the "LASSO fit" panel as zeros, annotates the
+header with *"LASSO declined — sum_beta below threshold"*, and zeroes
+the smeared panel.  This is the expected display for tagger-fired
+but solver-rejected ROIs (e.g. negative-polarity dips with no
+in-window basis1 coverage in older kernel files).  The viewer also
+auto-switches the U/V/W radio button if the currently selected plane
+has no ROIs for the chosen event/APA.
 
 **First-time process-mode sanity check.**  After step C above, before
 trusting the L1SP-modified output, run the same event with `-x` to get

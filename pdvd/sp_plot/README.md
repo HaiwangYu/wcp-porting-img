@@ -99,9 +99,18 @@ overlays top and bottom on a shared time axis (relative to each
 detector's V-plane zero crossing) so the relative W shift between
 the two CRPs is visible at a glance.
 
+By default the script also rebuilds the kernels in-process from the
+field-response file and electronics preset (`load_detector_config` +
+`build_l1sp_kernels`) and overlays them as thick translucent bands
+behind the from-JSON curves.  Any drift between the on-disk JSON and
+the FR source-of-truth is then immediately visible (the bands won't
+hug the thin lines).  Pass `--no-rebuild` to skip the overlay if you
+just want to inspect the JSON.
+
 ```bash
 python track_response_l1sp_pdvd.py
 # --top-file / --bottom-file override the defaults
+# --no-rebuild skips the FR-rebuild overlay (faster)
 ```
 
 Mirrors the PDHD validator at

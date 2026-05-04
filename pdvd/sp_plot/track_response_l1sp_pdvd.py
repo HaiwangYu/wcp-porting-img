@@ -37,9 +37,30 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from wirecell.sigproc.l1sp import load_l1sp_kernels, negative_half
+from wirecell.sigproc.l1sp import build_l1sp_kernels, load_l1sp_kernels, negative_half
+from wirecell.sigproc.track_response import load_detector_config
+from wirecell import units
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _rebuild_from_fr(detector_key):
+    """Rebuild PDVD kernels from the same fr/elec preset that produced the JSON files."""
+    cfg = load_detector_config(detector_key)
+    er_kind = cfg.get('er_kind', 'cold')
+    ow = cfg.get('output_window')
+    return build_l1sp_kernels(
+        fr_file               = cfg['fr'],
+        gain                  = cfg['gain']    if er_kind == 'cold' else 0.0,
+        shaping               = cfg['shaping'] if er_kind == 'cold' else 0.0,
+        postgain              = cfg['postgain'],
+        adc_per_mv            = cfg['adc_per_mv'],
+        coarse_time_offset_us = -8.0,
+        fine_time_offset_us   =  0.0,
+        er_kind               = er_kind,
+        er_file               = cfg.get('er_file'),
+        output_window_us      = float(ow / units.us) if ow else None,
+    )
 
 # PDVD U/V wire pitch is 7.65 mm.  Used only for the ADC×N_MIP overlay.
 PDVD_PITCH_CM = 0.765
@@ -97,8 +118,11 @@ def report(data):
               f'W shift (positive case)={p["positive"]["unipolar_time_offset_us"]:+.3f} µs')
 
 
-def plot_pdvd_plane(data, plane_idx, outpath):
-    """Two-panel figure for one plane: positive ROI (top) + negative ROI (bottom)."""
+def plot_pdvd_plane(data, plane_idx, outpath, ref_data=None):
+    """Two-panel figure for one plane: positive ROI (top) + negative ROI (bottom).
+
+    If ref_data is provided (FR rebuild), its curves are drawn as thick translucent
+    bands behind the from-file curves so any mismatch is immediately visible."""
     plane_label = {0: 'U', 1: 'V'}[plane_idx]
     k_bip = data['kU'] if plane_idx == 0 else data['kV']
     t  = data['t_us']
@@ -116,12 +140,21 @@ def plot_pdvd_plane(data, plane_idx, outpath):
 
     # positive case: bipolar + W (collection-on-induction)
     ax = axes[0]
+    if ref_data is not None:
+        r_bip   = ref_data['kU'] if plane_idx == 0 else ref_data['kV']
+        r_shift = ref_data['planes'][plane_idx]['positive']['unipolar_time_offset_us']
+        ax.plot(t_plot, r_bip * Nm, color='steelblue', lw=4, alpha=0.35, ls='-',
+                label='_bipolar (rebuilt from FR)')
+        ax.plot(t_plot + r_shift, ref_data['kW'] * Nm, color='darkorange', lw=4, alpha=0.35, ls='-',
+                label='_unipolar (rebuilt from FR)')
     ax.plot(t_plot, k_bip * Nm, color='steelblue', lw=1.5,
             label=f'{plane_label}-plane bipolar (×{Nm:.0f} e⁻/pitch)  '
                   f'[zero-crossing at {zc_in_plot:+.2f} µs]')
     ax.plot(t_plot + shift_W, data['kW'] * Nm, color='darkorange', lw=1.5,
             label=f'W-plane unipolar  '
                   f'(W-peak ↔ {plane_label}-zero-crossing; raw shift {shift_W:+.2f} µs)')
+    if ref_data is not None:
+        ax.plot([], [], color='gray', lw=4, alpha=0.35, label='thick band = rebuilt from FR')
     ax.axhline(0, color='gray', lw=0.5, ls=':')
     ax.axvline(zc_in_plot, color='steelblue', lw=0.5, ls=':')
     ax.set_xlim(PLOT_XLIM)
@@ -133,11 +166,19 @@ def plot_pdvd_plane(data, plane_idx, outpath):
 
     # negative case: bipolar + neg-half(bipolar), no shift
     ax = axes[1]
+    if ref_data is not None:
+        r_bip = ref_data['kU'] if plane_idx == 0 else ref_data['kV']
+        ax.plot(t_plot, r_bip * Nm, color='steelblue', lw=4, alpha=0.35, ls='-',
+                label='_bipolar (rebuilt from FR)')
+        ax.plot(t_plot, negative_half(r_bip) * Nm, color='forestgreen', lw=4, alpha=0.35, ls='-',
+                label='_neg-half (rebuilt from FR)')
     ax.plot(t_plot, k_bip * Nm, color='steelblue', lw=1.5,
             label=f'{plane_label}-plane bipolar (×{Nm:.0f} e⁻/pitch)  '
                   f'[zero-crossing at {zc_in_plot:+.2f} µs]')
     ax.plot(t_plot, negative_half(k_bip) * Nm, color='forestgreen', lw=1.5, ls='--',
             label=f'neg-half({plane_label}) — anode-induction unipolar (no shift)')
+    if ref_data is not None:
+        ax.plot([], [], color='gray', lw=4, alpha=0.35, label='thick band = rebuilt from FR')
     ax.axhline(0, color='gray', lw=0.5, ls=':')
     ax.set_xlim(PLOT_XLIM)
     ax.set_ylabel('ADC (×N_MIP)')
@@ -147,17 +188,21 @@ def plot_pdvd_plane(data, plane_idx, outpath):
                  f'(anode-induction)', fontsize=9)
 
     axes[-1].set_xlabel('time (µs, relative to V-plane zero crossing)')
+    overlay_note = ('  [thick band = rebuilt from FR; thin line = from file]'
+                    if ref_data is not None else '')
     fig.suptitle(f'{data["label"]} L1SPFilterPD — {plane_label} plane  '
-                 f'(N_MIP/pitch={Nm:.0f} e⁻;  V-zero-crossing @ {t_zc_V:+.2f} µs)',
+                 f'(N_MIP/pitch={Nm:.0f} e⁻;  V-zero-crossing @ {t_zc_V:+.2f} µs)'
+                 f'{overlay_note}',
                  fontsize=10)
     plt.savefig(outpath, dpi=150, bbox_inches='tight')
     plt.close()
     print(f'  → {outpath}')
 
 
-def plot_compare(top_data, bot_data, outpath):
+def plot_compare(top_data, bot_data, outpath, ref_top=None, ref_bot=None):
     """Top-vs-bottom overlay: each plane as one row, bipolar + W on a single
-    panel, time axis relative to each detector's own V-plane zero crossing."""
+    panel, time axis relative to each detector's own V-plane zero crossing.
+    ref_top/ref_bot, if provided, are drawn as thick translucent bands."""
     fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
     fig.subplots_adjust(hspace=0.12)
 
@@ -165,12 +210,20 @@ def plot_compare(top_data, bot_data, outpath):
         (axes[0], 0, 'U'),
         (axes[1], 1, 'V'),
     ):
-        for det, color in ((top_data, COLOR_TOP), (bot_data, COLOR_BOTTOM)):
+        for det, ref, color in ((top_data, ref_top, COLOR_TOP),
+                                (bot_data, ref_bot, COLOR_BOTTOM)):
             t_zc_V  = det['planes'][1]['zero_crossing_us']
             t_plot  = det['t_us'] - t_zc_V
             k_bip   = det['kU'] if plane_idx == 0 else det['kV']
             shift_W = det['planes'][plane_idx]['positive']['unipolar_time_offset_us']
             zc_local = det['planes'][plane_idx]['zero_crossing_us'] - t_zc_V
+
+            if ref is not None:
+                r_bip   = ref['kU'] if plane_idx == 0 else ref['kV']
+                r_shift = ref['planes'][plane_idx]['positive']['unipolar_time_offset_us']
+                ax.plot(t_plot, r_bip * ref['N_mip'], color=color, lw=4, alpha=0.35)
+                ax.plot(t_plot + r_shift, ref['kW'] * ref['N_mip'],
+                        color=color, lw=4, alpha=0.35, ls='--')
 
             ax.plot(t_plot, k_bip * det['N_mip'], color=color, lw=1.5,
                     label=f'{det["label"]} — {plane_label} bipolar  '
@@ -178,6 +231,9 @@ def plot_compare(top_data, bot_data, outpath):
             ax.plot(t_plot + shift_W, det['kW'] * det['N_mip'],
                     color=color, lw=1.5, ls='--',
                     label=f'{det["label"]} — W (shifted {shift_W:+.2f} µs)')
+
+        if ref_top is not None or ref_bot is not None:
+            ax.plot([], [], color='gray', lw=4, alpha=0.35, label='thick band = rebuilt from FR')
         ax.axhline(0, color='gray', lw=0.5, ls=':')
         ax.set_xlim(PLOT_XLIM)
         ax.set_ylabel('ADC (×N_MIP)')
@@ -187,8 +243,9 @@ def plot_compare(top_data, bot_data, outpath):
                      fontsize=9)
 
     axes[-1].set_xlabel('time (µs, relative to each detector\'s V-plane zero crossing)')
-    fig.suptitle('PDVD L1SP kernel comparison: top CRP (JsonElec) vs bottom CRP (cold)',
-                 fontsize=11)
+    overlay_note = '  [thick band = rebuilt from FR]' if (ref_top or ref_bot) else ''
+    fig.suptitle('PDVD L1SP kernel comparison: top CRP (JsonElec) vs bottom CRP (cold)'
+                 + overlay_note, fontsize=11)
     plt.savefig(outpath, dpi=150, bbox_inches='tight')
     plt.close()
     print(f'  → {outpath}')
@@ -204,6 +261,8 @@ def main():
     parser.add_argument('--bottom-file', default='pdvd_bottom_l1sp_kernels.json.bz2',
                         help='PDVD-bottom kernel JSON+bz2 (default: '
                              'pdvd_bottom_l1sp_kernels.json.bz2 via WIRECELL_PATH).')
+    parser.add_argument('--no-rebuild', action='store_true',
+                        help='Skip the FR rebuild overlay (faster; just plot the JSON file).')
     args = parser.parse_args()
 
     print(f'Loading PDVD-top    kernels from {args.top_file}')
@@ -217,12 +276,20 @@ def main():
     report(top)
     report(bot)
 
+    ref_top = ref_bot = None
+    if not args.no_rebuild:
+        print('\nRebuilding PDVD top    kernels from FR + electronics...')
+        ref_top = _kernels_to_data(_rebuild_from_fr('pdvd-top'),    'PDVD top (FR rebuild)')
+        print('Rebuilding PDVD bottom kernels from FR + electronics...')
+        ref_bot = _kernels_to_data(_rebuild_from_fr('pdvd-bottom'), 'PDVD bottom (FR rebuild)')
+
     print()
-    plot_pdvd_plane(top, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_top_U.png'))
-    plot_pdvd_plane(top, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_top_V.png'))
-    plot_pdvd_plane(bot, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_bottom_U.png'))
-    plot_pdvd_plane(bot, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_bottom_V.png'))
-    plot_compare(top, bot, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_compare.png'))
+    plot_pdvd_plane(top, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_top_U.png'),    ref_data=ref_top)
+    plot_pdvd_plane(top, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_top_V.png'),    ref_data=ref_top)
+    plot_pdvd_plane(bot, 0, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_bottom_U.png'), ref_data=ref_bot)
+    plot_pdvd_plane(bot, 1, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_bottom_V.png'), ref_data=ref_bot)
+    plot_compare(top, bot, os.path.join(WORKDIR, 'track_response_l1sp_pdvd_compare.png'),
+                 ref_top=ref_top, ref_bot=ref_bot)
 
     print('\nDone.')
 
