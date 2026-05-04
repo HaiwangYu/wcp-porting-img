@@ -37,7 +37,7 @@ bottom today are electronics-derived:
 
 | Knob | Bottom (ident 0–3) | Top (ident 4–7) | Why |
 |------|--------------------|-----------------|-----|
-| `elecresponse` | `tools.elec_resps[0]` — `ColdElecResponse`, 7.8 mV/fC, 2.2 µs shaping (`params.jsonnet:124–126`) | `tools.elec_resps[1]` — `JsonElecResponse` from `dunevd-coldbox-elecresp-top-psnorm_400.json.bz2`, postgain 1.52 (`params.jsonnet:129–132`) | Physically distinct front-end electronics on the two drift faces |
+| `elecresponse` | `tools.elec_resps[0]` — `ColdElecResponse`, 7.8 mV/fC, 2.2 µs shaping (`params.jsonnet:124–126`) | `tools.elec_resps[1]` — `JsonElecResponse` from `dunevd-coldbox-elecresp-top-psnorm_400.json.bz2`, postgain 1.36 (`params.jsonnet:129–132`) | Physically distinct front-end electronics on the two drift faces |
 | `fullscale` (→ `ADC_mV`) | `params.adc.fullscale[1] − [0]` = 1.4 V → `ADC_mV` ≈ 11.71 / mV | hard-overridden to 2.0 V → `ADC_mV` ≈ 8.19 / mV (`sp.jsonnet:66–69`) | Top ADC spans 0–2 V; bottom 0.2–1.6 V |
 | L1SP `kernels_file` | `pdvd_bottom_l1sp_kernels.json.bz2` | `pdvd_top_l1sp_kernels.json.bz2` | Per-region response kernels generated offline |
 | L1SP `gain_scale` | `elec.gain / 7.8 mV/fC` | `1.0` (top gain is JSON-fixed; no runtime knob) | Reference electronics differ by region |

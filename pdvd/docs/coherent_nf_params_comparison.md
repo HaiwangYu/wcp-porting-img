@@ -156,8 +156,8 @@ configurations.
 |---|---|---|---|
 | uBooNE | **14.0** | 2.2 | 1.2 |
 | SBND | **14.0** (common-params default; not overridden) | 2.0 | 1.0 |
-| PDVD bottom (anodes 0–3) | **7.8** (overridable) | 2.2 | 1.1365 |
-| PDVD top (anodes 4–7) | n/a (uses `JsonElecResponse` waveform; effective FE gain ≈ 11 mV/fC × postgain 1.52 ≈ 16.7 mV/fC) | n/a (response built into JSON) | 1.52 |
+| PDVD bottom (anodes 0–3) | **7.8** (overridable) | 2.2 | 1.0 (was 1.1365 before FR fix) |
+| PDVD top (anodes 4–7) | n/a (uses `JsonElecResponse` waveform; effective FE gain ≈ 11 mV/fC × postgain 1.36 ≈ 14.96 mV/fC) | n/a (response built into JSON) | 1.36 (was 1.52 before FR fix) |
 | PDHD | external (`std.extVar("elecGain")`; typical 7.8 or 14.0) | 2.2 | (none in default block) |
 | PDSP | (uses common defaults) | 2.2 | 1.1365 |
 
@@ -198,7 +198,7 @@ than the 14-bit DUNE experiments, so an ADC-domain threshold of
 | uBooNE | 7.32 mV | 0.523 fC (gain 14 mV/fC) | **3.27 ke-** |
 | SBND | 6.59 mV | 0.471 fC (gain 14) | **2.94 ke-** |
 | PDVD bottom (gain 7.8) | 1.28 mV | 0.165 fC | **1.03 ke-** |
-| PDVD top (effective ~11 mV/fC × postgain 1.52) | 1.83 mV | 0.110 fC | **0.69 ke-** |
+| PDVD top (effective ~11 mV/fC × postgain 1.36) | 1.83 mV | 0.123 fC | **0.77 ke-** |
 | PDHD (gain 14 mV/fC) | 1.28 mV | 0.0916 fC | **0.57 ke-** |
 
 (1 fC ≈ 6242 e-)

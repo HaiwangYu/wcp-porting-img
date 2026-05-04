@@ -35,7 +35,7 @@ ProtoDUNE-VD has two drift technologies with different electronics:
 | Anode ident | Drift | Electronics response | Full-scale |
 |-------------|-------|---------------------|-----------|
 | 0–3 | Bottom (TDE) | `ColdElecResponse` 7.8 mV/fC, shaping 2.2 µs | 0.2–1.6 V (1.4 V range, `params.adc.fullscale`) |
-| 4–7 | Top | `JsonElecResponse` from `dunevd-coldbox-elecresp-top-psnorm_400.json.bz2`, postgain 1.52 | Forced 2.0 V |
+| 4–7 | Top | `JsonElecResponse` from `dunevd-coldbox-elecresp-top-psnorm_400.json.bz2`, postgain 1.36 | Forced 2.0 V |
 
 Config in `sp.jsonnet:43–55` and `params.jsonnet:113–125`.
 The `ADC_mV` ratio (`(2^resolution - 1) / fullscale`, `sp.jsonnet:43–47`)

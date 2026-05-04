@@ -11,7 +11,7 @@ line FR.
 Configuration source (cfg/pgrapher/experiment/protodunevd/params.jsonnet:128):
     elecs[1] = { type: "JsonElecResponse",
                  filename: "dunevd-coldbox-elecresp-top-psnorm_400.json.bz2",
-                 postgain: 1.52 }
+                 postgain: 1.36 }
 
 Outputs:
   track_response_pdvd_top_U.png
@@ -24,7 +24,7 @@ PDVD detector response.
 
 Top-CRP electronics (coherent_nf_params_comparison.md §2–3):
   ER       : JsonElecResponse (peak ≈ 7.2 mV/fC effective FE gain, fast)
-  postgain : 1.52
+  postgain : 1.36
   ADC      : 14-bit, 0.0–2.0 V → 8.192 ADC/mV
   pitch    : U=V=7.65 mm,  W=5.10 mm  (read from FR file)
   N_MIP    : 1.8 MeV/cm × pitch_cm × 0.7 / 23.6 eV
@@ -64,7 +64,7 @@ ADC_TICK_NS = 500.0
 # the wraparound zone.
 OUTPUT_WINDOW_NS = 160_000.0
 
-POSTGAIN    = 1.52        # params.jsonnet:131
+POSTGAIN    = 1.36        # params.jsonnet:131
 ADC_PER_MV  = 8.192       # 14-bit, 0–2 V (§3 PDVD top)
 
 

@@ -166,21 +166,18 @@ To build an L1SP kernel for PDHD or PDVD, replace these parameters:
 | basis 1 (collection)   | W with `collect_time_offset = +3 µs`    | unipolar ± with `unipolar_time_offset` (default +3 µs, `L1SPFilterPD.h:114`) |
 | output basis weights   | `l1_col_scale=1.15`, `l1_ind_scale=0.50` | `l1_basis0_scale`, `l1_basis1_scale`  |
 
-> **‡ PDVD `postgain` is provisional — revisit when the PDVD FR is
-> fixed.**  The current values
+> **‡ PDVD `postgain` history.**  The original values
 > (PDVD-bottom = 1.1365, PDVD-top = 1.52) were calibrated through the
-> W (collection) plane against an FR file that under-normalises the
+> W (collection) plane against an FR file that under-normalised the
 > W-plane line-source integrand by ~12% (an all-zero "sentinel" path
 > at pp=0 on W; see `pdvd/sp_plot/illustrate_pdvd_w_sentinel_path_bug.py`).
-> The calibration absorbs that deficit into `postgain`, so when the
-> corrected FR lands the postgain values are expected to drop:
-> PDVD-bottom → 1.0 (matches PDHD, with which it shares electronics);
-> PDVD-top → ≈ 1.36 (re-derive from the new calibration).  Update the
-> `POSTGAIN` constants in `track_response_pdvd_{bottom,top}.py`, the
-> `postgain` entries in
+> The calibration absorbed that deficit into `postgain`.  The FR has
+> since been corrected (`FR_xn_boost_3.json.bz2`) and the postgains have
+> been de-compensated: PDVD-bottom = 1.0 (PDHD-equivalent; same chip),
+> PDVD-top = 1.36 (= 1.52 / 1.117).  These values are now wired into
+> `track_response_pdvd_{bottom,top}.py` (`POSTGAIN`),
 > `wire-cell-python/wirecell/sigproc/track_response_defaults.jsonnet`,
-> and regenerate `wire-cell-data/pdvd_{bottom,top}_l1sp_kernels.json.bz2`
-> via `wirecell-sigproc gen-l1sp-kernels -d pdvd-{bottom,top}`.
+> and the regenerated `wire-cell-data/pdvd_{bottom,top}_l1sp_kernels.json.bz2`.
 
 The `l1sp_response()` function in `track_response_uboone.py` is detector-agnostic — pass
 the PDHD FR line, PDHD ER, and period; the rest is the same FFT product.

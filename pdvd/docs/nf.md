@@ -312,9 +312,21 @@ builds `respec` by one of three paths (first match wins):
 two split files:
 
 - `chndb-resp-bot.jsonnet` — bottom CRP (cold ER, gain 7.8 mV/fC, postgain
-  1.1365, ADC/mV 11.70): `response_offset` = 239 (U) / 245 (V).
-- `chndb-resp-top.jsonnet` — top CRP (JsonElecResponse, postgain 1.52,
-  ADC/mV 8.192): `response_offset` = 240 (U) / 243 (V).
+  1.1365 [generation-time, see note], ADC/mV 11.70): `response_offset` =
+  239 (U) / 245 (V).
+- `chndb-resp-top.jsonnet` — top CRP (JsonElecResponse, postgain 1.52
+  [generation-time, see note], ADC/mV 8.192): `response_offset` = 240 (U)
+  / 243 (V).
+
+> The postgain values quoted here (1.1365 / 1.52) are the generation-time
+> values used when these FR⊗ER kernel arrays were exported.  After the
+> upstream FR sentinel-path fix
+> (`protodunevd_FR_imbalance3p_260501.json.bz2` → `FR_xn_boost_3.json.bz2`),
+> the physically correct postgains are 1.0 (bottom) and 1.36 (top).  The
+> kernel arrays in these files are intentionally **not** regenerated
+> because the NF thresholds were tuned against the response shape they
+> encode; regeneration is deferred to a future NF re-calibration pass.
+> See the per-file headers for the same note.
 
 The selection is gated on the anode index `n`: `n < 4` ⇒ bottom, `n >= 4`
 ⇒ top. The kernel is scaled by `gain_scale = if n >= 4 then 1.0 else
@@ -462,7 +474,7 @@ on the main path after the tap.
 | `toolkit/cfg/pgrapher/experiment/protodunevd/nf.jsonnet` | Returns OmnibusNoiseFilter pnode per anode |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-base.jsonnet` | Channel DB: groups, bad channels, per-channel defaults |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp-bot.jsonnet` | FR⊗ER kernel for bottom CRP (cold ER, gain 7.8 mV/fC); wired into `chndb-base.jsonnet` |
-| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp-top.jsonnet` | FR⊗ER kernel for top CRP (JsonElecResponse, postgain 1.52); wired into `chndb-base.jsonnet` |
+| `toolkit/cfg/pgrapher/experiment/protodunevd/chndb-resp-top.jsonnet` | FR⊗ER kernel for top CRP (JsonElecResponse, generation-time postgain 1.52; current postgain is 1.36 — kernel intentionally not regenerated, see file header); wired into `chndb-base.jsonnet` |
 | `toolkit/cfg/pgrapher/experiment/protodunevd/params.jsonnet` | Detector parameters (tick, nticks, strip_length file) |
 | `toolkit/cfg/pgrapher/common/resamplers.jsonnet` | Resampler pnode construction |
 | `toolkit/sigproc/src/ProtoduneVD.cxx` | C++ impl of PDVD NF modules |

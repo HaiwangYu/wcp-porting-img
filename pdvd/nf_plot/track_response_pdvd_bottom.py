@@ -18,7 +18,7 @@ overlay is shown for visual continuity only — shape and scale do not reflect
 PDVD detector response.
 
 Bottom-CRP electronics (coherent_nf_params_comparison.md §2–3):
-  cold electronics  gain=7.8 mV/fC,  shaping=2.2 µs,  postgain=1.1365
+  cold electronics  gain=7.8 mV/fC,  shaping=2.2 µs,  postgain=1.0
   ADC: 14-bit, 0.2–1.6 V → 11.70 ADC/mV
   pitch (per plane, read from FR file):  U=V=7.65 mm,  W=5.10 mm
   N_MIP (user definition) = 1.8 MeV/cm × pitch_cm × 0.7 / 23.6 eV
@@ -60,7 +60,7 @@ OUTPUT_WINDOW_NS = 160_000.0
 # PDVD bottom-CRP cold-electronics parameters (§2)
 GAIN        = 7.8  * units.mV / units.fC
 SHAPING     = 2.2  * units.us
-POSTGAIN    = 1.1365
+POSTGAIN    = 1.0
 
 # PDVD bottom ADC: 14-bit, 0.2–1.6 V fullscale → 11.70 ADC/mV (§3)
 ADC_PER_MV  = 11.70

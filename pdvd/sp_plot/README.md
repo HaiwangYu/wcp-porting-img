@@ -65,46 +65,46 @@ python illustrate_pdvd_w_sentinel_path_bug.py
 #   row 2: line_source_response buggy vs fixed; U/V identical, W shows Δ
 ```
 
-### Follow-up: postgain values to revisit when the FR is fixed
+### Resolution: postgain values updated after FR fix
 
-The all-zero sentinel path is **also in the upstream Garfield FR file**
-(`protodunevd_FR_imbalance3p_260501.json.bz2`).  Once the FR is
-regenerated (in progress with the FR-file owners), the W-plane
-collection peak will recover the missing ~12% on its own, and the
-existing detector-calibration `postgain` values become over-corrections:
+The all-zero sentinel path was **also in the upstream Garfield FR file**
+(`protodunevd_FR_imbalance3p_260501.json.bz2`).  The FR has since been
+regenerated (`FR_xn_boost_3.json.bz2`, copied over the same filename in
+`wire-cell-data/`); re-running this script confirms the buggy/fixed
+integrators agree (`peak ×1.0000`, `∫ ×1.0000`), so the W-plane
+under-normalisation is gone.  The detector-calibration `postgain` values
+that absorbed the deficit have been de-compensated accordingly:
 
-- **PDVD-bottom: `postgain = 1.1365` is suspect.**  PDVD-bottom shares
-  cold electronics with PDHD (gain = 7.8 mV/fC vs PDHD's 14 mV/fC are
-  the only difference; everything else is the same chip).  PDHD has
-  `postgain = 1.0`.  The 1.1365 / 1.0 ≈ 1.137 excess closely tracks
-  the W-plane line-source-integrator deficit (peak ×1.124, integral
-  ×1.117).  Plausible interpretation: the bottom-CRP postgain was
-  calibrated **through the collection plane**, so the W-plane FR
-  under-normalisation got absorbed into `postgain`.  After the FR fix:
-  expect the bottom-CRP postgain to drop to ~1.0 (PDHD-equivalent).
-- **PDVD-top: `postgain = 1.52` should scale down by the same ~12%.**
-  Same calibration path (collection plane), same W under-normalisation,
-  but with the top-CRP JsonElecResponse layered on top.  After the FR
-  fix: expect ~1.52 / 1.117 ≈ 1.36.
+- **PDVD-bottom: `postgain` 1.1365 → 1.0.**  PDVD-bottom shares cold
+  electronics with PDHD (gain = 7.8 mV/fC vs PDHD's 14 mV/fC; everything
+  else is the same chip).  PDHD has `postgain = 1.0`; the 1.1365 / 1.0 ≈
+  1.137 excess closely tracked the W-plane line-source-integrator deficit
+  (peak ×1.124, integral ×1.117).  After the FR fix the bottom postgain
+  drops to PDHD-equivalent 1.0.
+- **PDVD-top: `postgain` 1.52 → 1.36** (= 1.52 / 1.117).  Same calibration
+  path (collection plane), same W under-normalisation, but with the
+  top-CRP `JsonElecResponse` layered on top.
 
-When the corrected FR lands, update **all three** of:
+Updates landed in:
 
 1. `wirecell/sigproc/track_response_defaults.jsonnet` —
-   `pdvd-bottom.postgain` and `pdvd-top.postgain`.
+   `pdvd-bottom.postgain = 1.0`, `pdvd-top.postgain = 1.36`.
 2. `pdvd/nf_plot/track_response_pdvd_{bottom,top}.py` —
-   the `POSTGAIN` module constants (used by the chndb-resp comparison
-   and PNG generation in `nf_plot/`).
-3. Regenerate the L1SP kernel JSONs in `wire-cell-data/`:
+   `POSTGAIN` module constants updated.
+3. `cfg/pgrapher/experiment/protodunevd/params.jsonnet` —
+   `elecs[0].postgain = 1.0`, `elecs[1].postgain = 1.36`.
+4. L1SP kernel JSONs regenerated in `wire-cell-data/`:
 
    ```
    wirecell-sigproc gen-l1sp-kernels -d pdvd-bottom  pdvd_bottom_l1sp_kernels.json.bz2
    wirecell-sigproc gen-l1sp-kernels -d pdvd-top     pdvd_top_l1sp_kernels.json.bz2
    ```
 
-Re-running this script (`illustrate_pdvd_w_sentinel_path_bug.py`)
-against the corrected FR is a quick way to confirm the recovery: row 0
-column W should look like row 1 column W, and row 2 column W should
-collapse to "no Δ" exactly like U and V.
+The coherent-noise removal kernels (`chndb-resp-bot.jsonnet`,
+`chndb-resp-top.jsonnet`) were **not** regenerated — the NF thresholds
+were tuned against those response shapes and re-tuning is deferred to a
+later NF re-calibration pass.  See the headers of those files for the
+generation-time postgain (1.1365 / 1.52).
 
 ---
 

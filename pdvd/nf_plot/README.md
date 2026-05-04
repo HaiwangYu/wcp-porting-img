@@ -120,29 +120,20 @@ a WireCell simulation waveform from
 | Script | Detector | FR file | Electronics | Sim anode |
 |--------|----------|---------|-------------|-----------|
 | `track_response_pdhd.py` | PDHD APAs 1/2/3 | `dune-garfield-1d565.json.bz2` | cold 14 mV/fC, 2.2 µs | HD anode 1 |
-| `track_response_pdvd_bottom.py` | PDVD bottom CRP (anodes 0–3) | `protodunevd_FR_norminal_260324.json.bz2` | cold 7.8 mV/fC, 2.2 µs, postgain 1.1365 † | VD anode 0 |
-| `track_response_pdvd_top.py` | PDVD top CRP (anodes 4–7) | `protodunevd_FR_norminal_260324.json.bz2` | `JsonElecResponse` (peak ≈ 7.2 mV/fC), postgain 1.52 † | VD anode 4 |
+| `track_response_pdvd_bottom.py` | PDVD bottom CRP (anodes 0–3) | `protodunevd_FR_norminal_260324.json.bz2` | cold 7.8 mV/fC, 2.2 µs, postgain 1.0 | VD anode 0 |
+| `track_response_pdvd_top.py` | PDVD top CRP (anodes 4–7) | `protodunevd_FR_norminal_260324.json.bz2` | `JsonElecResponse` (peak ≈ 7.2 mV/fC), postgain 1.36 | VD anode 4 |
 
-> **† `postgain` follow-up — revisit when the PDVD FR file is fixed.**
-> Both PDVD postgains were calibrated through the W (collection) plane
-> against an FR file that ships an all-zero "sentinel" path at pp=0 on
-> W (see `pdvd/sp_plot/illustrate_pdvd_w_sentinel_path_bug.py`), which
-> under-normalises the W line-source integral by ~12% (0.823 e → 0.920 e
-> per electron after the in-software fix).  The calibration absorbs that
-> deficit into postgain.  PDVD-bottom shares cold electronics with PDHD
-> (postgain = 1.0), so 1.1365 / 1.0 ≈ 1.137 ≈ the FR-driven excess.
->
-> When the corrected FR lands:
->
-> - **PDVD-bottom:** drop `POSTGAIN` from 1.1365 → 1.0 (PDHD-equivalent).
-> - **PDVD-top:** scale `POSTGAIN` from 1.52 down by the same ~12%, to
->   ≈ 1.36 (re-derive from the calibration once the new FR is in hand).
->
-> Files to update at that time: the `POSTGAIN` constant in each
-> `track_response_pdvd_*.py`, the `postgain` entries in
-> `wire-cell-python/wirecell/sigproc/track_response_defaults.jsonnet`,
-> and regenerate the L1SP kernel JSONs in `wire-cell-data/` via
-> `wirecell-sigproc gen-l1sp-kernels -d pdvd-{bottom,top}`.
+> **`postgain` history.**  Both PDVD postgains were originally calibrated
+> through the W (collection) plane against an FR file that shipped an
+> all-zero "sentinel" path at pp=0 on W (see
+> `pdvd/sp_plot/illustrate_pdvd_w_sentinel_path_bug.py`), which
+> under-normalised the W line-source integral by ~12% (0.823 e → 0.920 e
+> per electron after the in-software fix).  The calibration absorbed that
+> deficit into postgain (PDVD-bottom 1.1365, PDVD-top 1.52).  The FR has
+> since been corrected (`FR_xn_boost_3.json.bz2`, copied over the same
+> filename in `wire-cell-data/`) and the postgains have been
+> de-compensated: bottom 1.1365 → 1.0 (PDHD-equivalent; same chip),
+> top 1.52 → 1.36 (= 1.52 / 1.117).
 
 ### How to run
 
