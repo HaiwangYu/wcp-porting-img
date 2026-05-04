@@ -11,16 +11,18 @@
 #   -d dump_root  Enable PDVDCoherentNoiseSub debug dump (default: OFF).
 #                 Per-group .npz files are written to
 #                 <dump_root>/<RUN_PADDED>_<EVT>/apa<N>/.
-#   L1SP defaults to dump (tagger-only) mode with calib NPZs under
-#   work/<RUN>_<EVT>/l1sp_calib/.  -c overrides the dump dir; -w switches to
-#   process mode + per-ROI waveform dump; -x disables L1SP entirely.
-#   -c calib_root Override the L1SP calibration dump directory (still dump mode).
-#                 Per-event NPZ files with per-ROI asymmetry quantities are
-#                 written to <calib_root>/<RUN_PADDED>_<EVT>/.
-#   -w wf_root    Switch L1SP to process mode and write per-triggered-ROI
+#   L1SP defaults to process mode for bottom anodes (0-3): the LASSO fit
+#   replaces gauss/wiener for triggered ROIs.  Top anodes (4-7) auto-fall
+#   back to dump (tagger-only) per the cap in protodunevd/sp.jsonnet.
+#   -c switches L1SP to dump (tagger-only) mode and writes calib NPZs;
+#   -w stays in process mode and additionally writes per-ROI waveform NPZs;
+#   -x disables L1SP entirely.
+#   -c calib_root Switch L1SP to dump (tagger-only) mode.  Per-event NPZ
+#                 files with per-ROI asymmetry quantities are written to
+#                 <calib_root>/<RUN_PADDED>_<EVT>/.
+#   -w wf_root    Stay in process mode and write per-triggered-ROI
 #                 waveform NPZ files (raw/decon/lasso/smeared) to
-#                 <wf_root>/<RUN_PADDED>_<EVT>/.  Requires kernels_file in
-#                 cfg/pgrapher/experiment/protodunevd/sp.jsonnet to be populated.
+#                 <wf_root>/<RUN_PADDED>_<EVT>/.
 #   -x            Disable L1SPFilterPD entirely (no node instantiated).
 #
 # Input:  input_data/<run_dir>/<evt_dir>/protodune-orig-frames-anode{0..7}.tar.bz2
@@ -50,17 +52,18 @@ Options:
                   <dump_dir>/<RUN_PADDED>_<EVT>/apa<N>/.
                   View with: cd nf_plot && ./serve_coherent_viewer.sh <dump_dir>
 
-  L1SP defaults to dump (tagger-only) mode; calib NPZs land under
-  work/<RUN>_<EVT>/l1sp_calib/.  Use the flags below to redirect or change
-  the L1SP variant.  Precedence: -x > -w > -c > default.
-  -c <calib_dir>  Override the L1SP calibration dump dir (still dump mode).
-                  Per-event NPZ files with per-ROI asymmetry quantities are
-                  written to <calib_dir>/<RUN_PADDED>_<EVT>/.
+  L1SP defaults to process mode (LASSO fit replaces gauss/wiener for
+  triggered ROIs).  Bottom anodes (0-3) run the full LASSO; top anodes
+  (4-7) auto-fall to dump (tagger-only) per the cap in
+  cfg/pgrapher/experiment/protodunevd/sp.jsonnet.  Use the flags below
+  to override.  Precedence: -x > -w > -c > default.
+  -c <calib_dir>  Switch L1SP to dump (tagger-only) mode.  Per-event NPZ
+                  files with per-ROI asymmetry quantities are written to
+                  <calib_dir>/<RUN_PADDED>_<EVT>/.
                   Load with: np.load('<calib_dir>/.../apa<N>_NNNN_IIII.npz')
-  -w <wf_dir>     Switch L1SP to process mode and write per-triggered-ROI
+  -w <wf_dir>     Stay in process mode and write per-triggered-ROI
                   waveform NPZ files (raw/decon/lasso/smeared) to
-                  <wf_dir>/<RUN_PADDED>_<EVT>/.  Requires kernels_file
-                  populated in cfg/pgrapher/experiment/protodunevd/sp.jsonnet.
+                  <wf_dir>/<RUN_PADDED>_<EVT>/.
                   View with: cd nf_plot && ./serve_l1sp_roi_viewer.sh <wf_dir>
   -x              Disable L1SPFilterPD entirely (no node instantiated).
   -h              Show this help message and exit.
@@ -183,7 +186,7 @@ process_event() {
         echo "Dump dir: $DUMP_DIR_ABS"
     fi
 
-    # L1SP mode selection.  Precedence: -x > -w > -c > default (auto-dump).
+    # L1SP mode selection.  Precedence: -x > -w > -c > default (process).
     local L1SP_TLA=()
     if [ "$L1SP_OFF" -eq 1 ]; then
         L1SP_TLA=(--tla-str l1sp_pd_mode='')
@@ -202,21 +205,20 @@ process_event() {
         L1SP_TLA=(--tla-str l1sp_pd_mode=process
                   --tla-str l1sp_pd_wf_dump_path="$WF_DIR_ABS")
         echo "L1SP wf dir:    $WF_DIR_ABS  (mode=process)"
-    else
+    elif [ -n "$CALIB_ROOT" ]; then
         local CALIB_DIR_ABS
-        if [ -n "$CALIB_ROOT" ]; then
-            case "$CALIB_ROOT" in
-                /*) CALIB_DIR_ABS="$CALIB_ROOT" ;;
-                *)  CALIB_DIR_ABS="$PDVD_DIR/$CALIB_ROOT" ;;
-            esac
-            CALIB_DIR_ABS="${CALIB_DIR_ABS}/${RUN_PADDED}_${EVT}"
-        else
-            CALIB_DIR_ABS="${WORKDIR}/l1sp_calib"
-        fi
+        case "$CALIB_ROOT" in
+            /*) CALIB_DIR_ABS="$CALIB_ROOT" ;;
+            *)  CALIB_DIR_ABS="$PDVD_DIR/$CALIB_ROOT" ;;
+        esac
+        CALIB_DIR_ABS="${CALIB_DIR_ABS}/${RUN_PADDED}_${EVT}"
         mkdir -p "$CALIB_DIR_ABS"
         L1SP_TLA=(--tla-str l1sp_pd_mode=dump
                   --tla-str l1sp_pd_dump_path="$CALIB_DIR_ABS")
         echo "L1SP calib dir: $CALIB_DIR_ABS  (mode=dump)"
+    else
+        L1SP_TLA=(--tla-str l1sp_pd_mode=process)
+        echo "L1SP:           process mode (bottom anodes 0-3 fit; top 4-7 auto-fall to dump)"
     fi
 
     wire-cell \

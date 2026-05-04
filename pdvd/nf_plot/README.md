@@ -57,10 +57,12 @@ parameters (bottom = anodes 0–3, top = anodes 4–7).  See
 [`../../sigproc/docs/l1sp/L1SPFilterPD.md`](../../sigproc/docs/l1sp/L1SPFilterPD.md)
 for the algorithm.
 
-The default mode is `dump`: the ROI tagger runs and writes per-event NPZ
-calibration records, but the LASSO fit + replacement (the parts that need
-the per-region kernel files) are bypassed.  This lets the user validate the
-tagger before generating kernels.
+The default mode is `process`: the LASSO fit replaces gauss/wiener for
+triggered ROIs on bottom anodes (0–3).  Top anodes (4–7) auto-fall to
+dump (tagger-only) per the cap in `protodunevd/sp.jsonnet`, since the
+top-CRP electronics are not yet validated for the LASSO writeback.
+Pass `-c <dir>` to force dump (tagger-only) mode if you only want the
+calibration NPZs.
 
 ```bash
 # A) Smearing-kernel sanity check (already validated; rerun any time):
@@ -68,25 +70,23 @@ cd ../sp_plot
 python plot_l1sp_smearing_kernel.py
 # Produces l1sp_smearing_kernel_validation.png.
 
-# B) Tagger validation via dump-mode NPZ (default behaviour):
+# B) Default run — L1SP fit replaces gauss/wiener on bottom anodes:
 cd ..
 ./run_nf_sp_evt.sh 039324 0
-# Calib NPZs land under work/039324_0/l1sp_calib/apa<N>_<run>_<evt>.npz.
+# SP tar.bz2 in work/039324_0/ now contains L1SP-modified gauss/wiener.
+# Convert to magnify ROOT via run_sp_to_magnify_evt.sh to inspect.
+
+# C) Tagger validation only (no LASSO writeback):
+./run_nf_sp_evt.sh 039324 0 -c work/calib
+# Calib NPZs land under work/calib/039324_0/apa<N>_<run>_<evt>.npz.
 # Inspect ROI asymmetry distributions per plane per region (np.load).
 
-# C) (Future) Switch to process mode + per-ROI dump:
-#    1. The kernel files pdvd_{bottom,top}_l1sp_kernels.json.bz2 are
-#       already in wire-cell-data/.  Build/refresh them via
-#         wirecell-sigproc gen-l1sp-kernels -d pdvd-{bottom,top} <out>.json.bz2
-#    2. Populate the kernels_file string in
-#         cfg/pgrapher/experiment/protodunevd/sp.jsonnet
-#       (search for the 'set kernels_file to' comment).
-#    3. Run with -w to enable process mode + waveform dump:
+# D) Process mode + per-ROI waveform dump (for the bokeh viewer):
 ./run_nf_sp_evt.sh 039324 0 -w work/wf
 # Triggered-ROI NPZs (raw/decon/lasso/smeared) land under
 # work/wf/039324_0/<dump_tag>_<frame_ident>/.
 
-# D) Event-display ROI point-check:
+# E) Event-display ROI point-check:
 cd nf_plot
 ./serve_l1sp_roi_viewer.sh ../work/wf
 ssh -L 5007:localhost:5007 user@workstation     # from laptop
