@@ -1,0 +1,39 @@
+run,evt,plane,ch1,ch2,t1,t2,asym,type,real,note
+39324,0,U,38,42,5087,5299,-0.82,L_long+asym+fill_shape,Yes,
+39324,0,U,41,44,5082,5363,,,Missing,extension of U 38-42; ch 41 already adj-promoted (flag_l1_adj=-1) so cluster IS tagged via adjacency. ch 43 sub-window ef fails. Actual NPZ ROIs span ch 41-46 t 5082-5363
+39324,0,U,44,45,1891,1946,-0.93,asym,Yes,
+39324,0,U,82,87,1228,1640,-0.45,L_long+fill_shape,No,prolonged track
+39324,0,U,89,91,1699,2147,0.76,L_long+asym,No,prolonged track
+39324,0,U,96,96,2238,2413,0.69,L_long+asym,No,prolonged track
+39324,0,U,195,195,382,412,1.00,asym,Yes,
+39324,0,U,230,232,7,39,-0.93,asym,Yes,
+39324,0,U,386,388,3254,3358,0.56,L_long+asym+fill_shape,Yes,
+39324,0,V,1013,1015,183,375,-0.86,L_long+asym+fill_shape,Yes,
+39324,0,V,1081,1085,4282,4589,0.39,L_long+fill_shape,No,prolonged track
+39324,1,U,48,49,1235,1353,0.69,L_long+asym+fill_shape,Yes,
+39324,1,U,79,82,347,597,-0.93,L_long+asym+fill_shape,Yes,
+39324,1,V,1050,1054,445,577,-0.98,L_long+asym,Yes,
+39324,1,V,1351,1351,3458,3504,-1.00,asym,Yes,
+39324,1,V,1394,1395,5076,5143,0.72,asym,Yes,
+39324,2,V,987,988,2541,2704,-1.00,L_long+asym,Yes,
+39324,2,V,1082,1084,4962,5008,-1.00,asym,Yes,
+39324,2,V,1181,1181,1083,1133,-0.94,asym,Yes,
+39324,2,V,1290,1291,5119,5303,,,Missing,refined window from NPZ; ch 1290 cl=83 aw_core=-1.00 should fire but per-sub-window ef<0.66
+39324,3,U,319,331,759,2339,0.69,L_long+asym+fill_shape,No,prolonged track nch=14 len=444
+39324,3,U,465,467,6000,6300,,,Missing,no ROI on ch 465-467 above g_thr=50; nearest is ch 463 [6049-6163] aw=-0.02 (no asym to fire any arm). May be a channel-numbering mismatch in the hand-scan
+39324,3,V,1043,1044,1045,1103,0.49,fill_shape,No,
+39324,3,V,1048,1049,4869,4926,-1.00,asym,Yes,
+39324,3,V,1228,1229,5995,6042,-1.00,asym,Yes,
+39324,4,U,171,172,2,33,-0.68,asym,Yes,
+39324,4,V,1227,1229,843,914,-1.00,asym,Yes,
+39324,5,U,51,56,6100,6224,-0.63,L_long+asym,No,prolonged track
+39324,5,U,275,281,178,347,-0.61,L_long+asym,No,prolonged track
+39324,5,U,315,318,198,488,-1.00,L_long+asym,Yes,
+39324,5,U,363,365,2235,2403,0.85,L_long+asym,Yes,
+39324,5,U,375,376,3175,3278,-0.56,asym+fill_shape,No,
+39324,5,V,989,990,6138,6249,-0.71,asym+fill_shape,No,
+39324,5,V,1011,1013,5801,5919,0.67,L_long+asym+fill_shape,Yes,
+39324,5,V,1210,1211,4627,4664,-1.00,asym,Yes,
+39324,5,V,1292,1292,1699,1756,-1.00,asym,Yes,
+39324,5,V,1314,1316,375,442,-0.99,asym,Yes,
+39324,5,V,1340,1341,120,157,-1.00,asym,Yes,

@@ -1,0 +1,4 @@
+run,evt,anode,plane,ch_lo,ch_hi,t_lo,t_hi,n_channels,length_max,gauss_max,fill_factor_min,fwhm_frac_min,raw_asym_extreme,roi_energy_frac_max,triggered_by
+39324,2,0,V,987,988,2541,2704,2,164,2939.0,0.413,0.348,-1.000,1.000,L_long+asym
+39324,2,0,V,1082,1084,4962,5008,1,47,2346.0,0.396,0.319,-1.000,1.000,asym
+39324,2,0,V,1181,1181,1083,1133,1,51,1926.0,0.512,0.490,-0.941,0.998,asym

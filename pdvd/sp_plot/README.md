@@ -1,12 +1,81 @@
 # pdvd/sp_plot — PDVD signal-processing inspection scripts
 
-Three families of scripts live here; each is documented below.
+Five families of scripts live here; each is documented below.
 
 | Script | Purpose |
 |---|---|
+| `find_long_decon_artifacts_pdvd.py` | Offline reference detector for L1SP induction-plane artifacts (clustered output) |
+| `eval_l1sp_trigger_pdvd.py` | Compare the L1SP tagger output (Python CSV or C++ NPZ) against the hand-scan ground truth |
 | `cmd_plot_frames.py` | U/V/W frame views from a `FrameFileSink` archive |
 | `track_response_l1sp_pdvd.py` | Validator for the PDVD L1SPFilterPD kernel JSONs (top + bottom) |
 | `illustrate_pdvd_w_sentinel_path_bug.py` | Diagnostic plot for the all-zero sentinel-path bug in the PDVD W FR |
+
+Reference data:
+
+| File | Purpose |
+|---|---|
+| `handscan_039324_anode0.csv` | Hand-scan ground truth for run 39324 events 0-5, PDVD bottom anode 0.  Schema mirrors `pdhd/nf_plot/handscan_27409.csv` plus a `real ∈ {Yes, No, Missing}` column (Yes = real artifact must fire; No = real prolonged track that must NOT fire; Missing = real artifact the gate currently misses).  Consumed by `--validate` mode of `find_long_decon_artifacts_pdvd.py` and the default ground truth of `eval_l1sp_trigger_pdvd.py`. |
+| `pdvd_l1sp_rois_039324_evt{0..5}_anode0.csv` | Per-event clustered-ROI tables emitted by `find_long_decon_artifacts_pdvd.py --csv`.  Refresh after any defaults / algorithm change. |
+
+---
+
+## `find_long_decon_artifacts_pdvd.py` — offline reference detector
+
+Reads the per-event Magnify ROOT file (`magnify-runRRRRRR-evtN-anodeA.root`)
+and applies the same multi-arm gate as the C++ `L1SPFilterPD`, then
+clusters per-channel sub-window candidates into per-cluster ROIs.
+
+Three differences vs the C++ tagger (Python is the offline detector,
+C++ is the production filter; both are tuned against the same hand-scan):
+
+* operates at the **clustered** level (max-feature aggregation across a
+  cluster's per-channel ROIs), while the C++ gate is per-sub-window;
+* implements an additional **multi-channel-track veto** at the cluster
+  level (`--multi-ch-min` / `--multi-ch-asym-esc`) that the C++ side
+  realises differently via `l1_pdvd_track_veto_enable` (per-sub-window);
+* defaults are tuned for PDVD bottom anode 0 against
+  `handscan_039324_anode0.csv` (l_combo=90, ff_thr=0.30, fwhm_thr=0.25,
+  len_long=180, asym_mod=0.50; multi-ch-min=4, multi-ch-asym-esc=0.85).
+
+```bash
+# Single event, print clusters and validate against the hand-scan
+python find_long_decon_artifacts_pdvd.py --run 39324 --evt 0 --anode 0 --validate
+
+# Save clusters to CSV (used by eval_l1sp_trigger_pdvd.py --source csv)
+python find_long_decon_artifacts_pdvd.py --run 39324 --evt 0 --anode 0 \
+    --csv pdvd_l1sp_rois_039324_evt0_anode0.csv
+```
+
+---
+
+## `eval_l1sp_trigger_pdvd.py` — hand-scan evaluator
+
+Compares the L1SP tagger output to `handscan_039324_anode0.csv` with
+channel ∩ time overlap matching.  Two input sources:
+
+* `--source csv` (default): reads
+  `pdvd_l1sp_rois_039324_evt*_anode0.csv` (Python script's clustered
+  output).
+* `--source npz`: reads the C++ tagger's per-event NPZ dumps under
+  `pdvd/work/<RUN>_<EVT>/l1sp_calib/apa<APA>_*.npz` and uses
+  `flag_l1_adj` (the post-adjacency polarity that actually drives the
+  LASSO; pass `--trigger-only` for the un-promoted `flag_l1`).  This
+  mode also lets you re-apply the gate offline with overridden
+  thresholds via CLI flags so you can probe what each threshold movement
+  costs without rebuilding C++.
+
+```bash
+# Eval the Python script's current output
+python eval_l1sp_trigger_pdvd.py --source csv
+
+# Eval the C++ tagger's live output
+python eval_l1sp_trigger_pdvd.py --source npz --use-cpp-flag
+
+# Sweep one threshold offline against the C++ NPZ data
+python eval_l1sp_trigger_pdvd.py --source npz --asym-mod 0.55
+```
+
+Mirrors the PDHD pattern at `pdhd/nf_plot/eval_l1sp_trigger.py`.
 
 ---
 
