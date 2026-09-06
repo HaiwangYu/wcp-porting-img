@@ -38,7 +38,20 @@ JOBS=16 ./scripts/pr145_arms.sh np
 
 # C. Round B -- the split census, then the instrumented probe (sec 4)
 ./scripts/pr145_split_census.py --tsv docs/pr/pr145-splitcensus.tsv
-JOBS=8 ./scripts/pr145_cont_probe.sh
+JOBS=8 ./scripts/pr145_cont_probe.sh                    # TAG=d145cont2 (M13: fresh tag per run)
+./scripts/pr145_cont_attribute.py --tag d145cont2 --tsv docs/pr/pr145-contattr.tsv
+
+# D. the gate and the sentinels, both arms (secs 3.2, 3.4)
+for s in ncpi0 nuecc48 mcp1k mcp2k; do
+  ./scripts/analysis/pr143/pr143_compare_arms.py work-$s-d145np work-$s-d144fixprod --jobs 8
+done
+./scripts/pr127_sentinels.py --arms 'work-*-d144fixprod'   # 19 PASS / 0 FAIL / 4 OPEN / 7 INERT
+./scripts/pr127_sentinels.py --arms 'work-*-d145np'        # 20 PASS / 0 FAIL / 3 OPEN / 7 INERT
+
+# E. Round C -- the join, then the on-epoch set and its blind sheet (sec 5)
+./scripts/pr145_yz_join.py --tsv docs/pr/pr145-labels-onepoch.tsv
+./scripts/pr145_pidset.py --tsv docs/pr/pr145-pidset.tsv \
+    --manifest docs/pr/pr145-pidscan-manifest.tsv
 ```
 
 ---
@@ -681,3 +694,30 @@ mechanism into a measured precision.
 ---
 
 *Sections 3 (Round A) and 4 (Round B) are filled in as their arms land.*
+
+---
+
+## 6 Where this leaves items 3, 4 and 5
+
+| item | state after this round | what it needs next |
+|---|---|---|
+| **4** | **Priced.** 3067/3067 `rc=0`, 0 selection churn, 5 events move and they are named, the only live pr/129 sentinel goes green causally, −1553.3 MeV of `Enu`. The guard **empties** the pool rather than trimming it, and only `impact` binds. | A **blind scan of the four unadjudicated refusals** — 392009, 101828, 395610, 350935. Then the flip is a §5.1 decision for the owner. |
+| **3b** | **Answered.** The escape is named: the rest term is charged at four admission sites and reduced at one. 4 of 6 payers are that; 1 is an untyped parent; **1 is not a defect at all**. Two of doc 144 §14.2.1's statements are corrected. | A **cross-admission-path continuation test**, its own round, with the 9 `reduced_ok` and 5 `single` events as negative controls. |
+| **3a + 5** | **Round 1 reported honestly as a miss.** The ported-label route died — 29 % id stability, only 2 confident-EM survivors. But the population is unchanged in size (rate ratio 1.06), and its own empty 1.0–1.2 bin gives a label-free threshold. | The **blind 20-object sheet** needs the owner's verdicts. That is the human step; it converts a corroborated mechanism into a measured precision. |
+
+**Nothing in this round changes production.** Two default-OFF knobs exist
+(`kine_near_pointing_impact` from `7c4bf46a`, `kine_continuation_debug` from
+`8c14185a`), both proven byte-identical when off, and neither is flipped.
+
+### 6.1 What this round did not do
+
+- **No truth-level check.** Every correctness statement above rests on the
+  owner's adjudications, not on MC truth, which is not available at population
+  scale in this chain.
+- **No PDVD / PDHD / uBooNE gate for `8c14185a`.** `NeutrinoKinematics` binds on
+  all of them.  The knob-off byte-identity is proven on SBND (13 events, §2.1)
+  and the C++ default is `false`, so those chains cannot reach the new code —
+  but the standing bar wants the gate run on each detector's own manifest, and
+  that is **owed**.
+- **No blind scan.** Both §3.5's four refusals and §5.9's 20-object sheet are
+  prepared and unscanned; Bee upload is ask-first.
