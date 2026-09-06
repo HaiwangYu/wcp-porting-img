@@ -1,0 +1,48 @@
+# doc sbnd_xin/pr/145 sec 7 -- the PRE-FIX ("before") counterpart of the doc-144
+# post-fix scan set.  Uploaded 2026-09-06 on the owner's ask.
+#
+#   BEFORE (this set): https://www.phy.bnl.gov/twister/bee/set/6bb7bf54-1af3-4bcb-887f-81f6a378c3d6/event/list/
+#   AFTER             : https://www.phy.bnl.gov/twister/bee/set/42a635f6-475b-4a17-9e5d-913fdb355bab/event/list/
+#
+# Same 13 events in the SAME bee index order 0..12, so idx N here is idx N there.
+#
+# WHAT "BEFORE" MEANS HERE, precisely.  Built from work-{mcp1k,mcp2k,nuecc48}-d144off:
+# SBND PR production as it stood on 2026-09-05, toolkit 70c23cc7, with BOTH doc-144
+# knobs at their then-default false.  Its compiled config is byte-identical to
+# pre-flip production (doc 144 sec 0, T0 md5 3bfd2a80d0201d22e9a1b5db37c774eb).
+# It is NOT literally origin/master, which is ~78 commits back; two named
+# differences, both PRESENT in the AFTER set and ABSENT here:
+#   * toolkit 70c23cc7 (doc pr/143, break_segment stamps the vertex it creates)
+#     IS in these pictures -- it is the pin these arms were built on;
+#   * peer commit ef995685 (wrapped-channel lookup defaults ON, 2026-09-06 10:08)
+#     is NOT -- it landed after the pin.  Wrapped channels do not reach SBND.
+# The three SBND production changes that separate this set from the AFTER set are
+# excl_t0_frame, kine_dqdx_skip_zero_dx (both toolkit 4c84855c) and the 494297
+# remove_vertex crash guard (toolkit 25baa8aa).  flash_by_gid (toolkit 94590129)
+# also flipped in that window but writes diagnostic tree columns only -- the PR
+# archives and the nusel verdict TSVs are byte-identical across it.
+#
+# The Q/L layers (img-global, clustering-global, op, channel-deadarea-*) come from
+# the SAME work-<s>-d97fv imaging arm as the AFTER set, so every visible difference
+# between the two sets is attributable to the PR stage alone.
+#
+# Presence proved from this set's own event/list/ page: 13 events, indices 0-12.
+#
+# bee_idx  event    sample    note
+0   179369  mcp2k
+1   47212   mcp2k
+2   175896  mcp1k
+3   393505  mcp2k    the cluster-15 cosmic the owner adjudicated (doc 144 sec 13)
+4   94392   mcp2k
+5   171572  mcp2k
+6   177536  mcp2k    owner item 3: cathode-bridge muon.  doc 144 sec 14.2 -- the muon is
+                     SPLIT into two PF nodes here too; the split adds 105.7 MeV rest mass
+7   347890  mcp2k    owner item 3: the far half is typed 11 (EM) not 211 -- a PID problem
+8   137238  nuecc48  owner item 5: hadronic shower absorbed into an EM shower
+9   111412  nuecc48
+10  98844   mcp2k
+11  100135  mcp2k
+12  494297  mcp2k    *** the SIGSEGV event.  It CRASHED only with excl_t0_frame ON, so it
+                     reconstructs fine in this pre-fix arm (rc=0, mabc-pr.zip 131987 B) and
+                     this is its "before" picture.  The AFTER set's idx 12 is its first
+                     post-fix reconstruction.

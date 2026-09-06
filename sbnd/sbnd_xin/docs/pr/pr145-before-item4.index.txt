@@ -1,0 +1,25 @@
+# doc sbnd_xin/pr/145 sec 7 -- the PRE-FIX ("before") counterpart of the item-4
+# scan set.  Uploaded 2026-09-06 on the owner's ask.
+#
+#   BEFORE (this set): https://www.phy.bnl.gov/twister/bee/set/41b6421d-7995-4c87-985d-21b7d9744d35/event/list/
+#   AFTER             : https://www.phy.bnl.gov/twister/bee/set/c1529fd5-d4f6-42f0-b182-71aa7974cdd6/event/list/
+#
+# Same 5 events in the SAME bee index order 0..4, so idx N here is idx N there.
+# Provenance and the exact meaning of "before" are identical to
+# pr145-before-d144fixed.index.txt -- work-{mcp1k,mcp2k}-d144off, toolkit 70c23cc7,
+# both doc-144 knobs at default false, same work-<s>-d97fv Q/L layers.
+#
+# Presence proved from this set's own event/list/ page: 5 events, indices 0-4.
+#
+# Cross-check: event 393505 is in BOTH new before-sets (idx 3 of the 13-event set,
+# idx 2 here) and all 9 of its layer members are byte-identical between them
+# (member content md5, basename prefix excluded).
+#
+# bee_idx  event    sample   cluster  seg_id   owner verdict on the AFTER set (doc 145 sec 3.8)
+0   392009  mcp2k    58       58015    DAUGHTER -- one long muon broken by SP failure + cathode;
+                              the energy SHOULD be counted.  See sec 3.8.2 for why segment
+                              58014 (23.67 cm) is missing from the PF tree entirely.
+1   101828  mcp2k    18       18004    COSMIC (overclustering) -- energy should NOT be counted
+2   393505  mcp2k    15       15014    COSMIC -- matches his doc 144 sec 13 verdict
+3   395610  mcp1k    28       28005    COSMIC (overclustering)
+4   350935  mcp1k    11       11002    COSMIC (overclustering)

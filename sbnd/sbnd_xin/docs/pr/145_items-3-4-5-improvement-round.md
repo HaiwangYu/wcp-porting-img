@@ -874,5 +874,92 @@ mechanism into a measured precision.
   and the C++ default is `false`, so those chains cannot reach the new code —
   but the standing bar wants the gate run on each detector's own manifest, and
   that is **owed**.
-- **No blind scan.** Both §3.5's four refusals and §5.9's 20-object sheet are
-  prepared and unscanned; Bee upload is ask-first.
+- **One blind scan is still owed.** §3.5's four refusals *were* scanned —
+  §3.8 carries the owner's verdicts, and they inverted the recommendation.
+  §5.9's 20-object PID sheet is prepared and **unscanned**; that is the human
+  step item 5 is waiting on.
+
+## 7 The pre-fix ("before") Bee sets
+
+Owner ask, 2026-09-06: *"for events in [the doc-144 post-fix set], and events in
+[the item-4 set], can you first provide me the bee links for the master branch
+production, this is before the three fix that we put in to the apply point
+cloud."*
+
+Two new order-matched sets, uploaded 2026-09-06:
+
+| | events | BEFORE (new) | AFTER (already scanned) |
+|---|---|---|---|
+| doc 144 post-fix set | 13 | [`6bb7bf54`](https://www.phy.bnl.gov/twister/bee/set/6bb7bf54-1af3-4bcb-887f-81f6a378c3d6/event/list/) | [`42a635f6`](https://www.phy.bnl.gov/twister/bee/set/42a635f6-475b-4a17-9e5d-913fdb355bab/event/list/) |
+| item-4 refusal set | 5 | [`41b6421d`](https://www.phy.bnl.gov/twister/bee/set/41b6421d-7995-4c87-985d-21b7d9744d35/event/list/) | [`c1529fd5`](https://www.phy.bnl.gov/twister/bee/set/c1529fd5-d4f6-42f0-b182-71aa7974cdd6/event/list/) |
+
+Indices are 1:1 with the AFTER sets: idx N here is idx N there.  Sidecars:
+`docs/pr/pr145-before-d144fixed.index.txt`, `docs/pr/pr145-before-item4.index.txt`.
+
+### 7.1 What "before" is, precisely — and what it is not
+
+Both sets are built from **`work-{mcp1k,mcp2k,nuecc48}-d144off`**: SBND PR
+production as it stood on 2026-09-05, toolkit **70c23cc7**, with both doc-144
+knobs at their then-default `false`.  Its compiled config is byte-identical to
+pre-flip production (§0 of doc 144, T0 md5 `3bfd2a80d0201d22e9a1b5db37c774eb`).
+
+It is **not literally `origin/master`**, which is ~78 commits back (merge-base
+`e88f364d`).  Naming the gap rather than hiding it:
+
+- the SBND PR driver's `master`→`HEAD` diff carries exactly **three**
+  production flips — `flash_by_gid` (`94590129`), `excl_t0_frame` and
+  `kine_dqdx_skip_zero_dx` (both `4c84855c`).  `flash_by_gid` writes diagnostic
+  tree columns only; its own comment records the PR archives and nusel verdict
+  TSVs byte-identical across it (308 events).  So on the **pictures**, the OFF
+  arm is the master-branch state.
+- doc pr/143's `break_segment` vertex stamp (`70c23cc7`) **is** in these
+  pictures — it is the pin the arms were built on.
+- the peer's `ef995685` (wrapped-channel lookup defaults ON, 2026-09-06 10:08)
+  is **not** — it landed after the pin, and is in the AFTER sets.  Wrapped
+  channels do not reach SBND.
+- the 494297 `remove_vertex` crash guard (`25baa8aa`) is not needed here: that
+  event crashed only with `excl_t0_frame` **on**, so it reconstructs cleanly in
+  the OFF arm and idx 12 of `6bb7bf54` is its genuine "before" picture — the
+  first one that has ever existed for it.
+
+If a literally-`origin/master` build is wanted it is a separate isolated-prefix
+build; it must not `wcbuild` into the shared `local/lib`.
+
+### 7.2 Construction and the checks that back the two links
+
+```bash
+cd wcp-porting-img/sbnd/sbnd_xin
+python3 scripts/bee/make_pr_bee.py \
+  -q work-mcp2k-d97fv -q work-mcp1k-d97fv -q work-nuecc48-d97fv \
+  -p work-mcp2k-d144off -p work-mcp1k-d144off -p work-nuecc48-d144off \
+  -o d145_setA_before.zip \
+  179369 47212 175896 393505 94392 171572 177536 347890 137238 111412 98844 100135 494297
+python3 scripts/bee/make_pr_bee.py \
+  -q work-mcp2k-d97fv -q work-mcp1k-d97fv \
+  -p work-mcp2k-d144off -p work-mcp1k-d144off \
+  -o d145_setB_before.zip \
+  392009 101828 393505 395610 350935
+BROWSER=echo ./upload-to-bee.sh d145_setA_before.zip   # -> 6bb7bf54-...
+BROWSER=echo ./upload-to-bee.sh d145_setB_before.zip   # -> 41b6421d-...
+```
+
+Three checks, because an index shift here would be silent and would misalign
+every comparison the owner makes:
+
+1. **No event can be dropped.** `make_pr_bee.py` refuses an event with no
+   selected neutrino candidate, and a refusal shifts every later index with no
+   error.  All 17 distinct events were checked first for
+   `TaggerCheckNeutrino: selected main cluster` in their OFF-arm logs — present
+   on every one (179369 twice, the rest once).
+2. **Presence proved from the set's own `event/list/` page**, not from layer
+   URLs (a Bee layer URL 200s when the layer is missing): 13 events, indices
+   0–12; 5 events, indices 0–4.
+3. **The shared event agrees across the two sets.** 393505 is idx 3 of the
+   13-event set and idx 2 of the 5-event set; all **9 of 9** layer members are
+   byte-identical between them (member-content md5, the bee-index basename
+   prefix excluded).
+
+The Q/L layers (`img-global`, `clustering-global`, `op`, `channel-deadarea-*`)
+come from the **same** `work-<s>-d97fv` imaging arm as the AFTER sets, so every
+visible difference between a before/after pair is attributable to the PR stage
+alone.
