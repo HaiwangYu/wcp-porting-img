@@ -39,11 +39,22 @@ idx  sample   event   cluster  seg_id   len_cm   KE_MeV  impact_cm  miss_deg  d_
 #  idx 3  395610  seg 28005  ( -32.8, 154.6, 275.3) -> ( -56.5, 110.5, 276.8)   nu vtx (  8.3, 101.1, 184.1)
 #  idx 4  350935  seg 11002  ( -18.9, -75.6,  98.4) -> ( -19.2, -99.4,  57.4)   nu vtx (-91.5, -45.3,  29.6)
 #
-# Verdict column to fill: COSMIC (refusal right) / DAUGHTER (refusal wrong) / UNSURE
+# OWNER VERDICTS, 2026-09-06 (doc 145 sec 3.8), verbatim:
+#   "the only event that the energy should be included is the first event 392009,
+#    this is supposed to be one long muon, but was broken to pieces due to signal
+#    processing failure and cathode plane. But the energy should be counted. The
+#    other four are all overclustering, so the energy should not be counted."
 #
-# idx  verdict   comment
-# 0
-# 1
-# 2
-# 3
-# 4
+# idx  event   verdict            refusal
+# 0    392009  DAUGHTER (keep)    WRONG -- one long muon fragmented by SP failure + cathode
+# 1    101828  COSMIC             right -- overclustering
+# 2    393505  COSMIC             right -- overclustering (matches his doc 144 sec 13 verdict)
+# 3    395610  COSMIC             right -- overclustering
+# 4    350935  COSMIC             right -- overclustering
+#
+# CONSEQUENCE: the priced 20 cm impact cut refuses 392009 and is NOT shippable.
+# miss_deg separates these five by 78.3 deg (12.5 vs 90.8) where impact manages
+# 14.8 cm (54.30 vs 69.10), so the corrected point is
+#     kine_near_pointing_impact = 200   (arms the test; no effective bound)
+#     kine_near_pointing_miss_deg = 30
+# which scores 5/5 for -1166.3 MeV.  Fitted on n=5 with one keep -- see sec 3.8.

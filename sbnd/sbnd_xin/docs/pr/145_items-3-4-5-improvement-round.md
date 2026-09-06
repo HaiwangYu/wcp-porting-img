@@ -316,7 +316,8 @@ population is **54.30 cm** against a 20 cm threshold.  So:
 
 **No default is flipped here** (CLAUDE.md §5.1).  The recommendation, with the
 numbers above, is that this is a strong candidate for production **after** a
-blind scan of the four unadjudicated refusals.
+blind scan of the four unadjudicated refusals.  **§3.8 is that scan, and it
+changed the answer: do not ship 20/30.**
 
 ### 3.7 The scan set (uploaded 2026-09-06)
 
@@ -336,6 +337,88 @@ The question per event is not "which arm is better" but **"is this object a
 cosmic or a daughter"** — all five were admitted on `gap_cm = 0.00`, proximity
 with no direction test.  Index 2 (393505) is the owner's already-adjudicated
 cosmic and is included as calibration, marked as such.
+
+### 3.8 The scan came back — and it inverts §3.5's recommendation
+
+The owner's verdicts, 2026-09-06, verbatim:
+
+> *"the only event that the energy should be included is the first event 392009,
+> this is supposed to be one long muon, but was broken to pieces due to signal
+> processing failure and cathode plane. But the energy should be counted. The
+> other four are all overclustering, so the energy should not be counted."*
+
+So **4 of 5 refusals are right and one is wrong** — and the wrong one is the
+event §3.5 named in advance as the likeliest false refusal.
+
+**The two clauses separate very differently:**
+
+| | keep (392009) | refuse (the other four) | margin |
+|---|---|---|---|
+| `impact` | 54.30 cm | 69.10 … 110.22 cm | **14.80 cm** |
+| `miss_deg` | **12.5°** | 90.8 … 113.6° | **78.3°** |
+
+**The 20 cm impact cut is on the wrong side of its own gap.** And the clause
+§3.6 reported as *inert* — `miss_deg` — is the one that actually discriminates,
+by a factor of five more margin.  It read as inert only because the impact cut
+refused every candidate before `miss_deg` was ever consulted.
+
+**The owner's mechanism explains exactly why**, and it is the part worth keeping:
+a long muon broken up by signal-processing failure and the cathode plane has its
+fragments **displaced** — so the piece's line misses the vertex by 54 cm — but
+their **direction is preserved**, so it still points back at the vertex within
+12.5°.  Over-clustering attaches an unrelated cosmic, which has neither.
+**Displacement survives fragmentation; direction does not survive
+over-clustering.**  That is why direction is the robust discriminator and
+proximity-to-vertex is not.
+
+### 3.8.1 The corrected operating point
+
+Scored on the census (which carries every candidate the test examines, so any
+threshold pair can be evaluated with no new arm):
+
+    impact <= 20    miss <= 30    4/5   WRONG: 392009      <- what was priced
+    impact <= 20    miss <= 90    4/5   WRONG: 392009
+    impact <= 60    miss <= 30    5/5
+    impact <= 200   miss <= 30    5/5   <- recommended
+    impact <= inf   miss <= 30    5/5
+
+Recommended: **`kine_near_pointing_impact = 200`, `kine_near_pointing_miss_deg = 30`.**
+The impact value only has to be > 0 to arm the test; at 200 cm it places no
+effective bound on this population and lets the 78°-margin clause decide.
+`impact = 60` also scores 5/5 but sits just 5.7 cm above 392009's 54.30 — brittle
+where the direction clause is not.
+
+Effect against today's production:
+
+| event | verdict | Enu prod | Enu new | Δ |
+|---|---|---|---|---|
+| 392009 | **keep** | 1391.0 | 1391.0 | **0.0** |
+| 101828 | refuse | 1571.7 | 1190.7 | −381.0 |
+| 393505 | refuse | 858.2 | 574.8 | −283.4 |
+| 395610 | refuse | 1013.5 | 761.0 | −252.5 |
+| 350935 | refuse | 1001.4 | 752.0 | −249.4 |
+| | | | **total** | **−1166.3 MeV** |
+
+against the 20/30 point's −1553.3 MeV, of which −387.1 was the muon that must
+be kept.
+
+**What this rests on, stated plainly: n = 5, with exactly one "keep".** The
+threshold was chosen *after* seeing the labels, so 30° is **fitted, not
+predicted** — the honest status is the same one §5.4 insists on for item 5.  What
+is *not* fitted is the mechanism: fragmentation preserves direction and destroys
+proximity, and that is a physical statement that would have predicted this
+result.  A second keep-class event would be worth more than any amount of
+re-tuning on these five.
+
+### 3.8.2 The upstream defect this exposes
+
+392009's muon is **broken into pieces by signal-processing failure and the
+cathode plane**.  The near-cross-cluster pool re-admitting its far half is a
+*patch* for that fragmentation, not a fix — and the pointing test is then a
+patch on the patch.  The real defect is upstream, in SP and in cathode-crossing
+reconstruction, and it is the same family as doc 144 §14's split muon
+(§4 here) and doc 84's cathode bridge.  **Reported, not fixed**; it is out of
+scope for this round and belongs with the cathode-crossing work.
 
 ---
 
@@ -720,7 +803,7 @@ mechanism into a measured precision.
 
 | item | state after this round | what it needs next |
 |---|---|---|
-| **4** | **Priced.** 3067/3067 `rc=0`, 0 selection churn, 5 events move and they are named, the only live pr/129 sentinel goes green causally, −1553.3 MeV of `Enu`. The guard **empties** the pool rather than trimming it, and only `impact` binds. | A **blind scan of the four unadjudicated refusals** — 392009, 101828, 395610, 350935. Then the flip is a §5.1 decision for the owner. |
+| **4** | **Priced and scanned.** 3067/3067 `rc=0`, 0 selection churn, 5 events move. The owner scanned all five: **4 refusals right, 1 wrong (392009)**. The priced 20/30 point is therefore **not shippable** — but `miss_deg` separates the same five by 78.3° where `impact` manages 14.8 cm, so **impact = 200 / miss_deg = 30** scores 5/5 for −1166.3 MeV (§3.8). | Owner's decision on the corrected operating point. It is fitted on n=5 with one keep, so a **second keep-class event** is worth more than further tuning. |
 | **3b** | **Answered.** The escape is named: the rest term is charged at four admission sites and reduced at one. 4 of 6 payers are that; 1 is an untyped parent; **1 is not a defect at all**. Two of doc 144 §14.2.1's statements are corrected. | A **cross-admission-path continuation test**, its own round, with the 9 `reduced_ok` and 5 `single` events as negative controls. |
 | **3a + 5** | **Round 1 reported honestly as a miss.** The ported-label route died — 29 % id stability, only 2 confident-EM survivors. But the population is unchanged in size (rate ratio 1.06), and its own empty 1.0–1.2 bin gives a label-free threshold. | The **blind 20-object sheet** needs the owner's verdicts. That is the human step; it converts a corroborated mechanism into a measured precision. |
 
