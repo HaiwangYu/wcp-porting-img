@@ -1015,6 +1015,10 @@ the guard attribution (§4.5).
 | 5 | **improve the hadronic shower reconstruction** | **scoped, §15** — on 137238 the exclusion pool empties (`kine_n_excluded` 9 → 1, 316.4 → 0.0 MeV) and the EM shower absorbs it (354 → 555 MeV, 103 → 143 cm). **The deciding census has run** (§15.1, 1434 candidates on both arms): the pool does NOT collapse — Σ`kine_n_excluded` −1.5 %, Σ excluded energy −4.4 %, 108 fell / 92 rose / 1234 unchanged — so 137238 sits in an **8-event tail**, and this is a **PID / shower-building round, not an exclusion-threshold round**. Working set = those 8 events; reading list docs 127, 93, 125, 133, 136, 141. **No code changed** |
 | — | **update the sentinels** | §16, on the `d144fixprod` arm |
 
+**Items 3, 4 and 5 are carried forward in [doc 145](145_items-3-4-5-improvement-round.md)**,
+which prices item 4's fix on 3067 events, names the escape behind item 3b's
+rest-mass double count, and opens items 3a + 5 as one PID round.
+
 **A shared-mechanism check comes before items 3 and 4 are opened as two
 investigations.**  The fourteen failures cluster: two cathode-bridge sentinels
 fail together, and three are the pr/129 pointing-guard family (393505, 171572,
@@ -1293,7 +1297,11 @@ negative control is free — the OFF arm.
 His reading of idx 6/7 as "the two cathode-bridge muons are lost" holds for
 **347890** and not for **177536**:
 
-- 347890 — real loss, 59 MeV of far half, bridge pre-filter at the cathode seam.
+- 347890 — real loss of the far half's 59 MeV, but **not** at a geometric filter:
+  the ends are unchanged at x = (106.91, 4.95) and the bridge never sees the
+  pair because the far half's **PID flips 211 → 11** and doc 84 r4's partner
+  filter refuses EM by design (§14.1).  An earlier draft of this line said
+  "bridge pre-filter at the cathode seam"; the calib dumps refuted it.
 - 177536 — no loss at all; the muon is split in two and the *energy goes up* by a
   spurious rest mass.
 
