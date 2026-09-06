@@ -1,0 +1,49 @@
+# doc sbnd_xin/pr/145 sec 3.5 -- item 4 scan set: the five candidates the
+# near-cross-cluster pointing test refuses.
+#
+# SET  https://www.phy.bnl.gov/twister/bee/set/c1529fd5-d4f6-42f0-b182-71aa7974cdd6/event/list/
+# Built from work-*-d144fixprod (today's production).  ONE set only, on purpose:
+# the display files are byte-identical between the knob-off and knob-on arms
+# (member-content hash, all five events), so an OFF/ON pair would be two
+# identical pictures.  Only the kine accounting changes.
+#
+# THE QUESTION, per event: the named segment sits in a DIFFERENT cluster from
+# the neutrino candidate and was admitted into Enu on proximity alone
+# (gap_cm = 0.00 on all five -- no direction test).  Is it
+#     (a) a cosmic / unrelated track that should NOT be in Enu  -> refusing it is RIGHT
+#     (b) a real daughter of the neutrino interaction           -> refusing it is WRONG
+#
+# Layers: shower_track-global (per-particle colour), track_fit-global (the
+# fitted trajectory), vertices-global (q=15000 marks the neutrino vertex), mc
+# (the PF jsTree), over img-global / clustering-global / op.
+#
+# "impact" = how far the segment's line passes from the neutrino vertex.
+# "miss"   = angle between the segment direction and the direction to the vertex.
+#            A real daughter points back at the vertex: small impact, small miss.
+# The test refuses when impact > 20 cm.  All five fail on impact alone; miss_deg
+# never binds (sec 3.6).
+#
+idx  sample   event   cluster  seg_id   len_cm   KE_MeV  impact_cm  miss_deg  d_vtx_cm  Enu_off  Enu_on   dEnu   note
+0    mcp2k    392009   58       58015    114.1    281.4      54.3      12.5     250.2   1391.0   1003.9  -387.1  --
+1    mcp2k    101828   18       18004    111.3    275.3      98.5     113.6      98.4   1571.7   1190.7  -381.0  --
+2    mcp2k    393505   15       15014     65.5    177.8      69.1     112.2      68.9    858.2    574.8  -283.4  ALREADY ADJUDICATED by the owner (doc 144 sec 13): cluster 15 is a COSMIC.  Use as calibration.
+3    mcp1k    395610   28       28005     51.2    146.9     110.2     103.8     110.3   1013.5    761.0  -252.5  --
+4    mcp1k    350935   11       11002     49.8    143.7      94.5      90.8      94.5   1001.4    752.0  -249.4  --
+
+# Where to look -- the refused segment's endpoints (x, y, z) in cm, and the
+# neutrino vertex, so the object can be found without hunting:
+#
+#  idx 0  392009  seg 58015  (   2.3, 125.4, 361.5) -> ( -71.8,  92.1, 437.6)   nu vtx (150.3, 178.3, 166.7)
+#  idx 1  101828  seg 18004  ( 113.8, 143.3, 493.2) -> (  81.6,  43.1, 482.6)   nu vtx ( 93.1, 114.8, 391.7)
+#  idx 2  393505  seg 15014  ( 133.3, -78.7, 360.8) -> (  93.7, -56.7, 315.8)   nu vtx (160.1, -18.3, 326.1)
+#  idx 3  395610  seg 28005  ( -32.8, 154.6, 275.3) -> ( -56.5, 110.5, 276.8)   nu vtx (  8.3, 101.1, 184.1)
+#  idx 4  350935  seg 11002  ( -18.9, -75.6,  98.4) -> ( -19.2, -99.4,  57.4)   nu vtx (-91.5, -45.3,  29.6)
+#
+# Verdict column to fill: COSMIC (refusal right) / DAUGHTER (refusal wrong) / UNSURE
+#
+# idx  verdict   comment
+# 0
+# 1
+# 2
+# 3
+# 4

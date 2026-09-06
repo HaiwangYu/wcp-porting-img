@@ -318,6 +318,25 @@ population is **54.30 cm** against a 20 cm threshold.  So:
 numbers above, is that this is a strong candidate for production **after** a
 blind scan of the four unadjudicated refusals.
 
+### 3.7 The scan set (uploaded 2026-09-06)
+
+    https://www.phy.bnl.gov/twister/bee/set/c1529fd5-d4f6-42f0-b182-71aa7974cdd6/event/list/
+
+Index and per-event geometry: `docs/pr/pr145-item4-bee.index.txt`.
+
+**ONE set, not an OFF/ON pair, and that is a measurement not a shortcut.** The
+display files are **byte-identical between the two arms on all five events**
+(member-content hash, path-summary line excluded — the naive whole-listing
+`md5sum` reports a false DIFF because that line embeds the archive's own
+directory).  Only `root` and `calib` move.  So an order-matched pair would have
+shipped two identical pictures and asked the owner to spot a difference that is
+not in them.
+
+The question per event is not "which arm is better" but **"is this object a
+cosmic or a daughter"** — all five were admitted on `gap_cm = 0.00`, proximity
+with no direction test.  Index 2 (393505) is the owner's already-adjudicated
+cosmic and is included as calibration, marked as such.
+
 ---
 
 ## 4 Item 3b — why `flag_reduce` misses, named from the data
