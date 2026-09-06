@@ -1,0 +1,23 @@
+# doc pr/145 item 3b -- rest-term admission sites and the flag_reduce escape
+sample	event	d_add	escape	n_charge	n_test	n_reduce	n_skipvisited	sites	why
+mcp2k	98844	139.57	pool	2	0	0	0	shower:211:139.6;orphan:13:105.7	2 mu/pi rest terms charged at sites {orphan,shower}; the reduction exists only in the BFS
+mcp1k	407280	105.658	untyped	8	5	3	0	bfs_or_mainvtx:2212:8.6;shower:11:0.0;bfs_or_mainvtx:0:0.0;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	parent seg=19 has pdg=0, so the chain breaks and curr_pdg=13 pays unreduced
+mcp2k	78743	105.658	reduced_ok	4	2	2	0	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 2 reduction(s) were applied; no escape
+mcp1k	55595	105.658	pool	3	0	0	0	shower:13:105.7;shower:13:105.7;bfs_or_mainvtx:2212:8.6	2 mu/pi rest terms charged at sites {shower}; the reduction exists only in the BFS
+mcp2k	177536	105.658	pool	3	0	0	1	bfs_or_mainvtx:2212:8.6;shower:13:105.7;guard_freed:13:105.7	2 mu/pi rest terms charged at sites {guard_freed,shower}; the reduction exists only in the BFS
+mcp2k	97260	105.658	pool	3	0	0	1	bfs_or_mainvtx:2212:8.6;bfs_or_mainvtx:13:105.7;orphan:13:105.7	2 mu/pi rest terms charged at sites {bfs_or_mainvtx,orphan}; the reduction exists only in the BFS
+mcp1k	286527	0.0	reduced_ok	3	1	1	0	bfs_or_mainvtx:2212:8.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp1k	279256	0.0	single	1	0	0	1	bfs_or_mainvtx:13:105.7	only one mu/pi rest term charged
+mcp1k	287621	0.0	reduced_ok	4	2	2	1	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 2 reduction(s) were applied; no escape
+mcp1k	320029	0.0	reduced_ok	2	1	1	0	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp1k	395962	0.0	visited	3	0	0	2	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:211:139.6	vtx=3 already visited, so the reduction block was skipped for prev_seg=6
+mcp2k	392262	0.0	reduced_ok	2	1	1	0	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp2k	77328	0.0	single	2	0	0	1	bfs_or_mainvtx:13:105.7;shower:11:0.0	only one mu/pi rest term charged
+mcp2k	321895	-0.0	reduced_ok	6	3	2	1	bfs_or_mainvtx:2212:8.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:2212:8.6	every mu/pi continuation fired and 2 reduction(s) were applied; no escape
+mcp2k	347824	-8.599	visited	3	0	0	3	bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:13:105.7	vtx=4 already visited, so the reduction block was skipped for prev_seg=5
+mcp1k	50303	-8.6	single	1	0	0	1	bfs_or_mainvtx:13:105.7	only one mu/pi rest term charged
+mcp1k	291961	-33.912	reduced_ok	6	2	1	2	bfs_or_mainvtx:2212:8.6;shower:11:0.0;bfs_or_mainvtx:2212:8.6;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp2k	163771	-33.912	reduced_ok	2	1	1	0	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp1k	284657	-33.912	reduced_ok	4	1	1	2	bfs_or_mainvtx:13:105.7;bfs_or_mainvtx:211:139.6;bfs_or_mainvtx:2212:8.6;bfs_or_mainvtx:13:105.7	every mu/pi continuation fired and 1 reduction(s) were applied; no escape
+mcp1k	404244	-139.57	single	2	0	0	1	bfs_or_mainvtx:13:105.7;shower:11:0.0	only one mu/pi rest term charged
+mcp2k	170076	-139.57	single	2	0	0	1	bfs_or_mainvtx:13:105.7;shower:11:0.0	only one mu/pi rest term charged

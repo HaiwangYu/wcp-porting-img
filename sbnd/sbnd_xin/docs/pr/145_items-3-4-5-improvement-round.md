@@ -121,6 +121,147 @@ itself differs that way (`stmfit  lm  label` vs `stmfit     lm  label`).
 
 ---
 
+## 4 Item 3b — why `flag_reduce` misses, named from the data
+
+### 4.1 The reframing
+
+Doc 144 §14.2.1 recommended deciding "whether `rest_term_rules` should be
+charged per *particle* rather than per *node*".  That reads as though no
+per-particle rule exists.  **One does.**
+`NeutrinoKinematics.cxx:331-347` carries `flag_reduce`, a particle-continuation
+detector, and `:375-388` already undoes the rest term charged to the previous
+segment when it fires.  So the question is not "design a predicate" but **"why
+do 6 of 21 escape a mechanism that catches the others?"**
+
+Five escapes are visible in the code, and all five are separable by log lines:
+
+| escape | where | why it can miss |
+|---|---|---|
+| `sign` | `:344-346` | `curr_pdg == prev_pdg` is **signed**, so 13 vs −13 never matches, and the μ↔π clause covers only `+211`/`+13` |
+| `pool` | `:230`, `:615`, `:784`, `:894` | the rest term is charged at **four** admission sites; the reduction exists at **one** (the BFS) |
+| `visited` | `:329` | `used_vertices.count(curr_vtx)` skips the entire reduction block |
+| `untyped` | `:344` | a parent segment with `pdg == 0` breaks the chain — found by hand-reading, not predicted |
+| `genuine` | — | two real particles; no defect |
+
+### 4.2 The instrumentation
+
+`kine_continuation_debug` (toolkit, **default OFF**, key-suppressed ⇒
+byte-identical) logs the **signed** pdg on both sides of every continuation
+test, both segment graph indices, whether the reduction fired, the
+already-visited early-continue, and — added after the first probe came back
+incomplete — the rest term charged by `push_shower_kine`, which the first pass
+could not see.
+
+It is **log-only**: no arithmetic reads it.  Proven, not asserted — the probe
+arm reproduces `d144on` exactly on 177536
+(`type=[2212,13,11,11,13]`, `add=219.92`, `Enu=1339.8`, identical to the
+decimal).
+
+Gates: **T0** — knob-off compiled config `cmp` rc 0 against the committed
+`7c4bf46a`.  **T1** — arming adds exactly one key,
+`"kine_continuation_debug": true`.  `build/clus/wcdoctest-clus` 323 cases /
+23067 assertions, 0 failed.
+
+> A trap worth recording, because the first attempt at these gates passed
+> vacuously: a compile without `pipeline_names` produces a config with **no
+> kine block at all**, so the diff was empty and the "T1" looked like a
+> byte-identical result.  The tell was that a known production-ON key
+> (`kine_mainvtx_used_guard`) was also missing.  Always confirm a sibling key
+> is present before reading an empty diff as proof (M6).
+
+### 4.3 The answer
+
+`work-{mcp1k,mcp2k}-d145cont2`, 21/21 `rc=0`, attributed by
+`pr145_cont_attribute.py` (`docs/pr/pr145-contattr.tsv`):
+
+| escape | of the 6 payers | of all 21 |
+|---|---|---|
+| **`pool`** | **4** | 4 |
+| `untyped` | 1 | 1 |
+| `reduced_ok` — no escape, no defect | 1 | 9 |
+| `single` — only one rest term charged | 0 | 5 |
+| `visited` | 0 | 2 |
+| unattributed | **0** | **0** |
+
+**The dominant escape is `pool`, and 177536 is its clearest case.** Its two
+muon halves enter through *two different non-BFS paths* — the 276.0 MeV half as
+a **long-muon shower** (`push_shower_kine`), the 644.3 MeV half through
+**`kine_count_guard_freed`** — so the BFS never sees the pair and `flag_reduce`
+is never even evaluated.  There is no `TEST` line on the event at all.  The
+arithmetic closes exactly:
+
+```
+kine_cont: CHARGE seg=17 pdg=2212 rest_mev=8.60 ke_mev=191.17
+kine_cont: CHARGE_SHOWER start_seg=18 pdg=13 rest_mev=105.66 ke_mev=276.00
+kine_cont: SKIP_VISITED vtx=17 prev_seg=17 prev_pdg=2212
+kine_cont: CHARGE seg=8 pdg=13 rest_mev=105.66 ke_mev=644.34
+```
+(the 644.34 charge is immediately followed by
+`kine_count_guard_freed: COUNT seg idx=8 cluster=17 pdg=13 ke_mev=644.34`, which
+is what attributes it to that pool)
+
+    8.60 + 105.66 + 105.66 = 219.92 = kine_reco_add_energy
+
+against the OFF arm's `8.60 + 105.66 = 114.26`.
+
+### 4.4 Two corrections to doc 144 §14.2.1, both from primary source
+
+1. **The "only two of the counting sites call `rest_term_rules`" explanation for
+   the 15 non-payers is refuted.** They pay nothing because `flag_reduce`
+   *fires* — 9 of 21 are `reduced_ok`, with a `REDUCE` line on the record — or
+   because only one rest term was charged at all (5 `single`).
+2. **Not all 6 payers are spurious.** mcp2k **78743** is `reduced_ok`: every
+   μ/π continuation fired and both reductions applied.  Its +105.7 MeV is a
+   genuinely *extra* muon chain the ON arm counts, not a double count.  So the
+   defect count is **5 of 21, not 6**, and doc 144's "270.0 MeV" figure — which
+   also could not be reproduced from the definition that section states (the sum
+   over the six is **667.9 MeV**) — should not be quoted.
+
+### 4.5 Why no physics fix ships in this round
+
+The named escape does not hand over a safe fix.  Reducing the `pool` case means
+detecting that a shower-path admission and a guard-freed-pool admission are *the
+same particle* — a **cross-admission-path continuation test that does not exist
+today**, not a relocation of `flag_reduce`.  It has to be built so that two
+genuine muons from one vertex still pay twice, and that is its own round with
+its own negative control.  Landing a speculative version here would be a
+behaviour change on the strength of 5 events.
+
+**What ships:** the instrumentation (default OFF), the attribution, and the
+named fix shape.  **Recommended next step:** a cross-pool continuation test
+keyed on the same predicate `flag_reduce` uses, evaluated once after all four
+admission sites have run, behind its own default-OFF knob — and gated on the
+`reduced_ok` and `single` events as negative controls, since those must not move.
+
+### 4.6 An unrelated defect found on the way — reported, not fixed
+
+Hand-reading mcp1k 407280 showed `seg=18 pdg=13 rest_mev=105.66 ke_mev=1.48`: a
+1.48 MeV fragment typed as a muon, charged a full muon rest mass.  Across the
+1435 production dumps, **1808 μ/π nodes carry 205 951 MeV of rest mass into
+`Enu`**.
+
+A caveat that has to come first, because the obvious census is misleading: 789
+of those 1808 nodes (43.6 %) have a kinetic energy *below* their own rest term,
+and **that is ordinary physics** — a stopping pion still carries 139.57 MeV of
+rest mass that belongs in the neutrino energy.  It is not a defect and must not
+be quoted as one.
+
+What is anomalous is narrower: **9 nodes have kinetic energy exactly `0.000` and
+are still charged a full rest mass**, worth **1120.5 MeV** (0.54 % of all μ/π
+rest mass).
+
+    mcp1k 277298 pdg= 211  139.57      mcp2k 350354 pdg= 211  139.57
+    mcp1k 412208 pdg=  13  105.66      mcp2k  72940 pdg= 211  139.57
+    mcp2k 400029 pdg= 211  139.57      mcp2k  99035 pdg=  13  105.66
+    mcp2k 171572 pdg= 211  139.57      mcp2k 281567 pdg=  13  105.66
+                                       mcp2k 179765 pdg=  13  105.66
+
+This is doc 85's known "zero-energy degenerate rows" class arriving in the
+kinematics rather than the score table.  **Reported, not fixed** — it is
+unrelated to item 3b and belongs in its own change (CLAUDE.md §5 tie-breaker).
+
+---
+
 ## 5 Item 3a + 5 — the PID round: PRE-REGISTRATION
 
 *Written and committed **before** any blind object was scored.  Doc 141 §22

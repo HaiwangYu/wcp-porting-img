@@ -6,10 +6,13 @@
 # Runs on the INSTRUMENTED pin, which is a different binary from Round A's arm
 # pin -- the two rounds run concurrently and must not read each other's libs.
 #
-# Usage: [JOBS=8] [PIN=/home/xqian/tmp/d145_libpin_cont] ./scripts/pr145_cont_probe.sh
+# Usage: [JOBS=8] [TAG=d145cont2] [PIN=...] ./scripts/pr145_cont_probe.sh
+#
+# M13: a re-run gets a FRESH tag, never the previous one.
 set -u
 JOBS=${JOBS:-8}
-PIN=${PIN:-/home/xqian/tmp/d145_libpin_cont}
+PIN=${PIN:-/home/xqian/tmp/d145_libpin_cont2}
+TAG=${TAG:-d145cont2}
 SX=$(cd "$(dirname "$0")/.." && pwd)
 cd "$SX" || exit 2
 CENSUS=${CENSUS:-$SX/docs/pr/pr145-splitcensus.tsv}
@@ -26,7 +29,7 @@ grep -v '^#' "$PR_EXTRA_TLA"
 for s in mcp1k mcp2k nuecc48 ncpi0; do
   EVTS=$(awk -F'\t' -v s="$s" 'NR>2 && $1==s {printf "%s ", $2}' "$CENSUS")
   [ -z "$EVTS" ] && { echo "--- $s: none in census"; continue; }
-  OUT="work-$s-d145cont"
+  OUT="work-$s-$TAG"
   echo "--- $s -> $OUT  events: $EVTS"
   PR_JOBS=$JOBS ./run_pr_chain_batch.sh "work-$s-d97fv" "$OUT" data $EVTS
   echo "--- $s rc=$? events=$(ls -d $OUT/pr_evt*/ 2>/dev/null | wc -l)  loadavg=$(cut -d' ' -f1 /proc/loadavg)"
