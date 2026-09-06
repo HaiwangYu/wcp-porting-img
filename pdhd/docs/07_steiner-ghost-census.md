@@ -54,7 +54,9 @@ hash of `mabc-pr.zip`, census arm vs its doc-06 twin:
 ## 1. The answer in one paragraph
 
 The 20 cm bound is **not** being defeated by the support test, and it is **not** inert — it removes
-a great deal, including a **100.8 cm fabricated column** in the owner's own cluster. What leaks is
+a quarter of all unsupported blobs on its own (7 240 of 27 671 in evt 991), including a **100.8 cm
+fabricated column** in the owner's own cluster. The older legacy component vote removes most of the
+rest (16 207); the two sets are disjoint by construction, so they add. What leaks is
 the **run decomposition**: the bound is applied per connected *run* of unsupported blobs, one
 physical fabrication breaks into several runs, and the survivors pile up **just under the
 threshold** — 18.5, 18.4, 18.3, 17.1, 16.4 cm against a 20 cm bound. In cluster 42 the removed
@@ -122,9 +124,16 @@ Three things to take from this table.
 1. **The retile roughly doubles the blob count**, and *half to sixty percent* of what it makes has
    no support in the cluster it is improving. That is the scale of the fabrication, and it is not a
    pathology of one cluster.
-2. **The guard is doing real work.** It removes 84.7 % of the unsupported blobs in evt 991 baseline
-   (23 447 of 27 671) and about a quarter of all retiled *points*. Doc 06's earlier claim that this
-   guard was off was wrong; a quarter of the cloud would otherwise be there.
+2. **The filters do real work, and the two must be credited separately.** In evt 991 baseline the
+   **legacy component vote** — the historical path, always on — removes 16 207 unsupported blobs
+   (58.6 %) and the **20 cm run bound** — the doc pdvd/40 r3 knob — removes a further 7 240
+   (26.2 %), for 84.7 % between them and about a quarter of all retiled *points*. Evt 1079 is the
+   same shape (56.5 % / 27.7 % / 84.1 %). The two sets are **disjoint by construction**
+   (`BadBlobRuns.h:118-127`: a vote-removed component contains no supported blob, and runs are
+   formed only inside kept components), which is why the union is exactly additive and why
+   `kept − nsup` below is an exact count of surviving unsupported blobs rather than a bound.
+   Doc 06's earlier claim that the bound was off everywhere was wrong; its own quarter of the
+   removal would otherwise still be in the cloud.
 3. **The residual is not small and it is not class (c).** 4 224 – 8 030 unsupported blobs survive
    per event, and the 15–20 cm band — runs that would die under a slightly tighter bound — holds
    19 to 37 of the reported runs in every arm.
