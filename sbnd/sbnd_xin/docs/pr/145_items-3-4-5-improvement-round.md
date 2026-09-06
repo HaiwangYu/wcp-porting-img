@@ -906,12 +906,13 @@ pre-flip production (§0 of doc 144, T0 md5 `3bfd2a80d0201d22e9a1b5db37c774eb`).
 It is **not literally `origin/master`**, which is ~78 commits back (merge-base
 `e88f364d`).  Naming the gap rather than hiding it:
 
-- the SBND PR driver's `master`→`HEAD` diff carries exactly **three**
-  production flips — `flash_by_gid` (`94590129`), `excl_t0_frame` and
-  `kine_dqdx_skip_zero_dx` (both `4c84855c`).  `flash_by_gid` writes diagnostic
-  tree columns only; its own comment records the PR archives and nusel verdict
-  TSVs byte-identical across it (308 events).  So on the **pictures**, the OFF
-  arm is the master-branch state.
+- **in the driver**, the SBND PR job's `master`→`HEAD` diff carries exactly
+  **three** production flips — `flash_by_gid` (`94590129`), `excl_t0_frame` and
+  `kine_dqdx_skip_zero_dx` (both `4c84855c`).  That is a claim about *config
+  flips only*; unconditional code changes in the same window are the next two
+  bullets.  `flash_by_gid` writes diagnostic tree columns only; its own comment
+  records the PR archives and nusel verdict TSVs byte-identical across it (308
+  events).  So on the **pictures**, the OFF arm is the master-branch state.
 - doc pr/143's `break_segment` vertex stamp (`70c23cc7`) **is** in these
   pictures — it is the pin the arms were built on.
 - the peer's `ef995685` (wrapped-channel lookup defaults ON, 2026-09-06 10:08)
