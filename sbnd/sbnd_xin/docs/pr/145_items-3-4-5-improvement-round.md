@@ -964,3 +964,167 @@ The Q/L layers (`img-global`, `clustering-global`, `op`, `channel-deadarea-*`)
 come from the **same** `work-<s>-d97fv` imaging arm as the AFTER sets, so every
 visible difference between a before/after pair is attributable to the PR stage
 alone.
+
+## 8 Item 4 SHIPPED — `kine_near_pointing_impact` 200 / `miss_deg` 30, SBND PRODUCTION 2026-09-06
+
+**Status: FLIPPED.**  Owner decision, 2026-09-06, verbatim:
+
+> *"Let's first flip `kine_near_pointing_impact = 200` … `kine_near_pointing_miss_deg = 30` for SBND production following the earlier suggestions."*
+
+That is the authorisation of record for a CLAUDE.md §5.1 default flip: production
+output now moves unconditionally on four events.  §3.8.1 is the recommendation
+this executes; **the shipped point is 200/30, not the 20/30 §3–3.6 priced**, and
+the difference is not cosmetic — at 20 cm the impact clause also refused 392009,
+the one real daughter in the population.
+
+### 8.1 Why the gate is 35 events and not 3067
+
+A full 3067-event arm was launched and then **stopped on purpose** when the owner
+asked whether it was needed.  It is not, and the reason is structural rather
+than statistical:
+
+`near_cands`, the pool the pointing test judges, is filled at
+`NeutrinoKinematics.cxx:892-915` — **before** the admission loop — from
+`kine_near_gap`, `kine_near_end_tol`, `kine_near_kink_deg` and
+`kine_near_min_len`.  **No pointing threshold is read there.**  The pointing test
+lives inside the loop that follows (`:919-947`) and only decides admission.  So
+no threshold can enlarge the pool, and the already-complete 3067-event armed arm
+`work-*-d145np` enumerated that pool over the whole population: **5 candidates in
+5 events**.  Every other event runs identical code on identical data and cannot
+move.
+
+That is a stronger statement than a population arm would have made — an arm shows
+that nothing else moved *this time*; the pool argument shows nothing else *can*.
+The partial arm is left on disk carrying an `ABORTED.txt` in each sample dir so
+it can never be mistaken for a complete one (M13: nothing deleted).
+
+The gate manifest is therefore **the 5 candidate events ∪ the pr127 sentinel
+registry** = 35 events across all four samples.
+
+### 8.2 The config proofs
+
+Both compiled from one tree state; numeric TLAs throughout, because `-A` passes a
+**string** and `"0" != 0` in jsonnet defeats the key-suppression idiom — an `-A`
+proof silently emits the keys it is trying to prove absent.
+
+    T0  flipped driver + --tla-code impact=0,miss_deg=90  ==  pre-flip default
+        cmp rc 0, md5 15cfad8cda4ccf0f895aa86c8fb1f384
+    T1  flipped driver's DEFAULT  ==  pre-flip driver + --tla-code impact=200,miss_deg=30
+        cmp rc 0, md5 881862ad794f1d66188616b340686642
+
+M6 compiled-config proof: pre-flip production carries **neither** key (839 keys);
+the flipped default carries `kine_near_pointing_impact: 200` and
+`kine_near_pointing_miss_deg: 30` on node 21, `TaggerCheckNeutrino:pr` — exactly
++2 keys.  And T1″, the proof a forced-TLA arm cannot give: the config
+`work-mcp2k-d145prod/pr_evt392009/.wct-cfg-evt392009.json` that the **no-TLA** arm
+actually ran carries `{'kine_near_pointing_impact': 200,
+'kine_near_pointing_miss_deg': 30}`.
+
+**Binder count = 1.**  `kine_near_pointing_*` appears in exactly one config file
+in the whole tree — the SBND PR driver.  Unlike the doc-99 flash flip (four files,
+because the LArSoft chain calls `clus_maker.pr()` without the keys) there is no
+second entry point to keep in sync.
+
+### 8.3 The arm and the gate
+
+`scripts/pr145_prodarm.sh` → `work-*-d145prod`, **no `PR_EXTRA_TLA` at all**, on
+the same pin `d145_libpin` (toolkit `7c4bf46a`, `libWireCellClus.so`
+`7f4a718d9795f515e032d705f492e58b`) the §3 census ran on, so `work-*-d144fixprod`
+stays licensed as the negative control by §2's epoch bridge.  35/35 rc=0, 76 s
+wall.
+
+Gate, `pr143_compare_arms.py` per sample against `work-*-d144fixprod`
+(member-content hashes, M2):
+
+| sample | events | tsv | root | zip | tar | calib |
+|---|---|---|---|---|---|---|
+| ncpi0 | 1 | SAME | SAME | SAME | SAME | SAME |
+| nuecc48 | 2 | SAME | SAME | SAME | SAME | SAME |
+| mcp1k | 9 | SAME | **DIFF 350935, 395610** | SAME | SAME | **DIFF 350935, 395610** |
+| mcp2k | 23 | SAME | **DIFF 101828, 393505** | SAME | SAME | **DIFF 101828, 393505** |
+
+**Exactly four events move, and they are the four the owner called cosmics.**
+Two facts in that table are worth reading twice:
+
+- **Every `zip` and `tar` is SAME, on all 35 events.**  The refused objects stay
+  in the PF picture and the Bee display; only the kine accounting moves.  That is
+  what pr/123 r2 requires and it is why the item-4 scan set (§3.7) was one set
+  rather than an OFF/ON pair.
+- **392009 is SAME on every class.**  It was predicted as a *check*, not claimed:
+  at 200/30 the test examines it and votes COUNT, the same outcome as today's
+  no-test path, so if any artefact had moved the test would not be
+  decision-neutral on an admitted candidate and that would have been a finding.
+  It is neutral.
+
+**Selection-label churn: 0.**  `nusel-table.tsv` and `nusel-events.tsv` compare
+DIFF at file level, but that is an artefact of comparing a 1/2/9/23-event arm's
+table against a 3067-event one — the tables are column-aligned and the `event`
+column is one space narrower when every id has five digits.  Row-by-row on the 35
+common events, whitespace-normalised: **0 differing rows in either file**,
+including `event_label`, `label`, `tgm`, `stm`, `fc` and `stmfit`.
+
+### 8.4 What it costs
+
+Read off the calib dumps of both arms:
+
+| event | verdict | Enu prod | Enu new | Δ |
+|---|---|---|---|---|
+| 392009 | **COUNT** (keep) | 1391.0 | 1391.0 | **0.0** |
+| 101828 | SKIP | 1571.7 | 1190.7 | −381.0 |
+| 393505 | SKIP | 858.2 | 574.8 | −283.4 |
+| 395610 | SKIP | 1013.5 | 761.0 | −252.5 |
+| 350935 | SKIP | 1001.4 | 752.0 | −249.4 |
+| | | | **total** | **−1166.3 MeV** |
+
+Exactly §3.8.1's prediction, to the decimal.  Census on the shipped arm
+(`docs/pr/pr145-census-prod.tsv`): 5 candidates examined, 1 COUNT (281.4 MeV
+admitted), 4 SKIP (743.6 MeV refused), no impact anywhere near the 200 cm bound
+(max 110.22 cm).
+
+### 8.5 Sentinels — and the waiver that came off
+
+`pr127_sentinels.py` against `work-*-d145prod`: **20 PASS, 0 FAIL, 3 OPEN, 7
+INERT**, against §3.4's 19 PASS / 0 FAIL / 4 OPEN / 7 INERT baseline.  The event
+that moved is 393505:
+
+    PASS 393505   pr/129   cosmic cluster 15 no longer counted into Enu
+            [ok] Enu=574.8 want [540, 600]
+            [ok] pf_contains 'mu-  267' (14 PF nodes)
+
+Its `KNOWN_OPEN_D144` waiver is **lifted** — the defect it tracked is fixed in
+production, and it was measured fixed on an arm that forced nothing.  The comment
+replacing it records the one thing a future round must not lose: **this is the
+suite's only live assertion on the entire pr/129 feature.**  The other two pr/129
+sentinels (94392, 171572) are INERT — the knob is byte-identical on/off for them
+in both frames, so they have never discriminated it.  If 393505 goes red, read it
+as the pointing test dying, not as drift.
+
+The three remaining OPEN entries (137238, 177536, 347890) are items 3a and 5 and
+are untouched by this flip, as expected.
+
+`./build/clus/wcdoctest-clus` after a rebuild: **328 cases / 23096 assertions, 0
+failed**.  The two `CHECK_KNOB_NUM` entries still pin the **C++** defaults 0.0 and
+90.0 — that is what keeps pdhd, pdvd and the uBooNE chain on the legacy no-test
+path — and they now carry a comment saying out loud that a green run there does
+**not** mean SBND runs the test disarmed.
+
+### 8.6 What is being shipped, stated against itself
+
+- **The threshold is fitted, not predicted.**  n = 5 with exactly one keep, and
+  30° was chosen after seeing the owner's labels.  §3.8.1 says this and shipping
+  does not make it less true.  What is *not* fitted is the mechanism —
+  fragmentation preserves direction and destroys proximity — and a second
+  keep-class event is worth more than any re-tuning on these five.
+- **`miss_deg` has changed role.**  §3.6 measured it **inert** at 20 cm, where
+  impact refused all five on its own.  At 200 cm it is the only live clause.  A
+  future reader must not carry §3.6's "inert on SBND" forward.
+- **It does not recover the energy 392009 actually loses.**  §3.8.2: segment
+  58014 and two more pieces of that same muon are unreachable from this
+  component at any threshold.  This flip decides whether *one* of four fragments
+  is counted.
+- **The LArSoft 1-step chain does not get this** (or `excl_t0_frame`, or
+  `kine_dqdx_skip_zero_dx`, or `flash_by_gid`).
+  `wcp-porting-img/sbnd/pr-operating-point.jsonnet` is a **generated** mirror of
+  the driver's TLA defaults, last regenerated at toolkit `14f0aeeb2` with 151
+  knobs, and it carries none of them.  Found while counting binders for this
+  flip; **reported, not fixed** — it is a resync round of its own, and it is owed.

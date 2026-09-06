@@ -474,14 +474,22 @@ KNOWN_OPEN_D144 = {
     (347890, "doc 84 r4"):
         "doc 144 sec 14.1 -- the far half is still reconstructed but its PID flips "
         "211 -> 11, and doc 84 r4's partner filter refuses EM partners by design; item 5",
-    (393505, "pr/129"):
-        "doc 144 sec 13 -- a cluster-15 cosmic admitted by kine_count_near_cross_cluster "
-        "(proximity only, gap 0.00 cm). Fixed behind kine_near_pointing_impact "
-        "(toolkit 7c4bf46a), which is NOT yet flipped. doc 145 sec 3 PRICED that "
-        "fix on all 3067 events at 20 cm / 30 deg: the pool admits exactly 5 "
-        "candidates across the population and the pointing test refuses all 5 "
-        "(1025.0 MeV), with 19 PASS / 0 FAIL / 4 OPEN / 7 INERT -- identical to "
-        "the control -- and this event's enu_between clause back to PASS at 574.8",
+    # (393505, "pr/129") -- WAIVER LIFTED 2026-09-06, doc 145 sec 8.  The defect
+    # it tracked (a cluster-15 cosmic admitted by kine_count_near_cross_cluster
+    # on proximity alone, gap 0.00 cm) is FIXED IN SBND PRODUCTION: the owner
+    # flipped kine_near_pointing_impact = 200 / kine_near_pointing_miss_deg = 30
+    # in the SBND PR driver, and this event's clauses now read
+    # Enu = 574.8 in [540, 600] and pf_contains 'mu-  267' on an arm run with NO
+    # TLA at all (work-*-d145prod).  Note the operating point is NOT the 20/30
+    # doc 145 sec 3 priced: at 20 cm the impact clause also refused 392009, a
+    # real daughter, which is why 20/30 was not shipped (sec 3.8).
+    #
+    # THIS ENTRY IS THE SUITE'S ONLY LIVE ASSERTION ON THE WHOLE pr/129 FEATURE.
+    # The other two pr/129 sentinels (94392, 171572) are INERT -- the knob was
+    # measured byte-identical on/off for them in both frames, so they never
+    # discriminated it.  If 393505 goes red, read it as the pointing test dying,
+    # not as drift; the fix is worth 283.4 MeV here and the window has 40 MeV of
+    # headroom each side.
 }
 
 RETIRED_SENTINELS = [
