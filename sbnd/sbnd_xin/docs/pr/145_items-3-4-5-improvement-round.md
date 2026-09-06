@@ -360,4 +360,117 @@ a **proton veto**, never a positive electron ID.
 
 ---
 
+### 5.7 What the join actually returned — the ported-label route is dead
+
+`pr145_yz_join.py` carried the 18 labels onto `work-*-d144fixprod`.  It did not
+survive the epoch, and the failure is worth more than the success would have
+been:
+
+| | |
+|---|---|
+| labels | 18 |
+| matched into the current arm | **14** |
+| **object id survived the epoch** | **4 / 14 = 29 %** |
+| matches with a residual so large they are plainly a different object | 2 (170098: length 16.9 → 0.6 cm; 176502: 19.5 → 0.5 cm) |
+| **confident-EM labels surviving a clean match** | **2** |
+
+**29 % id stability is the number doc 144 §7.2 wanted** and it settles that open
+item: a cross-epoch join keyed on object id is wrong more often than it is
+right, and the π⁰ census that used one was correctly declared invalid.
+
+With **two** clean confident-EM survivors, a threshold cannot be re-fit from
+these labels.  The route the pre-registration named in §5.4 step 2 is therefore
+**closed**, and it is closed by measurement rather than by opinion.
+
+### 5.7.1 Why four labels vanished — and it is good news
+
+Three of the four unmatchable objects were owner-labelled **EM**, and in the
+current epoch the nearest object at that position **is typed `particle_id = 11`**:
+
+    286681  owner EM   ->  id 69032  pid=11  len 131.5 (was 109.2)
+    282979  owner EM   ->  id 45036  pid=11  len  22.7 (was  27.9)
+    235435  owner EM   ->  (no clean counterpart; 2 showers left on the event)
+    392901  owner TRACK->  no mu-typed shower remains at all
+
+**The reconstruction has already re-typed several of the objects the owner
+called mis-typed.**  That is item 5's defect being repaired by intervening work,
+not by anything in this round — and it is also why `235435`, declared in §5.5 as
+the training/blind contamination, is moot: the object is gone.
+
+### 5.8 But the defect has not shrunk, and the population sets the threshold
+
+Individual objects churn; the **population does not**:
+
+| | pr141 epoch (`work-pr140r2-off-*`) | current (`work-*-d144fixprod`) |
+|---|---|---|
+| events read | 239 | 1435 |
+| μ-typed showers > 50 MeV | 35 | **222** |
+| rate per event | 0.1464 | **0.1547** |
+
+Ratio **1.06** — unchanged inside any reasonable error.  So doc 141's closing
+finding stands: this is still the open front, worth **73 059 MeV** of
+`kine_charge` across 222 objects.
+
+And the unlabelled population supplies what the labels could not — a threshold:
+
+```
+q/range      count
+   <0.5      7
+0.5-0.6     12
+0.6-0.7     48
+0.7-0.8    108   <- the track peak
+0.8-0.9     21
+0.9-1.0      3
+1.0-1.2      0   <- EMPTY
+1.2-1.5      5
+1.5-2.0      4
+2.0-3.0      9   <- the second population
+3.0-5.0      1
+ 5.0-10      1
+   >10       3
+```
+
+**The distribution is bimodal with an empty bin at 1.0–1.2.** Every threshold in
+`[1.0, 1.2]` selects exactly the same **23 objects**, so the choice is not a fit
+— it is the midpoint of a gap, and it uses **no labels at all**, which is
+precisely what makes it immune to the post-hoc trap §5.4 was guarding against.
+The predictor for the next round is therefore
+
+> **`kine_charge / kine_range > 1.0` ⇒ EM**, 23 of 222 objects (10.4 %),
+> **3276 MeV** of `Enu` at stake if every one of them is really EM.
+
+Two honest qualifications.  This shape is **corroboration, not validation**: a
+valley shows the variable has structure, it does not show which side is EM, and
+only labels can. And 10.4 % is well below doc 141's "≥ 29 % of μ-typed objects
+are EM showers", so either this predictor is conservative or that estimate was
+high — unresolved, and worth stating rather than reconciling by assertion.
+
+### 5.9 What round 1 delivered, and what it did not
+
+**It did not deliver the promised blind precision.**  The measurement that would
+have produced it — re-fit the threshold on the ported labels, then score a
+disjoint set — died at §5.7 when only 2 confident-EM labels survived the join.
+Reporting that plainly is the point of having pre-registered.
+
+What it did deliver:
+
+- the **(y,z)/invariant join**, and with it doc 144 §7.2's number: **29 %** id
+  stability across an epoch;
+- the finding that the reconstruction has **already re-typed** three of the four
+  labelled EM objects that vanished;
+- the population measurement showing the defect is **the same size as at doc
+  141** (rate ratio 1.06, 222 objects, 73 059 MeV);
+- a **label-free threshold** from the population's own empty bin, with the
+  stability argument for it;
+- `docs/pr/pr145-pidscan-manifest.tsv` — a **blind** 20-object sheet (14
+  predicted-EM by highest energy at stake + 6 predicted-TRACK controls) with the
+  predicted class and the discriminant deliberately absent.
+
+**Named next step:** the sheet needs the owner's verdicts.  That is the human
+step round 1 cannot do for itself, and it is what turns the corroborated
+mechanism into a measured precision.
+
+
+---
+
 *Sections 3 (Round A) and 4 (Round B) are filled in as their arms land.*

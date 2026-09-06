@@ -1,0 +1,26 @@
+# doc pr/145 sec 5 -- BLIND mu-typed PID scan sheet.  The predicted
+# class and the discriminant are deliberately ABSENT: printing them on
+# the sheet you then judge makes the agreement circular
+# (feedback_blind_the_scan_sheet).  Verdict: EM or TRACK, plus weak=1
+# if you are not confident.
+sample	run	subrun	event	obj	kine_charge	length	nseg	verdict	weak
+mcp2k	18255	1	275231	6005	1011.3	535.6	7		
+mcp1k	18255	1	283713	17007	871.3	506.3	4		
+mcp2k	18255	1	99563	16002	838.8	515.0	5		
+mcp2k	18255	1	99838	14004	794.9	473.7	6		
+mcp2k	18255	1	78032	18007	751.6	442.2	3		
+mcp2k	18255	1	283833	11004	746.9	435.3	3		
+mcp2k	18259	1	179048	17013	560.1	364.9	9		
+mcp2k	18255	1	478880	24007	414.7	147.5	4		
+mcp2k	18255	1	281567	9023	396.5	143.1	37		
+mcp2k	18255	1	318769	65039	352.6	83.0	6		
+mcp2k	18255	1	97062	15009	345.8	114.8	3		
+mcp2k	18255	1	294174	16030	327.9	148.9	9		
+mcp2k	18255	1	54629	15005	285.5	156.5	6		
+mcp2k	18259	1	243628	74030	201.9	66.2	7		
+mcp1k	18255	1	348691	51063	191.7	80.3	7		
+mcp2k	18255	1	395695	59031	190.8	79.7	6		
+mcp2k	18255	1	91917	87047	180.0	58.3	10		
+mcp1k	18255	1	283713	23011	168.4	56.3	11		
+mcp1k	18259	1	170808	61027	167.6	74.8	11		
+mcp1k	18255	1	490977	23004	158.1	56.2	12		
