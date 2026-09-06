@@ -119,6 +119,192 @@ itself differs that way (`stmfit  lm  label` vs `stmfit     lm  label`).
 
 **`d144fixprod` is therefore a licensed zero-cost negative control for §3.**
 
+### 2.1 The bridge licenses ONE binary, and §4 needed its own
+
+Stated precisely, because it is easy to over-read: the bridge above licenses
+`d144fixprod` against **`7f4a718d…`**, the Round A pin, and nothing else.  §4's
+instrumentation was built and installed *after* that snapshot, so it is a
+different binary (`863e55d6…`) and inherits none of the bridge's authority.
+
+That matters because §4's patch is not purely additive.  Alongside the guarded
+log statements it refactors the live `flag_reduce` condition into
+`const bool cont_hit = (...); if (cont_hit) flag_reduce = true;`.  That should be
+byte-identical by inspection — and "should be by inspection" is not this
+codebase's bar.
+
+So the bridge was **run a second time** on the instrumented binary at HEAD
+(`work-*-d145bridge2`, `863e55d6…` = current `local/lib`, knob off, same 13
+events):
+
+| | mcp1k (1) | mcp2k (10) | nuecc48 (2) |
+|---|---|---|---|
+| `tsv` / `root` / `zip` / `tar` / `calib` | SAME | SAME | SAME |
+
+13/13 `rc = 0`, and **0 log files contain a `kine_cont:` line**, which is the
+knob-off proof for the instrumentation itself.  `8c14185a`'s inertness claim
+therefore rests on a byte gate over 13 events, not on one event plus a reading
+of the diff.
+
+---
+
+## 3 Item 4 — the pointing test priced on 3067 events
+
+`7c4bf46a` shipped the fix behind `kine_near_pointing_impact` with the bar
+written into its own commit message: *"it needs its own 3067-event arm and its
+own negative control before it earns a default."*  This is that arm.
+
+`work-*-d145np`, all four samples, **3067/3067 `rc = 0`**, 35 minutes wall on
+the `d145_libpin` pin, armed at **20 cm / 30°** via the existing
+`docs/pr/pr144-nearpoint.tla`.  Negative control `work-*-d144fixprod`, licensed
+by §2's epoch bridge.
+
+**Proof the arms are what they claim** (not assumed — sampled): 200 of 200
+compiled configs from the armed arm carry `kine_near_pointing_impact : 20` **and**
+`kine_near_pointing_miss_deg : 30`; 50 of 50 control configs carry neither key.
+
+### 3.1 The refusal census — the guard does not trim this pool, it empties it
+
+`pr145_pointing_census.py` over every `wct_pr_evt<ID>.log`
+(`docs/pr/pr145-pointing-census.tsv`):
+
+| | |
+|---|---|
+| events in the arm | 3067 |
+| events reaching the test at all | **5** (0.16 %) |
+| candidates examined | **5** |
+| → COUNT (admitted) | **0** |
+| → SKIP (refused) | **5** |
+| refused KE | **1025.0 MeV** |
+
+**Cross-checked against the control arm, because a census this small is exactly
+the shape a broken parser produces.** The control's own
+`kine_count_near_cross_cluster: COUNT` lines number **5** across the same 3067
+events, on the same five events, and the armed arm has **0**.  So the pool
+really is this rare, and the pointing test refuses **100 %** of what it admits.
+
+That is a stronger statement than "the guard is narrow".  On SBND, at 20 cm /
+30°, `kine_near_pointing_impact` does not tune `kine_count_near_cross_cluster`
+— **it switches it off**.  Anyone reading this as a threshold to tune should
+know there is nothing left on the other side of it to keep.
+
+### 3.2 The gate — 5 events move, and they are the 5 the census named
+
+`pr143_compare_arms.py` against the control, member-content hashes (M2):
+
+| | ncpi0 (19) | nuecc48 (48) | mcp1k (1000) | mcp2k (2000) |
+|---|---|---|---|---|
+| `nusel-evt*.tsv` | SAME | SAME | SAME | SAME |
+| `mabc-pr.zip` | SAME | SAME | SAME | SAME |
+| `pctree-*.tar.gz` | SAME | SAME | SAME | SAME |
+| `tracking-pr.root` | SAME | SAME | **DIFF 2** | **DIFF 3** |
+| `calib-*.json` | SAME | SAME | **DIFF 2** | **DIFF 3** |
+| **`nusel-table.tsv`** | **SAME** | **SAME** | **SAME** | **SAME** |
+| **`nusel-events.tsv`** | **SAME** | **SAME** | **SAME** | **SAME** |
+
+    mcp1k  DIFF: 350935 395610
+    mcp2k  DIFF: 101828 392009 393505
+
+**Exactly the five the census named, and no sixth.** Nothing to explain away.
+
+**Zero selection-label churn** on all four samples — the tagger/BDT selection is
+untouched; only the kinematics move.  And only `root` + `calib` move: the
+display and imaging products are byte-identical, so nothing downstream of the
+picture changes.
+
+### 3.3 What it costs, per event
+
+| sample | event | `Enu` off | `Enu` on | ΔEnu | refused KE | `n_excluded` |
+|---|---|---|---|---|---|---|
+| mcp1k | 350935 | 1001.4 | 752.0 | **−249.4** | 146.9 | 3 → 4 |
+| mcp1k | 395610 | 1013.5 | 761.0 | **−252.5** | 143.7 | 5 → 6 |
+| mcp2k | 101828 | 1571.7 | 1190.7 | **−381.0** | 275.3 | 0 → 1 |
+| mcp2k | 392009 | 1391.0 | 1003.9 | **−387.1** | 281.4 | 7 → 8 |
+| mcp2k | 393505 | 858.2 | 574.8 | **−283.4** | 177.8 | 4 → 5 |
+| | **total** | | | **−1553.3** | **1025.1** | |
+
+Each ΔEnu is **larger** than the refused kinetic energy by about one muon rest
+mass — exactly 105.7 MeV on 101828, 392009 and 393505, and 102.5 / 108.8 on the
+other two — because refusing the segment also drops the rest term
+`push_segment_kine` would have charged it.  And `kine_n_excluded` rises by
+**exactly 1** on every one of the five: the refused segment is not lost, it is
+moved into the excluded pool, which is the correct bookkeeping.
+
+### 3.4 The sentinels — and 393505 is the only live one for this feature
+
+`pr127_sentinels.py`, both arms, against doc 144 §16's baseline:
+
+| arm | result |
+|---|---|
+| control `work-*-d144fixprod` | **19 PASS, 0 FAIL, 4 OPEN, 7 INERT** |
+| armed `work-*-d145np` | **20 PASS, 0 FAIL, 3 OPEN, 7 INERT** |
+
+**No new FAIL.**  The one moved sentinel is 393505, from OPEN to PASS, and it is
+causal:
+
+    knob off    [XX] Enu=858.2 want [540, 600]
+    knob armed  [ok] Enu=574.8 want [540, 600]
+
+That matters more than one row suggests: `pr127_sentinels.py`'s own
+`INERT_AT_D144` block records that the other two pr/129 sentinels (94392,
+171572) are *"on/off byte-identical in BOTH frames — never discriminated"*.  So
+**393505 is the only event in the registry that can catch the pr/129 pointing
+feature dying**, and until this arm it was waived.
+
+The clause that was *not* passing was `pf_contains "mu-  268"`, and it is a
+stale literal, not a physics failure: the node reads **`mu-  267 MeV`** — one MeV
+of ordinary drift — and it reads **identically on both arms**, so it never
+discriminated this knob at all.  It only asserts the owner's *"OK to be in PR"*,
+that the muon is not deleted from the PF tree.  Re-baselined to `mu-  267` with
+both sides measured at the d145 pin (doc 91 §12 discipline), and the file now
+records that `pf_contains` takes a raw substring and therefore — unlike
+`pf_node_ge`/`pf_node_lt` — does **not** tolerate drift, so it will need
+re-baselining whenever the energy scale moves.
+
+### 3.5 Verdict on item 4 — and what is NOT being claimed
+
+The fix does what `7c4bf46a` predicted, at population scale, for free:
+
+- 3067/3067 `rc = 0`, cost unchanged;
+- **0 selection-label changes**; only 5 events move at all, and they are named;
+- the only live pr/129 sentinel goes green, causally;
+- 1553.3 MeV of `Enu` removed, of which 1025.1 MeV is refused kinetic energy.
+
+**This does not establish that the five refusals are right.** The arm measures
+**exposure**, not correctness: it says how much energy the guard takes and from
+where, and truth-level `Enu` is not available at population scale to say whether
+taking it was correct.  On **393505** the owner has already adjudicated cluster
+15 a cosmic, so that one refusal is known-good.  The other four —
+**392009 (281.4 MeV), 101828 (275.3), 395610 (146.9), 350935 (143.7)** — have
+never been looked at.  Note their `miss_deg`: 101828 at 113.6°, 395610 at
+103.8°, 350935 at 90.8° are all pointing *away* from the vertex, which is the
+signature the test was built for; **392009 at 12.5° with a 54.3 cm impact is the
+one that fails on impact alone** and is the likeliest false refusal of the five.
+
+### 3.6 The working point: only `impact` binds, and by a wide margin
+
+Checking which clause actually refuses each candidate — because the plan for
+this round assumed `miss_deg` would matter and it does not:
+
+    mcp1k 350935  impact= 94.49  miss_deg= 90.8   refused by IMPACT (and miss_deg)
+    mcp1k 395610  impact=110.22  miss_deg=103.8   refused by IMPACT (and miss_deg)
+    mcp2k 101828  impact= 98.47  miss_deg=113.6   refused by IMPACT (and miss_deg)
+    mcp2k 392009  impact= 54.30  miss_deg= 12.5   refused by IMPACT ONLY
+    mcp2k 393505  impact= 69.10  miss_deg=112.2   refused by IMPACT (and miss_deg)
+
+**Every one of the five fails the impact cut**, and the smallest impact in the
+population is **54.30 cm** against a 20 cm threshold.  So:
+
+- `kine_near_pointing_miss_deg` is **inert on SBND at this epoch** — arming at
+  20 cm / **90°**, the jsonnet's own armed default, gives the *identical* result,
+  and the working-point mismatch this round was written to guard against does
+  not exist.  A flip therefore need not carry the 30° value.
+- the impact threshold is robust: **any** value in `[0, 54.3)` cm produces
+  exactly this outcome, so 20 cm is not a tuned number sitting near a cliff.
+
+**No default is flipped here** (CLAUDE.md §5.1).  The recommendation, with the
+numbers above, is that this is a strong candidate for production **after** a
+blind scan of the four unadjudicated refusals.
+
 ---
 
 ## 4 Item 3b — why `flag_reduce` misses, named from the data

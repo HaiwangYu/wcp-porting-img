@@ -1,0 +1,7 @@
+# doc pr/145 -- kine_near_pointing_impact refusal census
+sample	event	seg_idx	cluster	ke_mev	d_vtx_cm	impact_cm	miss_deg	verdict
+mcp1k	350935	2	11	143.7	94.5	94.49	90.8	SKIP
+mcp1k	395610	5	28	146.86	110.27	110.22	103.8	SKIP
+mcp2k	101828	4	18	275.3	98.37	98.47	113.6	SKIP
+mcp2k	392009	15	58	281.41	250.22	54.3	12.5	SKIP
+mcp2k	393505	14	15	177.78	68.91	69.1	112.2	SKIP

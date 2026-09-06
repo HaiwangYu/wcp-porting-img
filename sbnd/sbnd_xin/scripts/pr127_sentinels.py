@@ -163,7 +163,19 @@ SENTINELS = [
      # The knob is worth 1079 MeV here, so the window can absorb ordinary drift
      # and still fail loudly when the fix dies.  [540, 600] leaves 40 MeV of
      # headroom on each side and is 1038 MeV clear of the fix-dead value.
-     [("enu_between", 540.0, 600.0), ("pf_contains", "mu-  268")]),
+     # RE-BASELINED 2026-09-06 (doc 145 sec 3.4), both sides measured at the
+     # d145 pin.  The literal was "mu-  268" and the node reads "mu-  267 MeV" --
+     # ONE MeV of ordinary drift.  Note what that clause is and is not: it reads
+     # IDENTICALLY on the armed arm (work-*-d145np) and the knob-off control
+     # (work-*-d144fixprod), so it never discriminated the pr/129 fix at all; it
+     # only asserts the owner's "OK to be in PR", that the muon is not deleted
+     # from the PF tree.  pf_contains takes a raw substring, so unlike
+     # pf_node_ge/pf_node_lt it does NOT tolerate the few-MeV drift every round
+     # produces, and it will need re-baselining again whenever the energy scale
+     # moves.  The clause that actually discriminates is enu_between, and it is
+     # causal: knob off Enu=858.2 (FAIL), knob armed at 20 cm / 30 deg
+     # Enu=574.8 (PASS) -- 283.4 MeV on this one event.
+     [("enu_between", 540.0, 600.0), ("pf_contains", "mu-  267")]),
     (171572, "pr/129", "real daughter KEPT by the pointing test",
      # The KEEP, and the negative control for the DROP above: impact 4.16 cm,
      # miss 11.8 deg.  Owner: "784.9 MeV should be the right energy."  A
@@ -465,7 +477,11 @@ KNOWN_OPEN_D144 = {
     (393505, "pr/129"):
         "doc 144 sec 13 -- a cluster-15 cosmic admitted by kine_count_near_cross_cluster "
         "(proximity only, gap 0.00 cm). Fixed behind kine_near_pointing_impact "
-        "(toolkit 7c4bf46a), which is NOT yet flipped",
+        "(toolkit 7c4bf46a), which is NOT yet flipped. doc 145 sec 3 PRICED that "
+        "fix on all 3067 events at 20 cm / 30 deg: the pool admits exactly 5 "
+        "candidates across the population and the pointing test refuses all 5 "
+        "(1025.0 MeV), with 19 PASS / 0 FAIL / 4 OPEN / 7 INERT -- identical to "
+        "the control -- and this event's enu_between clause back to PASS at 574.8",
 }
 
 RETIRED_SENTINELS = [
