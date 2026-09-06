@@ -35,6 +35,13 @@ SX = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HYP = 1.657          # shower-hypothesis / track-hypothesis energy, exact global (doc 141)
 E_FLOOR = 50.0       # MeV, track hypothesis
 RATIO_CUT = 1.0      # kine_charge/kine_range; > cut => predicted EM
+RANGE_FLOOR = 10.0   # MeV; below this the ratio is a division artifact, not a
+                     # measurement -- doc 145 sec 5.8.1.  Three objects in the
+                     # 222 sit here, the worst a 364.9 cm shower whose
+                     # kine_range is 1e-4 MeV, which the ratio turns into 5.6e6
+                     # and which would otherwise TOP the blind sheet.  They are
+                     # classed DEGENERATE, never EM: the predictor did not
+                     # select them, a failed range computation did.
 N_SERVE = 20         # blind sheet size
 
 
@@ -63,6 +70,7 @@ def main():
             if q <= E_FLOOR:
                 continue
             rng = float(s.get("kine_range") or 0.0)
+            degenerate = (rng < RANGE_FLOOR)
             ratio = (q / rng) if rng > 0 else float("inf")
             nseg = int(s.get("num_segments") or 0)
             L = float(s.get("total_length") or 0.0)
@@ -80,15 +88,23 @@ def main():
                 # change -- ids renumber (doc 145 sec 5.7: only 29% survived)
                 sy=round(float(st.get("y", 0)), 2), sz=round(float(st.get("z", 0)), 2),
                 ey=round(float(en.get("y", 0)), 2), ez=round(float(en.get("z", 0)), 2),
-                predicted="EM" if ratio > RATIO_CUT else "TRACK",
+                predicted=("DEGENERATE" if degenerate else
+                           "EM" if ratio > RATIO_CUT else "TRACK"),
                 dump=os.path.relpath(f, SX)))
 
     em = [r for r in rows if r["predicted"] == "EM"]
     tr = [r for r in rows if r["predicted"] == "TRACK"]
+    dg = [r for r in rows if r["predicted"] == "DEGENERATE"]
     print("events read                       : %d" % nev)
     print("mu-typed objects > %.0f MeV        : %d" % (E_FLOOR, len(rows)))
     print("  predicted EM  (q/range > %.1f)   : %d" % (RATIO_CUT, len(em)))
     print("  predicted TRACK                 : %d" % len(tr))
+    print("  DEGENERATE (kine_range < %.0f MeV): %d  -- excluded from both classes"
+          % (RANGE_FLOOR, len(dg)))
+    for r in sorted(dg, key=lambda r: -r["kine_charge"]):
+        print("      %-8s ev=%-8d obj=%-7d q=%7.1f rng=%8.4f len=%7.1f"
+              % (r["sample"], r["event"], r["obj"], r["kine_charge"],
+                 r["kine_range"], r["length"]))
     print("energy at stake if every predicted-EM object IS EM: %.0f MeV over %d objects"
           % (sum(0.657 * r["kine_charge"] for r in em), len(em)))
 

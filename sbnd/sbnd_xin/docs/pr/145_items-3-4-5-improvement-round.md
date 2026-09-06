@@ -414,34 +414,54 @@ finding stands: this is still the open front, worth **73 059 MeV** of
 And the unlabelled population supplies what the labels could not — a threshold:
 
 ```
-q/range      count
+q/range      count      (219 usable objects; 3 degenerate excluded -- §5.8.1)
    <0.5      7
 0.5-0.6     12
 0.6-0.7     48
-0.7-0.8    108   <- the track peak
-0.8-0.9     21
+0.7-0.8    106   <- the track peak
+0.8-0.9     23
 0.9-1.0      3
 1.0-1.2      0   <- EMPTY
 1.2-1.5      5
 1.5-2.0      4
 2.0-3.0      9   <- the second population
 3.0-5.0      1
- 5.0-10      1
-   >10       3
+    >5       1
 ```
 
-**The distribution is bimodal with an empty bin at 1.0–1.2.** Every threshold in
-`[1.0, 1.2]` selects exactly the same **23 objects**, so the choice is not a fit
-— it is the midpoint of a gap, and it uses **no labels at all**, which is
-precisely what makes it immune to the post-hoc trap §5.4 was guarding against.
-The predictor for the next round is therefore
+**The distribution is bimodal with an empty bin at 1.0–1.2.** The plateau is
+exact — thresholds of 1.0, 1.1 and 1.2 all select the same **20 objects**, and
+only at 1.3 does the count move (to 17).  So the choice is not a fit; it is the
+low edge of a gap, and it uses **no labels at all**, which is precisely what
+makes it immune to the post-hoc trap §5.4 was guarding against.  The predictor
+for the next round is therefore
 
-> **`kine_charge / kine_range > 1.0` ⇒ EM**, 23 of 222 objects (10.4 %),
-> **3276 MeV** of `Enu` at stake if every one of them is really EM.
+> **`kine_charge / kine_range > 1.0` ⇒ EM**, 20 of 219 usable objects (9.1 %),
+> **2600 MeV** of `Enu` at stake if every one of them is really EM.
+
+### 5.8.1 Three objects the ratio selects but the mechanism does not
+
+The ratio is only a measurement while its denominator is one.  Three of the 222
+have a `kine_range` small enough that `q/range` is a **division artifact**:
+
+    mcp2k 179048 obj 17013   q=560.1  kine_range=0.0001 MeV  len=364.9 cm
+    mcp2k 294174 obj 16030   q=327.9  kine_range=3.81   MeV  len=148.9 cm
+    ncpi0 259542 obj 83055   q=141.1  kine_range=5.71   MeV  len=41.1  cm
+
+A 364.9 cm object cannot have a range energy of 10⁻⁴ MeV; that is a failed range
+computation, and the ratio turns it into 5.6 × 10⁶.  Left unguarded it **topped
+the blind sheet** — the owner would have scanned the predictor's loudest
+selection on an object the predictor never really selected.  `pr145_pidset.py`
+now floors `kine_range` at 10 MeV and classes these **DEGENERATE**, in neither
+class.  It is the same failure family as §4.6's zero-KE nodes, seen from the
+other side.
+
+The confident pr141 labels of §5.3 are **unaffected** — their smallest
+`kine_range` is 19.7 MeV, above the floor — so that table stands as printed.
 
 Two honest qualifications.  This shape is **corroboration, not validation**: a
 valley shows the variable has structure, it does not show which side is EM, and
-only labels can. And 10.4 % is well below doc 141's "≥ 29 % of μ-typed objects
+only labels can. And 9.1 % is well below doc 141's "≥ 29 % of μ-typed objects
 are EM showers", so either this predictor is conservative or that estimate was
 high — unresolved, and worth stating rather than reconciling by assertion.
 
@@ -461,7 +481,8 @@ What it did deliver:
 - the population measurement showing the defect is **the same size as at doc
   141** (rate ratio 1.06, 222 objects, 73 059 MeV);
 - a **label-free threshold** from the population's own empty bin, with the
-  stability argument for it;
+  stability argument for it, and a degeneracy floor that keeps three
+  division artifacts out of the owner's scan (§5.8.1);
 - `docs/pr/pr145-pidscan-manifest.tsv` — a **blind** 20-object sheet (14
   predicted-EM by highest energy at stake + 6 predicted-TRACK controls) with the
   predicted class and the discriminant deliberately absent.
