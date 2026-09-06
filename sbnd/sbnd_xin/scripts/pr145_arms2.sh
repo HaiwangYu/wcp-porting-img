@@ -25,6 +25,15 @@
 # work-*-d145np200/pr_evt*/wct_pr_evt*.log.
 #
 # Usage: [JOBS=16] [PIN=/home/xqian/tmp/d145_libpin] ./scripts/pr145_arms2.sh np200
+# DO NOT RUN.  This arm was ABORTED partway through mcp1k on 2026-09-06 and is
+# kept only as the record of what was launched (doc 145 sec 8.1).  The gate that
+# actually shipped the flip is scripts/pr145_prodarm.sh -- 35 events, no TLA.
+# Running this would spend an hour re-deriving a result the pool argument above
+# already proves, and would write into an out_root that carries an ABORTED.txt.
+echo "pr145_arms2.sh: ABORTED ARM, do not run -- see doc 145 sec 8.1;" >&2
+echo "                the shipped gate is scripts/pr145_prodarm.sh" >&2
+exit 2
+
 set -u
 ARM=${1:?usage: pr145_arms2.sh np200}
 JOBS=${JOBS:-16}
