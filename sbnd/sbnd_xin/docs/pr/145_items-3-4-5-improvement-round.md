@@ -410,7 +410,60 @@ proximity, and that is a physical statement that would have predicted this
 result.  A second keep-class event would be worth more than any amount of
 re-tuning on these five.
 
-### 3.8.2 The upstream defect this exposes
+### 3.8.2 The owner's follow-up: why segment 58014 is missing entirely
+
+He asked why a *second* piece of the same muon — cluster 58 segment **58014**,
+23.67 cm, `pdg = 211` — is absent from the particle flow.  The answer is that
+**58014 appears in ZERO log lines in the entire event**: not declined, not
+scanned, not excluded by name.  Two independent gates drop it, and **neither
+asks whether it belongs to the muon**.
+
+**The chain, from the calib dump's shared vertex ids:**
+
+    58014 (23.67 cm, pi)  --[v58019]--  58015 (114.13 cm, mu)  --[v58018]--  58013 (13.82 cm, EM shower)
+                                    also at v58019: 58016 (4.55 cm)
+
+That is ~156 cm of one object, in four pieces — exactly the shattering the owner
+attributes to signal-processing failure and the cathode plane.  **Only 58015 has
+any route into the PF tree or into `Enu`.**
+
+**Gate 1 — the PF tree is keyed on a guard's history, not on the object.**
+The only path that renders these displaced cluster-58 objects is
+`pf_orphan_guard_freed` (`MultiAlgBlobClustering.cxx:2576`), and its first test is
+
+```cpp
+if (!seg->flags_any(PR::SegmentFlags::kPass4GuardFreed)) continue;
+```
+
+so a segment is eligible **only if the pass-4 proximity guard previously
+declined it**.  This event contains exactly one such decline:
+
+    pr130 pass4_prox_guard: decline seg=58015 pdg=13 len=114.1cm
+
+58015 was declined, so it is flagged, so it is emitted as the
+`nu -> n -> mu-  281 MeV` pseudo-node the PF tree shows.  58014 was **never
+declined by that guard**, so it never carries the flag, so the emitter never
+sees it.  Nothing about 58014's length, PID or position is consulted — it is
+invisible because of what happened to a *different* segment.
+
+**Gate 2 — the energy pool has a 30 cm floor.** Independently, the
+near-cross-cluster pool requires `m_kine_near_min_len{30*units::cm}`
+(`NeutrinoPatternBase.h:2330`) and 58014 is **23.67 cm**.  So even with a PF node
+it would not be counted.
+
+**Consequence for §3.8.1, and it is not small.** The corrected operating point
+recovers 58015's 281.4 MeV, but it does **not** recover 58014, 58013 or 58016.
+Of the four pieces the PF sees one, and `kine_track_ctx` scanned only idx 1, 4,
+13 and 15 — never 14.  58013's kinetic energy is on the record at **33.2 MeV**;
+58014's is in no output at all, because nothing ever measured it.  The 7 excluded
+objects on this event total 139.6 MeV, all outside the main cluster.
+
+So the pointing-threshold question was the wrong scale of question for this
+event: **tuning the guard decides whether one of four fragments is counted.**
+The energy that is structurally unreachable is larger, and no threshold in this
+component recovers it.
+
+### 3.8.3 The upstream defect this exposes
 
 392009's muon is **broken into pieces by signal-processing failure and the
 cathode plane**.  The near-cross-cluster pool re-admitting its far half is a
