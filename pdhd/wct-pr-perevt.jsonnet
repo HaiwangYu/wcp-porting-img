@@ -1339,7 +1339,13 @@ function(
     // main cluster.  ON re-anchors the start into the end's component.
     // false (default) => key omitted => byte-identical compiled config and output.
     // GRADED knob, not a production flip.
-    stm_rough_path_require_connected = false,
+    // doc pdhd/11, owner flip 2026-09-07.  Fail a Steiner-graph shortest-path query whose
+    // endpoints are in different connected components instead of accepting boost's
+    // {src, dst, dst} stub as a 2-node path (Graphs.cxx:19-40).  Measured FREE with
+    // unmerge_assoc on: 31/31 events byte-identical in mabc-pr members and in the
+    // T_rec_charge/T_stm_pass/T_stm_eval contents.  Kept on as a guard on the query,
+    // which must never invent a path -- doc pdhd/11 sec 10.2 / 13.
+    stm_rough_path_require_connected = true,
     // ---- doc pr/34 §10: particle-flow (Bee mc tree) port-fidelity knobs ----
     // **ALL FIVE ARE SBND PRODUCTION DEFAULTS ON, owner 2026-08-04** (doc
     // pr/34 §11; C++ defaults stay false).  Display-only, MEASURED: the ON
