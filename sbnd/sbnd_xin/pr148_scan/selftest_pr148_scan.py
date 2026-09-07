@@ -12,6 +12,13 @@ browser (feedback_bokeh_client_session_false_negative).
 
   T1  all 24 sheet rows have a payload, and every payload's start segment
       matches the sheet's `obj`.
+  T1b DRAWABILITY.  Every object's drawn member length is >= 90 % of the
+      length its own shower record claims.  The dump records ONE owner per
+      segment while `num_segments` counts a member list that overlaps, so a
+      shower can be only partly drawable -- 396222 shower 0 reads 43 of 60
+      segments, 246.6 of 432.5 cm.  Judging an object at 57 % of its length
+      is judging a different object; the sheet builder now excludes those and
+      this asserts the sheet it built.
   T2  THE BLIND.  Every key of every ColumnDataSource the module builds, and
       every payload key, is on an allow-list.  An absence has to be PROVEN,
       not asserted, so this enumerates what IS there rather than looking for
@@ -86,6 +93,16 @@ def main():
     bad = [r["event"] for r in rows
            if V.PAYLOAD[int(r["idx"])]["obj"] != int(r["obj"])]
     check(not bad, "payload start segment matches the sheet obj (bad: %s)" % bad)
+
+    thin = []
+    for r in rows:
+        p = V.PAYLOAD[int(r["idx"])]
+        drawn = sum(s["len"] for s in p["members"])
+        claim = float(r["total_len_cm"])
+        if claim > 0 and drawn / claim < 0.90:
+            thin.append((r["event"], round(drawn / claim, 2)))
+    check(not thin, "every object draws >= 90%% of its claimed length "
+                    "(thin: %s)" % thin)
 
     # T2 -- enumerate what actually reaches the browser
     srcs = {"mem_src": V.mem_src, "oth_src": V.oth_src, "st_src": V.st_src,

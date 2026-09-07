@@ -60,6 +60,33 @@ def num(r, k, d=0.0):
         return d
 
 
+DRAWABLE_MIN = 0.90
+
+
+def drawable_frac(sample, event, shower_id):
+    """Fraction of the shower's own total_length that can actually be DRAWN.
+
+    The dump records ONE owner per segment in `segments[].shower_id`, while a
+    shower's `num_segments` counts its member list -- and those overlap, so a
+    segment claimed by two showers appears under one of them only.  Measured
+    over this sheet's pool, 23 of 24 objects are exact and one (396222
+    shower 0) reads 43 of 60 segments, 246.6 of 432.5 cm.  An object drawn at
+    57 % of its length is a different object to judge, so it is not put in
+    front of the owner at all."""
+    p = os.path.join("work-%s-d145np" % sample, "pr_evt%s" % event,
+                     "calib-pr-evt%s.json" % event)
+    if not os.path.exists(p):
+        return 0.0
+    with open(p) as fh:
+        d = json.load(fh)
+    sh = {s["shower_id"]: s for s in d["showers"]}.get(shower_id)
+    if not sh or sh["total_length"] <= 0:
+        return 0.0
+    have = sum(s["length"] for s in d["segments"]
+               if s.get("shower_id") == sh["id"])
+    return have / sh["total_length"]
+
+
 def runsub(sample, event):
     """run/subrun from the per-event calib dump's meta (never guessed)."""
     p = os.path.join("work-%s-d145np" % sample, "pr_evt%s" % event,
@@ -97,6 +124,8 @@ def main():
 
     picked, strata = [], {}
 
+    skipped = []
+
     def take(cands, name, n=PER_STRATUM):
         got = 0
         for r in cands:
@@ -104,6 +133,10 @@ def main():
                 break
             k = (r["event"], r["shower_id"])
             if k in strata:
+                continue
+            f = drawable_frac(r["sample"], r["event"], int(r["shower_id"]))
+            if f < DRAWABLE_MIN:
+                skipped.append((r["event"], r["shower_id"], round(f, 3)))
                 continue
             strata[k] = name
             picked.append(r)
@@ -166,6 +199,9 @@ def main():
 
     from collections import Counter
     print("picked %d object(s): %s" % (len(picked), dict(Counter(strata.values()))))
+    if skipped:
+        print("skipped, not fully drawable (evt, shower, drawable frac): %s"
+              % skipped)
     print("137238 present: %s" % any(r["event"] == "137238" for r in picked))
     print("wrote %s and %s" % (a.sheet, a.key))
     return 0

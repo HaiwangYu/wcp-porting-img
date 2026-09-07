@@ -170,17 +170,17 @@ for f, ax, ay in PROJ:
               name="mem_%s" % k)
     f.scatter(ax, ay, source=st_src, marker="x", size=16, color="#d62728",
               line_width=3)
-    f.scatter(ax, ay, source=fa_src, marker="circle", size=13, color=None,
+    # fill_color, NOT color: `color=` writes fill AND line, so `color=None`
+    # followed by line_color is two settings racing for the same property and
+    # the marker can end up invisible -- half of what says where the object
+    # ends.  Hollow is fill_color=None with the outline set explicitly.
+    f.scatter(ax, ay, source=fa_src, marker="circle", size=13, fill_color=None,
               line_color="#d62728", line_width=3)
 
 cbar = ColorBar(color_mapper=LinearColorMapper(palette=Turbo256, low=MIP_LO,
                                                high=MIP_HI),
                 title="dQ/dx  (MIP)", width=12)
 f_xy.add_layout(cbar, "right")
-
-for s in (psize, gsize):
-    s.js_link("value", f_xy.select(name="mem_xy")[0].glyph, "size")
-
 
 def _sizes(attr, old, new):
     for k in ("xy", "yz", "zx"):

@@ -310,6 +310,14 @@ Control set for everything below: the **62** censused showers in events the νe
 BDT selects (`nue_score ≥ 3`) — the same proxy pr/99 used for its 36 protected
 primaries. Its circularity is stated in §9.
 
+**And it is scored at the resolution pr/99 used, not one coarser.** pr/99 §5
+found *"11 nuecc48 satellite hadrons in nue events — none a selected primary"*:
+a νe event legitimately contains hadronic satellites that A5 should re-type,
+so firing on *a* shower in a selected event is not automatically a false
+positive. Only firing on the event's **primary** — its highest-energy censused
+shower — is. Of the 62 controls, **47** are their event's primary. Both counts
+are given below.
+
 ### 5.2 Candidate 1 — the single-segment stem run. DEAD.
 
 *Hypothesis:* a hadronic object has a long single-prong stem before its
@@ -331,11 +339,12 @@ particle_score < 1.0`, with the header reasoning *"above 20 cm that PID's own
 template competition never considers electron, so a real good score there is
 unambiguous muon-or-proton evidence."*
 
-*Measured over the 300:* the predicate fires on **27** showers — and **15 of
-the 62 νe-selected controls**, including `nue_score` 11.93 (214469, 1699 MeV),
-12.46 (172230), 12.86 (246579) and 14.06 (489330). Of the 39 controls whose
-start segment is over 20 cm, **15 carry a score below 1.0** (0.11 … 0.45); the
-other 24 carry the 100.0 "PID not performed" sentinel.
+*Measured over the 300:* the predicate fires on **27** showers — and on **15 of
+the 62 νe-selected controls**, of which **15 of 15 are their event's primary**,
+including `nue_score` 11.93 (214469, 1699 MeV), 12.46 (172230), 12.86 (246579)
+and 14.06 (489330). Not a satellite among them. Of the 39 controls whose start
+segment is over 20 cm, **15 carry a score below 1.0** (0.11 … 0.45); the other
+24 carry the 100.0 "PID not performed" sentinel.
 
 **Dead — and the premise is wrong, not just the threshold.** A real electron
 stem fits the muon template well, because it *is* a MIP before it radiates. A
@@ -358,15 +367,15 @@ number 137238 reads `n_heavy = 4`, `f_heavy = 0.229` against a control maximum
 of 0.212 — a survivor with a one-object margin. On the number the job actually
 ran with it reads **`n_heavy = 2`, `f_heavy = 0.129`**, and:
 
-| `f_heavy` cut | new re-types | of which νe-**selected** | 137238 in? |
-|---|---|---|---|
-| > 0.10 | 34 | **12** | yes |
-| > 0.15 | 17 | 3 | no |
-| > 0.20 | 12 | 1 | no |
+| `f_heavy` cut | new re-types | in νe-**selected** events | of those, the event **primary** | 137238 in? |
+|---|---|---|---|---|
+| > 0.10 | 34 | 12 | **10** | yes |
+| > 0.15 | 17 | 3 | 3 | no |
+| > 0.20 | 12 | 1 | 1 | no |
 
-Above 0.10, twelve controls come with it — 239794 at `nue` 14.81, 42280 at
-14.07, 489330 at 14.06. Below, 137238 is gone. And 138009 (`nue` 6.75) sits at
-0.212, *above* 137238.
+Above 0.10, ten νe-selected **primaries** come with it — 81597 at `nue` 16.26,
+239794 at 14.81, 42280 at 14.07, 489330 at 14.06. Below, 137238 is gone. And
+138009 (`nue` 6.75) sits at 0.212, *above* 137238.
 
 **Dead.** `scripts/pr148_a5_census.py` now reads the MIP from the compiled
 config and records the dump's claim beside it in the `mip_meta` column, so this
@@ -413,6 +422,15 @@ pr/137-139 splitter's problem, not the tag's. pr/144 §15 records that this
 shower *grew* from 354.3 MeV / 102.7 cm to 555.3 / 142.9 when the exclusion pool
 emptied, and pr/145 §5.1 phrased it as *"a hadronic shower absorbed into an EM
 shower."* That fork is put to the owner rather than resolved here.
+
+**One completeness gate, and it excluded one object.** The dump records ONE
+owner per segment in `segments[].shower_id`, while a shower's `num_segments`
+counts a member list that legitimately overlaps other showers — so a shower can
+be only partly drawable. Measured across the candidate pool, 23 of 24 objects
+are exact and **396222 shower 0** reads 43 of 60 segments, 246.6 of 432.5 cm.
+Judging an object at 57 % of its length is judging a different object, so
+`pr148_pidset.py` now requires ≥ 90 % drawable and 396222 is off the sheet.
+The self-test asserts the sheet it built.
 
 The sheet carries only `sample run subrun event obj shower_id kine_charge
 kine_best total_len nseg`. Withheld: `growth`, `bragg`, `stem`, `n_heavy`,
@@ -470,7 +488,7 @@ never read (while asserting the manifest *is* read, so the negative means
 something). It does not use `bokeh.client.pull_session`, which hands back a
 detached document and would pass on an app that is broken in the browser.
 
-Verified live: `selftest` 21/21 checks pass; the server binds 5017, `HTTP 200`,
+Verified live: `selftest` 22/22 checks pass; the server binds 5017, `HTTP 200`,
 and a session pulls back 1 root, panels `f_xy/f_yz/f_zx`, 249 member points for
 object 1, the three verdict buttons, and **no forbidden word in any served
 Div**.
