@@ -109,6 +109,30 @@ TREES = {
      "work-ncpi0-d97fvpr2":"as work-mcp1k-d97fvpr2.",
      "work-nuecc48-d97fvpr2":"as work-mcp1k-d97fvpr2.",
    },
+   # TIER 3 (added 2026-09-06 after tiers 1+2 ran).  Owner: "There are a lot of
+   # work* directories there, intermediate ones can be cleaned up, right?
+   # retire them."  Same bar as tier 2 -- named by hand, one ground each, and
+   # NOTHING here is named by PROTECTED.txt, so this tier needs no edit to it.
+   tier3={
+     "work-ncpi0-d144frameonly":"pr/144 frame-only decomposition on the PRE-crash-fix binary.  Its crash-fixed twin work-*-d144fixframeonly went in tier 2 and the shipped point work-*-d144fixprod is kept, so this is the older half of a decomposition whose newer half is already released.",
+     "work-nuecc48-d144frameonly":"as work-ncpi0-d144frameonly.",
+     "work-mcp1k-d146sat":"pr/146 satellite A/B sweep arm.  pr/146 shipped its knob default-OFF and sec 12 RECOMMENDS kine_sat_cont_keep_deg 25, whose arm work-*-d146sv25 is KEPT for that open decision.  The other three sweep points are the intermediate steps to it.",
+     "work-mcp2k-d146sat":"as work-mcp1k-d146sat.", "work-ncpi0-d146sat":"as work-mcp1k-d146sat.", "work-nuecc48-d146sat":"as work-mcp1k-d146sat.",
+     "work-mcp1k-d146satoff":"as work-mcp1k-d146sat.", "work-mcp2k-d146satoff":"as work-mcp1k-d146sat.", "work-ncpi0-d146satoff":"as work-mcp1k-d146sat.", "work-nuecc48-d146satoff":"as work-mcp1k-d146sat.",
+     "work-mcp1k-d146sv0":"as work-mcp1k-d146sat.", "work-mcp2k-d146sv0":"as work-mcp1k-d146sat.", "work-ncpi0-d146sv0":"as work-mcp1k-d146sat.", "work-nuecc48-d146sv0":"as work-mcp1k-d146sat.",
+     "work-nuecc48-doc25d38new":"the SBND-side regression gate of PDVD doc 25, a round CLOSED 2026-09-02 (doc pdvd/25 execution).  Cross-detector, so it was checked against BOTH repos' docs before listing -- the doc 100 sec 10 casualty shape.",
+     "work-ncpi0-doc25d38new":"as work-nuecc48-doc25d38new.",
+     "work-nuecc48-doc25r8new":"as work-nuecc48-doc25d38new (gate round 8).",
+     "work-d45sbnd-off3all-nuecc48":"the SBND side of PDVD doc 45's exclusion-frame gate; doc 45 is closed and its PDVD arms (d45prod) are kept.  COST: doc pdvd/45's SBND cross-check becomes text-only.",
+     "work-d45sbnd-off3all-ncpi0":"as work-d45sbnd-off3all-nuecc48.",
+     "work-d45sbnd-on3all-nuecc48":"as work-d45sbnd-off3all-nuecc48.",
+     "work-d45sbnd-on3all-ncpi0":"as work-d45sbnd-off3all-nuecc48.",
+     "work-d46sbnd-on-nuecc48":"the SBND side of PDVD doc 46's cross-detector open-defect census; the defects it names are tracked in doc 46 itself.",
+     "work-d46sbnd-on-ncpi0":"as work-d46sbnd-on-nuecc48.",
+     "work-stmcamp-d42fit":"SBND stm-campaign gate arm for PDVD doc 42, closed 2026-09-05; the constants it backs are on record and the PDVD-side arm d42fit is KEPT.",
+     "work-stmcamp-d44sig":"as work-stmcamp-d42fit (doc pdvd/44).",
+     "work-stmcamp-d46skip":"as work-stmcamp-d42fit (doc pdvd/46).",
+   },
  ),
  "pdvd": dict(
    root=f"{R}/pdvd", work=f"{R}/pdvd/work", unit="armsuffix",
@@ -141,6 +165,13 @@ TREES = {
      "d45nu0": "doc pdvd/45 nu-stage iteration superseded within the same doc.",
      "d143pref":"pr/143's PDVD reference arm.  sec 7.3 states the PDVD chain is NOT production; the defect density number it backs is in the doc.  d143pnew is KEPT as substrate for today's d08 arms.  COST: sec 7.3's before-side.",
    },
+   tier3={
+     "d45skipon":"doc pdvd/45's skip-variant A/B.  The doc's operating point is d45prod, which is KEPT; this pair is the sweep around it.  COST: doc 45's skip table becomes text-only.",
+     "d45skipoff":"as d45skipon.",
+     "d43fvoff":"doc pdvd/43's exit-gap fiducial sweep.  The SHIPPED constant is d43p90c5 and the production arm is d43prod -- both KEPT.  These four are the other sweep points.  COST: doc 43 sec 6's per-point table.",
+     "d43fvd50":"as d43fvoff.", "d43p80c3":"as d43fvoff.", "d43p90c3":"as d43fvoff.",
+     "d46dump":"a single-event dump probe behind doc pdvd/46; the census it fed is in the doc.",
+   },
  ),
  "pdhd": dict(
    root=f"{R}/pdhd", work=f"{R}/pdhd/work", unit="armsuffix",
@@ -170,6 +201,12 @@ TREES = {
      "d03nu6":"as d03nu1 (iteration 6 of 9).",
      "d03nu7":"as d03nu1 (iteration 7 of 9).",
      "d03nu8":"as d03nu1 (iteration 8 of 9).",
+   },
+   tier3={
+     "d08cap10":"doc pdhd/08's bridge-cap sweep.  The round SHIPPED (toolkit 4119a78a) and its shipped arm d08both plus the gate pair d08gref/d08goff are KEPT.  These ten are the sweep points either side of it.  COST: doc 08's per-cap and per-merge tables become text-only; the shipped value and its gate stay re-runnable.",
+     "d08cap20":"as d08cap10.", "d08cap20b":"as d08cap10.", "d08cap40":"as d08cap10.",
+     "d08mrg1":"as d08cap10.", "d08mrg3":"as d08cap10.", "d08mrg5":"as d08cap10.",
+     "d08mr10":"as d08cap10.", "d08mr15":"as d08cap10.", "d08mr30":"as d08cap10.",
    },
  ),
 }
@@ -251,7 +288,7 @@ def plan_tree(tree, cfg):
     # --- what a KEEP is made of -------------------------------------------
     keep_names = (set(cfg["substrate"]) | set(cfg["production"])
                   | set(cfg["flip_evidence"]) | set(cfg["keep_arms"]))
-    tier2_names = set(cfg["tier2"])
+    tier2_names = set(cfg["tier2"]); tier3_names = set(cfg.get("tier3", {}))
     def is_open(d, a):
         return d.startswith(cfg["open_prefix"]) or (a or "").startswith(cfg["open_prefix"])
     keep_dirs = {d for d, a in universe.items()
@@ -262,11 +299,14 @@ def plan_tree(tree, cfg):
             keep_dirs.add(d)
     # a tier-2 family is a deliberate release: it wins over PROTECTED/keep-name
     # matching, and INTERLOCK 10 makes sure that override was intentional.
-    keep_dirs -= {d for d, a in universe.items() if d in tier2_names or a in tier2_names}
+    keep_dirs -= {d for d, a in universe.items()
+                  if d in tier2_names or a in tier2_names
+                  or d in tier3_names or a in tier3_names}
 
     cand = {d for d in universe} - keep_dirs
     tier2 = sorted(d for d in cand if d in tier2_names or universe[d] in tier2_names)
-    rest  = sorted(cand - set(tier2))
+    tier3 = sorted(d for d in cand if d in tier3_names or universe[d] in tier3_names)
+    rest  = sorted(cand - set(tier2) - set(tier3))
 
     # --- INTERLOCK 6 first: citation pulls a dir OUT of tier 1 -------------
     def cited(d):
@@ -278,7 +318,7 @@ def plan_tree(tree, cfg):
     keep_dirs |= set(CITED)
 
     # --- transitive closure: keeping a dir means keeping its substrate -----
-    relset = set(tier1) | set(tier2)
+    relset = set(tier1) | set(tier2) | set(tier3)
     for _ in range(12):
         pull = set()
         for d in keep_dirs:
@@ -290,9 +330,10 @@ def plan_tree(tree, cfg):
                         if o in relset: pull.add(o)
         if not pull: break
         keep_dirs |= pull; relset -= pull
-    closure = sorted((set(tier1) | set(tier2)) - relset)
+    closure = sorted((set(tier1) | set(tier2) | set(tier3)) - relset)
     tier1 = [d for d in tier1 if d in relset]
     tier2 = [d for d in tier2 if d in relset]
+    tier3 = [d for d in tier3 if d in relset]
     if closure:
         print(f"        closure: +{len(closure)} dirs pulled back as substrate of a kept dir")
 
@@ -336,7 +377,7 @@ def plan_tree(tree, cfg):
                 if len(acc) > 3000: break
             out[d] = (len(acc), max(acc) if acc else 0)
         return out
-    rel    = tier1 + tier2
+    rel    = tier1 + tier2 + tier3
     sample = rel[::max(1, len(rel)//120)] if rel else []
     before = snap(sample)
     ps  = subprocess.run(["ps","-eo","cmd"], capture_output=True, text=True).stdout
@@ -392,20 +433,28 @@ def plan_tree(tree, cfg):
     # ---- INTERLOCK 10 (NEW): every tier-2 family must EXIST, carry a ground,
     # and be a deliberate override of whatever else would have kept it.  A
     # tier-2 name that matches nothing is a typo that silently frees 0 bytes.
-    missing = sorted(n for n in tier2_names
-                     if not any(d == n or universe[d] == n for d in universe))
+    def resolves(n): return any(d == n or universe[d] == n for d in universe)
+    allt, missing, executed = {}, [], []
+    for tname, fams in (("tier2", cfg["tier2"]), ("tier3", cfg.get("tier3", {}))):
+        allt.update(fams)
+        if not fams: continue
+        gone = [n for n in fams if not resolves(n)]
+        if len(gone) == len(fams): executed.append(f"{tname} already executed")
+        else: missing += gone
     def grounded(n, seen=()):
-        g = cfg["tier2"].get(n, "")
+        g = allt.get(n, "")
         # the alias token must not swallow a trailing '.' -- a greedy class
         # containing '.' made every "as <other>." ground look ungrounded.
         m = re.match(r"^as\s+([A-Za-z0-9_-]+)\b", g.strip())
-        if m and m.group(1) not in seen and m.group(1) in cfg["tier2"]:
+        if m and m.group(1) not in seen and m.group(1) in allt:
             return grounded(m.group(1), seen + (n,))       # alias -> its target
         return len(g) >= 40
-    noground = sorted(n for n in cfg["tier2"] if not grounded(n))
+    noground = sorted(n for n in allt if not grounded(n))
     check(tree, 10, not missing and not noground,
-          f"tier 2: {len(tier2_names)} families, {len(tier2)} dirs; "
-          f"missing={missing or 'none'} ungrounded={noground or 'none'}")
+          f"tier 2: {len(tier2_names)} fam/{len(tier2)} dirs, tier 3: "
+          f"{len(tier3_names)} fam/{len(tier3)} dirs; "
+          f"missing={missing or 'none'} ungrounded={noground or 'none'}"
+          f"{'; ' + ', '.join(executed) if executed else ''}")
 
     # ---- INTERLOCK 11 (NEW): the production and substrate sets must RESOLVE.
     # Doc 100's decisive test was not "is it cited" but "does it still exist" --
@@ -415,13 +464,15 @@ def plan_tree(tree, cfg):
     check(tree, 11, not unres, f"every substrate/production name resolves ({unres or 'all resolve'})")
 
     # ------------------------------------------------------------- report --
-    sz = du_kb([os.path.join(WORK, d) for d in tier1 + tier2 + KEEP])
+    sz = du_kb([os.path.join(WORK, d) for d in tier1 + tier2 + tier3 + KEEP])
     t1kb = sum(sz.get(d, 0) for d in tier1); t2kb = sum(sz.get(d, 0) for d in tier2)
+    t3kb = sum(sz.get(d, 0) for d in tier3)
     print(f"\n  universe {len(universe)} dirs | KEEP {len(KEEP)}"
           f" | TIER 1 {len(tier1)} = {t1kb/1048576:.2f} GiB"
           f" | TIER 2 {len(tier2)} = {t2kb/1048576:.2f} GiB"
+          f" | TIER 3 {len(tier3)} = {t3kb/1048576:.2f} GiB"
           f" | out-of-scope (untouched) {len(out_scope)}")
-    for label, dirs in (("TIER 1", tier1), ("TIER 2", tier2)):
+    for label, dirs in (("TIER 1", tier1), ("TIER 2", tier2), ("TIER 3", tier3)):
         byarm = collections.Counter()
         for d in dirs: byarm[universe[d]] += sz.get(d, 0)
         if not byarm: continue
@@ -429,20 +480,20 @@ def plan_tree(tree, cfg):
         for a, kb in byarm.most_common(40):
             n = sum(1 for d in dirs if universe[d] == a)
             print(f"                    {a:<24}{n:>6}{kb/1048576:>9.2f}{CIT.get(a,0):>7}")
-    for tier, dirs, kb in (("1", tier1, t1kb), ("2", tier2, t2kb)):
+    for tier, dirs, kb in (("1", tier1, t1kb), ("2", tier2, t2kb), ("3", tier3, t3kb)):
         tf = os.path.join(HERE, f"tier{tier}_{tree}_{STAMP}.txt")
         with open(tf, "w") as fh:
             for d in dirs: fh.write(os.path.join(WORK, d) + "\n")
         print(f"  tier {tier} file: {tf}  ({len(dirs)} lines, {kb/1048576:.2f} GiB)")
-    return t1kb, t2kb
+    return t1kb, t2kb, t3kb
 
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if a in TREES] or list(TREES)
-    g1 = g2 = 0
+    g1 = g2 = g3 = 0
     for t in want:
-        a, b = plan_tree(t, TREES[t]); g1 += a; g2 += b
-    print(f"\n{'='*78}\nGRAND TOTAL  tier 1 {g1/1048576:.2f} GiB   "
-          f"tier 2 {g2/1048576:.2f} GiB   both {(g1+g2)/1048576:.2f} GiB")
+        a, b, c = plan_tree(t, TREES[t]); g1 += a; g2 += b; g3 += c
+    print(f"\n{'='*78}\nGRAND TOTAL  tier 1 {g1/1048576:.2f}   tier 2 {g2/1048576:.2f}   "
+          f"tier 3 {g3/1048576:.2f} GiB   all {(g1+g2+g3)/1048576:.2f} GiB")
     print(f"interlock failures: {fails or 'NONE'}")
     print("\nThis script retired nothing.  Review the tier files, then the owner "
           "runs the retire driver (CONFIRM=yes), tier 1 and tier 2 separately.")

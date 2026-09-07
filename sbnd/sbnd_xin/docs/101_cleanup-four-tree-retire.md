@@ -405,6 +405,77 @@ record. 0 mismatches.
 
 Disk: `/home/xqian` free **399 G → 466 G**, with work tier 2 still to run.
 
+## 8.7 TIER 3, and where the remaining bytes actually are
+
+Owner, after tiers 1-2 ran: *"there are a lot of work* directories there,
+intermediate ones can be cleaned up, right? retire them."*
+
+**Accounted first, because the answer changes what is worth doing.** After
+tiers 1-2 the three trees held 109.3 GiB:
+
+| GiB | what |
+|---|---|
+| 45.0 | **INPUT substrate** — sbnd `grp0825` 15.6, pdvd `keep`/`d27fresh`/`d41prov`/… 18.6, pdhd's 38 bare dirs 10.8 |
+| 35.6 | **LATEST PRODUCTION** — `d97fv` 10.0, `d144fixprod` 10.2, `d145np` 10.2, pdvd `d48nu7`/`d48nu3`/`d45prod` 4.3, pdhd `d03nu9` 0.7 |
+| 9.6 | **pinned by labels or live manifests** — `vtx105-base` (1782 label refs), the `em_display` arms, pdhd's hand-scan source and structural blind |
+| 4.9 | arms backing constants shipped 09-05/06 |
+| **14.2** | **the genuinely intermediate remainder** |
+
+So the honest ceiling was ~14 GiB, not another 90 — the trees are now what was
+asked for. **Tier 3 took 7.39 GiB of it (963 dirs)** and stopped where the next
+byte would have cost a record.
+
+Tier 3's rule is narrower than tier 2's and needs **no `PROTECTED.txt` edit at
+all**: it releases the SWEEP POINTS around a shipped value whose shipped arm and
+gate both survive. pdhd's ten `d08` cap/merge sweep arms (2.82 GiB) go while
+`d08both` + `d08gref`/`d08goff` stay; pdvd's four non-shipped `d43` fiducial
+points go while `d43p90c5` (the shipped constant) and `d43prod` stay; sbnd's
+`d146` sweep goes while `d146sv25`, the still-open recommendation, stays.
+
+**INTERLOCK 10 needed one more distinction.** With tiers 1-2 executed, every one
+of their families reads as "missing" and the check failed on a finished round.
+The rule that keeps it sharp: a tier must be **either fully executed (nothing
+resolves) or fully resolvable** — a tier where some families resolve and others
+do not is the typo case and still fails. It immediately earned that: it caught
+`work-mcp1k-d144frameonly`, which never existed (pr/144 ran the frame-only
+decomposition on ncpi0 + nuecc48 only).
+
+## 8.8 Final state, verified
+
+| | before | after |
+|---|---|---|
+| `sbnd_xin` | 148 G | **72 G** |
+| `pdvd` | 54 G | **40 G** |
+| `pdhd` | 42 G | **34 G** |
+| `~/tmp` | 98 G | **31 G** |
+| `/home/xqian` free | 399 G | **564 G** |
+
+Released: tier 1 97 dirs / 0.89 GiB, tier 2 1462 / 90.46, tier 3 963 / 7.39,
+`~/tmp` sweep 40.49, `~/tmp` dedup 26.77 (nothing deleted). Record layer frozen
+for all 2522 released dirs — **97/97 + 1462/1462 + 963/963** — a SHA-256 per
+file, in `archive/records/cleanup-20260906/`.
+
+**Post-state, checked rather than assumed:**
+
+- broken symlinks **0 / 0 / 0**, against the 0 interlock 4 recorded beforehand —
+  which is the only reason that number means anything;
+- sbnd input `grp0825` **3067/3067**, stage A `d97fv` **3067/3067**, stage B
+  `d144fixprod` **3067/3067**, current point `d145np` **3067/3067**;
+- pdvd `keep` 240, `d27fresh` 120, `d48nu7` 120, `d45prod` 120; pdhd 38 bare
+  substrate dirs, `d03nu9` 30, `d08both` 30;
+- the paused peer's `qlpilot` + `qlctrl` **both intact**;
+- `pr127_sentinels.py` on the current operating point (`work-*-d145np`):
+  **20 PASS, 0 FAIL, 3 OPEN, 7 INERT**.
+
+**One sentinel result that looks like a regression and is not.** The same suite
+against `work-*-d144fixprod` reads **19 PASS / 1 FAIL / 3 OPEN**, where doc
+pr/144 §16.3.1 recorded 19/0/4. The moved entry is 393505, and the cause is in
+the registry, not the data: pr/145 **lifted its waiver on 09-06** (commit
+`22c51ace`) because the defect it tracked was fixed by the
+`kine_near_pointing_impact` flip. `d144fixprod` predates that flip and is the
+knob-off control, so it now fails that entry **by design**. Run the suite against
+`d145np` for the current point — it is 0 FAIL there.
+
 ## 9. Files
 
 Machinery (`pdhd/scripts/retire/`): `toks_20260906.py`, `cit_20260906.py`,
