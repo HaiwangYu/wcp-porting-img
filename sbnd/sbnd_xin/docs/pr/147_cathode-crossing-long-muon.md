@@ -261,12 +261,20 @@ per-particle rule that fires on 9 of the 21 split candidates. It is *bypassed*:
 the two halves enter through two different non-BFS pools, so it is never
 evaluated (no `TEST` line on the event).
 
-But the census locates the second node: **`seg 8`, 279.6 cm, is the unbridged
-far half** — the same object, sitting in the census as a candidate pair at
-gap 20.8 cm with `a_gap 11.4 / a_tan 8.0`, held out by **both** the 20 cm gap
-cap and the 6 cm `xcut` (its end is at x = −9.41). So 177536's "double-counted
-rest mass" is a *symptom of the same unjoined far half*, not an independent
-accounting bug: join it and there is one muon node and one rest term.
+But the census locates the second node: **`seg 8` / `17008`, 279.6 cm, is an
+unjoined muon piece** — so 177536's "double-counted rest mass" is a *symptom of
+an unjoined piece*, not an independent accounting bug: join it and there is one
+muon node and one rest term.
+
+> **Round 2 corrects what that piece IS, and this paragraph is left standing so
+> the correction is visible.** Round 1 read it off the census as a second
+> *cathode* half held out by the gap cap and `xcut`, because the census pairs
+> any two ends whose far ends straddle x = 0 — and these do (+56.86 / −192.87).
+> They straddle because they are the two ends of ONE muon that already crosses
+> the seam. Segment 17008 (vtx 17004→17005) shares **vertex 17005** with
+> segment 17009, an 11.6 cm *member* of the shower the bridge had already
+> built, on the **same side** of the cathode. It is not a cathode pair at all.
+> §11 has the real mechanism and the fix.
 
 **No knob is proposed for it here**, because joining it needs *two* geometry
 cuts loosened at once on the strength of one event, which is tuning to fit.
@@ -280,7 +288,8 @@ Measured instead:
 
 That last line is the reason no gap change is recommended: the one event it
 demonstrably joins gains nothing measurable, and its over-reach across the
-population is unmeasured.
+population is unmeasured. **Round 2 supersedes the premise anyway** — 177536
+never needed a wider cathode window (§11).
 
 ## 8 What is NOT claimed
 
@@ -323,3 +332,112 @@ Scan the two rescued pictures (347890, 168448) before any flip — both change
 pictures, not the scalars, are the thing to judge. If they hold, the flip is
 `long_muon_cathode_bridge_track_types = true` alone; the three value knobs stay
 at their C++ defaults.
+
+---
+
+# Round 2 (2026-09-06) — the owner's flip, and 177536's real mechanism
+
+**Owner verdict on the round-1 Bee pair** (`6130f074` / `2b6b166d`):
+**"0 and 1 are good, 2 should be a long muon as well ..."**
+
+So: idx 0 (347890) and idx 1 (168448) confirmed → `track_types` **flipped for
+SBND production**. idx 2 (177536) is this round.
+
+## 10 SBND production flip — `long_muon_cathode_bridge_track_types = true`
+
+`wct-pr-perevt.jsonnet` now ships it true; the three value knobs stay at their
+C++ defaults. Nothing else changed.
+
+| gate | result |
+|---|---|
+| **T0′** base default vs flipped-with-knob-forced-off | `cmp` **rc 0** — the flip changes nothing else |
+| **T1′** base+knob vs flipped default | `cmp` **rc 0**, md5 `a452fc4dac5c4a32c9ad5a67eabbf61a` — the cfg flip *is* the validated operating point |
+| **flip-equivalence** `work-d147-on1-*` (env) vs `work-d147-flipchk-*` (cfg, no env), 22 events | **PASS 26/26 + 18/18 = 44/44 byte-identical** |
+
+## 11 177536 — not a cathode pair, a receiver-side tail
+
+Round 1 had this wrong, and the correction is the round's main finding.
+
+```
+seg 17005  bare  pdg 11  12.2 cm   vtx 17003 -> 17004
+seg 17008  bare  pdg 13  279.6 cm  vtx 17004 -> 17005     <- the missing piece
+seg 17009  sid 85018 pdg 13  11.6 cm  vtx 17005 -> 17001  <- a SHOWER MEMBER
+seg 85018  sid 85018 pdg 13  98.7 cm  vtx 85019 -> 85018  <- what the bridge absorbed
+main_vertex at x = 56.86
+```
+
+The muon runs main_vertex (x +56.9) → `85018` → **across the cathode** →
+`17009` → `17008` → x −192.9. The bridge already did its job (`absorb bare
+chain … gap=9.4cm`). What it left behind is `17008`, which hangs off the
+**receiver's** far end at vertex 17005 — the *same* side of the seam.
+
+The bare-chain BFS walks only from `best->seg`, the partner, and it refuses to
+traverse `main_vertex`; it never walks back along the receiver. So the piece was
+never reachable, at any cathode window. Round 1's census listed it as a cathode
+pair because the census pairs ends whose *far* ends straddle x = 0 — and these
+do (+56.86 / −192.87), for the trivial reason that they are the two ends of one
+muon that already crosses.
+
+**`long_muon_cathode_bridge_tail_min_len`** (C++ default `0.0` = off) walks the
+bare continuation from the bridged muon's own vertices after a bridge fires.
+Unlike the partner-side BFS it **retypes nothing** — the tail must already be
+`|13|`. That is the whole guard, and the census says why:
+
+| bare segment ≥ 20 cm sharing a vertex with a `\|13\|` shower member | rows |
+|---|---|
+| pdg 2212 | **37** |
+| pdg 211 | **18** |
+| pdg 13 | **9** |
+
+Absorbing on geometry alone would swallow a hadronic prong six times out of
+seven.
+
+### 11.1 Gates and over-reach
+
+| gate | result |
+|---|---|
+| compiled config, key absent | byte-identical; armed ⇒ exactly **one** new key |
+| `wcdoctest-clus` | **328 cases / 23108 assertions, 0 failed** |
+| freshness | `libWireCellClus.so` 19:50:51 > last edit 19:50:17 |
+| **ON vs OFF, 17 events** | **exactly 1 archive differs** — 177536 `mabc-pr.zip`. mcp1k **PASS 16/16** |
+| **determinism** | `work-d147-tdet1/tdet2`, `setarch -R` — **PASS 2/2** |
+
+The 17 events are the 9 muon-tail events plus **8 hadron-tail controls** —
+168526 (206.3 cm π tail), 169824 (153.7 cm π), 99716 (135.1 cm p), 97231,
+98470, 59025, 313847, 288287. None moves.
+
+**Scope limit, stated because it bounds the knob:** the tail walk runs only
+*after a bridge fires*, so of the 9 muon-tail events it can reach exactly one.
+The other 8 have the same geometry with no cathode bridge; whether they should
+also be joined is a **separate question this round does not answer**.
+
+### 11.2 Effect on 177536
+
+| | tail OFF | tail ON |
+|---|---|---|
+| `kine_particle_type` | `[2212, 13, 11, 11, 13]` | `[2212, 13, 11, 11]` |
+| muon nodes | **2** — 276.0 + 644.3 | **1** — **917.3** |
+| `add_energy` | 219.9 (two rest masses) | **114.3** (one) |
+| `Enu` | 1339.8 | **1231.0** |
+
+Pre-regression `Enu` was **1222.4**, so this lands within **9 MeV** of it, and
+the spurious rest mass is gone as a *consequence* of joining the muon — which
+is what §7 predicted would happen if the piece were joined.
+
+Bee A/B for the owner's scan, uploaded 2026-09-06 (sidecar
+`bee/d147r2/d147r2.index.txt`):
+
+- **BEFORE**: https://www.phy.bnl.gov/twister/bee/set/8e8a9c3c-c2bb-44ca-b94f-91f749afe599/event/list/
+- **AFTER**: https://www.phy.bnl.gov/twister/bee/set/118d3404-9708-4fd6-ac60-5c2ac58aacb1/event/list/
+
+**`tail_min_len` is HELD OFF for SBND** pending that scan: "2 should be a long
+muon as well" states the goal, not a verdict on this mechanism.
+
+## 12 Round 2 — what is NOT claimed
+
+- The tail walk is gated on a bridge having fired; **8 of the 9 muon-tail
+  events are out of its reach** (§11.1) and are not addressed.
+- Over-reach is measured on 17 events, not on 3067.
+- No PDVD / PDHD / uBooNE gate — still owed, as in §8.
+- Round 1's §7 reading of 177536 was wrong and is corrected in place rather
+  than deleted.
