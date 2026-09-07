@@ -308,6 +308,82 @@ plane behaves like an induction plane with much weaker signals because of a
 hardware fault**. APA2's excess sits in the **dead** band instead, so whatever
 APA2 suffers from is not the APA0 fault. The face-0 grouping is common to both.
 
+### 4.2b The APA label does not depend on x or on t0 (owner check, 2026-09-07)
+
+The assignment above used `sign(x)` and `z`, and the owner rightly asked whether
+that is legitimate: **before Q/L matching or a t0 correction, x is a drift-time
+proxy, not a position, so it cannot by itself say which APA read the charge.**
+
+It does not have to. The dump carries a wire-based label. `pu/pv/pw` in
+`T_rec_charge` are not per-face wire numbers — `PdvdMagnifyTrackingVisitor.cxx:599-601`
+writes them through `ChanScheme::globalf`, i.e. `base[plane] +` the rank of the
+channel in the ascending list of that plane's channels over **all** anodes. From
+the production wire file the blocks are exact:
+
+| plane | base | block size | APA from the stored value |
+|---|---|---|---|
+| U | 0 | 800 / APA | `pu // 800` |
+| V | 3200 | 800 / APA | `(pv - 3200) // 800` |
+| W | 6400 | 960 / APA (480 per face) | `(pw - 6400) // 960` |
+
+Labelling every accepted-pass fit point by `(pw - 6400) // 960` and comparing
+with the `sign(x) + z` guess, over all 61 events:
+
+```
+CONFUSION   rows = APA from pw (wire index)   cols = APA guessed from sign(x), z
+   true APA0     20747       0       0       0
+   true APA1         0   14764       0       0
+   true APA2         0       0   22684       0
+   true APA3         0       0       0   20672
+                                     agreement 78867/78867 = 100.0 %
+```
+
+The two agree on **every point**. The reason is that imaging runs per APA, so a
+point's x is built from the drift time relative to *that* APA's own anode and
+stays inside that APA's drift volume whatever the t0 error is — a wrong t0 slides
+x within the volume, it does not move it across the cathode. The W-rank blocks
+also confirm which face is live: the APA0-face1, APA1-face0, APA2-face1 and
+APA3-face0 blocks are **empty**, exactly matching `clus.jsonnet`'s statement that
+APA0+APA2 run on face 0 and APA1+APA3 on face 1.
+
+So the per-APA numbers stand, and **APA2 really is APA2**. (An earlier attempt to
+check this through `T_proj_data.channel` gave 28 % agreement; that was an error on
+my side — that branch is `cs.global(...) = base[plane] + rank`, not a raw LArSoft
+channel, and decoding it as `channel // 2560` scrambles the APAs.)
+
+### 4.2c The charge is already missing before the fit runs
+
+This is §9's first test, answered here rather than deferred. `T_proj_data` holds
+the 2-D pixels the fit was actually handed. Per accepted pass, normalised by the
+**true 3-D path length** (not `sum(nq)` — the fitter's `dx` is
+`|p-prev| + |p-next|`, about twice the step):
+
+| APA | measured W charge per cm | W pixels per cm | charge per pixel | slices per channel |
+|---|---|---|---|---|
+| APA0 | 369 954 | 34.8 | 6 776 | 18.4 |
+| APA1 | 785 593 | 90.9 | 5 620 | 18.7 |
+| APA2 | 429 756 | 46.8 | 5 937 | 16.9 |
+| APA3 | 1 053 035 | 114.9 | 5 517 | 17.2 |
+
+Relative to the APA1/APA3 mean the measured collection charge per cm is **APA0
+0.40, APA1 0.85, APA2 0.47, APA3 1.15** — the same ordering, and roughly the same
+factor, as the fit's own dQ/dx (0.59 / 0.95 / 0.53 / 0.92). Two further points:
+the **charge per pixel is the same in all four APAs** (5.5-6.8 k), and the **ROI
+time extent per channel is the same** (17-19 slices) and essentially no pixel
+carries zero charge. So APA0 and APA2 are not being read at a lower gain and
+their ROIs are not being truncated in time — the fit is simply handed about half
+as much collection-plane charge per unit track.
+
+**`TrackFitting` is therefore not the culprit; the deficit arrives with the
+input.** That moves the investigation upstream into SP/imaging.
+
+*Caveat, stated rather than solved:* `T_proj_data` is a region around the
+trajectory, not only the wires the track crosses, so "pixels per cm" is not a
+pure geometric rate and can carry a track-angle dependence; APA1 and APA3
+themselves differ by 35 %. The robust part of this table is the ordering and the
+fact that charge-per-pixel and slices-per-channel are flat while the total is
+not.
+
 ### 4.3 PDVD as the control: this is PDHD-specific
 
 ![](figs/50_pdvd_deficit_anatomy.png)
@@ -510,14 +586,16 @@ are correct to 5 %.** Imaging more PDHD events buys nothing against this.
 
 Four tests, in the order that narrows fastest. None needs a new dump.
 
-1. **Is the charge already missing before the fit?** Compare the per-point fit
-   charge against the *imaging* charge in the same region (the
-   `clusters-apa-apa{0..3}-ms-active.tar.gz` products, one per APA, are already
-   on disk). If the imaging charge is there and the fit does not pick it up, it
-   is `TrackFitting`; if the imaging charge is already absent, it is upstream in
-   SP/imaging. **This single test splits the problem in half** and should come
-   first.
-2. **Separate the APA0 hardware fault from whatever APA2 has.** §4.2 shows they
+1. ~~Is the charge already missing before the fit?~~ **Answered in §4.2c: yes.**
+   The 2-D collection charge per cm handed to the fit is 0.40 / 0.85 / 0.47 /
+   1.15 for APA0-3, with identical charge-per-pixel and ROI time extent. It is
+   **not** `TrackFitting`. The next step inherits from this: take the same
+   comparison one stage further upstream, into the per-APA imaging products
+   (`clusters-apa-apa{0..3}-ms-active.tar.gz`, already on disk) and then the SP
+   frames, and find the stage at which APA0 and APA2 diverge from APA1 and APA3.
+2. **Separate the APA0 hardware fault from whatever APA2 has.** This is now the
+   central question — the owner's position is that APA2 is a normal APA, and
+   §4.2b rules out a mis-labelling. §4.2 shows they
    fail differently — APA0 in the partial band (0.29), APA2 in the dead band
    (0.31). `pdhd/docs/sp-apa0-plane2.md` explains APA0. APA2 needs its own
    explanation, and the fact that both are face 0 is the clue.
