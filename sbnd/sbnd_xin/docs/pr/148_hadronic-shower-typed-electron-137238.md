@@ -1,8 +1,25 @@
-# doc sbnd_xin/pr/148 — evt 137238: the scan says the object is EM, and the tag is firing where it should not
+# doc sbnd_xin/pr/148 — evt 137238: the tag that was supposed to fix it is right about half the time, and its energy effect is not the one it was designed for
 
-**Status: SCAN 0 DONE (24/24, 2026-09-06). THE ROUND INVERTED. Fix designed
-(§8), default OFF, not yet implemented. SCAN 2 (§11) built and running on
-port 5017 — it is what decides the fix's precision and recall.** No code changed, no default flipped.
+**Status: BOTH SCANS DONE — 24/24 and 12/12, 2026-09-06, 36 labels.
+THE ROUND INVERTED, THEN THE FIX WAS REFUTED BY THE SECOND SCAN.
+No knob is proposed. §12 is what was measured; §13 is the recommendation.**
+
+The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
+Scan 0 (§6.1) called that object **EM** and found the opposite defect —
+`shower_hadronic_tag` re-typing real EM cascades. §8 designed a segment-count
+guard for that. **Scan 2 (§11.3) labelled the guard's entire cut set and
+refuted it**: 5 EM / 2 HADRONIC, Fisher *p* = 0.37. §8 is kept, marked refuted.
+
+What survives is a measurement and two findings the owner can act on:
+
+- on **18 labelled re-types** the tag is right **8 times** — 44 %, 95 % Wilson CI
+  **[0.25, 0.66]**. **Fifty percent is inside that interval**, so the data cannot
+  distinguish harmful from neutral, and ~100+ labels would be needed to try.
+  **The precision question is closed as unanswerable at achievable scan cost.**
+- **A5's effect on `Enu` is 11 : 1 rest-mass over estimator** (§12.2) — the
+  estimator is the only thing it was designed to change.
+- **A5 has drifted off its own calibration** (§12.3): 395148, the sole design
+  object of the proton-stem branch, no longer fires it. No code changed, no default flipped.
 
 The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
 **The owner's own blind scan calls it EM** — and calls every one of the twelve
@@ -64,6 +81,11 @@ cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin
 # The scan, once it is labelled (sec 6.1, sec 8) -- reproduces every table
 ./scripts/pr148_score_scan.py
 #   -> EM 19  MIXED 2  HADRONIC 3;  guard at nseg>10 declines 7, dEnu -790.5 MeV
+
+# Both scans pooled -- reproduces every table in sec 12
+./scripts/pr148_scan_combined.py
+#   -> 18 labelled re-types, precision 0.444 CI [0.25,0.66]; sec 8 bar Fisher
+#      p=0.367 REFUTED; rest-mass:estimator 11:1; 395148 no longer fires
 
 # Scan 2 -- the 12-object sheet (sec 11)
 ./scripts/pr148_pidset2.py --census docs/pr/pr148-a5-census.tsv \
@@ -620,7 +642,14 @@ operator to check.
 
 ---
 
-## 8. The design of the fix — `shower_hadronic_max_nseg`
+## 8. The design of the fix — `shower_hadronic_max_nseg` — **REFUTED, §11.3**
+
+> **Kept as written and marked dead.** Scan 2 labelled the whole of the cut set
+> priced below: **5 EM / 2 HADRONIC, Fisher *p* = 0.37** against the objects the
+> guard keeps. The bar does not separate. The empty bin argued for in §8.1 was
+> not a class boundary — it is where a monotone tail thins out, unlike the
+> genuinely bimodal one pr/145 §5.8 used, and reading it as a boundary was the
+> error. §12 has the numbers. Nothing in this section ships.
 
 Not "make A5 fire more". **Make A5 stop firing on EM cascades.** One new knob,
 C++ default `0` = off, so the legacy path is byte-identical:
@@ -628,7 +657,7 @@ C++ default `0` = off, so the legacy path is byte-identical:
 > **A5 declines to re-type a shower whose segment count at evaluation time
 > exceeds `shower_hadronic_max_nseg`.** Recommended SBND value **10**.
 
-### 8.1 Why the segment count, and why 10
+### 8.1 Why the segment count, and why 10 *(the reasoning that failed)*
 
 **The labels pick the variable.** Sorted by the shower's *final* segment count:
 
@@ -798,15 +827,23 @@ assertion (doc 91 §12.3).
 
 ## 10. Honest limits
 
+- **Two designs of mine were refuted by the owner's scans, in sequence** — the
+  charter (recover 137238 to hadronic) by scan 0, and §8's `nseg` guard by
+  scan 2. Both are kept and marked rather than deleted; a doc that only shows
+  what survived cannot be audited.
+- **The §8.1 empty-bin argument was wrong, and the error is nameable.**
+  pr/145 §5.8's empty bin sat between two **modes** of a bimodal distribution.
+  §8.1's sat where a monotone tail thins out — mass at `nseg` 2-4, then
+  sparsity. That is not a class boundary, and reading it as one is how n=4
+  got promoted to a design.
 - **The round's own charter was refuted by the round's own scan.** It was
   opened to re-type 137238 from EM to hadronic; the owner's blind verdict on
   that object is EM. §§1-5 are kept as written, and §5.5 carries the note that
   their three dead discriminants were searching a class the scan says is empty.
   Erasing the refuted half would make the record useless.
-- **The evidence for §8 is four labels.** Three EM and one HADRONIC among the
-  seven objects the guard declines. The bar itself rests on a stronger,
-  label-free argument (§8.1's empty bin), but the *direction* — that A5
-  re-types real EM cascades — rests on those four. §11 is how to widen it.
+- **§8's four labels became seven and the guard died.** The direction it rested
+  on — that A5 re-types real EM cascades — survives and is now measured on 18
+  (§12.1); the *variable* did not.
 - **S4 is the energy tail, not a sample of A5.** It is literally the top six
   re-types by `kine_best` out of sixty whose median is 58.1 MeV. "Three of six
   are EM" is a statement about the tail. Do not quote it as A5's precision.
@@ -878,7 +915,7 @@ objects served on 5017, no forbidden word in any Div, no count on screen.
 
 A **fresh tag** (`scan1`), never written into `scan0` (M13).
 
-### 11.2 After it comes back
+### 11.2 What was pre-registered, before the labels arrived
 
 1. Re-score with `pr148_score_scan.py --labels work/pr148_scan_labels/scan1/filled_sheet.tsv`.
 2. **Precision** = the labelled fraction of stratum A ∪ scan 0's four that is
@@ -889,8 +926,186 @@ A **fresh tag** (`scan1`), never written into `scan0` (M13).
    should be turned off outright, not guarded.
 5. Then implement §8.4 and score §9.1's pre-registration.
 
-**And the round after that is the splitter, not another typing round.** Three
-of scan 0's twenty-four objects point at absorption — 137238 itself under the
-§6.2 reading, plus both `MIXED` verdicts at 81 and 35 segments — and none point
-at the tag. Doc pr/137-139 owns that machinery. §6.2's question decides it, and
-it is the owner's to answer.
+§11.4 scores these against what came back.
+
+### 11.3 What came back — 12/12, and it kills §8
+
+`docs/pr/pr148-pidscan2-verdicts.tsv` (committed before this analysis, so the
+labels are a record independent of what I conclude from them). No `weak` ticks.
+
+| idx | evt | shower | stratum | branch | census `nseg` | **verdict** |
+|---|---|---|---|---|---|---|
+| 3 | 321015 | 16 | A above bar | growth | 11 | HADRONIC |
+| 7 | 406125 | 0 | A above bar | growth | 11 | **EM** |
+| 10 | 318769 | 0 | A above bar | growth | 11 | **EM** |
+| 0 | 30504 | 0 | B stem | stem | 3 | **EM** |
+| 4 | 399328 | 0 | B stem | stem | 2 | **EM** |
+| 8 | 174771 | 4 | B stem | stem | 1 | HADRONIC |
+| 11 | 92904 | 0 | B stem | stem | 2 | HADRONIC |
+| 1 | 177068 | 2 | C below bar | growth | 2 | **EM** |
+| 2 | 315167 | 1 | C below bar | growth | 7 | HADRONIC |
+| 5 | 355106 | 0 | C below bar | growth | 3 | **EM** |
+| 6 | 163543 | 3 | C below bar | growth | 6 | **EM** |
+| 9 | 165767 | 0 | C below bar | growth | 3 | HADRONIC |
+
+**Stratum A closes the guard.** With scan 0's four, the seven objects
+`shower_hadronic_max_nseg = 10` would decline are now **fully labelled**:
+
+| | labelled | EM (the guard is right to remove) | HADRONIC (it is wrong to) |
+|---|---|---|---|
+| **above** the bar — what §8 removes | 7 | **5** | 2 |
+| **below** the bar — what §8 keeps | 11 | **5** | 6 |
+
+EM fraction 0.71 above against 0.45 below; **Fisher two-sided *p* = 0.37**.
+On 18 labels the bar is indistinguishable from a coin. **§8 is refuted.**
+
+**Stratum C is the reason it could never have worked.** Three of five
+growth-branch fires *below* the bar came back EM. A5 mis-fires below the bar at
+much the same rate as above it, so no cut on this variable was ever going to be
+sufficient — and the guard's own removals are 2-in-7 wrong.
+
+### 11.4 Scoring §11.2's pre-registered predictions
+
+Written before the labels arrived, scored as written:
+
+| # | prediction | outcome |
+|---|---|---|
+| 2 | stratum A gives the guard's precision | **delivered** — 5/7, and it kills the guard |
+| 3 | "any EM verdict in stratum C means the guard is necessary but not sufficient" | **fired, and harder than the wording allows.** 3 of 5 are EM: the guard is not necessary either |
+| 4 | "if stratum B is 5/5 EM the stem branch should be turned off outright" | **did not fire.** With scan 0's 98294 the stem branch is **3 EM / 2 HADRONIC** — indistinguishable from the growth branch's 7/6. No grounds to single it out |
+
+Prediction 4 mattering is the point of writing it down: without it the temptation
+would have been to retro-fit the stem branch as the villain on 2 of 5.
+
+
+---
+
+## 12. What the two scans measured, together
+
+36 labels over two independently-designed samples — scan 0's by energy rank,
+scan 2's by branch and by energy quantile. **18 of them are objects
+`shower_hadronic_tag` re-typed**, which is the first labelled calibration set
+this mechanism has ever had. `scripts/pr148_score_scan.py` reproduces
+everything below.
+
+### 12.1 The tag is right about half the time, and that question is now closed
+
+| | n |
+|---|---|
+| labelled A5 re-types | **18** |
+| the re-type was right (HADRONIC) | **8** |
+| the re-type was wrong (EM) | **10** |
+
+**Precision 8/18 = 0.444, 95 % Wilson score interval [0.25, 0.66].**
+(Wilson, not the normal approximation, which is meaningless at n=18.)
+
+**Fifty percent is inside that interval**, and at 50 % the tag is `Enu`-neutral
+by construction (§12.2's terms cancel). So these labels cannot distinguish
+*harmful* from *neutral* from *mildly helpful*, and the decomposition says the
+same thing arithmetically: reverting the 18 would fix **1246.7 MeV** of error
+and break **929.9 MeV** — a net of +317 MeV, which is one or two verdicts wide.
+
+Establishing precision < 0.5 at any useful confidence needs on the order of
+**100+ labels**. That is not an achievable scan. **The precision question is
+therefore closed as unanswerable at achievable cost, and this doc does not
+recommend a flip on it.** Recording that is worth more than a third scan of
+the same population.
+
+**And nothing measured separates the two classes.** Over the 18, every census
+variable overlaps completely:
+
+| variable | EM (n=10) | HADRONIC (n=8) |
+|---|---|---|
+| `growth` | 0.06 … 1.03 | 0.07 … 1.13 |
+| `bragg` | 0.47 … 2.00 | 0.37 … 2.14 |
+| `stem` | 0.61 … 5.06 | 0.32 … 4.22 |
+| `nseg` (census) | 2 … 27 | 1 … 26 |
+| `total_length` | 2.7 … 142.1 cm | 14.0 … 138.7 cm |
+| `kine_best` | 7.8 … 677.1 MeV | 34.2 … 390.8 MeV |
+| `start_len`, `f_heavy`, `max_mip`, `smax` | — all overlapping — | |
+
+Twelve variables, no separation. Fishing for a thirteenth on n=18 is the
+over-fitting this campaign has repeatedly refused, so this doc stops.
+
+By branch: **growth 7 EM / 6 HADRONIC, stem 3 EM / 2 HADRONIC.** The two
+branches are indistinguishable from each other as well as from a coin.
+
+### 12.2 A5's energy effect is 11 : 1 rest-mass over estimator — and the estimator is the only thing it was designed to change
+
+pr/99 §3 built A5 so that a re-typed object's *"best energy follows the hadronic
+rule"* — `apply_hadronic_dqdx_best` swaps `kine_charge` for `kine_dQdx`. The
+π rest term rides along afterwards, because `kine_mass_rules` keys on pdg 211;
+pr/99 §5 mentioned it once as *"the existing non-EM kine convention"* and never
+measured it. Measured now, over the 60 joined re-types:
+
+| term | total | per object |
+|---|---|---|
+| π rest mass added to `kine_reco_add_energy` | **−8374.2 MeV** if reverted (60 × 139.57) | **139.57** |
+| the estimator swap it was built for | **+942.3 MeV** if reverted | median **12.7** |
+| net if the tag were switched off | **−7431.9 MeV** over 58 events | −123.9 |
+
+**The thing A5 was designed to do moves the median object by 12.7 MeV. The
+thing nobody calibrated moves it by 139.57.** And for **9 of the 60 (15 %)**
+`apply_hadronic_dqdx_best` declines to write at all — `kine_best` is still
+`kine_charge` — so for those objects the re-type's *entire* effect on `Enu` is
+the rest term, 1256 MeV of it between them.
+
+That reframes the owner's decision. It is not "keep or kill A5". It is:
+
+> **Should a typing decision measured at 44 % (CI 0.25-0.66) carry a 139.57 MeV rest
+> term at all?**
+
+That is answerable without a discriminant, it is a CLAUDE.md §5.1 production
+question, and it is the owner's.
+
+### 12.3 A5 has drifted off its own calibration
+
+pr/99 §3 named five design events. Checked against the current census:
+
+| pr/99 design event | what pr/99 built it for | today |
+|---|---|---|
+| **395148** | **the entire proton-stem branch** — *"its ownership growth is 0.87 but its stem reads 3.0 MIP"* | **does not fire.** `growth 0.86` still, but `stem` reads **0.44**, not ~3. The branch that exists for this object no longer reaches it |
+| 315167 | *"pdg 211 + numu 1.77 → 2.23"* on its 329 MeV object | shower 0 **no longer fires** (`bragg 4.97` clears the 3.0 bar but `growth 1.86` fails the 1.2 ceiling); showers 1 and 2 fire instead |
+| 285567 | *"BOTH fakes 211"* | **one of two** fires |
+| 70084 | re-typed 211 | still fires |
+| 91653 | *"numu 0.03 → 0.65"* | still fires |
+
+So two of five are intact, two fire on different objects than they were tuned
+on, and **the stem branch's sole design object has fallen off it**. The stem
+branch now fires 5 times on a population it was never calibrated against, and
+those five label 3 EM / 2 HADRONIC.
+
+**This is pr/127's story again** — a shipped, owner-approved fix quietly
+stopped reaching the object it was built for, and nothing failed. It is a more
+actionable finding than any precision figure, because it has a cause that can
+be chased: what moved 395148's stem from ~3.0 MIP to 0.44 between 2026-08-20
+and now.
+
+Weak corroboration that the labels are sound rather than noisy: 315167's
+re-typed shower came back **HADRONIC**, agreeing with pr/99's own verdict on
+that event.
+
+---
+
+## 13. Recommended next step
+
+**Stop the typing thread here and go to the splitter.** After 36 labels it has
+produced a measurement, not a fix, and the measurement says the remaining
+uncertainty cannot be bought at achievable scan cost (§12.1). Meanwhile three
+of scan 0's twenty-four objects point at **absorption** — 137238 itself under
+the §6.2 reading, plus both `MIXED` verdicts at 81 and 35 segments — and none
+point at the tag. Doc pr/137-139 owns that machinery.
+
+Two things go back to the owner, both §5.1 calls, neither taken here:
+
+1. **§6.2** — on 137238, is the 555 MeV object itself wrong, or is the
+   complaint that hadronic content was absorbed into a real EM shower? This
+   decides whether the splitter is the right follow-up at all.
+2. **§12.2** — should a typing decision measured at 44 %, CI 0.25-0.66, carry a 139.57 MeV rest
+   term? Decoupling the mass term from the type stamp is a small, well-defined
+   change; killing the tag is not recommended, because the data cannot support
+   it.
+
+And one investigation that stands on its own, with a cause to chase rather than
+a threshold to tune: **§12.3, why 395148's stem collapsed from ~3 MIP to 0.44**
+and took the proton-stem branch's only calibration object with it.
