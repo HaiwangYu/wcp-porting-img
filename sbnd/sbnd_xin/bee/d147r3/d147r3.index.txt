@@ -1,0 +1,34 @@
+# doc sbnd_xin/pr/147 round 3 -- the 8 muon-tail events the tail walk CANNOT reach
+# SET https://www.phy.bnl.gov/twister/bee/set/e12de155-9429-407e-b485-7401f314837a/event/list/
+#     = work-d147-tail8-{mcp2k,mcp1k}, CURRENT SBND PRODUCTION (both doc-147 knobs ON)
+#
+# This is ONE set, not an A/B, on purpose: in all 8 events no cathode bridge
+# fires, and long_muon_cathode_bridge_tail_min_len only runs after a bridge, so
+# the knob is inert here and a before/after pair would be byte-identical.  The
+# question is whether these tails SHOULD be joined -- which is a judgement about
+# the pictures, not about a change.
+#
+# Each event has a bare, ALREADY-|13|-typed segment >= 20 cm sharing a graph
+# vertex with a member of a |13| shower -- the same geometry that 177536 had.
+# "nmu" is how many separate muon nodes Enu currently counts.
+#
+# bee_idx	event	sample	tail_cm	current state
+0	294174	mcp2k	245.4	two muon showers (148.9 cm / 407.2 MeV and 78.2 cm / 205.1 MeV) plus a 245.4 cm bare muon tail.  nmu=1, Emu 568.1, Enu 1313.3.  NB doc 84's case list flags this event separately: its long-muon chain start segment is pdg 11, so its L_chain there was meaningless.
+1	406631	mcp2k	212.5	one 85.8 cm / 220.8 MeV muon shower + a 212.5 cm bare muon tail -- the tail is 2.5x the shower.  nmu=2, Emu 715.1, Enu 977.2.
+2	240636	mcp2k	148.3	one 120.9 cm / 295.8 MeV muon shower + a 148.3 cm bare muon tail.  nmu=2, Emu 650.3, Enu 918.7.
+3	101828	mcp2k	111.3	two muon showers (59.6 cm and 271.3 cm) + a 111.3 cm bare muon tail.  nmu=3, Emu 894.6, Enu 1190.7 -- three muon nodes for what may be one muon.
+4	395610	mcp1k	51.2	one 59.5 cm / 164.8 MeV muon shower + a 51.2 cm bare muon tail.  nmu=2, Emu 651.0, Enu 761.0.
+5	350935	mcp1k	49.8	one 131.2 cm / 317.9 MeV muon shower + a 49.8 cm bare muon tail.  nmu=1, Emu 301.7, Enu 752.0.
+6	94392	mcp2k	47.3	one 29.6 cm / 98.1 MeV muon shower + a 47.3 cm bare muon tail.  nmu=3, Emu 307.6, Enu 1040.2.  This event is also pr/146's drop:C case.
+7	321371	mcp1k	32.0	one 29.6 cm / 98.1 MeV muon shower + a 32.0 cm bare muon tail.  nmu=3, Emu 216.5, Enu 757.0.  Also pr/146 sec 10.1 ("PF draws a 590 MeV object that Enu already refuses").
+#
+# One oddity flagged rather than explained: idx 6 and idx 7 report an IDENTICAL
+# muon shower (29.6 cm, 98.1 MeV) in different samples and different runs.  That
+# is either coincidence or a joining error in my census; it has not been chased,
+# and it is not load-bearing for anything shipped.
+#
+# What to judge, per event: is the bare tail the SAME muon as the shower it
+# touches?  If yes for most of these, the follow-up is to let the tail walk run
+# without requiring a cathode bridge first -- which is a bigger change than what
+# shipped, because the bridge is currently what establishes "this is a long muon
+# crossing the cathode" before anything is absorbed.
