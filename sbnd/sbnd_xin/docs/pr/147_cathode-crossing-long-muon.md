@@ -296,7 +296,27 @@ population is unmeasured.
   the standing bar wants each detector's own manifest and that is **owed**.
 - **392901 is not a live control on this epoch** (§4).
 
-## 9 Recommended next step
+## 9 The Bee A/B for the owner's scan (uploaded 2026-09-06, owner-requested)
+
+Same binary (toolkit `03a23405`) on both sides; the only difference is the one
+boolean. Indices are 1:1 between the sets. Sidecar:
+`bee/d147/d147.index.txt`.
+
+- **BEFORE** (knob OFF, byte-identical to production):
+  https://www.phy.bnl.gov/twister/bee/set/6130f074-6d94-48e8-a591-4206ce82e047/event/list/
+- **AFTER** (`SBND_LONG_MUON_CATHODE_BRIDGE_TRACK_TYPES=1`):
+  https://www.phy.bnl.gov/twister/bee/set/2b6b166d-7d19-48f5-857b-360435286be5/event/list/
+
+| idx | event | what to look for |
+|---|---|---|
+| 0 | 347890 | partner guard — the far half joins; muon 429.4 → 470.8 MeV |
+| 1 | 168448 | receiver guard — the near half had lost its own type; muon 34.9 → 276.1 MeV |
+| 2 | 177536 | **unchanged by design**, included as the control: its remaining far half is held out by the gap cap *and* `xcut`, not by a type guard (§7) |
+
+Judge the picture, not `Enu`: both rescues land above their pre-regression
+`Enu` by close to one muon rest mass, for the §7 reason.
+
+## 10 Recommended next step
 
 Scan the two rescued pictures (347890, 168448) before any flip — both change
 `Enu` upward past their pre-regression value for the §7 reason, so the

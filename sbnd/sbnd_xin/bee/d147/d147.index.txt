@@ -1,0 +1,17 @@
+# doc sbnd_xin/pr/147 A/B index -- the cathode-crossing long muon
+# BEFORE https://www.phy.bnl.gov/twister/bee/set/6130f074-6d94-48e8-a591-4206ce82e047/event/list/ = work-d147-beeoff-mcp2k (production config, knob OFF)
+# AFTER  https://www.phy.bnl.gov/twister/bee/set/2b6b166d-7d19-48f5-857b-360435286be5/event/list/ = work-d147-beeon-mcp2k  (SBND_LONG_MUON_CATHODE_BRIDGE_TRACK_TYPES=1)
+# Same binary both sides (toolkit 03a23405, libWireCellClus.so md5 d5558074...);
+# the ONLY difference is the one boolean.  Indices are 1:1 between the sets.
+#
+# bee_idx	event	status
+0	347890	RESCUED (partner guard): the far half is a 17.5cm shower typed 11 (was 211 before the excl_t0_frame flip), so the bridge refused it by design and never logged a reason.  ON: merged, muon 429.4 -> 470.8 MeV, the 59.0 MeV EM node absorbed.  Enu 658.9 -> 746.9.
+1	168448	RESCUED (receiver guard) -- NOT in your earlier scan, and the worse of the two.  Its NEAR half lost its own muon type (pdg 13 / 94.2cm / x -15.0->+61.2 became pdg 11 / 20.2cm), so the pass never even looked for a partner.  ON: absorbs the 75.1cm bare chain, muon 34.9 -> 276.1 MeV total, Enu 444.9 -> 689.7.  It is a doc 84 R4.6a fire-set sentinel whose gate had gone red unnoticed.
+2	177536	unchanged BY DESIGN -- included so you can see what this knob does NOT fix.  Its bridge already fires; the muon it still shows as two pieces is a SECOND far half (seg 8, 279.6cm) held out by BOTH the 20cm gap cap (it sits at 20.8) and the 6cm xcut (its end is at x=-9.41).  Joining it needs two geometry cuts loosened at once, which is why doc pr/147 sec 7 proposes no knob for it and asks for your call instead.
+#
+# What to judge: whether idx 0 and 1 are now ONE muon through the cathode.
+# One caveat to carry into the scan -- both land ABOVE their pre-regression Enu
+# (347890 632.3, 168448 652.2) by close to one muon rest mass, because the
+# rescued object is now charged a rest term it was not charged before.  That is
+# the idx-2 defect showing up on the rescued events, so judge the PICTURE, not
+# the Enu number.
