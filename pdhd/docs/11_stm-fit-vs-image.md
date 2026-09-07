@@ -54,7 +54,9 @@ symptoms.**
 | **B** | `separate(drift_side_fv_x)` is silently inert on PDHD | `drift_side_fv_skip_degenerate` | **OFF** |
 
 R2 is the fix for the owner's cluster 126. R3 is containment for a *different* family (objects that
-are not tracks). R1 is the upstream cause of both and is already built. B is an independent real bug
+are not tracks). R1 is the upstream cause of both and is already built. **R2 is not the cure either**:
+it repairs a genuine query bug — a Dijkstra call that fails must not return a stub — but its remedy
+still works around a cluster that clustering should never have built. Only R1 removes the cause. B is an independent real bug
 found on the way, with a small measured effect. **No default is changed and no production output
 moves** — every gate is in §6.
 
@@ -89,8 +91,21 @@ PDHD_MAX_JOBS=8 ./run_clus_evt.sh -q -save-pctree -save-assoc -s d11sepoffA 0280
 PDHD_MAX_JOBS=8 PDHD_CLUS_TLA="-S clus_drift_side_fv_skip_degenerate=true" \
   ./run_clus_evt.sh -q -save-pctree -save-assoc -s d11seponA 028084 all
 
-# the PDVD control
+# the PDVD control -- seed edges (sec 3.1 table 1)
 cd ../pdvd && WCT_STM_PATH_DEBUG=1 ./run_pr_evt.sh -stm-fit -s d11vtrace 039252 16
+
+# the PDVD component census (sec 3.1 table 2), on the SAME binary as every gate in sec 6.
+# NOTE: the trace writes to STDOUT, which run_pr_evt.sh does not fold into wct_pr_*.log
+# (that is an spdlog file sink) -- redirect the runner or the lines are lost.
+cd ../pdvd && for e in 5 16; do
+  WCT_STM_PATH_DEBUG=1 ./run_pr_evt.sh -stm-fit -s d11vgraph 039252 $e > /home/xqian/tmp/d11vgraph_$e.log 2>&1
+  grep '^STMGRAPH' /home/xqian/tmp/d11vgraph_$e.log | grep -c 'same_comp=0'   # -> 0
+done
+
+# R2's own footprint (sec 4.3)
+grep -h "re-anchoring" work/028084_*_d11both/wct_pr_028084_*.log
+python3 docs/scripts/d08_tag_flips.py d11off d11on   028084
+python3 docs/scripts/d08_tag_flips.py d11off d11both 028084
 ```
 
 Binary pinned for the arms above: `local/lib/libWireCellClus.so` md5 `e3b1ea36a578070fd206f9a3f24a44df`,
@@ -283,6 +298,23 @@ The mechanism is detector-agnostic code. What differs is the input: PDVD runs `u
 default at both ends (doc pdhd/06 §"Producer/Consumer"), so detached clumps do not sit inside main
 clusters, so boundary points land on the track and the Steiner graph is one component.
 
+**That last clause is measured, not inferred** (added after the first draft, which asserted it).
+The `STMGRAPH` diagnostic of §2.1 was re-run on PDVD on the same binary
+(`libWireCellClus.so` md5 `e3b1ea36a578070fd206f9a3f24a44df`, 12:29 — the build every gate in §6 was
+taken on), arm `d11vgraph`:
+
+| | PDVD 039252 evt 5 + evt 16 | PDHD 028084 evt 9 |
+|---|---|---|
+| STM seed queries traced | 42 | 23 |
+| queries on a **single-component** graph (`ncomp=1`) | **42 / 42** | 22 / 23 |
+| **disconnected queries** (`same_comp=0` ⇒ stub) | **0** | **1** — cluster 126 |
+| shortest walked path | 11 nodes | **3 nodes** (the stub) |
+
+So the bug is *latent* on PDVD, not absent: the same unvalidated query runs there, and in this
+sample it is never handed a disconnected pair. Two events / 42 queries is a thin sample and the
+claim is bounded by it — it is a demonstration that PDVD's graphs are whole, not a proof that they
+always are.
+
 ### 3.2 Two premises to correct
 
 - **PDVD is not unwrapped.** `protodunevd/clus.jsonnet:204-207`: 1568 U/V wires (11.3 %) wrap at the
@@ -352,11 +384,39 @@ Read it as a ladder, not a contest:
 | mean negative dQ/dx | 0.231 | 0.184 |
 | **accepted (status 0)** | n = 153, med 1.10 cm, **45.8 %** > 3 cm | n = **167**, med **0.58 cm**, **12.0 %** > 3 cm |
 
-**Verdicts move and the sign is NOT graded.** STM-tagged objects matched by 2 cm point-set signature,
-not by count (`feedback_count_vs_set_census`): **161 → 191 — 157 unchanged, 4 lost, 34 gained.**
+**Verdicts move and the sign is NOT graded.** STM-tagged objects matched as a set, not by count
+(`feedback_count_vs_set_census`): **161 → 191 — 157 unchanged, 4 lost, 34 gained**, over 21 of 31
+events. This is **R3's footprint alone**: the OFF→R3 and OFF→BOTH censuses are identical row for row
+(§4.3), so every tag that moves here is moved by the fill test.
 Mostly additive and consistent with 14 more accepted passes, but **no hand scan was done**. Read it
 as "the tags move and the surviving trajectories now sit on charge", not as an improvement. The scan
 of the 34 gained and 4 lost is the grading step (§9).
+
+### 4.3 R2's own footprint over 31 events
+
+R2 changes where a trajectory *starts*, and for a **stopping**-muon tagger the endpoint is the
+observable — so a re-anchor is only correct when the extreme it discards is junk (an unrelated
+detached hit, as in cluster 126) and not the muon's real end behind a dead region. That distinction
+is not visible in the fit→charge metric, so R2 is measured separately here.
+
+```
+grep -h "re-anchoring" work/028084_*_d11both/wct_pr_028084_*.log
+python3 docs/scripts/d08_tag_flips.py d11off d11on   028084   # R3 only
+python3 docs/scripts/d08_tag_flips.py d11off d11both 028084   # R2 + R3
+```
+
+| | measured |
+|---|---|
+| events in which R2 fires | **1 of 31** (evt 9, cluster 126) |
+| re-anchor distances | a single value, **45.2 cm** — no second firing, no tail |
+| STM tags gained / lost vs OFF→R3 | **0 / 0** — the two censuses are identical |
+| TGM, FC | 885 → 885, 1063 → 1063, zero flips in both arms |
+
+So over this sample R2's verdict footprint is **empty**: it repairs the owner's trajectory and moves
+no tag anywhere, on any of the three taggers. That is the reassuring reading. The honest one is that
+**n = 1** — a fault this rare cannot have its tail characterised from 31 events, and the case that
+would worry me (a re-anchor of 150+ cm silently truncating a real stopping muon) is *unobserved*,
+not *excluded*. Any flip of R2 to production should carry a firing-rate and distance monitor.
 
 ---
 
@@ -473,10 +533,24 @@ two-faces-per-anode configuration.
    stub bug — worth its own round.
 3. **The retiler's bounding-box pull** (doc pdhd/06 §8.3) and the uncapped path painting
    (doc pdhd/08) — why a split may not reach the Steiner build.
-4. **A cross-component Dijkstra query returning a stub is arguably never correct**, on any detector.
-   R2 is knobbed here because a hard fix changes output; whether it should instead be unconditional
-   is an owner decision.
-5. Doc pdhd/10's APA2 coverage numbers stand; §3.3 adds the tolerance caveat, and §2 supplies the
+4. **A cross-component Dijkstra query returning a stub is arguably never correct**, on any detector,
+   and §3.1 shows the same unvalidated query runs on PDVD. R2 is knobbed here because a hard fix
+   changes output; whether it should instead be unconditional is an owner decision.
+5. **R2's remedy is a policy choice, and the conservative alternative was not taken.** Two responses
+   to "the endpoints are in different components" are defensible: *re-anchor* to the nearest vertex
+   of the destination component (what R2 does), or *fail* — return an empty path and let
+   `check_stm_conditions` give up, which it already handles (it bails on a ≤ 3-point fit). Failing
+   never invents an endpoint, so it cannot truncate a real stopping muon; re-anchoring keeps the
+   pass alive and recovers a usable trajectory, which is what the owner's cluster 126 wanted. I
+   chose re-anchor for that reason and because it is the one that produces a *visible* fix in the
+   Bee comparison — but on a stopping-muon tagger the case for failing is real, and it is a one-line
+   change from here.
+6. **Whether the seeding point should exist at all is untested.** A single blob 45 cm from every
+   other point of its cluster is also what `clustering_deghost` exists to remove. This doc locates
+   the *merge* that glued it onto cluster 31 and the *query* that then broke on it; it does not ask
+   whether imaging should have made the point. If it is a ghost, the root is one stage further
+   upstream than R1.
+7. Doc pdhd/10's APA2 coverage numbers stand; §3.3 adds the tolerance caveat, and §2 supplies the
    mechanism doc 10 could only describe.
 
 ---
@@ -511,7 +585,17 @@ and are a different comparison.
 
 **Blind-scan the 34 gained and 4 lost STM tags of §4.2**, on the R3 arm, with the `stm_fit` layer
 overlaid on `clustering` so the scan judges the trajectory and not only the verdict
-(`feedback_scan_display_must_show_the_evidence`). That is the one thing standing between "the fits
-now sit on charge" and a defensible flip, and it decides the ladder: if the gained tags scan clean,
-R2 + R3 go to PDHD production and R1 goes back to doc pdhd/06 §9's queue; if they do not, R2 alone
-still stands on its own — a Dijkstra query that fails must not return a stub.
+(`feedback_scan_display_must_show_the_evidence`). §4.3 narrows what that scan decides: the 34/4 are
+**R3's**, so the scan grades R3 and only R3.
+
+That splits the ladder into two independent decisions:
+
+- **R3** is the one the scan gates. It changes 30 net verdicts across 21 of 31 events; nothing
+  should flip until those are graded.
+- **R2** moves no tag on any of the three taggers over 31 events (§4.3) and repairs the owner's
+  cluster 126. It can be decided on its own merits — but on **n = 1 firing**, so the honest
+  precondition is a wider sample (more runs, or PDHD events beyond 028084) with the re-anchor
+  distance logged, plus the §7.5 choice of whether failing the query is the better remedy than
+  re-anchoring it for a stopping-muon tagger.
+- **R1** (`unmerge_assoc`) remains the only fix that removes the cause of both symptoms, and stays
+  queued behind doc pdhd/06 §9 item 1.
