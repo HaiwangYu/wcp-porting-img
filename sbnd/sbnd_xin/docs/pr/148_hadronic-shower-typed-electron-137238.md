@@ -1050,13 +1050,33 @@ thing nobody calibrated moves it by 139.57.** And for **9 of the 60 (15 %)**
 `kine_charge` — so for those objects the re-type's *entire* effect on `Enu` is
 the rest term, 1256 MeV of it between them.
 
-That reframes the owner's decision. It is not "keep or kill A5". It is:
+**A correction to how this was first phrased, because it matters.** The rest
+term is not *wrong*: a real charged pion's contribution to the neutrino energy
+budget genuinely includes its 139.57 MeV rest mass, so the term is correct
+**conditional on the type being right**. "Strip the rest term" is therefore not
+a fix — it would break the 44 % of firings that are correct.
 
-> **Should a typing decision measured at 44 % (CI 0.25-0.66) carry a 139.57 MeV rest
-> term at all?**
+The finding is about the **validation bar**, not the term:
 
-That is answerable without a discriminant, it is a CLAUDE.md §5.1 production
-question, and it is the owner's.
+> **A5 was calibrated as a 13 MeV decision and it is making a 140 MeV one.**
+
+pr/99 §3 validated it the way a change to an *estimator* is validated —
+selections did not flip, the re-typed objects' energies moved sensibly, and the
+adverse controls held. What it never asked is whether the typing was good
+enough to carry a term eleven times larger than the estimator swap. On 18
+labels the answer is that the typing is roughly a coin flip, so the term is
+right about half the time and wrong by 139.57 MeV the other half.
+
+**The consequence is noise, not bias.** At 44 % (CI [0.25, 0.66], i.e.
+statistically indistinguishable from 50 %) the errors very nearly cancel in the
+mean — reverting the 18 labelled objects nets only **+317 MeV**, ~18 MeV per
+object — while each individual event moves by **±125 MeV**. So A5 trades a
+~13 MeV systematic improvement for a ~140 MeV random error on the 58 events
+(1.9 % of the sample) where it fires.
+
+Whether that trade is worth making is a CLAUDE.md §5.1 judgement and it is the
+owner's. This doc does **not** recommend flipping it, because §12.1's interval
+cannot exclude the possibility that the tag is helping.
 
 ### 12.3 A5 has drifted off its own calibration
 
@@ -1101,10 +1121,12 @@ Two things go back to the owner, both §5.1 calls, neither taken here:
 1. **§6.2** — on 137238, is the 555 MeV object itself wrong, or is the
    complaint that hadronic content was absorbed into a real EM shower? This
    decides whether the splitter is the right follow-up at all.
-2. **§12.2** — should a typing decision measured at 44 %, CI 0.25-0.66, carry a 139.57 MeV rest
-   term? Decoupling the mass term from the type stamp is a small, well-defined
-   change; killing the tag is not recommended, because the data cannot support
-   it.
+2. **§12.2** — A5 was calibrated as a 13 MeV decision and is making a 140 MeV
+   one. **No change is proposed**: the rest term is correct when the type is
+   correct, so stripping it would break the 44 % of firings that are right, and
+   §12.1's interval cannot exclude the tag helping. This is recorded for
+   whoever next touches the mechanism, and flagged as a §5.1 judgement if the
+   owner wants to act on it anyway.
 
 And one investigation that stands on its own, with a cause to chase rather than
 a threshold to tune: **§12.3, why 395148's stem collapsed from ~3 MIP to 0.44**
