@@ -1,7 +1,7 @@
 # doc pdhd/10 — the APA2 charge deficit: which stage it comes from
 
 **Scope.** No code and no configuration is changed. Everything below is measured
-from reconstruction products already on disk; five new analysis scripts are
+from reconstruction products already on disk; six new analysis scripts are
 added under `pdhd/docs/scripts/`. This round **diagnoses**; it proposes a fix
 but does not implement one (CLAUDE.md §5.1).
 
@@ -38,6 +38,12 @@ against 1.02 for APA1 and APA3 — ~10 % of a factor 1.6, traced to
 `PDHD::SignalProtection`'s noise-scaled threshold meeting face 0's 3–4× larger
 coherent noise (§4).
 
+**And the deficit is not in the charge either.** With no trajectory involved —
+the whole SP gauss frame, imaging collection face — the charge per *occupied*
+cell is 11 852 / 9 795 / **9 310** / 10 159 e for APA0–3, i.e. APA2 sits at
+**0.93** of the APA1/APA3 mean with occupancy between theirs (§4.0). Nothing
+like the 0.61 measured along the trajectory.
+
 What APA2 actually has is a **trajectory** problem, not a charge problem:
 
 1. **Half of APA2's fitted points sit where there is no charge — on all three
@@ -46,11 +52,15 @@ What APA2 actually has is a **trajectory** problem, not a charge problem:
    against 0.75–0.80 in APA0, APA1 and APA3. All three planes fail *together*,
    which excludes any plane-, ROI- or wire-mapping-specific cause and points at
    the point's position.
-2. **They are concentrated in one corner.** 12 677 of APA2's 27 401 fit points
-   (46 %), spread over 41 of the 61 events and 53 tracks, lie in the last 96
-   collection wires (imaging wires 384–479, z ≈ 416–462 cm) at y ≈ 23 cm — the
-   bottom, far-z corner. The hit fraction there is **0.17–0.22** against 0.72 in
-   the rest of APA2 and 0.73–0.84 everywhere in APA3.
+2. **They are concentrated in one corner, and it is a track-level class.**
+   12 677 of APA2's 27 401 fit points (46 %) lie in the last 96 collection wires
+   (imaging wires 384–479, z ≈ 416–462 cm) at y ≈ 23 cm — the bottom, far-z
+   corner, where the hit fraction is **0.17–0.22** against 0.72 in the rest of
+   APA2 and 0.73–0.84 everywhere in APA3. Weighted per track rather than per
+   point it holds up: **35 of the 91 APA2 passes (38 %) have more than half
+   their APA2 points in that corner, and 33 (36 %) have more than 80 %**, while
+   38 (42 %) have none at all. It is a bimodal population of tracks, not a tail
+   of one or two long objects.
 3. **The charge is not missing from the detector there.** Those same wires carry
    16.2–16.9 ×10⁶ e per 48-wire block per event in the SP output, in line with
    the rest of APA2 and with APA1/APA3.
@@ -101,6 +111,17 @@ python3 docs/scripts/d10_stage_ladder.py 028084_0 028084_2 028084_5 028084_9
 
 # 4. SP frame vs ctpc, cell by cell   (sec 2 gate)
 python3 docs/scripts/d10_frame_vs_ctpc.py 028084_0 028084_1 028084_2 028084_3
+
+# 5. the trajectory-free discriminator: charge per OCCUPIED collection cell,
+#    and the per-wire plane census   (sec 4.0, 4.1)
+python3 docs/scripts/d10_plane_census.py $(ls -d work/028084_*_d09 | head -8) \
+    --out docs/figs/10_plane_census.tsv
+
+# 6. the per-track corner statistic of sec 5, from the coverage blocks TSV
+awk -F'\t' 'NR==2{for(i=1;i<=NF;i++){if($i=="apa")A=i; if($i=="frac_hi96")F=i}}
+  NR>2 && $A==2 {n++; if($F>0.5) a++; if($F>0.8) b++; if($F==0) c++}
+  END{printf "%d passes; >50%% corner %d; >80%% %d; none %d\n",n,a,b,c}' \
+  docs/figs/10_coverage_blocks.tsv
 ```
 
 **Arms.** PR/STM: `work/*_d30hpost` (61 events = 31 × run 028084 + 30 × run
@@ -312,6 +333,28 @@ and finds none, there is no charge in the raw digits either.** That is the
 direct answer to hypothesis (a): the raw digits do not differ; the trajectory
 asks about cells that were never occupied.
 
+### 4.0 The discriminator: charge per *occupied* cell, with no trajectory involved
+
+The tube and ladder numbers above are all measured *at the fitted trajectory*, so
+a low value has two possible readings: the trajectory is misplaced, or less
+charge was collected there. The following separates them, and uses no
+trajectory at all — the whole SP gauss frame of the imaging collection face,
+rebinned to imaging slices, 8 events of run 028084:
+
+| APA | occupied cells / event | **charge per occupied cell [e]** | occupancy | ÷ mean(APA1, APA3) |
+|---|---|---|---|---|
+| 0 | 34 700 | 11 852 | 0.0482 | 1.188 |
+| 1 | 13 614 | 9 795 | 0.0189 | 0.982 |
+| **2** | 17 030 | **9 310** | 0.0237 | **0.933** |
+| 3 | 19 123 | 10 159 | 0.0266 | 1.018 |
+
+**APA2's occupied collection cells carry 0.93 of what APA1's and APA3's do**, and
+its occupancy sits between theirs. There is no charge deficit in APA2's
+collection plane — nothing like the 0.61–0.69 seen along the trajectory. So the
+low pre-NF ADC at the trajectory's cells is a statement about *where the
+trajectory points*, not about what the detector collected. (APA0 is 1.19 and
+2.5× more occupied, which is its fault.)
+
 ### 4.1 The collection plane of APA2 is healthy
 
 Mean SP charge on the imaging collection face, 8 events of run 028084, in
@@ -447,14 +490,19 @@ face-0 (x<0) cells; face-0 blocks carry none. Example, run 028084 event 0:
 | 1080 | 3 | {0: 5858, 1: 57, 2: 4134, 3: 1176} |
 | 1170 | 3 | {0: 5858, 1: 57, 2: 4134, 3: 3276} |
 
-The same 5 858 APA0 cells appear in every block, including blocks whose
-trajectory never leaves x > 0. Most of them carry `charge_pred == 0`
-(69 % in the block sampled), i.e. they are cells the fit never predicted onto —
-consistent with the visitor's owner-less-cell branch
+The same 5 858 APA0 cells appear in each of these four blocks, including the two
+whose trajectory never leaves x > 0. **The mechanism is not traced.** Most of
+those cells carry `charge_pred == 0` (69 % in the one block sampled), which is
+what the visitor's owner-less-cell branch would give
 (`PdvdMagnifyTrackingVisitor.cxx:471-472` keeps a cell when `fc.clusters` is
-empty) being fed by the very large pool of cells APA0's faulty plane produces
-(§4.1: APA0 is 2.5–3× hotter than every other APA, and its 132 801 live W cells
-in that event compare with APA1's 4 675).
+empty), and APA0 supplies by far the largest pool of cells to draw from
+(§4.1; 132 801 live collection cells in that event against APA1's 4 675). But
+the counts are **not** constant across all blocks of the event — the non-accepted
+blocks of the same event hold 789, 7 553 and 7 185 APA0 cells — so a single
+shared owner-less pool does not explain it on its own. The census stands; the
+cause does not, and it is worth tracing on its own account: a one-way
+cross-cathode leak in the fitted-charge map is arguably a larger defect than the
+APA2 corner.
 
 **Consequence.** Any per-APA quantity computed by binning a block's cells is
 contaminated. Doc pdvd/50 §4.2c's "W pixels per cm" and "measured W charge per
@@ -473,7 +521,7 @@ block. Nothing in production reads `T_proj_data`.
 
 | hypothesis | verdict | evidence |
 |---|---|---|
-| **(a) raw digits** | **No — not as a detector difference.** | APA2's deficit is already 0.69 in the pre-NF ADC *at the trajectory's cells* (§4), and the hit fraction is the same at pre-NF, post-NF, SP and ctpc. But the plane itself is healthy: 480/480 imaging wires carry charge, uniform to ±30 %, 2 quiet channels (§4.1). So the raw digits do not differ; the trajectory asks about cells that were never occupied. |
+| **(a) raw digits** | **No.** | APA2's deficit is already 0.69 in the pre-NF ADC *at the trajectory's cells*, and the hit fraction is the same at pre-NF, post-NF, SP and ctpc (§4) — so nothing downstream creates it. That alone would not distinguish "trajectory misplaced" from "less charge collected", so §4.0 settles it without a trajectory: charge per **occupied** collection cell is 0.93 of the APA1/APA3 mean in APA2, with occupancy between theirs, and the plane is uniform over all 480 imaging wires (§4.1). The detector collected normal charge; the trajectory asks about cells that were never occupied. |
 | **(b) SP chain and its input** | **No, with one 10 % caveat.** | ctpc ÷ SP frame = 0.926–1.018 on both runs (§4); the compiled `OmnibusSigProc` map and every SP parameter are identical for APA1, APA2 and APA3. The one real face-0/face-1 asymmetry found is in **NF**, not SP: post-NF ÷ pre-NF is 0.90 (APA2) and 0.94 (APA0) against 1.02 (APA1, APA3), driven by face 0's 3–4× larger coherent noise through `PDHD::SignalProtection`'s noise-scaled threshold. Worth ~10 % of a factor 1.6. |
 | **(c) decon results** | **No.** | Same rows. In addition, the field response is literally the same file for APA1/2/3, DNNROI passes W through unchanged on every anode, and doc 50 already showed the *surviving* points agree with expectation to 5 % in every APA — an amplitude-calibration error would move those too. |
 | **(d) geometry / mapping** | **No.** | The wire→channel mapping is exact (G1, 100.0 %); the drift→time mapping is exact and correctly signed per face (G2, zero spread); there is no wire displacement (median Δwire = 0 ± 2); and the failure hits U, V and W *equally*, which no single-plane mapping error can do. |
@@ -553,9 +601,11 @@ Items 3 and 4 change output and are therefore **blocking asks** (CLAUDE.md
 | `docs/scripts/d10_tube_census.py` | charge per cm of 3-D track in a ±3-wire tube around the trajectory, in the pre-NF ADC (`--adc`), post-NF ADC, SP gauss frame, ctpc and the fit |
 | `docs/scripts/d10_stage_ladder.py` | the four-stage hit ladder at the trajectory's cells, judged against each channel's own 4.5σ-clipped noise RMS |
 | `docs/scripts/d10_frame_vs_ctpc.py` | the G1 gate: every ctpc collection cell reproduced from `frame_gauss` at the derived (row, tick) |
+| `docs/scripts/d10_plane_census.py` | §4.0's trajectory-free discriminator (charge per occupied cell, occupancy) and §4.1's per-wire plane census; writes `figs/10_plane_census.tsv` |
 | `docs/scripts/d10_plots.py` | the four panels of `figs/10_apa2_anatomy.png` and its profile TSV |
 | `docs/figs/10_apa2_anatomy.png` | the figure |
 | `docs/figs/10_apa2_anatomy_profiles.tsv` | hit fraction vs wire index and vs y, per APA, all 61 events |
-| `docs/figs/10_coverage_{summary,blocks}.tsv` | §3's numbers; `blocks.tsv` is the list the §8 item 1 scan set is selected from (`apa == 2 and cov_w < 0.3`) |
+| `docs/figs/10_coverage_{summary,blocks}.tsv` | §3's numbers; `blocks.tsv` also carries `wire_med` and `frac_hi96` per pass, which give §5's per-track corner statistic and the list the §8 item 1 scan set is selected from (`apa == 2 and cov_w < 0.3`) |
+| `docs/figs/10_plane_census.tsv` | §4.0 and §4.1 |
 | `docs/figs/10_tube_{028084,029107}_summary.tsv` | §4's stage table, per run |
 | `docs/figs/10_tube_adc_028084_summary.tsv` | §4's ADC table |

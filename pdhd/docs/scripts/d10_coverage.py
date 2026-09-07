@@ -151,12 +151,19 @@ def main():
                         hit[j] = True
                         qq[j] = float(qof.get((int(w), best), 0.0))
                 per[tag] = (hit, pres, qq)
+            # within-anode collection wire index (0..959); PDHD's imaging face
+            # is the UPPER half for APA0/APA2 and the LOWER half for APA1/APA3
+            d = DET[args.det]
+            wloc = (np.floor(rec["pw"][m]).astype(np.int64) - d["base"][2]
+                    - wapa * d["per_apa"][2])
             step = L / max(len(wapa) - 1, 1)
             for a in np.unique(wapa):
                 k = wapa == a
                 row = dict(det=args.det, event=evt, run=evt.split("_")[0],
                            block=int(blk), apa=int(a), npts=int(k.sum()),
-                           L=float(k.sum()) * step, status=st)
+                           L=float(k.sum()) * step, status=st,
+                           wire_med=float(np.median(wloc[k])),
+                           frac_hi96=float(np.mean(wloc[k] >= 864)))
                 for tag in "uvw":
                     hit, pres, qq = per[tag]
                     row[f"hit_{tag}"] = int(hit[k].sum())
