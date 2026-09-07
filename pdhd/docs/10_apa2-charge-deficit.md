@@ -266,6 +266,38 @@ on the same wire, the signed wire offset has median +0.0 with p16/p84 = −2/+2 
 every APA — no shift — while the time offset for APA2's corner points spreads to
 p16/p84 = −10/+8 slices with median 0. There is no coherent offset to correct.
 
+### 3.1 PDVD control — the same measure, the other detector
+
+The coverage measure needs **no channel scheme**: `pu/pv/pw` and
+`T_proj_data.channel` are the same numbering by construction, so it transfers to
+PDVD unchanged. Arm `pdvd/work/*_d42fit`, 119 events, 578 accepted STM passes,
+166 605 points:
+
+| detector / volume | points | cov U | cov V | cov W |
+|---|---|---|---|---|
+| PDVD x<0 | 58 571 | 0.942 | 0.946 | **0.965** |
+| PDVD x>0 | 108 034 | 0.925 | 0.919 | **0.942** |
+| **PDVD all** | 166 605 | 0.931 | 0.929 | **0.950** |
+| PDHD APA0 | 21 395 | 0.800 | 0.782 | 0.756 |
+| PDHD APA1 | 15 999 | 0.760 | 0.749 | 0.771 |
+| **PDHD APA2** | 27 401 | **0.512** | **0.533** | **0.490** |
+| PDHD APA3 | 22 792 | 0.777 | 0.764 | 0.778 |
+
+Two things follow. **PDVD sits at 0.95**, so the measure is not saturating
+somewhere below 1 for structural reasons — 0.95 is what a working detector
+looks like. And **even PDHD's healthy APAs are at 0.76–0.78**, i.e. a quarter of
+their fit points already sit on empty cells; APA2 is a second, much larger
+effect on top of a PDHD-wide one that PDVD does not share.
+
+**"Along the drift" is not the defect.** 132 of PDVD's 578 accepted passes
+(22.8 %) have `|Δx|/L > 0.85` — six times PDHD's rate — and PDVD's mean
+negative-dQ/dx point fraction is **0.021** against PDHD's 0.031 / 0.091 /
+**0.174** / 0.083. Long PDVD tracks stay well covered: its 166 passes with
+L > 250 cm run cov_W **0.57–0.88**, against 0.07–0.11 for PDHD's APA2 corner
+passes of the same length. So a trajectory that runs along the drift is
+reconstructed cleanly on PDVD; what fails on PDHD is something else that those
+objects happen to share.
+
 ## 4. The stage ladder: nothing is lost between the raw ADC and the fitter
 
 The trajectory-local charge, summed over the distinct (collection wire, slice)
@@ -608,7 +640,18 @@ events; these are the 10 largest.
 | 9 | 029107_15 | 521 | 517 | 311 | 0.10 | 1.00 |
 | 10 | 028084_8 | 480 | 426 | 255 | 0.08 | 1.00 |
 
-Each display (`d10_scan_display.py`) carries three layers per plane so the scan
+**Bee links (uploaded 2026-09-07, at the owner's request).**
+
+| set | what |
+|---|---|
+| [PDHD 028084 evt 9](https://www.phy.bnl.gov/twister/bee/set/b5acf424-3cc3-48f0-89b1-4f8348187137/event/list/) | the corner object, cluster 36 (= block 360): x −339→−13, y 11→44, z 434→457 cm, 660 points, 34 % negative dQ/dx |
+| [PDVD 039252 control, 2 events](https://www.phy.bnl.gov/twister/bee/set/313fee06-139a-4948-a402-6a20533b04eb/event/list/) | index 0 = evt 16 block 700, a healthy L = 444 cm pass (cov_W 0.74, median dQ/dx 50 381 e/cm); index 1 = evt 5 block 690, PDVD's own worst long case (cov_W 0.05, L = 172 cm, 30 % negative) |
+
+Both carry `clustering`, `steiner_graph`, `steiner_terminals`, `stm`, `stm_fit`,
+`stm_tagged` and the `channel-deadarea` layers, straight from each arm's own
+`mabc-pr.zip` — nothing was re-run to make them.
+
+Each PNG display (`d10_scan_display.py`) carries three layers per plane so the scan
 can decide what the numbers cannot:
 
 - **grey** — every SP gauss charge the detector recorded in that APA (the truth,

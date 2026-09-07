@@ -1,0 +1,4 @@
+# doc pdhd/10 -- PDVD control set, built 2026-09-07
+# bee_idx	event	block	npts	L_cm	cov_W	med_dqdx
+0	039252_16	700	704	444.0	0.74	50381
+1	039252_5	690	288	171.9	0.05	44802
