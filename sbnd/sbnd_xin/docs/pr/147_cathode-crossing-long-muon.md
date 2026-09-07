@@ -556,3 +556,82 @@ actually adjacent to (294174's stub is 24.4 cm from shower 8) or belongs
 nowhere. The 15-event census above is the working set, and 19 of the 20 rows
 are free negative controls: they must not move, because their isolated members
 are EM fragments in EM showers where the current behaviour is harmless.
+
+---
+
+# Round 3b — how many muons, and how many muon masses, in each of the 8
+
+Owner: *"for these 8 events, I wonder for final neutrino energy calculation,
+how many muons are involved in each case, also whether the muon mass is counted
+(how many?)"*
+
+Measured, not inferred: the 8 events re-run with `kine_continuation_debug=true`
+(committed default-OFF, log-only) into `work-d147-c8-{mcp2k,mcp1k}`. Muon nodes
+are `|pdg| == 13` entries in `kine_particle_type`; masses are the `105.66` rest
+terms the log shows being charged and refunded.
+
+| evt | sample | muon nodes in `Enu` | μ masses charged | refunded | **net masses** | `add_energy` | `Enu` |
+|---|---|---|---|---|---|---|---|
+| 294174 | mcp2k | 1 | 1 | 0 | **1** | 105.7 | 1313.3 |
+| 406631 | mcp2k | 2 | 2 | 0 | **2** | 211.3 | 977.2 |
+| 240636 | mcp2k | **2** | 1 | 0 | **1** | 114.3 | 918.7 |
+| 101828 | mcp2k | **3** | 1 | 0 | **1** | 114.3 | 1190.7 |
+| 395610 | mcp1k | **2** | 1 | 0 | **1** | 105.7 | 761.0 |
+| 350935 | mcp1k | 1 | 1 | 0 | **1** | 245.2 | 752.0 |
+| 94392 | mcp2k | **3** | 3 | **1** | **2** | 219.9 | 1040.2 |
+| 321371 | mcp1k | **3** | 3 | **1** | **2** | 350.9 | 757.0 |
+| **total** | | **17** | **13** | **2** | **11** | | |
+
+## 14 The charge does not track the node count, in either direction
+
+**17 muon nodes, 11 muon masses.** And the mismatch runs both ways, which is
+the point:
+
+- **Under-charged — 240636, 101828, 395610.** 2, 3 and 2 muon nodes
+  respectively, but only **one** muon mass each, and **no refund line**. So
+  these are neither `reduced_ok` nor `single` in pr/145 §4.3's vocabulary. At
+  least one counting site appends a muon node to `kine_particle_type` **without
+  charging a rest term and without emitting any instrumentation line** —
+  `pr145_cont_probe`'s coverage does not reach it. 240636's whole log is three
+  `kine_cont` lines (proton 8.60, muon 105.66, one `SKIP_VISITED`) while its
+  type list carries two muons; the second, a 120.9 cm / 295.8 MeV muon shower,
+  is counted silently.
+- **Over-charged then partly refunded — 94392, 321371.** Three muon masses
+  charged, one given back by `flag_reduce`, net two for three nodes.
+
+Only **406631** is internally consistent (2 nodes, 2 masses), and **294174**,
+**350935** are consistent at one node / one mass.
+
+This is the same defect family as 177536 (doc §7, §11) seen from the other
+side: there, one physical muon split into two nodes and paid **twice**; here,
+several nodes share **one** mass or none. The common cause is that the rest
+term is priced per admitted node by whichever pool admitted it, and the pools
+neither agree nor are all instrumented.
+
+## 14.1 294174 again — the display says muon, the accounting says electron
+
+Its single counted muon is **568.1 MeV**, which is neither of the two muon-typed
+showers in the dump (407.2 and 205.1 MeV). The 407.2 MeV object — the one whose
+end point the owner asked about in §13 — is charged as:
+
+```
+kine_cont: CHARGE_SHOWER seg=30 pdg=11 rest_mev=0.00 ke_mev=407.1
+```
+
+**pdg 11, rest 0.00.** So the object drawn and dumped as a muon (`particle_id`
+13, §13) contributes to `Enu` as EM energy with no muon mass at all. That is
+consistent with §13's finding that its muon typing rests entirely on a 1.8 cm
+stub 332.8 cm away, and it means the 407 MeV is not being double-counted as a
+muon — but it also means the PID a scanner sees and the PID the energy sum uses
+are **different** for the same object.
+
+## 14.2 Not claimed
+
+- **The silent counting site is not identified.** The evidence says one exists
+  (a muon node with no `kine_cont` line at all); naming it needs a probe at the
+  remaining admission paths, which is its own round.
+- **Log `seg=` indices are graph indices, not the calib dump's `id`** — they are
+  not joined here, and nothing above depends on joining them.
+- No claim that any of these 8 `Enu` values is wrong overall; the rest-mass term
+  is 105.7–350.9 MeV against `Enu` of 752–1313 MeV, and whether the *node* count
+  is right is exactly the question the round-3 scan set was built to ask.
