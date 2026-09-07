@@ -188,31 +188,43 @@ map consumes the t0 the match assigns.
 ### 4.4 It does not.  The run-split anode control settles it
 
 A wrong t0 shifts x.  So it moves the gap at the ANODE planes, which are an
-x-direction measurement, and leaves the transverse y/z gaps alone.  Splitting the
-`d09fvoff` census by run separates the two cleanly (median gap, cm):
+x-direction measurement, and leaves the transverse y/z gaps alone.  The
+`d09fvoff` census split by run separates the two.
 
-| | 028084 | 029107 | difference |
+**The estimator has to be conditioned the same way the surface is.**  A median
+over ALL ends assigned to a plane is dominated by non-exits (the anode sample's
+mean gap is ~72 cm against a median of ~5), and it is far too noisy to answer
+this: it gives 028084 - 029107 = +2.97 +- 5.95 cm, i.e. 0.5 sigma, which says
+nothing.  Restricted to actual exits (gap < 40 cm, readout-edge ends removed) —
+exactly the sample the quantiles are read from — it is decisive:
+
+| sample | n | anode-exit gap to the collection plane |
+|---|---|---|
+| 028084 | 106 | **1.29 +- 0.04 cm** |
+| 029107 | 103 | **1.26 +- 0.03 cm** |
+| difference | | **+0.02 +- 0.05 cm = +0.1 +- 0.3 us of t0 (0.4 sigma)** |
+
+and the transverse walls agree independently:
+
+| wall | 028084 | 029107 | difference |
 |---|---|---|---|
-| **anode** (x-direction) | +5.91 | +2.94 | **+2.97** |
-| y+ | 3.30 | 4.98 | +1.69 |
-| y- | 4.50 | 4.11 | -0.38 |
-| z- | 5.03 | 5.61 | +0.57 |
-| z+ | 4.88 | 3.36 | -1.53 |
+| y+ | 2.96 +- 0.92 | 4.96 +- 0.92 | -2.01 +- 1.30 (1.5 sigma) |
+| y- | 4.03 +- 0.73 | 3.85 +- 0.56 | +0.19 +- 0.92 |
+| z- | 4.79 +- 1.16 | 4.75 +- 1.04 | +0.05 +- 1.55 |
+| z+ | 4.55 +- 0.99 | 3.88 +- 1.41 | +0.67 +- 1.73 |
 
-28084 does carry a ~3 cm x offset against 029107 — about 19 us of t0, or 1 % of
-the 358 cm drift, and small against the 84 cm drift bins.  But the four
-transverse walls scatter by +-1.7 cm with **no systematic sign**, which is what a
-pure x shift predicts and what a genuine reconstruction difference would not.
+chi2/ndf against "no difference" = 0.64 on the four transverse walls.
 
-**So the flash-merging difference does not reach the surface, and run 28084 can
-carry the map.**  This is also why the map is built on the transverse walls only:
-no drift-direction surface is measured, and `tgm_fv_x_margin` is left untouched.
+**There is no measurable x offset between the runs**, so the flash-merging
+difference of sec 4.3 does not move the fitted t0, and 28084 carries the map on
+the same footing as 029107.
 
-A PDHD-specific pedestal to note while reading the control: PDHD's FV bound
-(357.985) and its collection plane (353.1) differ by 4.9 cm, where PDVD's
-coincided at 339.91.  PDHD's imaged charge stops a few cm SHORT of the collection
-plane (+2.9 / +5.9 cm) where PDVD's overshot it by 2.5 cm.  Being an x-direction
-offset, it does not propagate into a transverse surface.
+The conditioned anode control is also the instrument's own null test, and it
+passes: imaged charge stops **1.3 cm** short of the collection plane in both runs.
+(PDVD's read -2.5 cm, an overshoot; both are cm-level.)  Note PDHD's FV bound
+357.985 and its collection plane 353.1 differ by 4.9 cm where PDVD's coincided —
+that pedestal is subtracted here, and being an x-direction offset it does not
+propagate into a transverse surface in any case.
 
 ## 5. The instrument
 
@@ -417,6 +429,38 @@ points, and doc pdvd/41 R4 warns the proxy is loose for outliers.
   isolated in the middle of the detector in y.  These flip because the tighter
   boundary crosses them, and sec 9.3 then tags them without further test.
 
+### 9.4b STM is essentially untouched -- and its denominator is not
+
+`TaggerCheckSTM` skips clusters already TGM-tagged, so a change in TGM moves the
+set STM is even allowed to evaluate.  On PDHD the skip count equals the TGM count
+exactly in every arm, which confirms the mechanism:
+
+| arm | TGM | STM=1 | skipped | evaluated | STM/evaluated | STM > 2 m |
+|---|---|---|---|---|---|---|
+| flat (PRODUCTION) | 1561 | 318 | 1561 | 4318 | 7.36 % | 86 |
+| p80 + 3 | 1432 | 316 | 1432 | 4447 | 7.11 % | 83 |
+| p80 + 5 | 1528 | 315 | 1528 | 4351 | 7.24 % | 83 |
+| p90 + 3 | 1755 | 320 | 1755 | 4124 | 7.76 % | 85 |
+| p90 + 5 | 1843 | 329 | 1843 | 4036 | 8.15 % | 84 |
+
+The STM total moves by at most 11 of 318 (3.5 %) and long-track STM by at most 3
+of 86, while the evaluated set shrinks by 282.  So the surface does **not**
+disturb the stopping-muon sample; the rate per evaluated cluster rises only
+because TGM removes more candidates from the front of the queue.
+
+Per-cluster flips confirm it is a queue effect and not a re-classification:
+
+| arm | STM gained | (of which previously skipped as TGM) | STM lost | (of which became TGM) |
+|---|---|---|---|---|
+| p80 + 3 | 38 | 30 | 40 | 11 |
+| p80 + 5 | 33 | 20 | 36 | 12 |
+| p90 + 3 | 31 | 7 | 29 | **25** |
+| p90 + 5 | 43 | 11 | 32 | **28** |
+
+For the p90 arms almost every lost STM is a cluster that became TGM — the two
+taggers trading a verdict, not one of them getting a track wrong.  The doc pdvd/25
+stopping-muon census is the sentinel to re-run before any flip.
+
 ### 9.5 The full ladder
 
 | arm | 0-10 cm | 10-50 | 50-200 | **> 200 cm** | TGM total | STM | FC |
@@ -503,8 +547,9 @@ before and after and never changed.
 3. **8 of 32 bins are statistics-starved**, all on z (sec 6).  They are named in
    the profile header.  ~60 more Q/L-matched events would clear them; run 27980
    is the obvious candidate (7.8 mV/fC, light already validated).
-4. **28084 carries a ~3 cm x offset** against 029107 (sec 4.4).  Harmless for a
-   transverse surface, but it is a real per-run t0 or drift-velocity difference
-   and would matter to any drift-direction measurement.
+4. **No measurable x offset between the runs** (sec 4.4): +0.02 +- 0.05 cm on the
+   conditioned anode control.  An earlier unconditioned median suggested ~3 cm;
+   that estimator is dominated by non-exits and carries a +-6 cm error.  Any
+   future drift-direction measurement should use the conditioned form.
 5. The surface is built and graded on the same 61 events.  The run-split
    cross-validation holds (sec 7), but the arm counts are in-sample.
