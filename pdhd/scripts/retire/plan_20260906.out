@@ -119,7 +119,7 @@
   PASS  INTERLOCK 10: tier 2: 8 families, 240 dirs; missing=none ungrounded=none
   PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
 
-  universe 1191 dirs | KEEP 917 | TIER 1 34 = 0.20 GiB | TIER 2 240 = 5.86 GiB | out-of-scope (untouched) 47
+  universe 1193 dirs | KEEP 919 | TIER 1 34 = 0.20 GiB | TIER 2 240 = 5.86 GiB | out-of-scope (untouched) 48
   --- TIER 1 ---   arm                       dirs      GiB  cited
                     d03stmnew                    2     0.01      0
                     d03stmnew10                  2     0.01      0

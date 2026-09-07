@@ -152,7 +152,14 @@ TREES = {
    flip_evidence=["stmc4000","stmc2000","stmc1000","stmc250",
                   "phdump","phdumpw","phdumpx","phdumpwc","wccdump","wccdumpw",
                   "qlt","perfslide"],
-   open_prefix=("d146","d08","d143f","d48","d46"),
+   # "ql" added 2026-09-06 21:50 -- INTERLOCK A caught a LIVE peer (PID 2727386)
+   # writing 028084_18_qlpilot and 029107_0_qlctrl at 21:46/21:48, half an hour
+   # after this round was planned.  Protected by PREFIX, never by naming those
+   # two: on 09-04 a live round created SEVEN new families between plan and
+   # confirm, and a name list frozen at plan time would have released all seven.
+   # "ql" is safe here because the tree's only other ql arm, qlt, is already
+   # kept (cited by pdvd/docs/qlmatch).
+   open_prefix=("d146","d08","d143f","d48","d46","ql"),
    keep_arms=["d05prod","d05wc","d05p","d04bee","d02fix","d02ref","d02sig","d02sigb"],
    tier2={
      "d03nu1":"doc pdhd/03 knob-bag iteration 1 of 9.  The SHIPPED bag is the one doc pdvd/48 sec 11 adopted and its arm is d03nu9 (kept).  COST: one row of the sec-7 sweep table.",

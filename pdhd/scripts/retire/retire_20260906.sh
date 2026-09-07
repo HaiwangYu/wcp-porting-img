@@ -19,6 +19,11 @@
 set -u
 D="$(cd "$(dirname "$0")" && pwd)"
 
+TIER=${1:?tier (1 or 2)}; shift || true
+case "$TIER" in 1|2) ;; *) echo "tier must be 1 or 2"; exit 1;; esac
+TREES=${*:-sbnd pdvd pdhd}
+CONFIRM=${CONFIRM:-no}
+
 # ---- INTERLOCK A: RE-PLAN AT CONFIRM TIME -------------------------------
 # A peer session started 11 minutes into this round's planning (PID 2727386,
 # cwd toolkit/) and on 09-04 a live round created SEVEN new arm families
@@ -50,10 +55,6 @@ if [ "${CONFIRM:-no}" = yes ] && [ "${REPLAN:-yes}" = yes ]; then
   fi
   echo "   OK: all interlocks still PASS and every tier file is unchanged."
 fi
-TIER=${1:?tier (1 or 2)}; shift || true
-case "$TIER" in 1|2) ;; *) echo "tier must be 1 or 2"; exit 1;; esac
-TREES=${*:-sbnd pdvd pdhd}
-CONFIRM=${CONFIRM:-no}
 
 for t in $TREES; do
   TF="$D/tier${TIER}_${t}_20260906.txt"

@@ -330,12 +330,88 @@ grounds are in `plan_20260906.py`'s `tier2` dicts, one string per family.
 - **`work-vtx105-base-*` (4.2 GiB) stays** — 1782 references from
   `vertex_labels/`, M13.
 
+## 8.5 EXECUTED 2026-09-06, and the two things execution taught
+
+**Owner ran the `~/tmp` sweep (all three tiers) and then said "go ahead clean up
+the directories."** State: `~/tmp` 98 G → 58 G; work tier 1 executed by me,
+**97 dirs / 0.89 GiB, rc=0 on all three trees, broken symlinks still 0**
+(against the 0 interlock 4 recorded, which is the only reason that means
+anything). **Work tier 2 was declined by the permission gate** — as every round
+since 09-01 records — so it is the owner's to run.
+
+### A fifth CONFIRM-only defect, introduced by the fix for the third
+
+`CONFIRM=yes ./retire_20260906.sh 1` died with **`line 36: TIER: unbound
+variable`**. INTERLOCK A sits above the line that assigns `TIER`, and scoping it
+to the running tier (§7.1 item 3) put `${TIER}` into it — the earlier `tier?_*`
+glob needed no variable, so the fix created the bug. `set -u` caught it *before*
+the loop, so nothing was deleted; all 97 tier-1 dirs were verified present
+afterwards. The block now sits below the argument parsing. **The lesson is about
+the fix, not the bug:** a correction to a `CONFIRM=yes`-only path is itself
+reachable only under `CONFIRM=yes`, and re-running the dry run proves nothing
+about it.
+
+### INTERLOCK A then fired on real data, exactly as designed
+
+The next confirm refused with `CHANGED since plan time: tier1_pdhd_20260906.txt`.
+Cause: a live peer (PID 2727386) wrote **`028084_18_qlpilot`** and
+**`029107_0_qlctrl`** at 21:46/21:48, half an hour *after* the plan — new,
+uncited, and therefore swept straight into tier 1 by the re-plan. This is doc
+100's seven-families-between-plan-and-confirm scenario, caught this time.
+Protected by the **`ql` prefix**, never by naming those two (a name list frozen
+at plan time is what fails here); `ql` is safe because the tree's only other
+`ql` arm, `qlt`, is already kept. Tier files returned to the committed content
+and the interlocks pass again.
+
+## 8.6 `~/tmp`: 26.77 GiB more, with nothing deleted
+
+After the sweep, `~/tmp` was 58 G and **39.06 GiB of it was pinned binaries**.
+A pin is a snapshot of `local/lib` — 19 shared objects — and a round rebuilds
+**one** of them (usually `libWireCellClus.so`, 410 MB) and copies the rest
+unchanged. Measured: **2272 files, 606 distinct contents, and zero existing
+hardlinks.** `libWireCellSigProc.so` is byte-identical in 34 pins.
+
+`dedup_pins_20260906.py` makes identical files share an inode:
+
+```
+2272 files, 2272 distinct inodes, 39.06 GiB on disk
+580 content groups; 1666 files can share an inode; 26.77 GiB recoverable
+linked 1666, skipped 0, made read-only 606
+VERIFY: 2272 files present (was 2272), 0 missing, 606 inodes, 12.29 GiB
+```
+
+**`~/tmp` 58 G → 31 G. Nothing was deleted**: every path stays, every pin stays
+complete and runnable, every byte stays readable. That makes it categorically
+different from the retire tiers — there is no record to lose and no owner
+judgement to make, which is why it did not need a tier of its own.
+
+Safety, in order: group by SHA-256, then `filecmp` **byte-compare the actual
+pair** before linking (a hash match is evidence; a byte compare is proof);
+`os.link` to a temp name and `os.replace` over the target, so an interruption
+can never leave a path missing; refuse on a symlink, a size that moved, or pins
+spanning two filesystems.
+
+**The hazard sharing creates, and its mitigation.** Once two paths share an
+inode, writing *in place* through one (`cp new.so pin/`, which opens `O_TRUNC`)
+corrupts every pin that shares it. Every deduplicated file is therefore made
+**read-only**, so `cp` fails loudly instead. Verified: `cp /dev/null` into the
+shipped pin returns `Permission denied`. Building a pin the normal way
+(`cp -r local/lib ~/tmp/newpin`, a *new* directory) is unaffected.
+
+**Verified, not asserted:** 61 files across three pins — including
+`d47_libpin/new11`, the shipped pdhd/03 + pdvd/48 binary, and `d144_libpin4`,
+the current SBND production arm's pin — re-hash **identical** to the pre-dedup
+record. 0 mismatches.
+
+Disk: `/home/xqian` free **399 G → 466 G**, with work tier 2 still to run.
+
 ## 9. Files
 
 Machinery (`pdhd/scripts/retire/`): `toks_20260906.py`, `cit_20260906.py`,
 `plan_20260906.py`, `archive_records_20260906.py`, `retire_20260906.sh`,
 `sweep_tmp_20260906.sh`, `tier{1,2}_{sbnd,pdvd,pdhd}_20260906.txt`,
-`plan_20260906.out`, `sweep_dry_t{1,2,3}.log`.
+`plan_20260906.out`, `sweep_dry_t{1,2,3}.log`, `retire_dry_t{1,2}.log`,
+`dedup_pins_20260906.py`.
 
 `PROTECTED.txt`: **pdvd gets its first one** (it had machinery since 09-04 but no
 carry-forward list); sbnd's stage-B line is rewritten; pdhd gains the
