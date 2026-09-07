@@ -1292,11 +1292,19 @@ function(
     // legacy literal that used to be hard-coded in pr.jsonnet's margin
     // vectors).  Broken out for doc pdvd/35.
     tgm_fv_zmin_margin = 18,   // 15 (space charge) + 3 (dvm FV_z_margin)
-    // NOTE: PDVD's curved_fv / curved_fv_margin_y / curved_fv_margin_z /
-    // curved_fv_profile family (doc pdvd/41, doc pdvd/43) is ABSENT.  It installs
-    // a MEASURED space-charge fiducial surface; PDHD has no such measurement and
-    // pdhd/pr.jsonnet carries only the flat box.  The four tgm_fv_*_margin TLAs
-    // above are therefore the whole fiducial operating point here.
+    // doc pdhd/09: the MEASURED space-charge fiducial surface.  ONE KNOB MOVES BOTH
+    // HALVES of the tagger volume, because they must move together: the fiducial goes
+    // from BoxFiducial:pdhd_pr_fv to the composite of curved_fiducial.jsonnet's two
+    // measured polygons, AND the y/z entries of fv_tolerance drop from 17.5/18 cm to
+    // the cushion (curved_fv_margin_y/z).  The 15 cm those margins carry IS the flat
+    // space-charge allowance the surface replaces -- carrying both would count it
+    // twice.  x keeps tgm_fv_x_margin = 2: no drift-direction surface was measured.
+    // Default OFF => the four tgm_fv_*_margin TLAs above remain the whole fiducial
+    // operating point and the compiled config is byte-identical to pre-doc-09.
+    curved_fv = false,
+    curved_fv_margin_y = 3,
+    curved_fv_margin_z = 3,
+    curved_fv_profile = 'flat',   // 'p80' | 'p90' | 'flat'
     // Persist the per-pass STM track fits (C++ default false; key omitted
     // when off => byte-identical): cluster PCs stm_fit/stm_pass/stm_eval, a
     // Bee 'stm_fit' layer in mabc-pr.zip, and (when 'stm_magnify' is added
@@ -3896,6 +3904,11 @@ function(
                              tgm_fv_x_margin=tgm_fv_x_margin,
                              tgm_fv_y_margin=tgm_fv_y_margin,
                              tgm_fv_zmin_margin=tgm_fv_zmin_margin,
+                             // doc pdhd/09: the curved (space-charge) fiducial surface.
+                             curved_fv=curved_fv,
+                             curved_fv_margin_y=curved_fv_margin_y,
+                             curved_fv_margin_z=curved_fv_margin_z,
+                             curved_fv_profile=curved_fv_profile,
                              save_stm_fit=save_stm_fit,
                              pf_track_main_cluster_only=pf_track_main_cluster_only,
                              pf_track_bridged_clusters=pf_track_bridged_clusters,

@@ -1,0 +1,35 @@
+doc pdhd/09 -- curved_fv config gate                          2026-09-07T08:17:30Z
+
+Reference: pdhd/wct-pr-perevt.jsonnet compiled BEFORE any doc-09 edit.
+  ref_preknob.json  254398 B  md5 b58f38f37a08750df2ac109104c96771
+
+TLAs common to every compile:
+  -A input=/tmp/x.tar.gz -A output_dir=/tmp/o -S run=29107 -S subrun=0 -S event=983
+  -S trigger_offset_us=0 -S readout_window_ticks=6000
+  -S pipeline_names='["fiducialutils","tagger_check_stm","tagger_check_tgm","tagger_check_fc","tagger_output"]'
+
+  arm                          extra TLAs                                            bytes   vs ref
+  knob absent (default OFF)    --                                                    254398  IDENTICAL  PASS
+  explicit OFF                 -S curved_fv=false                                    254398  IDENTICAL  PASS
+  ON p90 + cushion 5           -S curved_fv=true -A curved_fv_profile=p90            257834  differs    PASS
+                               -S curved_fv_margin_y=5 -S curved_fv_margin_z=5
+  ON p80 + cushion 3 (default) -S curved_fv=true -A curved_fv_profile=p80            257711  differs    PASS
+
+Compiled-config proof (M6) -- TaggerCheckTGM's own data block:
+  OFF      fiducial = BoxFiducial:pdhd_pr_fv
+           fv_tolerance = [-20,-20,-175,-175,-180,-180]  (x 2 / y 17.5 / z 18 cm)
+  ON p90c5 fiducial = CompositeFiducial:pdhdcurved-fv
+           + PolyFiducial:pdhdcurved-xy, PolyFiducial:pdhdcurved-xz
+           fv_tolerance = [-20,-20,-50,-50,-50,-50]      (x 2 / y 5 / z 5 cm)
+
+  i.e. ONE knob moves BOTH halves: the fiducial AND the y/z tolerance.  The 17.5/18 cm
+  those margins carry IS the flat 15 cm space-charge allowance the surface replaces;
+  carrying both would count it twice.  x is untouched (no drift-direction surface).
+
+Binary pin: /home/xqian/tmp/d09_libpin/pin
+  libWireCellClus.so  b3495810c15bf663c4a55e3f335b48a9
+  libWireCellAux.so   e86c87808585efb11bdf565d2560d20e
+
+NOTE: curved_fiducial_profiles.jsonnet was PROVISIONAL at gate time (30-event 029107
+prototype).  The gate tests the WIRING, which does not depend on the profile values;
+the profiles are regenerated from the 61-event d09fvoff arm before the doc is committed.

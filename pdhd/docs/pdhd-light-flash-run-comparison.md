@@ -64,13 +64,21 @@ different source and is not mixed into the LArSoft cross-run tables below.
 | **27305** | `run027305/np04hd_raw_run027305_0001_…_final.root` | 24 | **no** (+x only; −x dark this run) |
 | **27980** | `run027980/np04hd_raw_run027980_0000_…_final.root` | 31 | yes (full 80–159 wall) |
 | **29107** | `run029107/np04hd_raw_run029107_0004_…_final.root` (re-extracted, full `rawdump`) | 30 | yes (full 80–159 wall) |
-| ~~28084~~ | `run028084/np04hd_raw_run028084_0300_…_final.root` | — | **excluded** |
+| **28084** | `run028084/np04hd_raw_run028084_0300_…_final.root` (re-extracted, full `rawdump`) | 31 | yes (full 80–159 wall) |
 
-**Run 28084 is excluded:** its light ROOT is truncated/corrupt (723 MB, uproot
-read error mid-file). The 31 `evt_*` subdirectories under `run028084/` hold
-**charge** data (orig/SP wire frames per anode), not optical data, so the run
-contributes no flash statistics. If the file is re-extracted intact it slots
-straight into the comparison.
+**CORRECTION 2026-09-07 (doc pdhd/09):** the exclusion below is stale. The file
+was re-extracted — it is now **1,495,632,331 B (1.5 GB), mtime 2026-06-16**, and
+uproot reads it end to end: `rawdump/raw_waveform` 75,145 entries,
+`decodump/deco_waveform` 73,899, `trigoff/trigger_offset`, each covering **all 31
+DAQ events 74408–74648**. All 31 events have since been reconstructed through the
+all-PD light chain and Q/L-matched (doc pdhd/09 sec 4). The row above is updated;
+the paragraph below is kept for provenance.
+
+> ~~**Run 28084 is excluded:** its light ROOT is truncated/corrupt (723 MB, uproot
+> read error mid-file). The 31 `evt_*` subdirectories under `run028084/` hold
+> **charge** data (orig/SP wire frames per anode), not optical data, so the run
+> contributes no flash statistics. If the file is re-extracted intact it slots
+> straight into the comparison.~~
 
 The −x wall is **run-dependent**: it is dark in 27305 and lit (snippet PDs) in
 27980 and 29107. This matches `which-pd-side-lights.md`.
