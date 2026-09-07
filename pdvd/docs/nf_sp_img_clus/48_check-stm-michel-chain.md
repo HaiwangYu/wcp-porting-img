@@ -441,4 +441,125 @@ binary (`d48nu4`, pin new8) gives the SAME 99 `is_stm` of 574 as sec 8 (28 candi
 everything but that test), `plateau_mip_lo/hi`, `stop_extend_max` + `michel_guards_stop`,
 `dead_volume_check`, `min_chain_coverage`; bits 512-4096.  The PDVD arm with PDHD's operating point
 (`d48nu5`, pin new9) is reported in doc pdhd/03 sec 7 -- NOT adopted for PDVD here; that is the
-owner's call after a hand-scan.  The census script `d48_stm_michel_census.py` knows the new bit names.
+owner's call after a hand-scan.  [Corrected 2026-09-06: the arm reported in doc pdhd/03 sec 7 is
+`d48nu7`, pin new11 -- the shipped binary; and the operating point WAS adopted, see sec 11.]  The census script `d48_stm_michel_census.py` knows the new bit names.
+
+
+## 11. Addendum 2026-09-06 (owner flip): the doc pdhd/03 operating point becomes the PDVD default
+
+**Owner ask 2026-09-06**: "please turn it on for PDVD now."  Goal stated with it: (1) select
+stopping muons as completely as possible, (2) select STM + Michel out of that sample for other
+uses, (3) *no* change to SBND.  The knob bag of doc pdhd/03 sec 6 is now the DEFAULT of
+`stm_michel_knobs` in `pdvd/wct-pr-perevt.jsonnet`, so PDVD and PDHD share one operating point.
+
+### Repro
+
+```bash
+# the flip is config-only: the knobs are in the shipped binary at their (OFF) C++ defaults
+cd /nfs/data/1/xqian/toolkit-dev/toolkit/pdvd
+# compiled-config proof (fresh tag; the dir only needs the pctree + .tlas symlinks)
+PDVD_PR_COMPILE_ONLY=1 ./run_pr_evt.sh -s d48flipcfg {-stm | -nu | -nu-legacy} 39252 0
+#   -> work/039252_0_d48flipcfg/.wct-pr_d48flipcfg.json
+# the pre-flip measurement this section quotes (already run, do NOT re-run into these tags):
+#   arm d48nu7 = PDVD, 120 events, pin /home/xqian/tmp/d47_libpin/new11, PDHD's bag via PDVD_PR_TLA
+#   census     = pdhd/docs/figs/d03_stm_michel_d48nu7.tsv (one row per candidate, every verdict input)
+```
+
+### What changed
+
+`stm_michel_knobs` default `{}` -> the nine keys of doc pdhd/03 sec 6:
+`profile_min_dqdx_frac 0.15`, `pid_mode 2`, `plateau_mip_lo/hi 0.6/1.6`, `stop_extend_max 3`,
+`michel_guards_stop true`, `michel_shower_min_kink_deg 15`, `stop_fv_use_config_tolerance true`,
+`dead_volume_check true`.  `absorb_bragg_stub` and `min_chain_coverage` stay OFF (both measured
+harmful / non-separating, doc pdhd/03 sec 6.5, 6.8).  No C++ change, no rebuild.
+
+### Status flags
+
+- PDVD `-nu`: **NOT bit-identical, and intended** -- this is the behaviour change the owner asked
+  for.  Its pre-flip measurement is arm `d48nu7` (below).
+- PDVD `-stm` (production) and `-nu-legacy`: **byte-identical** compiled config, proven below.
+  `stm_michel_knobs` is inert unless `check_stm_michel` is in `pipeline_names`.
+- **SBND: structurally untouched.**  `check_stm_michel` is instantiated only in
+  `cfg/pgrapher/experiment/{pdhd,protodunevd}/pr.jsonnet`; `cfg/pgrapher/common/clus.jsonnet` holds
+  the builder *definition* only, and SBND never calls it.  (Name collision to be aware of: SBND's
+  `stm_michel_res_cm` in `sbnd/clus.jsonnet` is an unrelated `TaggerCheckSTM` doc-66 parameter.)
+  The flip lives in `pdvd/wct-pr-perevt.jsonnet`, which SBND never reads.
+- PDHD: untouched; its driver already carried this bag as its default since doc pdhd/03.
+
+### Compiled-config proof (event 039252/0, tag `d48flipcfg`, 2026-09-06)
+
+| mode | before vs after | verdict |
+|---|---|---|
+| `-stm` (production) | `cmp` of the compiled JSON | **IDENTICAL** |
+| `-nu-legacy` | `cmp` of the compiled JSON | **IDENTICAL** |
+| `-nu` | 61 nodes before and after; **1 node differs** (`CheckSTM_Michel` / `pr`): exactly the 9 keys ADDED, 0 removed, 0 changed | **as intended** |
+
+### The measurement this flip rests on (arm d48nu7, pre-flip, 120 events / 574 candidates)
+
+| | d48nu3 (C++ defaults = sec 8) | d48nu7 (this bag) |
+|---|---|---|
+| `is_stm` | 99 (17.2 %) | **148 (25.8 %)** |
+| Michel-carrying passers | 39 | **55** |
+| Michels overall / kink p10 | 137 / 21 deg | 123 / 31 deg |
+| chains extended past the tagger's stop | -- | 7 |
+| `dead_volume_check` fires | -- | 2 |
+| wall, median | 31.6 s | 23.5 s |
+
+Attribution of the 50 gained / 1 lost: **+49 `pid_mode`** (rejected before by the electron test
+alone), **+1 `stop_fv_use_config_tolerance`** (the flat 5 cm inset), **-1 `plateau_off_mip`**.
+
+**Not verified**: the purity of the +49.  They have not been hand-scanned, and PDHD's 8 passers
+include one known false positive (029107/11 cluster 18, an EM blob).  Purity is what the next scan
+is for; the flip is justified against sec 8's baseline, which is strictly worse on both of the
+owner's objectives.
+
+### Where the remaining stopping muons are (sole-bit census of d48nu7, 574 candidates)
+
+Candidates rejected by exactly ONE bit -- i.e. what each single test costs, and how many of those
+carry a Michel:
+
+| sole reject bit | candidates | of which Michel-carrying |
+|---|---|---|
+| `shape_flat` (tagger KS) | **69** | **26** |
+| `plateau_off_mip` | 13 | 3 |
+| `profile_sparse` | 11 | 4 |
+| `no_bragg` | 4 | 0 |
+| `stop_near_boundary` | 4 | 2 |
+
+`shape_flat` is now the dominant single rejector and the biggest Michel pool left -- 26 Michels
+behind one test, against the 55 being shipped.  That is where the next round pays.
+
+The 13 sole-`plateau_off_mip` rejects are the scan sheet for the one knob where the owner's two
+objectives pull apart (a plateau at 0.22 MIP means a broken charge scale, hence an unusable Michel
+KE, which is why the window ships ON at 0.6):
+
+| event | cluster | plateau (e/cm) | stop x (cm) | Michel |
+|---|---|---|---|---|
+| 039252/17 | 88 | 31060 | 201.7 | yes, kink 87.5 deg, 18.8 MeV |
+| 039349/77 | 52 | 18118 | 245.0 | yes, kink 43.0 deg, 7.7 MeV |
+| 039349/71 | 51 | 12354 | 282.4 | yes, kink 26.9 deg, 3.7 MeV |
+| 039252/6 | 106 | 100146 | 220.0 | no (above `plateau_mip_hi`) |
+| 039252/8 | 97 | 13471 | 311.4 | no |
+| 039349/24 | 21 | 10673 | -57.5 | no |
+| 039349/26 | 34 | 22125 | 256.5 | no |
+| 039349/37 | 52 | 13134 | 110.5 | no |
+| 039349/40 | 49 | 18209 | 122.5 | no |
+| 039349/56 | 18 | 32545 | -131.0 | no |
+| 039349/60 | 47 | 22843 | 112.5 | no |
+| 039349/7 | 65 | 32710 | 238.7 | no |
+| 039349/8 | 51 | 18909 | 109.2 | no |
+
+(`mip_dqdx` = 55000 e/cm on PDVD, so the window is 33000-88000.)  Reproduce with
+`pdhd/docs/figs/d03_stm_michel_d48nu7.tsv`.
+
+### Next steps
+
+1. **The STM + Michel subsample needs no new code**: `T_stm_michel` already persists
+   `michel_found`, `michel_kink_deg`, `michel_ke_best`, `michel_conn_type` per candidate.  The
+   development left is purity/efficiency of that flag, not plumbing.
+2. **Next round: `shape_flat`** (69 sole rejects, 26 with a Michel) -- the tagger's KS shape test,
+   on chains whose Bragg verdict is otherwise clean.
+3. Then the 13 above (`plateau_mip_lo`) and the 11 `profile_sparse`.
+4. Michel KE still needs an MC-truth calibration (sec 8 next steps, unchanged).
+5. A fresh 120-event PDVD arm on the flipped default is NOT taken here: `d48nu7` already is that
+   arm's measurement, on the shipped pin.  Take one under a new tag when the next binary lands.

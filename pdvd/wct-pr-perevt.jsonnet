@@ -209,10 +209,31 @@ function(
                       'protect_bundle', 'steiner_refresh',
                       'check_stm_michel', 'tracking_visitor',
                       'pr_display'],
-    // doc pdvd/48: verdict thresholds / PR-partition overrides for
-    // check_stm_michel, as an object (-S 'stm_michel_knobs={"bragg_contrast_min":0.5}').
-    // {} => the C++ defaults documented in CheckSTM_Michel::default_configuration().
-    stm_michel_knobs = {},
+    // doc pdvd/48 sec 10 addendum (owner flip 2026-09-06): verdict thresholds /
+    // PR-partition overrides for check_stm_michel, as an object
+    // (-S 'stm_michel_knobs={...}' replaces the WHOLE bag; pass {} for the C++
+    // defaults documented in CheckSTM_Michel::default_configuration(), i.e. the
+    // doc pdvd/48 behaviour as shipped).  The DEFAULT below is the doc pdhd/03
+    // sec 6 operating point, now adopted for PDVD so both ProtoDUNEs share one
+    // baseline; measured on arm d48nu7 (120 events, 574 candidates, pin new11):
+    // is_stm 99 -> 148, Michel-carrying passers 39 -> 55, Michels overall
+    // 137 -> 123 with kink p10 21 -> 31 deg.  Every entry differs from the C++
+    // default.  Inert unless 'check_stm_michel' is in pipeline_names, so the
+    // -stm production compiled config does not carry it.
+    stm_michel_knobs = {
+        profile_min_dqdx_frac: 0.15,   // drop fit points below 0.15 MIP from the verdict metrics (dead cells; doc pdhd/03 sec 5)
+        pid_mode: 2,                   // template PID = proton veto only (sec 6.1); +49 of PDVD's +50
+        plateau_mip_lo: 0.6,           // plateau_med / mip_dqdx window (sec 6.2); costs 1 vs doc 48, 13 vs the bag without it
+        plateau_mip_hi: 1.6,
+        stop_extend_max: 3,            // follow a collinear MIP continuation past the tagger's stop (sec 6.3; 7 PDVD chains) ...
+        michel_guards_stop: true,      // ... unless a Michel arm or the Bragg rise says the muon stopped here (sec 6.3)
+        michel_shower_min_kink_deg: 15, // a shower-flagged stop arm must still turn 15 deg (sec 6.8; the muon's own Bragg stub is not a Michel)
+        // absorb_bragg_stub is NOT set: on PDHD it turned a clean STM into no_bragg (sec 6.8)
+        stop_fv_use_config_tolerance: true,  // stop containment with the taggers' per-wall margins (PDVD 2.5 / 5 / 5 cm), not a flat 5 cm (sec 6.9); +1
+        dead_volume_check: true,       // stop that walks into a dead region (sec 6.4); fires on 2 of 574 here -- PDVD's FiducialUtils does carry the map (0 fires on PDHD)
+        // min_chain_coverage is NOT set: measured 0.30-0.99 on clean stopping muons vs 0.46 on the
+        // one EM blob (sec 6.5), so the guard does not separate; chain_coverage is persisted for scans.
+    },
     // TrackFitting parameter JSON, required whenever tagger_check_stm is in the
     // pipeline: the C++ preset defaults are uBooNE-hard-coded, never right for
     // SBND.  DEFAULT = the canonical in-tree file; TaggerCheckSTM resolves it

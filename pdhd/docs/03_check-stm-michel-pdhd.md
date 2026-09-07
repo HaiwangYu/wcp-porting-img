@@ -371,8 +371,14 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
 `pdvd/docs/nf_sp_img_clus/48_check-stm-michel-chain.md` (sec 10 addendum) and its census script.
 
 **Not done / owner decisions.**
-1. PDVD keeps the C++ defaults (= doc pdvd/48).  Sec 7 reports what PDHD's bag does on the 120
-   PDVD events; adopting any of it for PDVD is the owner's call after a hand-scan of the movers.
+1. ~~PDVD keeps the C++ defaults (= doc pdvd/48).~~  **DONE 2026-09-06 (owner flip):** the whole
+   sec-6 bag is now the default of `stm_michel_knobs` in `pdvd/wct-pr-perevt.jsonnet`, so PDVD and
+   PDHD share one operating point.  Sec 7's d48nu7 numbers (99 -> 148 `is_stm`, 39 -> 55
+   Michel-carrying passers) are the pre-flip measurement; PDVD `-stm` and `-nu-legacy` compiled
+   configs proven byte-identical, SBND untouched (it never instantiates the stage).  See
+   `pdvd/docs/nf_sp_img_clus/48_check-stm-michel-chain.md` sec 11 -- which also carries the
+   sole-bit census: `shape_flat` is now the dominant rejector (69 sole, 26 of them Michel-carrying)
+   and is the next round's target.  The purity of the +49 is still un-scanned.
 2. The PDHD operating point (sec 6) was chosen by reading ~40 panels of 166 candidates, not by a
    blind scan; the `d03_render_candidates.py` PNGs under `/home/xqian/tmp/d03_render/d03nu9/` are
    the scan sheet.  A Bee upload of `d03nu7` is ask-first and was not done.
