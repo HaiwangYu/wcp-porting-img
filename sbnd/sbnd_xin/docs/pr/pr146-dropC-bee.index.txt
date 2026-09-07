@@ -1,0 +1,23 @@
+# doc sbnd_xin/pr/146 -- BLIND scan sheet for the 8 arm-C satellite drops.
+#
+# One question per event:  is the object below a FRAGMENT of the neutrino
+# candidate's own track, or is it OVER-CLUSTERING that should not be counted?
+#
+# Deliberately NOT shown: the classifier's angle to the main vertex, its
+# continuation/track flags, its drop arm, and whether the proposed rule keeps
+# or refuses it.  Two of these eight already have owner verdicts and are left
+# unmarked on purpose, as calibration for the sheet.
+#
+# Layers: shower_track-global colours per particle; track_fit-global is the
+# fitted trajectory; mc is the particle-flow tree (the object is ABSENT from
+# it in every one of the eight -- that is the defect, not a hint).
+#
+# idx  event   object      pdg  len_cm    KE_MeV   start (x,y,z) cm
+  0    54341   seg 34014     11    2.63    46.92   (   83.6,    94.3,   166.5)
+  1    74336   seg 22002     13  103.85   267.48   ( -167.4,   -67.2,   147.8)
+  2    94392   seg 45029     13   29.62    98.14   ( -101.7,   -10.4,   245.9)
+  3    170098  seg 72030   2212    3.39    23.46   ( -103.2,   127.5,   336.2)
+  4    320667  seg 88039     11    2.88    35.64   (  -24.0,    77.9,   415.7)
+  5    321371  seg 18009     13   25.21    98.08   (   64.2,   -73.1,   127.6)
+  6    392009  seg 58014    211   23.67    59.35   (   16.4,   132.7,   344.2)
+  7    408534  seg 23011     13   29.84    98.65   (  114.9,    92.5,   249.1)

@@ -1,0 +1,18 @@
+# doc sbnd_xin/pr/146 -- the two Bee sets, SAME index order (idx N is the same event in both).
+#
+# BEFORE (production today, all 8 objects dropped by arm C) -- the blind scan sheet:
+https://www.phy.bnl.gov/twister/bee/set/5e3e9deb-43e9-4097-bb93-0de121575cbe/event/list/
+#
+# AFTER (kine_sat_cont_keep_deg = 25, arm work-*-d146sv25):
+https://www.phy.bnl.gov/twister/bee/set/7c7e1168-2c0f-4126-a539-fb57aa8ddceb/event/list/
+#
+# idx  event   owner verdict          delta Enu
+#  0   54341   count                  +46.92
+#  1   74336   count                 +267.48
+#  2   94392   count                  +98.14
+#  3   170098  count                  +23.46
+#  4   320667  count                  +35.64
+#  5   321371  OVER-CLUSTERING          0.00   (unchanged on purpose)
+#  6   392009  count                  +59.35
+#  7   408534  count                  +98.65
+#                              total +629.63 MeV
