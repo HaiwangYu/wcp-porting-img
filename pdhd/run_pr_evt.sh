@@ -140,12 +140,24 @@ esac
 # the split must precede steiner_pc creation; after flag_mains so the split-off
 # fragments are removed from the main's Steiner build and STM fit WITHOUT being
 # promoted to mains and given cosmic verdicts of their own.
-if [ "$UNMERGE" = 1 ] && [ -n "$PIPE" ]; then
-    case ",$PIPE," in
-        *,unmerge_assoc,*) ;;
-        *,flag_mains,*) PIPE="${PIPE/flag_mains,/flag_mains,unmerge_assoc,}" ;;
-        *) echo "ERROR: -unmerge needs flag_mains in the pipeline (got '$PIPE')" >&2; exit 4 ;;
-    esac
+if [ -n "$PIPE" ]; then
+    if [ "$UNMERGE" = 1 ]; then
+        case ",$PIPE," in
+            *,unmerge_assoc,*) ;;
+            *,flag_mains,*) PIPE="${PIPE/flag_mains,/flag_mains,unmerge_assoc,}" ;;
+            *) echo "ERROR: -unmerge needs flag_mains in the pipeline (got '$PIPE')" >&2; exit 4 ;;
+        esac
+    else
+        # -nounmerge must REMOVE the stage, not merely decline to insert it.
+        # Before the 2026-09-07 owner flip the default pipelines had no
+        # unmerge_assoc and skipping the insertion above was enough; the flip
+        # wrote the stage into PIPE_STM/PIPE_NU themselves, and from then until
+        # doc pdvd/50 round 2 found it, -nounmerge was a SILENT NO-OP -- it
+        # produced the unmerge chain and said nothing.  PDVD never had this bug
+        # (it selects the separate PIPE_{STM,NU}_MERGED strings instead).
+        PIPE="${PIPE//unmerge_assoc,/}"
+        PIPE="${PIPE//,unmerge_assoc/}"
+    fi
 fi
 if [ "$STM_FIT" = 1 ] && [ -n "$PIPE" ]; then PIPE="$PIPE,stm_magnify"; fi
 PIPE_JSON="[$(echo "$PIPE" | sed -e 's/,/","/g' -e 's/^/"/' -e 's/$/"/' -e 's/^""$//')]"

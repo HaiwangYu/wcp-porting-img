@@ -1,0 +1,29 @@
+# doc pdvd/50 r2 d51_arm_ladder.py -- tier ladder per arm.
+# Read f_low_med WITH pts_per_cm_med: R3 deletes charge-free fit points, so
+# f_low falls mechanically.  f_low down + density HELD = recovery;
+# f_low down + density DOWN = deletion.
+tier	arm	ntracks	npoints	k_pop	chi2	k_med	contrast_med	f_low_med	pts_per_cm_med	reach_frac
+all_kept	old	303	77801	0.8856	12478.47	0.5030	0.897	0.262	1.519	0.990
+all_kept	fvfix	337	86228	0.9231	14539.14	0.4183	1.022	0.244	1.445	0.988
+all_kept	fv_unmerge	323	97552	0.9625	2754.00	0.7259	1.162	0.084	1.566	0.972
+all_kept	new	323	95971	0.9645	2718.83	0.7322	1.174	0.082	1.563	0.972
+contrast_ge2	old	57	16599	0.7838	2407.56	0.2379	3.114	0.435	1.488	1.000
+contrast_ge2	fvfix	55	15763	0.9178	1111.87	0.3165	3.088	0.238	1.487	1.000
+contrast_ge2	fv_unmerge	85	27640	1.0015	10.27	1.0292	2.609	0.059	1.569	1.000
+contrast_ge2	new	85	27407	1.0022	9.86	1.0292	2.614	0.057	1.568	1.000
+doc55_cuts	old	1	365	1.1328	9.64	1.1641	2.424	0.008	1.561	1.000
+doc55_cuts	fvfix	2	972	1.0594	17.43	1.1128	2.508	0.012	1.568	1.000
+doc55_cuts	fv_unmerge	20	7850	1.0388	19.84	1.0936	2.458	0.009	1.572	1.000
+doc55_cuts	new	20	7850	1.0388	19.84	1.0936	2.458	0.009	1.572	1.000
+doc55_muon	old	1	365	1.1328	9.64	1.1641	2.424	0.008	1.561	1.000
+doc55_muon	fvfix	2	972	1.0594	17.43	1.1128	2.508	0.012	1.568	1.000
+doc55_muon	fv_unmerge	20	7850	1.0388	19.84	1.0936	2.458	0.009	1.572	1.000
+doc55_muon	new	20	7850	1.0388	19.84	1.0936	2.458	0.009	1.572	1.000
+complete	old	49	21491	1.0291	914.33	0.8928	0.925	0.023	1.560	1.000
+complete	fvfix	58	24744	1.0280	1147.24	0.8857	0.915	0.023	1.560	1.000
+complete	fv_unmerge	129	47288	1.0311	558.90	0.9824	1.364	0.014	1.564	0.992
+complete	new	130	48007	1.0311	583.43	0.9753	1.390	0.014	1.564	0.992
+complete_bragg	old	6	2606	1.0495	14.40	1.0013	2.238	0.016	1.559	1.000
+complete_bragg	fvfix	10	4653	1.0348	19.87	0.9949	2.343	0.019	1.559	1.000
+complete_bragg	fv_unmerge	39	14656	1.0456	14.97	1.0687	2.436	0.012	1.572	1.000
+complete_bragg	new	40	15378	1.0446	14.69	1.0661	2.458	0.012	1.571	1.000

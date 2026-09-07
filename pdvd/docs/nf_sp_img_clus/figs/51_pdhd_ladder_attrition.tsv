@@ -1,0 +1,11 @@
+# doc 50 sec 4.1's cumulative cuts, per arm.
+cut	old	fvfix	fv_unmerge	new
+accepted STM passes (status 0)	303	337	323	323
++ npts >= 40	302	301	319	309
++ >= 6 populated rr bins	219	193	298	290
++ reaches rr < 2 and rr >= 22 cm	219	192	296	288
++ Bragg contrast >= 2	46	40	83	81
++ median reduced chi2 <= 2.5	33	27	59	57
++ muon shape rms <= 0.10	1	2	20	20
+(instead) npts >= 40 and f_low < 0.05	49	61	130	131
+(instead) ... and Bragg contrast >= 2	6	10	39	40

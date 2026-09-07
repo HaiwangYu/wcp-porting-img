@@ -1,0 +1,23 @@
+# doc pdvd/50 r2 d51_arm_ladder.py -- tier ladder per arm.
+# Read f_low_med WITH pts_per_cm_med: R3 deletes charge-free fit points, so
+# f_low falls mechanically.  f_low down + density HELD = recovery;
+# f_low down + density DOWN = deletion.
+tier	arm	ntracks	npoints	k_pop	chi2	k_med	contrast_med	f_low_med	pts_per_cm_med	reach_frac
+all_kept	old	582	143379	0.9217	2343.44	0.8597	1.071	0.043	1.450	0.840
+all_kept	r3off	587	138215	0.9295	2429.72	0.8608	1.062	0.039	1.425	0.843
+all_kept	new	593	136934	0.9300	2448.58	0.8552	1.067	0.039	1.386	0.840
+contrast_ge2	old	102	25314	0.9159	47.23	0.9686	2.427	0.034	1.511	0.990
+contrast_ge2	r3off	94	22600	0.9130	29.92	0.9594	2.449	0.036	1.529	1.000
+contrast_ge2	new	95	22602	0.9129	30.94	0.9592	2.450	0.036	1.522	1.000
+doc55_cuts	old	47	13039	0.9261	67.75	0.9974	2.289	0.015	1.522	1.000
+doc55_cuts	r3off	41	12219	0.9300	76.51	1.0097	2.324	0.020	1.499	1.000
+doc55_cuts	new	41	12189	0.9308	75.22	1.0097	2.324	0.020	1.499	1.000
+doc55_muon	old	45	12544	0.9305	69.55	1.0125	2.289	0.015	1.523	1.000
+doc55_muon	r3off	40	12093	0.9315	78.67	1.0128	2.331	0.019	1.505	1.000
+doc55_muon	new	40	12063	0.9319	78.09	1.0128	2.331	0.019	1.505	1.000
+complete	old	284	80655	0.9638	911.11	0.9355	1.185	0.018	1.493	0.947
+complete	r3off	294	81803	0.9697	1042.10	0.9445	1.143	0.016	1.472	0.939
+complete	new	298	82358	0.9703	1057.52	0.9451	1.140	0.016	1.471	0.936
+complete_bragg	old	67	17973	0.9518	40.01	0.9984	2.282	0.012	1.523	1.000
+complete_bragg	r3off	56	15793	0.9501	46.00	1.0013	2.379	0.017	1.527	1.000
+complete_bragg	new	57	15982	0.9509	47.76	1.0016	2.406	0.017	1.522	1.000
