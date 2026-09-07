@@ -1329,6 +1329,17 @@ function(
     // to pipeline_names) tracking-stm.root for Magnify-tracking-SBND.  Also
     // gates loading the WireCellRoot plugin.  Runner flag: -stm-fit.
     save_stm_fit = true,   // PDVD: the STM fits ARE the product (Bee stm_fit layer + tracking-stm.root); SBND false
+
+    // doc pdhd/11 -- do_rough_path walks Dijkstra on "steiner_graph" between the two
+    // boundary vertices and never checks they share a connected component.  When they
+    // do not, boost returns the stub {src, dst, dst} rather than failing, and the fit
+    // chain interpolates a straight line between the two ends: PDHD 028084/9 cluster
+    // 126 is a 1019-point trajectory across 592 cm of empty detector, seeded by ONE
+    // detached 3-D point 60.5 cm off the track that clustering had absorbed into the
+    // main cluster.  ON re-anchors the start into the end's component.
+    // false (default) => key omitted => byte-identical compiled config and output.
+    // GRADED knob, not a production flip.
+    stm_rough_path_require_connected = false,
     // ---- doc pr/34 §10: particle-flow (Bee mc tree) port-fidelity knobs ----
     // **ALL FIVE ARE SBND PRODUCTION DEFAULTS ON, owner 2026-08-04** (doc
     // pr/34 §11; C++ defaults stay false).  Display-only, MEASURED: the ON
@@ -3928,6 +3939,7 @@ function(
                              curved_fv_margin_z=curved_fv_margin_z,
                              curved_fv_profile=curved_fv_profile,
                              save_stm_fit=save_stm_fit,
+                             stm_rough_path_require_connected=stm_rough_path_require_connected,
                              pf_track_main_cluster_only=pf_track_main_cluster_only,
                              pf_track_bridged_clusters=pf_track_bridged_clusters,
                              pf_shower_vertex_barrier=pf_shower_vertex_barrier,
