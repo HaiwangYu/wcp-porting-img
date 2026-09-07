@@ -384,6 +384,44 @@ themselves differ by 35 %. The robust part of this table is the ordering and the
 fact that charge-per-pixel and slices-per-channel are flat while the total is
 not.
 
+### 4.2d The long swings are the deficit, not a second effect (owner check)
+
+PDHD profiles show large slow swings along the track — the charge falls away and
+comes back over tens of centimetres — and the question is whether that is a
+separate artifact or the same thing as §4.2. Quantifying it per track: normalise
+dQ/dx by the track median, smooth with a 15-point boxcar, and take
+**swing** = p90 − p10 of the smoothed profile, with **hf** = the residual
+point-to-point scatter.
+
+| sample | n | swing | hf | swing/hf |
+|---|---|---|---|---|
+| PDHD APA0 | 57 | 1.07 | 0.36 | 2.78 |
+| PDHD APA1 | 36 | 0.66 | 0.21 | 3.34 |
+| PDHD APA2 | 61 | **1.39** | 0.22 | **5.74** |
+| PDHD APA3 | 51 | 0.53 | 0.19 | 2.58 |
+| PDHD x<0 (APA0+APA2) | 118 | **1.19** | — | — |
+| PDHD x>0 (APA1+APA3) | 87 | 0.60 | — | — |
+| PDVD x<0 | 150 | 0.45 | 0.29 | 1.52 |
+| PDVD x>0 | 274 | 0.46 | 0.29 | 1.60 |
+
+**Yes, the swings track the bad volume**: 1.19 in x<0 against 0.60 in x>0, a
+factor 2, while PDVD is flat at 0.45/0.46 across both of its volumes — and
+PDHD's *good* volume (0.53-0.66) is already close to PDVD.
+
+**But it is not an independent phenomenon.** Restricted to charge-complete
+tracks (f_low < 0.05) the swing collapses to **0.35** on PDHD with the volume
+difference gone (x<0 0.39 on 8 tracks, x>0 0.34 on 36), against PDVD's 0.37.
+Removing the killed points removes the swings. They *are* §4.2's extended
+deficient stretches seen in profile, not a separate oscillation riding on top.
+
+**And there is no characteristic period.** The dominant wavelength of the
+smoothed profile scales with the track: λ/span = 1.00, 0.50, 0.50, 0.33, 0.25
+across length bins from <60 cm to >250 cm, correlation(length, λ) = 0.57. The
+FFT is picking the longest mode the track can hold. An earlier reading of these
+profiles as a "~40 cm periodic oscillation" was an artifact of finite track
+length and should not be carried forward — nothing here supports a periodic
+mechanism such as a wire-pattern beat.
+
 ### 4.3 PDVD as the control: this is PDHD-specific
 
 ![](figs/50_pdvd_deficit_anatomy.png)
