@@ -1,11 +1,21 @@
 # doc sbnd_xin/pr/148 — evt 137238: the tag that was supposed to fix it is right about half the time, and its energy effect is not the one it was designed for
 
-**Status: BOTH SCANS DONE — 24/24 and 12/12, 2026-09-06, 36 labels.
-THE ROUND INVERTED, THEN THE FIX WAS REFUTED BY THE SECOND SCAN.
-No knob is proposed. §12 is what was measured; §13 is the recommendation.
-A RESCAN OF ALL 36 IS RUNNING (§14) — the first two scans drew only the
-best-fit trajectory, and the display now overlays the 3-D imaged charge.
-Every number in §12 is provisional until it comes back.**
+**Status: CLOSED ON THE TYPING QUESTION. Three scans done, 2026-09-06 —
+24 + 12 objects on the best-fit trajectory, then all 36 RESCANNED with the
+3-D imaged charge overlaid (§14, §15). 72 labels. No knob is proposed and
+none should be. §15 is the final measurement, §16 is the plan for the next
+session. §13 is superseded by §16 and kept as the pass-1 record.**
+
+**The rescan validated the scan and killed the last hope of a fix.** The two
+passes agree 30/36, **Cohen's κ = 0.609**, with **identical marginals** — so
+the labels are stable, the noise floor is **~17 %**, and the flips are a
+balanced swap rather than a shift (§15.1). On the confident core — the 15
+re-types both passes agree on — **0 of 14 census variables separate** the
+objects A5 gets right from the ones it gets wrong (§15.4). The one verdict
+that did move is the one the round was chartered on: **137238 went EM →
+MIXED once the charge was visible** (§15.5), which is the owner answering
+§6.2 with evidence — the object is *both*, so the splitter owns it and the
+tag never could.
 
 The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
 Scan 0 (§6.1) called that object **EM** and found the opposite defect —
@@ -105,6 +115,25 @@ cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin
 #   http://localhost:5017/pr148_scan_viewer
 #   labels land in work/pr148_scan_labels/<tag>/; the committed copy of the
 #   2026-09-06 pass is docs/pr/pr148-pidscan-verdicts.tsv
+
+# The RESCAN sheet -- all 36 previously-labelled objects, reshuffled, with the
+# first-pass verdict in the KEY only (sec 14)
+./scripts/pr148_pidset3.py --sheet docs/pr/pr148-pidscan3-manifest.tsv \
+    --key docs/pr/pr148-pidscan3.KEY.tsv
+/nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/python \
+    pr148_scan/selftest_pr148_scan.py \
+    --sheet docs/pr/pr148-pidscan3-manifest.tsv --expect 36     # 27/27
+./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan2 \
+    --sheet docs/pr/pr148-pidscan3-manifest.tsv
+
+# The two passes compared -- reproduces every table in sec 15
+./scripts/pr148_scan_stability.py
+#   -> 30/36 agree, chance 0.574, Cohen's kappa 0.609; identical marginals;
+#      confident core 15 re-types, 0 of 14 variables separate
+./scripts/pr148_scan_combined.py \
+    --scan docs/pr/pr148-pidscan3.KEY.tsv:docs/pr/pr148-pidscan3-verdicts.tsv
+#   -> sec 12 re-derived on pass 2 alone: precision 0.389 CI [0.20,0.61];
+#      sec 8 bar Fisher p=0.637
 
 # The raw log line this doc is built on
 grep "A5 hadronic" work-nuecc48-d145np/pr_evt137238/wct_pr_evt137238.log
@@ -870,7 +899,7 @@ assertion (doc 91 §12.3).
   scattering it is the upstream fix, and it is not in this doc — and §6.2 says
   the scan now points there.
 
-## 11. Scan 2 — 12 objects, built and running
+## 11. Scan 2 — 12 objects, and it kills §8
 
 `docs/pr/pr148-pidscan2-manifest.tsv` (+ `pr148-pidscan2.KEY.tsv`), built by
 `scripts/pr148_pidset2.py`, **forked by duplication** from `pr148_pidset.py`
@@ -1110,7 +1139,12 @@ that event.
 
 ---
 
-## 13. Recommended next step
+## 13. Recommended next step *(pass 1 — SUPERSEDED by §16, kept as the record)*
+
+*Written after 36 labels taken on the best-fit trajectory alone, before the
+rescan of §14. Its direction survived — §16.1 still says stop the typing thread,
+§16.2 still says go to the splitter — but the evidence under it changed, and
+§16 is the version to act on.*
 
 **Stop the typing thread here and go to the splitter.** After 36 labels it has
 produced a measurement, not a fix, and the measurement says the remaining
@@ -1229,3 +1263,311 @@ design.
 
 Nothing above is re-derived until the labels are in, and the pre-registration
 is here so it cannot be adjusted afterwards.
+
+---
+
+## 15. The rescan came back — 36/36, and the labels are stable
+
+**36/36 labelled, no `weak` ticks**, returned 2026-09-06 into
+`work/pr148_scan_labels/scan2/`; committed unaltered as
+`docs/pr/pr148-pidscan3-verdicts.tsv` (`2ccf2192`) **before** any of the
+analysis below was run, the same separation of record from conclusion used for
+pass 1 in `eb4447e7`.
+
+```bash
+./scripts/pr148_scan_stability.py            # sec 15.1, 15.2, 15.4, 15.5, 15.7
+./scripts/pr148_scan_combined.py \
+    --scan docs/pr/pr148-pidscan3.KEY.tsv:docs/pr/pr148-pidscan3-verdicts.tsv
+#   -> sec 15.3, i.e. every sec 12 table re-derived on pass 2 alone
+```
+
+### 15.1 The labels are stable — κ = 0.61, and the marginals do not move at all
+
+| | EM | HADRONIC | MIXED |
+|---|---|---|---|
+| **pass 1** (best-fit trajectory only) | 26 | 8 | 2 |
+| **pass 2** (trajectory **+ 3-D imaged charge**) | **26** | **8** | **2** |
+
+The marginals are **identical**. Confusion, rows = pass 1, columns = pass 2:
+
+| | → EM | → HADRONIC | → MIXED |
+|---|---|---|---|
+| **EM** (26) | 23 | 2 | 1 |
+| **HADRONIC** (8) | 2 | 6 | 0 |
+| **MIXED** (2) | 1 | 0 | 1 |
+
+**Raw agreement 30/36 = 0.833. Chance agreement from the marginals 0.574.
+Cohen's κ = 0.609.** On the 18 A5 re-types alone — the objects that carry §12 —
+**15 of 18 agree, 83 %**.
+
+Two things follow, and they matter more than either pass's numbers.
+
+- **The flips are a balanced swap, not a shift.** Adding the charge did not
+  move the population toward "hadronic". It moved six individual objects, three
+  each way, and left every marginal where it was. Whatever the image added, it
+  was not a systematic re-reading of the class boundary.
+- **The label noise floor is ~17 %.** That is a *measured* property of this
+  scan, not an assumption, and it is the quantitative reason §12.1's precision
+  question stays closed: an effect smaller than three objects in eighteen
+  cannot be resolved by hand labels at this scale, whatever the display draws.
+
+κ ≈ 0.61 is "substantial" on the usual scale and is a respectable number for a
+three-class physics judgement made twice, blind, on reshuffled sheets, weeks of
+context apart in the same afternoon. The instrument works.
+
+### 15.2 What moved — six objects, and they are the small ones
+
+| event | sh | pass 1 | pass 2 | A5 re-type | nseg | length | `kine_best` |
+|---|---|---|---|---|---|---|---|
+| 137238 | 0 | EM | **MIXED** | no | 20 | 142.9 cm | 555 MeV |
+| 165767 | 0 | HADRONIC | **EM** | **yes** | 3 | 14.0 cm | 34 MeV |
+| 21073 | 0 | MIXED | **EM** | no | 35 | 219.5 cm | 613 MeV |
+| 280972 | 0 | EM | **HADRONIC** | no | 19 | 88.3 cm | 823 MeV |
+| 38856 | 4 | HADRONIC | **EM** | **yes** | 4 | 58.1 cm | 391 MeV |
+| 399328 | 0 | EM | **HADRONIC** | **yes** | 2 | 17.6 cm | 111 MeV |
+
+Three of the six are among the 18 re-types. A flipped object is **smaller** than
+a stable one — median length **73.2 cm vs 134.4 cm**, median `nseg_final`
+**11.5 vs 22.5** — which is the reading a physicist would predict without being
+told: a 2-segment, 17 cm, 111 MeV object is where an EM/hadronic call is least
+determined by anything, image or no image. (n = 6, so this is an observation
+about which objects are hard, not a discriminant; §15.4 is where a discriminant
+would have had to show up.)
+
+### 15.3 §12, re-derived on pass 2 alone — every conclusion survives
+
+| §12.1 | pass 1 | pass 2 |
+|---|---|---|
+| labelled re-types | 18 | 18 |
+| right (HADRONIC) | 8 | **7** |
+| wrong (EM) | 10 | **11** |
+| precision | 0.444 | **0.389** |
+| 95 % Wilson CI | [0.25, 0.66] | **[0.20, 0.61]** |
+| is 0.50 inside? | yes | **yes** |
+| census variables that separate EM from HADRONIC | 0 of 12 | **0 of 12** |
+
+| §8's bar (`nseg_census > 10`) | pass 1 | pass 2 |
+|---|---|---|
+| above — the guard removes these | 5 EM / 2 HADRONIC | **5 EM / 2 HADRONIC** |
+| below — the guard keeps these | 5 EM / 6 HADRONIC | **6 EM / 5 HADRONIC** |
+| Fisher two-sided *p* | 0.367 | **0.637** |
+
+**§8 is refuted harder, and for a reason worth stating precisely: its cut set
+did not flip at all.** All **7** above-bar objects carry the identical verdict
+in both passes; the three re-type flips are all *below* the bar. So the
+guard's failure cannot be blamed on unstable labels — the labels it depends on
+are exactly the ones the rescan left untouched. §8 stays where pr/146's
+convention puts it: kept in the doc, marked refuted, with the measurement that
+refuted it.
+
+The §12.2 decomposition does not depend on labels and is unchanged (11 : 1,
+−8374.2 MeV of rest term against +942.3 MeV of estimator swap over 60
+re-types). The one label-dependent line moves the *right* way and stays
+uninformative: reverting the 18 would now fix **1373.5 MeV** and break
+**803.1 MeV**, net **+570.4 MeV** — up from +317, still one or two verdicts
+wide, still inside the noise floor §15.1 just measured.
+
+### 15.4 The confident core — 15 re-types, 14 variables, nothing separates
+
+This is the strongest negative the round can make. Take only the re-types
+**both passes agree on** — the objects where the label is not in doubt — and
+look again:
+
+| | n |
+|---|---|
+| re-types agreed in both passes | **15** |
+| tag right (HADRONIC) | 6 |
+| tag wrong (EM) | 9 |
+
+**Precision 0.400, 95 % Wilson CI [0.20, 0.64] — 0.50 still inside.** And of
+**14** census variables (§12.1's twelve plus `stem_run_cm` and `star_dist_cm`),
+**zero separate the two classes.**
+
+That closes the door §14.3 left open. The pre-registration said a separator
+appearing after the image was added would be "the outcome to hope for and the
+one to be most suspicious of, because it is also what over-fitting looks like".
+It did not appear — not on the full 18, and not on the 15 where the labels are
+cleanest. **The negative is now a property of the objects, not of the picture
+they were judged from.** Removing the label noise did not reveal a boundary
+underneath it; there is no boundary in anything the census can measure.
+
+### 15.5 137238 came back MIXED, and that is the owner answering §6.2
+
+```
+=== 137238 across both passes ===
+  pass 1 (fit only):        EM
+  pass 2 (fit + 3-D image): MIXED   <- the charge changed the answer
+```
+
+§6.2 asked the owner whether the complaint about this event is that *the 555 MeV
+object itself is wrong*, or that *hadronic content was absorbed into a real EM
+shower*. Pass 1 said EM, which is one answer with an asterisk. Pass 2, with the
+charge visible, says **MIXED — it is both** — and that is the second reading,
+given as evidence rather than inferred from a doc trail.
+
+It is also consistent with everything measured about the object independently:
+a 27 cm MIP-like stem into the main vertex, a star of short 2.5-3.3 MIP prongs
+at 25-33 cm (§3), and cluster 146's members absorbed at 72-108 cm (§4.2). That
+is a hadronic interaction and an EM cascade sharing one object. Neither *"it is
+an electron shower"* nor *"it is a pion"* was ever going to be the right label,
+and the tag — which can only choose one — was never the mechanism that could
+fix it.
+
+**The two objects either pass called MIXED are now 137238 (555 MeV, 143 cm) and
+100222 shower 2 (1905 MeV, 489 cm).** Both are absorption, both are the
+splitter's problem, and neither is a re-type. 21073, the third pass-1 MIXED,
+came back plain EM.
+
+### 15.6 Scoring §14.3, as written, before the labels arrived
+
+| pre-registered | outcome |
+|---|---|
+| "the interval moves in either direction; it will not get narrower" | **right** — 0.444 → 0.389, [0.25, 0.66] → [0.20, 0.61], same width |
+| "if the first-pass labels carried instrument noise, a separator could appear … the outcome to hope for and to be most suspicious of" | **it did not appear** — 0 of 12 on the full set, 0 of 14 on the confident core (§15.4) |
+| "two verdict flips in §8's cut set would change its Fisher *p* materially; §8 stays refuted unless that happens" | **zero flips in the cut set**; §8 refuted, *p* 0.367 → 0.637 |
+| "§6.2 and 137238 — its charge, not its fit, is what the owner will be looking at" | **the answer changed**: EM → MIXED (§15.5) |
+
+Three of four pre-registered outcomes are the null. The fourth is the one that
+mattered, and it took the display defect being fixed to appear at all.
+
+### 15.7 What the rescan cost, and what it was worth
+
+It cost one prep pass (5.8 s), one afternoon of the owner's scanning, and no
+reprocessing. It bought three things that a third scan of the same objects
+would not buy again:
+
+1. **A measured label-noise floor (~17 %, κ = 0.61)** — every future claim on
+   this population now has an error bar that is not a guess.
+2. **The confident-core negative (§15.4)** — the strongest form of "nothing
+   separates" available without new labels.
+3. **The right answer on 137238** (§15.5), which is the event the round was
+   chartered on.
+
+And it confirmed the owner's instinct about the instrument: **a display that
+draws only fit points is the wrong picture for a charge question.** Six of
+thirty-six answers changed when the charge was shown, and the one that changed
+on the charter event changed the round's conclusion. That is a lesson about
+scan design, not about this population — recorded as
+`feedback_scan_display_must_show_the_evidence`.
+
+**What the rescan did *not* buy: a fix.** Two passes, 72 labels, 26 measured
+variables' worth of overlap tests, and no separator. §16 is what to do with
+that.
+
+---
+
+## 16. The plan for the next session
+
+Owner, 2026-09-06: *"can you analyze the results again and update the design and
+plan for next session?"* §15 is the analysis. This is the plan, in priority
+order, with what is cheap and what is not stated up front — because the thing
+that made *this* round free does not repeat.
+
+**A note on cost, first.** This whole round cost zero reprocessing because A5
+emits its census line for **every** evaluated shower at DEBUG, unconditionally
+(`NeutrinoShowerClustering.cxx:9950-9956`) — the design note's *"offline
+calibration channel"*. **The splitter has no such channel**: its census is
+`SHOWER_SPLIT cand`, behind `WCT_SHOWER_SPLIT_DEBUG`
+(`NeutrinoShowerClustering.cxx:5333-5338`, emitted at `:5837`), and it is **not** set in
+production, so `grep SHOWER_SPLIT` over the finished arms returns nothing on
+either MIXED event. Item 2 below therefore **starts with a re-run**, and that
+re-run should be priced and asked for, not assumed.
+
+### 16.1 Item 1 — close the typing thread. No knob, no flip. *(recommended, and it is a decision, not work)*
+
+`shower_hadronic_tag` stays exactly as it is at the SBND operating point
+(`growth_max 0.7 / stem_ratio 2.8`, `wct-pr-perevt.jsonnet:2255-2264`).
+
+- Its precision is 0.39-0.44 with 0.50 inside every interval measured (§12.1,
+  §15.3, §15.4). It cannot be shown to hurt.
+- Nothing measurable separates the objects it gets right from the ones it gets
+  wrong — 38 variable-tests across two passes and the confident core, zero separations. There is no
+  guard to write.
+- The remaining uncertainty needs ~100+ labels *and* is now known to sit under
+  a ~17 % label-noise floor. It is not buyable.
+
+**§8's `shower_hadronic_max_nseg` is not implemented and should not be.** It is
+kept in the doc as a refuted design.
+
+### 16.2 Item 2 — the splitter round, on 137238 and 100222 *(the real follow-up)*
+
+Both objects the owner called MIXED with the charge visible are absorption, not
+mistyping, and doc pr/137-139 owns that machinery (`shower_split`, SBND-ON
+since pr/138). Staged, cheapest first:
+
+1. **Turn the census on and look.** Re-run the PR stage on the two events with
+   `WCT_SHOWER_SPLIT_DEBUG=1` into a **fresh** work dir (M13 — `d148sv0` or
+   similar; nothing under an existing `work-*-d145np` is touched). The PR
+   stage's own logged span on these two events is 10 s and 39 s, so this is
+   minutes, not hours. Read `SHOWER_SPLIT cand` for shower 0 of 137238 and
+   shower 2 of 100222: does the splitter *see* them as candidates, what is
+   `valley_best`, and which of `nseg`/`Q`/`veto` declines them?
+2. **Then, and only then, decide the shape of the fix.** If the candidate is
+   seen and vetoed, the answer is a threshold with a named cause. If it is
+   never a candidate, the answer is upstream of the splitter and this becomes a
+   clustering-admission question, which is a different doc.
+3. **If it goes further, the population is already built.** The 313-row A5
+   census (`docs/pr/pr148-a5-census.tsv`) has the absorbed-far-blob signature
+   in `smax_cm` vs `total_len_cm`; the 36 labelled objects are a ready-made
+   validation set with a known 17 % noise floor.
+
+Do not re-scan the same 36 objects a third time. Two passes agree at κ = 0.61;
+a third pass buys a third estimate of the same number.
+
+### 16.3 Item 3 — §12.3: why 395148's stem collapsed from ~3.0 MIP to 0.44 *(the one live bug with a chaseable cause)*
+
+This is the item with an actual mechanism to find rather than a threshold to
+tune. 395148 is the **sole design object of A5's proton-stem branch** in
+pr/99 round 3, and it no longer fires: `sh0: no (g=0.86 s=0.44)`. A stem that
+pr/99 measured near 3.0 MIP now reads 0.44 — a factor ~7, far too large to be
+a tuning drift.
+
+Where to start, in order:
+1. Confirm the object is the same object — pr/99's shower id vs today's, and
+   whether the segment that carried the stem still belongs to it.
+2. `stem_med` is a median dQ/dx over the start segment in MIP units; 0.44 MIP
+   is *below* a minimum-ionising track, which is what a **denominator** or an
+   **ownership** error looks like, not a physics change
+   (`feedback_ratio_needs_a_denominator_floor`, and §5.4's MIP trap in this
+   very doc — the dump says 43000, the job runs 48000).
+3. Bisect against the epochs between pr/99 and d145np, with the pr/99 log line
+   as the target.
+
+Two of pr/99's five design events (315167, 285567) also now fire on *different*
+objects than they were built on. A5's calibration set has drifted out from
+under it, and §16.1's "leave the tag alone" is an argument about its
+*precision*, not a claim that its calibration is still valid.
+
+### 16.4 Item 4 — §4.2's Bragg window, a real defect with a bounded fix
+
+`bragg` is computed over `nbins_full` spanning `smax`, so on 137238 it was
+measured at 93-99 cm on absorbed foreign members, ~70 cm past the object's own
+body. **This is a defect independent of any verdict in this doc**, and it is
+worth fixing on its own terms — behind a default-OFF knob with a byte-identical
+knob-off gate, as usual.
+
+It is item 4 and not item 1 because it is **priced and it does not rescue the
+charter event**: re-windowed to the contiguous body (51 cm), 137238 reads
+`bragg` 0.62 against a 3.0 threshold. Fixing it changes no verdict measured in
+this round. It is hygiene with a known payoff of zero on the events at hand.
+
+### 16.5 Carried, unresolved, and explicitly not started
+
+- **pr/145 §5.9's 20-object PID sheet** is still unscanned. It is a different
+  question (segment PID, not shower typing) and it is the cheapest unspent
+  scan available.
+- **The `pass3_backfill_guard` on segment 146066** (§9.2): the guard declines
+  it, and it is a member of 137238's shower anyway. The entry route is still
+  unestablished. It is small and it is real.
+- **The 3067-event A5 census** is committed and re-runnable; any future
+  question about this population starts from `docs/pr/pr148-a5-census.tsv`
+  rather than from new processing.
+
+### 16.6 Recommended next step
+
+**Item 2, step 1: re-run the PR stage on events 137238 and 100222 with
+`WCT_SHOWER_SPLIT_DEBUG=1` into a fresh work dir, and read what the splitter
+says about the two objects the owner called MIXED.** It is minutes of compute,
+it touches no existing record, it answers a question this round could not
+answer at any scan cost, and it is the only path left that leads to a code
+change rather than to another measurement.
