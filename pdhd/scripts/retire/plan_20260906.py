@@ -265,9 +265,9 @@ TREES = {
    # in different sentences, so a co-occurrence grep for "shipped near <arm>"
    # cannot see the link.  Audit value-first: read the flip section for the
    # value, then find the arm that carries it.
-   # d08cap10 is being regenerated (pin d08_libpin/new2 survives, substrate
-   # intact, 30/30 manifests frozen); it re-enters this list once verified.
-   production=["d03nu9","d08both","d08gref","d08goff","stmw"],
+   # d08cap10 REGENERATED and VERIFIED 2026-09-06 (doc 101 sec 8.10): every
+   # column of doc pdhd/08's published row reproduces exactly.  Back in the list.
+   production=["d03nu9","d08cap10","d08both","d08gref","d08goff","stmw"],
    flip_evidence=["stmc4000","stmc2000","stmc1000","stmc250",
                   "phdump","phdumpw","phdumpx","phdumpwc","wccdump","wccdumpw",
                   "qlt","perfslide"],

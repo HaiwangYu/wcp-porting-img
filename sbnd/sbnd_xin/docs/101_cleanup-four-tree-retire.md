@@ -566,6 +566,48 @@ a SHA-256 per file. Regenerated with the doc's own repro line
 (`ARM=d08cap10 PIN=… EXTRA="-S retile_hack_max_bridge=10"`) and checked against
 the frozen record — see §8.10.
 
+## 8.10 The repair, proven
+
+`ARM=d08cap10 PIN=~/tmp/d08_libpin/new2 JOBS=8 EXTRA="-S retile_hack_max_bridge=10"
+./docs/scripts/run_d08_arms.sh` — **30/30 rc=0**, from doc pdhd/08's own repro
+block.
+
+**Inventory:** 30/30 events, **0 mismatches**, 150 files compared against the
+frozen manifests.
+
+**Bytes, by class** — and the split is exactly what M2 predicts:
+
+| class | n | same size as the frozen record |
+|---|---|---|
+| `mabc-pr.zip` | 30 | **30** |
+| `tracking-stm.root` | 30 | **30** |
+| `pr_resource` / `pr_rss` | 60 | 29 (timing and memory samples) |
+| `wct_pr_*.log` | 30 | 0 (timestamps) |
+
+0 of 150 files match by SHA-256, which is **not** evidence of a bad restoration:
+zip and ROOT embed mtimes, so a whole-file hash of an archive cannot be equal —
+CLAUDE.md M2, the timestamp mirage. Both physics products match to the exact byte
+count on every event.
+
+**The decisive check is the physics, not the bytes.** Re-running the doc's own
+grader against the surviving `d08goff` reproduces **every column** of doc
+pdhd/08's published row 377:
+
+```
+arm       matched          >3cm      >10cm    >30cm       worst  unmat | TGM +/-   STM +/-   FC +/-
+d08cap10      774   17583->3719    1419->6    17->0  39.2->11.3    7/7 | TGM 0/0  STM 21/24  FC 4/4
+doc row 377   774   17583->3719    1419->6    17->0  39.2->11.3          TGM 0/0  STM 21/24  FC 4/4
+```
+
+**Negative control, and it is free:** the `d08cap20b` row immediately below in the
+same table reads 12 922 / 22 / 13.5 / 18-21 / 3-4. The grader plainly
+discriminates operating points, so a regeneration at the wrong knob value could
+not have produced this match.
+
+`d08cap10` is back in the planner's `production` list and now has its own
+`PROTECTED.txt` line — carrying the value-first audit rule, so the next round
+cannot repeat this.
+
 ## 9. Files
 
 Machinery (`pdhd/scripts/retire/`): `toks_20260906.py`, `cit_20260906.py`,

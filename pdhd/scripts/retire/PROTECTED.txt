@@ -45,6 +45,8 @@ input_data_14_old_coh_grouping	symlink -> /nfs/data/1/xning/wirecell-working/dat
 029107_0_qlt	Q/L timing arm cited by PDVD docs qlmatch/02_pdvd-anode-time-consistency.md and qlmatch/03_pdhd-anode-time-consistency.md.  A pdhd-only blast-radius check would not have seen this -- it is the doc 100 sec 10 shape (pdvd docs 28/31 cited an SBND arm that an SBND-only check released).	pdvd/docs/qlmatch/{02,03}
 029107_0_perfslide	the timing arm behind the pdhd computational-performance doc	pdhd/docs/pdhd-computational-performance.md
 
+029107_*_d08cap10	**THE ARM AT THE SHIPPED VALUE.**  doc pdhd/08 sec 9.1 flipped `retile_hack_max_bridge = 10 cm` to PDHD AND PDVD production 2026-09-06, and line 616 calls this "the arm taken to the hand scan, and now to production".  The 2026-09-06 tier 3 released it by mis-reading d08both as the shipped arm; regenerated and verified the same day (doc 101 sec 8.10).  READ THIS BEFORE ANY FUTURE SWEEP RELEASE: a doc names the shipped VALUE in its flip section and the ARM in its sweep table, in different sentences, so grepping for ship words near an arm name finds nothing.  Audit value-first.	docs/08_steiner-ghost-fix.md sec 9.1, line 616, sec 6 table
+
 # ================= RETIRED =================
 # (nothing yet)
 
@@ -59,6 +61,8 @@ input_data_14_old_coh_grouping	symlink -> /nfs/data/1/xning/wirecell-working/dat
 
 # --- doc pdhd/08, the retiler bridge cap (round closed 2026-09-06) ---------
 029107_*_d08*	the whole d08 family: the cap sweep (d08cap10/20/20b/40), the merge sweep (d08mrg1/3/5, d08mr10/15/30), the gate pair (d08gref/d08goff), the shipped-both arm (d08both) and the PDVD cross-check (d08pv*).  Protected by PREFIX, not enumeration: the round shipped toolkit 4119a78a TODAY and a live round's arm families must not be frozen at plan time (the 09-04 lesson -- seven new families appeared between plan and confirm)	docs/08_steiner-ghost-fix.md
+
+029107_*_d08cap10	**THE ARM AT THE SHIPPED VALUE.**  doc pdhd/08 sec 9.1 flipped `retile_hack_max_bridge = 10 cm` to PDHD AND PDVD production 2026-09-06, and line 616 calls this "the arm taken to the hand scan, and now to production".  The 2026-09-06 tier 3 released it by mis-reading d08both as the shipped arm; regenerated and verified the same day (doc 101 sec 8.10).  READ THIS BEFORE ANY FUTURE SWEEP RELEASE: a doc names the shipped VALUE in its flip section and the ARM in its sweep table, in different sentences, so grepping for ship words near an arm name finds nothing.  Audit value-first.	docs/08_steiner-ghost-fix.md sec 9.1, line 616, sec 6 table
 
 # ================= RETIRED =================
 # 2026-09-06 (doc 101 tier 2): 029107_*_d03nu1 .. _d03nu8 -- the eight knob-bag
