@@ -13,8 +13,10 @@ that would be good to add as well."*
 1. PDVD was measured and published (doc 42 §4). **PDHD had not been** — doc
    `pdhd/docs/stm-tagger-chain.md` §6 said so itself ("derived and consistent,
    NOT confirmed", n = 1 track). It is measured here.
-2. PDHD's clean-stopper yield looked 11× worse than PDVD's. **It is not a
-   charge or calibration difference.** Both detectors put the *same* scale on
+2. **The PDHD tagger is not the problem** — it tags 5.25 STM per event against
+   PDVD's 4.88, i.e. slightly *more*. What is 11× worse is the *analysis*
+   selection applied afterwards, and **it is not a charge or calibration
+   difference either.** Both detectors put the *same* scale on
    charge-complete tracks (k = 0.89 vs 0.94) and follow the *same* k-vs-
    completeness curve. They differ only in how many fitted points carry full
    charge: median f_low **0.262 on PDHD vs 0.042 on PDVD**.
@@ -147,6 +149,35 @@ absorbs gain × lifetime × fudge. Only the *shape* is interpretable.
 
 ## 4. Why PDHD's sample looked 11× worse — the per-cut attrition
 
+### 4.0 First: the PDHD tagger is not the problem
+
+This section is about the *analysis* selection, not about the tagger. Stated
+plainly, because "PDHD has trouble finding stopping muons" is the wrong reading:
+
+| | PDHD (61 evt) | PDVD (120 evt) |
+|---|---|---|
+| clusters tagged `STM=1` | 320 — **5.25 / event** | 586 — **4.88 / event** |
+| STM passes fitted | 23.2 / event | 15.1 / event |
+| accepted passes (status 0) | 5.25 / event | 4.88 / event |
+
+**PDHD tags slightly *more* stopping muons per event than PDVD.** The tagger
+finds them; what collapses is the quality selection applied afterwards, and
+§4.1 below shows it collapses on one cut.
+
+Two independent things are easy to conflate here, so they are kept apart:
+
+- **Purity** — the tagger's accepted population is not a Bragg-bearing sample on
+  *either* detector (median Bragg contrast 0.90 PDHD, 1.07 PDVD; only ~20 % of
+  accepted passes on either detector reach contrast ≥ 2). That is doc 42 §4.2's
+  finding, it is not PDHD-specific, and a contrast cut is the fix.
+- **Charge completeness** — PDHD's fitted points carry deficient charge 3× as
+  often as PDVD's. That *is* PDHD-specific and is what §4.2 characterises.
+
+The doc-55 five cuts fail PDHD tracks for the second while appearing to select
+for the first.
+
+### 4.1 The attrition
+
 Cuts applied cumulatively in doc-55 order:
 
 | cut applied cumulatively | PDHD | PDVD |
@@ -196,6 +227,77 @@ but it is not free of bias: PDVD moves from k 0.86 (all) to 0.94 (complete).
 The check that it lands on the right population is that on PDVD it reproduces
 the established doc-55 tier's scale — 0.952 (67 tracks) vs 0.931 (45 tracks) —
 with 50 % more tracks and a *better* χ² (40.0 vs 69.6).
+
+### 4.2 What a charge-deficient PDHD track actually looks like
+
+The deficiency is not per-point noise. Consecutive-deficient-point run lengths:
+
+| | median run | mean run | share of deficient points in runs ≥ 10 | longest run |
+|---|---|---|---|---|
+| PDHD | 4 | 11.1 | **78 %** | 345 pts |
+| PDVD | 2 | 3.6 | 32 % | 136 pts |
+
+So a typical affected PDHD track has one or more *extended stretches* — tens of
+points, i.e. tens of centimetres — where the fit gets little charge, separated by
+stretches that are near-normal. Example, `029107_21` block 1100 (193 live
+points, f_low 0.38), dQ/dx in ke/cm along the trajectory, every 4th point:
+
+```
+ 22   5   4  11  20  29  37  43  44  43  39  33  27  20  12   8  11  19  30  44  61
+ 78  92 101 104  99  88  72  55  38  24  15  10   8   1   8  23  42  61  77  85  83
+ 72  53  31   9   5   6  11
+```
+
+Four stretches of 15–23 consecutive deficient points, all in the same corner of
+the detector (y 20–56 cm, z 394–458 cm), with the same track's *other* points at
+47 945 e/cm = 0.88 of plateau. The track is not globally wrong; specific
+stretches of it are.
+
+**The charge is lost, not merely mis-assigned.** The oscillation invites the
+reading that charge is being shuffled between neighbouring points. It is not:
+per track over rr 20–100 cm, the *integral* sum(dQ)/sum(dx) falls with the
+per-point median rather than staying flat —
+
+| f_low | PDHD median / plateau | PDHD integral / plateau | PDVD median | PDVD integral |
+|---|---|---|---|---|
+| 0.00–0.05 | 1.073 | 1.103 | 1.008 | 1.061 |
+| 0.15–0.30 | 0.947 | 0.944 | 0.818 | 0.801 |
+| 0.30–0.50 | 0.540 | 0.630 | 0.484 | 0.561 |
+| 0.50–1.00 | 0.226 | 0.323 | 0.277 | 0.386 |
+
+(the integral sits slightly above the median at high f_low, so *some* charge is
+recovered by the peaks, but most of it is genuinely missing).
+
+**Where it happens.** Deficient fraction is strongly localised on PDHD and flat
+on PDVD: PDHD z 424–462 cm gives 0.482 and y 8–82 cm gives 0.511, against
+0.10–0.25 elsewhere; every PDVD bin is 0.05–0.13. And it tracks how close the
+claimed stopping point is to a y/z detector edge:
+
+| stop distance from nearest y/z edge | PDHD tracks (median f_low) | PDVD tracks (median f_low) |
+|---|---|---|
+| 0–15 cm | 45 (0.51) | 25 (0.14) |
+| 15–30 cm | 35 (0.30) | 82 (0.060) |
+| 30–60 cm | 92 (0.30) | 149 (0.043) |
+| 60–120 cm | 69 (0.17) | 194 (0.036) |
+| > 120 cm | 48 (0.089) | 54 (0.041) |
+
+PDHD stops within 15 cm of a y/z edge **16 %** of the time against PDVD's 5 %,
+and those tracks are the worst. But edge proximity is not the whole story:
+PDHD's most interior tracks still sit at f_low 0.089 against PDVD's 0.041.
+
+**What this is not.** The tempting explanation — that edge stops are *fake*
+stops, i.e. the charge fading out is being read as a Bragg end — is **not
+supported**. Bragg contrast is flat against edge distance on both detectors
+(PDHD 0.69–1.19, PDVD 0.94–1.09 across every distance bin). Poor contrast is
+the population-purity issue of §4.0, present equally on PDVD, and it is
+independent of the completeness issue.
+
+**What causes it is still open.** The characterisation above — long stretches,
+real loss, concentrated in the low-y / high-z corner, worse near edges, same
+k-vs-f_low relation as PDVD so the same failure mode at higher prevalence — is
+consistent with the wrapped-plane charge attribution of `pdhd/docs/04` §8 and
+the retiler ghosts of `pdhd/docs/07`, but **this round does not test that**. §9
+names the concrete next test.
 
 ## 5. The comparison the owner asked for
 
@@ -346,9 +448,21 @@ tier — 6 → ~12 clean tracks — and still not settle the hump. The 78 % of P
 passes with f_low > 0.05 are the real target: if the wrapped-plane attribution
 of `pdhd/docs/04` §8 is the cause, fixing it converts PDHD's 303 accepted passes
 into a sample the size of PDVD's and makes the hump decidable on two detectors.
-The concrete first step is to check whether f_low correlates with the wrapped
-(U/V) plane fraction along the trajectory — `T_rec_charge` already carries
-`pu/pv/pw` per point, so it needs no new dump.
+§4.2 narrows the target considerably. The deficit is real charge loss over
+extended stretches, concentrated in the **low-y / high-z corner** (y < 82 cm and
+z > 424 cm each run ~0.50 deficient against 0.10–0.25 elsewhere), and it is
+worse the closer the track's stop is to a y/z boundary. Two concrete tests, both
+needing no new dump:
+
+1. **Overlay the deficient stretches on the PDHD wire map.** `T_rec_charge`
+   carries `pu/pv/pw` per point; if the wrapped U/V attribution of
+   `pdhd/docs/04` §8 is the cause, the stretches should land on identifiable
+   wrapped-wire regions rather than scattering over the corner.
+2. **Cross-check against the dead-channel map** (`T_bad_ch`, present in the same
+   file). If the stretches coincide with dead channels this is a masking
+   problem, not an attribution one — and the two have different fixes. The
+   periodic collapse-and-recover of the §4.2 example argues against a static
+   dead-channel map, but that is an impression, not a test.
 
 Second, an open offer rather than a plan: the completeness cut is new, and
 nothing here confirms by eye that it selects *real* stopping muons. The 6 PDHD
