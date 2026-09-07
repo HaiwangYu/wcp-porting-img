@@ -1,6 +1,9 @@
 # PDHD: a space-charge fiducial volume from exit-gap quantiles, and what it does to the cosmic taggers
 
-**Status:** in progress (2026-09-07). Nothing is flipped; `curved_fv` ships default OFF.
+**Status:** PDHD PRODUCTION since 2026-09-07 at **exit-gap p90 + 3 cm cushion**
+(owner decision, sec 12).  Set in the driver `pdhd/wct-pr-perevt.jsonnet`; the
+`pr.jsonnet` function defaults stay OFF, so a caller passing nothing still gets
+the byte-identical legacy box.
 
 PDHD's cosmic taggers test a flat box inset by a uniform 15 cm space-charge
 allowance that was **adopted, never measured** — the same construction PDVD
@@ -505,8 +508,7 @@ but it does so by LOOSENING the anode half, where its offline miss rate is 14.0 
 against the flat shell's 7.4 % — i.e. it pays for tag purity with exit-end
 sensitivity, which is the quantity the fiducial exists to get right.
 
-**Nothing is flipped.**  `curved_fv` defaults OFF, `curved_fv_profile` defaults
-`'flat'`, and the compiled config is byte-identical to pre-doc-09 (sec 10).
+**Owner decision 2026-09-07: p90 + 3 is PDHD production** (sec 12).
 
 ## 10. Gates
 
@@ -553,3 +555,90 @@ before and after and never changed.
    future drift-direction measurement should use the conditioned form.
 5. The surface is built and graded on the same 61 events.  The run-split
    cross-validation holds (sec 7), but the arm counts are in-sample.
+
+## 12. Owner decision: p90 + 3 is PDHD production (2026-09-07)
+
+Set in the driver, `pdhd/wct-pr-perevt.jsonnet`, which is the only production
+caller of `pdhd/pr.jsonnet` — the doc pdvd/43 sec 8 precedent:
+
+```jsonnet
+curved_fv = true,
+curved_fv_margin_y = 3,
+curved_fv_margin_z = 3,
+curved_fv_profile = 'p90',
+```
+
+`pr.jsonnet`'s function defaults are unchanged (`false` / `'flat'` / 3), so any
+other caller keeps the byte-identical legacy box; the change there is
+comments-only, naming where production lives.
+
+**Why p90.**  The two physics metrics rank it first and they are independent of
+one another: the offline per-exit-end miss rate, which never sees a tagger
+(11.0 % flat -> 7.2 %, cross-validated 10.8-11.3 -> 8.9-10.1 by holding out
+either run), and long-track TGM (430 -> 464).
+
+**Why cushion 3 and not PDVD's 5.**  Going 3 -> 5 buys 5 more long tracks for 64
+more sub-10 cm tags.  Those tags are sec 9.3's `TaggerCheckTGM.cxx:1066` — a
+two-extreme-group cluster tagged with no interior support and no length test —
+not a property of the surface.  **Revisit the cushion once that is fixed**: p90+5
+has the better miss rate (6.0 %) and its only cost is the over-tagging 1066
+causes.
+
+**Why not p80**, which would have held the over-tag count down: p80 + 3 reduces
+sub-10 cm tags by 107, but it gets there by loosening the anode half, where its
+miss rate is 14.0 % against the flat shell's 7.4 %.  That pays for tag purity
+with exit-end sensitivity, which is the quantity the fiducial exists to provide.
+
+### 12.1 Gates
+
+| check | result |
+|---|---|
+| production (no TLA) == the graded `d09p90c3` arm's compile | **IDENTICAL**, 257804 B |
+| `-S curved_fv=false` == the pre-doc-09 flat compile | **IDENTICAL**, 254398 B |
+| `pr.jsonnet` comment addition changes no compiled config | production and flat both unchanged |
+| p90+5 and p80+3 arms still reachable and distinct | yes |
+
+Compiled-config proof, `TaggerCheckTGM`'s own data block:
+
+| compile | fiducial | fv_tolerance (cm) |
+|---|---|---|
+| production | `CompositeFiducial:pdhdcurved-fv` (+ 2 PolyFiducial, 24 corners/plane) | x 2 / y 3 / z 3 |
+| `curved_fv=false` | `BoxFiducial:pdhd_pr_fv` | x 2 / y 17.5 / z 18 |
+| `curved_fv_margin_y/z=5` | same polygon | x 2 / y 5 / z 5 |
+| `curved_fv_profile=p80` | different polygon | x 2 / y 3 / z 3 |
+
+Equivalence run `d09prod`: the 61 events re-run with NO TLA under the new
+defaults, verdicts compared per (event, cluster) against the graded `d09p90c3`
+arm — **0 flips of 5879 clusters** on TGM, STM and FC alike (1755 / 320 / 2058
+unchanged), pin fingerprint identical before and after.  The compiled configs
+were already cmp-identical; this run proves the identity holds through the
+binary, which a config-level cmp cannot show.
+
+### 12.2 What production changes, against the flat shell it replaces
+
+| | flat (was) | p90 + 3 (now) |
+|---|---|---|
+| TGM, all | 1561 | 1755 |
+| **TGM, tracks > 2 m** | **430** | **464** |
+| TGM, < 10 cm (see sec 9.3) | 724 | 815 |
+| STM | 318 | 320 |
+| STM, tracks > 2 m | 86 | 85 |
+| fully contained | 2180 | 2058 |
+| offline per-exit-end miss | 11.0 % | 7.2 % |
+
+### 12.3 Arm switches
+
+| want | `PDHD_PR_TLA` |
+|---|---|
+| production (p90 + 3) | *(none)* |
+| the doc-35-style flat shell | `-S curved_fv=false` |
+| p90 + 5 | `-S curved_fv_margin_y=5 -S curved_fv_margin_z=5` |
+| p80 + 3 | `-A curved_fv_profile=p80` |
+| p80 + 5 | `-A curved_fv_profile=p80 -S curved_fv_margin_y=5 -S curved_fv_margin_z=5` |
+
+### 12.4 Sentinels to re-run before trusting production
+
+1. The doc pdvd/25 stopping-muon census (sec 9.4b shows STM is undisturbed, but
+   that is the tagger count, not the census).
+2. Sec 11 item 1 (`:1066`) remains the first thing to fix; it is what makes the
+   cushion choice a trade at all.

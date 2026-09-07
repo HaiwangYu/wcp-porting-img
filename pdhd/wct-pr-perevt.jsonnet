@@ -1299,12 +1299,30 @@ function(
     // the cushion (curved_fv_margin_y/z).  The 15 cm those margins carry IS the flat
     // space-charge allowance the surface replaces -- carrying both would count it
     // twice.  x keeps tgm_fv_x_margin = 2: no drift-direction surface was measured.
-    // Default OFF => the four tgm_fv_*_margin TLAs above remain the whole fiducial
-    // operating point and the compiled config is byte-identical to pre-doc-09.
-    curved_fv = false,
+    // PDHD PRODUCTION since 2026-09-07 (owner decision, doc pdhd/09 sec 12):
+    // the exit-gap p90 surface with a 3 cm cushion.  With curved_fv on, the four
+    // tgm_fv_*_margin TLAs above no longer set the y/z operating point -- mgn_y /
+    // mgn_zmax / mgn_zmin in pr.jsonnet take curved_fv_margin_y/z instead, so the
+    // 17.5/18 cm above applies only when curved_fv is turned back off.  x is
+    // untouched: tgm_fv_x_margin = 2 still governs, no drift-direction surface
+    // having been measured.
+    //
+    // Why p90 and why cushion 3 (doc pdhd/09 secs 7, 9.5, 9.6):
+    //   * both physics metrics rank p90 first, and they are independent -- the
+    //     offline per-exit-end miss rate (11.0 % flat -> 7.2 %, cross-validated by
+    //     holding out either run) and long-track TGM (430 -> 464).
+    //   * cushion 3 rather than PDVD's 5 because 3 -> 5 buys 5 more long tracks
+    //     for 64 more sub-10 cm tags, and those sub-10 cm tags are
+    //     TaggerCheckTGM.cxx:1066 (a two-extreme-group cluster is tagged with no
+    //     interior support and no length test), not a property of the surface.
+    //     Revisit the cushion once that defect is fixed.
+    //
+    // To recover any arm:  flat = -S curved_fv=false ; p80+3 = -A curved_fv_profile=p80 ;
+    // p90+5 = -S curved_fv_margin_y=5 -S curved_fv_margin_z=5.
+    curved_fv = true,
     curved_fv_margin_y = 3,
     curved_fv_margin_z = 3,
-    curved_fv_profile = 'flat',   // 'p80' | 'p90' | 'flat'
+    curved_fv_profile = 'p90',   // 'p80' | 'p90' | 'flat'
     // Persist the per-pass STM track fits (C++ default false; key omitted
     // when off => byte-identical): cluster PCs stm_fit/stm_pass/stm_eval, a
     // Bee 'stm_fit' layer in mabc-pr.zip, and (when 'stm_magnify' is added

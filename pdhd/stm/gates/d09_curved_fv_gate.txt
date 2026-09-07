@@ -33,3 +33,58 @@ Binary pin: /home/xqian/tmp/d09_libpin/pin
 NOTE: curved_fiducial_profiles.jsonnet was PROVISIONAL at gate time (30-event 029107
 prototype).  The gate tests the WIRING, which does not depend on the profile values;
 the profiles are regenerated from the 61-event d09fvoff arm before the doc is committed.
+
+================================================================================
+PRODUCTION FLIP GATE -- p90 + 3 cm, owner decision 2026-09-07 (doc pdhd/09 sec 12)
+================================================================================
+
+Flipped in the DRIVER pdhd/wct-pr-perevt.jsonnet (the only production caller of
+pdhd/pr.jsonnet), the doc pdvd/43 sec 8 precedent:
+    curved_fv = true, curved_fv_profile = 'p90',
+    curved_fv_margin_y = 3, curved_fv_margin_z = 3
+pr.jsonnet's function defaults are UNCHANGED (false / 'flat' / 3); the edit there
+is comments-only, naming where production lives.
+
+Same TLAs as the gate above.
+
+  check                                                        bytes    result
+  production (no TLA) == the GRADED d09p90c3 arm's compile      257804  IDENTICAL  PASS
+  -S curved_fv=false  == the pre-doc-09 flat compile            254398  IDENTICAL  PASS
+  pr.jsonnet comment addition: production compile unchanged             IDENTICAL  PASS
+  pr.jsonnet comment addition: flat compile unchanged                   IDENTICAL  PASS
+  p90+5 reachable and distinct from production                  257804  differs    PASS
+  p80+3 reachable and distinct from production                  257801  differs    PASS
+
+Compiled-config proof -- TaggerCheckTGM's own data block:
+  production          fiducial = CompositeFiducial:pdhdcurved-fv
+                      + PolyFiducial:pdhdcurved-xy / -xz (24 corners per plane)
+                      fv_tolerance = [-20,-20,-30,-30,-30,-30]  (x 2 / y 3 / z 3 cm)
+  -S curved_fv=false  fiducial = BoxFiducial:pdhd_pr_fv
+                      fv_tolerance = [-20,-20,-175,-175,-180,-180] (x 2 / y 17.5 / z 18)
+  margin 5            same polygon, fv_tolerance y/z = 5 cm  (cushion only)
+  profile p80         DIFFERENT polygon, fv_tolerance y/z = 3 cm
+
+Note the size coincidence: production and the p90+5 arm are both 257804 B because
+only two 2-digit tolerance values differ.  cmp says they differ and the tolerance
+readback above says how -- never gate on file size alone.
+
+Arm switches: flat = -S curved_fv=false ; p90+5 = -S curved_fv_margin_y=5
+-S curved_fv_margin_z=5 ; p80+3 = -A curved_fv_profile=p80.
+
+Equivalence run d09prod (61 events, no TLA, new defaults) vs the graded d09p90c3:
+see the line appended below by the verdict comparison.
+
+EQUIVALENCE RUN d09prod (61 events, NO TLA, under the new production defaults),
+verdicts compared per (event, cluster) against the graded d09p90c3 arm:
+
+    TGM  1755 -> 1755   (+0)   gained 0  lost 0
+    STM   320 ->  320   (+0)   gained 0  lost 0
+    FC   2058 -> 2058   (+0)   gained 0  lost 0
+
+    0 verdict flips over 5879 clusters.
+    Pin fingerprint identical before and after the arm:
+      libWireCellClus.so b3495810c15b   libWireCellAux.so e86c87808585
+
+The compiled configs were already cmp-identical; this run proves the identity
+holds through the binary as well, which is the check a config-level cmp cannot
+make.
