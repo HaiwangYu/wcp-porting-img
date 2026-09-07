@@ -162,6 +162,17 @@ All 33 (11 × 3 trees) PASS in the final plan. Four failed on the first run and
   **seven** new arm families between plan and confirm. A tier file frozen at plan
   time cannot see them, so the driver refuses rather than deletes under a peer.
 
+  **Verified both ways, against a stub whose `rm -rf` is an `echo`** — a guard
+  that has only ever been seen to pass is not a guard:
+
+  | run | result |
+  |---|---|
+  | unperturbed | `OK: all interlocks still PASS and every tier file is unchanged` → reaches the stub, `would rm -rf 24 targets` |
+  | one line appended to `tier1_sbnd_20260906.txt` | `CHANGED since plan time: tier1_sbnd_20260906.txt` → `REFUSING`, and the delete never runs |
+
+  The re-plan also *restored* the perturbed tier file, so `git status` on it is
+  clean afterwards — the guard corrects as well as refuses.
+
 ## 5. `~/tmp`: 98 G, and 51 GiB of it is pinned binaries
 
 Measured at file granularity first, because the 09-05 draft would have deleted
