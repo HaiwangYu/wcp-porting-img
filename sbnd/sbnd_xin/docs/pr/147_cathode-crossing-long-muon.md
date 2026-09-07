@@ -1,6 +1,11 @@
 # 147 — The cathode-crossing long muon, broken in two: the bridge's PID guards
 
-**Status.** Round 1 CLOSED. One new knob family shipped **default OFF**
+**Status. CLOSED 2026-09-06** (owner: "things are good, we can conclude this
+campaign now"), after three rounds. Two knob families shipped and **both SBND
+production ON**; three defects reported and deliberately not fixed. The
+closing ledger is §15.
+
+Round 1 CLOSED. One new knob family shipped **default OFF**
 (`long_muon_cathode_bridge_track_types` + three value knobs), OFF gate
 **PASS 44/44 byte-identical**, ON over-reach measured at **exactly 2 archives
 in 22 events** — the two target events and nothing else. **Nothing is flipped
@@ -635,3 +640,74 @@ are **different** for the same object.
 - No claim that any of these 8 `Enu` values is wrong overall; the rest-mass term
   is 105.7–350.9 MeV against `Enu` of 752–1313 MeV, and whether the *node* count
   is right is exactly the question the round-3 scan set was built to ask.
+
+---
+
+# 15 Closing ledger
+
+Owner closed the campaign 2026-09-06: **"things are good, we can conclude this
+campaign now."**
+
+## 15.1 What shipped, and what state it is in
+
+| knob | C++ default | SBND | evidence |
+|---|---|---|---|
+| `long_muon_cathode_bridge_track_types` | `false` | **ON** | owner scan "0 and 1 are good"; flip-equivalence 44/44 |
+| `..._trk_dqdx_lo` / `_hi` / `_straight` | 0.8 / 2.0 / 0.90 | C++ defaults | `_hi` is the veto that refuses 289559 |
+| `long_muon_cathode_bridge_tail_min_len` | `0.0` | **ON at 20 cm** | owner-directed flip; flip-equivalence 34/34 |
+
+Toolkit `03a23405` → `1a3ccf1d` → `0c2bd555`. wcp-porting-img through
+`7038115d`. All pushed.
+
+**Gate ledger, whole campaign:** OFF gate 44/44 byte-identical; over-reach
+2 archives / 22 events (round 1) and 1 archive / 17 events (round 2); fire-set
+and hadron-tail controls unmoved; determinism 4/4 and 2/2 under `setarch -R`;
+`wcdoctest-clus` 328 cases / 23108 assertions; compiled-config proofs both
+directions on every flip.
+
+## 15.2 The three events the owner named
+
+| event | state |
+|---|---|
+| **347890** | **fixed** — partner guard; muon 429.4 → 470.8 MeV. Production. |
+| **168448** | **fixed** — receiver guard; found by census, not in the owner's scan; muon 34.9 → 276.1 MeV. Production. |
+| **177536** | **fixed** — receiver-side tail; two muon nodes → one of 917.3 MeV, `Enu` 1339.8 → 1231.0 against a pre-regression 1222.4. Production. |
+
+Plus **doc 84 R4.10 deferred item 2 closed**: the bridge fire count is 13
+before the `excl_t0_frame` flip and 11 after, and the deficit is exactly these
+events.
+
+## 15.3 Reported, NOT fixed — the three open items this campaign found
+
+1. **The 8 unreachable muon tails** (§11.1, Bee `e12de155`). Owner: "these look
+   quite good" — i.e. they should be joined. The tail walk requires a cathode
+   bridge to have fired first, so it cannot reach them. Removing that
+   precondition removes the thing that currently establishes "this is a long
+   muon crossing the cathode" before anything is absorbed, so it needs its own
+   round and its own controls.
+2. **294174's shower membership** (§13). A 1.8 cm `|13|` stub 332.8 cm from its
+   own shower's other 8 members sets both that shower's PID and its drawn end
+   point (360.7 cm apart on a 148.9 cm object). Census: 20 isolated members in
+   15 of 1368 events; only this one is muon-typed. `long_muon_members_geometry`
+   was **refuted by control arm** as the cause. Working set and 19 free
+   negative controls recorded in §13.3.
+3. **A silent counting site in `Enu`** (§14). Across the 8 events: 17 muon
+   nodes but 11 net muon masses. 240636 / 101828 / 395610 under-charge with
+   **no `REDUCE` line at all**, so at least one admission path appends a muon
+   node without charging a rest term and without any instrumentation.
+   `pr145_cont_probe` does not cover it.
+
+**Recommended order for whoever picks this up:** item 3 first. It is small and
+well-posed (instrument the remaining admission paths, re-run these 8, check the
+node count and the mass count agree), and until it is done, joining the item-1
+tails will move `Enu` in ways the instrumentation cannot explain.
+
+## 15.4 One correction on the record
+
+Round 1 §7 diagnosed 177536's missing piece as a second cathode half held out
+by the gap cap. It was not — it is a same-side continuation sharing a graph
+vertex with a shower member (§11). The wrong paragraph is left in place with
+the correction beside it, because the *way* it was wrong generalises: a census
+that pairs ends whose far ends straddle x = 0 will also select the two ends of
+one track that already crosses.
+
