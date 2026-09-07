@@ -1,0 +1,8 @@
+# bee_idx -> event.  FULL-LAYER set (doc pdhd/05 sec 9): the tagger layers
+# ARE included -- this is a diagnostic, not a blind scan.
+0	028084 evt 6	028084_6_d11fvbase	channel-deadarea-apa0-face0,channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
+1	028084 evt 7	028084_7_d11fvbase	channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
+2	028084 evt 8	028084_8_d11fvbase	channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
+3	028084 evt 9	028084_9_d11fvbase	channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
+4	028084 evt 19	028084_19_d11fvbase	channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
+5	028084 evt 29	028084_29_d11fvbase	channel-deadarea-apa1-face1,channel-deadarea-apa2-face0,channel-deadarea-apa3-face1,clustering,steiner_graph,steiner_terminals,stm,stm_fit,stm_tagged
