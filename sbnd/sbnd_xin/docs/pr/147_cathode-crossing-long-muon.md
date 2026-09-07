@@ -430,8 +430,37 @@ Bee A/B for the owner's scan, uploaded 2026-09-06 (sidecar
 - **BEFORE**: https://www.phy.bnl.gov/twister/bee/set/8e8a9c3c-c2bb-44ca-b94f-91f749afe599/event/list/
 - **AFTER**: https://www.phy.bnl.gov/twister/bee/set/118d3404-9708-4fd6-ac60-5c2ac58aacb1/event/list/
 
-**`tail_min_len` is HELD OFF for SBND** pending that scan: "2 should be a long
-muon as well" states the goal, not a verdict on this mechanism.
+### 11.3 SBND production flip — `long_muon_cathode_bridge_tail_min_len = 20`
+
+Owner-directed 2026-09-06: **"Please turn them on for SBND running"**, after
+**"2 should be a long muon as well"**. Both doc-147 knobs are now SBND
+production ON.
+
+| gate | result |
+|---|---|
+| **T1″** pre-flip base + knob vs flipped default | `cmp` **rc 0**, md5 `e24539c10935164c29f753c34a4f78bc` |
+| the flip's compiled delta | exactly one key, `long_muon_cathode_bridge_tail_min_len: 20` |
+| **flip-equivalence** `work-d147-tailon-*` (TLA) vs `work-d147-tailflip-*` (cfg, no TLA), 17 events | **PASS 18/18 + 16/16 = 34/34 byte-identical** |
+
+The Bee pair above (`8e8a9c3c` / `118d3404`) is now BEFORE = the pre-flip
+state, AFTER = what SBND production does. It is still worth a scan; the flip
+was directed rather than scan-confirmed, and that distinction is on the record
+here rather than blurred.
+
+### 11.4 Where the flip has to live, and why it reaches production
+
+Checked rather than assumed, because a flip in the wrong file is inert
+(`feedback_cpp_default_governs_only_silent_configs`):
+
+- the SBND **LArSoft** chain `wcls-img-clus.jsonnet` does **not run the PR
+  stage at all** (zero `pr(` calls; it builds `per_volume` clustering only), so
+  there is no LArSoft path to miss — unlike doc 99's `flash_by_gid`, which had
+  to be defaulted inside `clus.jsonnet`'s `pr()` for exactly that reason;
+- `sbnd_xin/wct-pr-perevt.jsonnet` is a **thin re-export** of the canonical
+  `cfg/pgrapher/experiment/sbnd/wct-pr-perevt.jsonnet` (doc 68 single source),
+  so the toolkit file is the only place to set it;
+- and the flip-equivalence arm above proves it empirically — a no-TLA run picks
+  the flip up.
 
 ## 12 Round 2 — what is NOT claimed
 
