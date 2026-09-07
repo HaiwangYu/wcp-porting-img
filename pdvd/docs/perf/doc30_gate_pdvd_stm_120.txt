@@ -1,0 +1,1 @@
+GATE d30vpre vs d30vpost (/nfs/data/1/xqian/toolkit-dev/wcp-porting-img/pdvd/work): PASS 120  FAIL 0  MISSING 0  of 120 events, 4 products each
