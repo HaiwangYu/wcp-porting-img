@@ -294,11 +294,19 @@ arm each detector took to production:
 | | PDHD, p90 + 3 vs flat | PDVD, p90 + 5 vs flat |
 |---|---|---|
 | tighter than the shell over | 76 % of the drift | 25 % (y) / 44 % (z) |
-| **TGM, total** | 1478 → **1664** (+12.6 %) | 2148 → **2095** (−2.5 %) |
+| **TGM, total** | 1561 → **1755** (+12.4 %) | 2148 → **2095** (−2.5 %) |
 | **TGM, tracks > 2 m** | 430 → **464** (+7.9 %) | 754 → **769** (+2.0 %) |
 | STM | 318 → 320 | 470 → 476 |
 | fully contained | 2180 → 2058 | 2045 → 2105 |
 | TGM, < 10 cm | 724 → 815 | (< 50 cm: 769 → 727) |
+
+*Counting note.* Both grading tables also carry a "TGM" column that is the **sum of
+their length bins**, and it runs 80–120 clusters short of the full count on both
+detectors (PDHD 1478 vs 1561; PDVD 2029 vs 2148) because the shared census assigns
+no length to some tagged objects. The totals above are the full counts (doc pdhd/09
+§9.3 and §12.2; doc 43 §6.2). Ratios barely move — PDHD is +12.4 % on the full count
+against +12.6 % on the binned sum — and the length bins themselves, which are the
+graded numbers, are exact. Filed against doc pdhd/09 §9.5, whose column was relabelled.
 
 Two readings, and the second is the one that matters.
 
@@ -316,8 +324,8 @@ Two readings, and the second is the one that matters.
 
 That distinction is load-bearing because the short bin is not trustworthy on either
 detector: `TaggerCheckTGM.cxx:1066` tags a two-extreme-group cluster with no interior
-support and no length test, and 49 % of PDHD's production TGM tags are under 10 cm
-(815 of 1664). Grading on total TGM grades partly on that defect; grading on
+support and no length test, and 46 % of PDHD's production TGM tags are under 10 cm
+(815 of 1755). Grading on total TGM grades partly on that defect; grading on
 long-track TGM does not. Open item 4.
 
 **One citation trap, recorded because this doc nearly walked into it.** PDVD's
@@ -425,7 +433,11 @@ No reconstruction was re-run and no reconstruction output changes.
    `clustering_neutrino.cxx`. The PR stage retired it; clustering did not. Whether the
    two should be made consistent is a separate question with its own A/B — the consumer
    is a clustering-separation decision, not a containment verdict.
-4. Carried from doc pdhd/09 §11, unchanged: fix `TaggerCheckTGM.cxx:1066` (a
+5. **The two grading tables count TGM two ways** (§5.1 counting note): a full
+   verdict count and a sum over length bins that is 80–120 clusters short, on both
+   detectors. Harmless for every ratio quoted here, but the census should say which
+   objects carry no length before the next round grades on a total.
+6. Carried from doc pdhd/09 §11, unchanged: fix `TaggerCheckTGM.cxx:1066` (a
    two-extreme-group cluster is tagged with no interior support and no length test —
    49 % of PDHD production TGM tags are under 10 cm); give TGM/FC the readout-edge
    guard that only `TaggerCheckSTM` has; clear PDHD's 8 starved z bins with ~60 more

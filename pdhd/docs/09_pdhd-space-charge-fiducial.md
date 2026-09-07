@@ -353,6 +353,18 @@ expose identical cluster-id sets per event before anything is differenced.
 
 ### 9.1 The direction is the OPPOSITE of PDVD's, and the reason is measurable
 
+> **Correction (doc pdvd/49, 2026-09-07).**  The "TGM fell 33 %" below is the
+> **withdrawn d50 arm** of doc pdvd/43 sec 6.2 (2148 -> 1431), not PDVD production.
+> PDVD's production swap, p90 + 5, is **2148 -> 2095, -2.5 %**, and its LONG-track
+> (> 2 m) TGM *rises*, 754 -> 769.  So the two detectors differ in the sign of the
+> TOTAL count only; on long tracks both gain, and doc pdvd/43 sec 6.2 records that
+> PDVD's whole -6.3 % at p90 + 3 sits on clusters under 50 cm.  The mechanism this
+> section identifies -- PDHD's measured surface sits inside the flat shell where
+> PDVD's sits outside it -- is unaffected and is quantified in doc pdvd/49 sec 5
+> (PDHD tighter over 76-77 % of the drift, PDVD over 25 % in y / 44 % in z).
+> The 1561 -> 1843 (+18.1 %) below is the **p90 + 5** arm; production is p90 + 3,
+> 1561 -> 1755 (+12.4 %), sec 12.2.
+
 PDVD's curved surface LOOSENED its tagger volume (its flat 17.5/18 shell was far
 larger than its measured p90, whose anode half is 5.6 cm), and TGM fell 33 %.
 PDHD's measured p90 is much bigger — its anode-half p90 reaches 18.9 cm — so the
@@ -466,7 +478,15 @@ stopping-muon census is the sentinel to re-run before any flip.
 
 ### 9.5 The full ladder
 
-| arm | 0-10 cm | 10-50 | 50-200 | **> 200 cm** | TGM total | STM | FC |
+The TGM column here is the **sum of the four length bins**, which is 83-99 clusters
+short of the full TGM count of sec 9.3 and sec 12.2 (flat 1478 vs 1561, p90 + 3
+1664 vs 1755): the census assigns no length to some tagged objects.  PDVD's doc
+pdvd/43 sec 6.2 table has the same gap (769+190+316+754 = 2029 against 2148), so it
+is a property of the shared census tooling, not of PDHD.  Ratios are unaffected
+(+12.6 % against +12.4 %) and the length bins themselves -- the graded numbers --
+are exact.
+
+| arm | 0-10 cm | 10-50 | 50-200 | **> 200 cm** | TGM (sum of bins) | STM | FC |
 |---|---|---|---|---|---|---|---|
 | flat (PRODUCTION) | 724 | 133 | 191 | **430** | 1478 | 318 | 2180 |
 | p80 + 3 | **617** | 115 | 187 | 440 | 1359 | 316 | 2295 |
