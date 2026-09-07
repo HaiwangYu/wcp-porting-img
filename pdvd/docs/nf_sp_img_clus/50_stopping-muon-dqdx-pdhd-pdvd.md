@@ -237,6 +237,13 @@ Reading it:
   k = 1.05 (PDHD) and 0.95 (PDVD) — both inside the few-percent uncalibrated
   gain / lifetime / fudge freedom. This is the first confirmation of the PDHD
   0.4959 kV/cm tables against PDHD data.
+- **The two samples carry different geometric cuts** — PDHD none, PDVD
+  |x| < 305 cm — because §6 derives them separately. This does not manufacture
+  the difference below: PDVD's excess is measured *after* its near-CRP points
+  are already excluded, so the near-CRP rise cannot be its cause; and applying
+  the same 305 cut to the PDHD clean tier drops 17 % of its points and moves
+  k_pop by **+0.7 %** (1.0495 → 1.0573), leaving every conclusion below intact.
+  The asymmetry is a per-detector geometry choice, not a lever on the result.
 - **PDVD's +10 % hump at 3–20 cm reproduces** (1.075–1.096 across 2–20 cm,
   1.03–1.05 at the plateau, same sign in every bin, χ² 40.0/11). Doc 42 saw it
   at 69.5/11 on 45 tracks; on the 67-track completeness tier it is smaller but
@@ -343,10 +350,13 @@ The concrete first step is to check whether f_low correlates with the wrapped
 (U/V) plane fraction along the trajectory — `T_rec_charge` already carries
 `pu/pv/pw` per point, so it needs no new dump.
 
-Second, and cheap: `50_pdhd_s0_tracks.tsv` lists the 6 PDHD and 67 PDVD clean
-stoppers by event and block. A Bee scan set of the 6 PDHD ones would confirm by
-eye that the completeness cut selects real stopping muons — worth doing before
-this tier is used for anything else.
+Second, an open offer rather than a plan: the completeness cut is new, and
+nothing here confirms by eye that it selects *real* stopping muons. The 6 PDHD
+and 67 PDVD clean stoppers are listed by event and block in
+`figs/50_pdhd_s0_tracks.tsv` / `figs/50_pdvd_s0_tracks.tsv` (rows with
+`complete = 1` and `contrast >= 2`), so a Bee scan set of the 6 PDHD ones is
+cheap to build on request. Worth having before this tier is used for anything
+beyond doc 50, but it costs owner scan time, so it is not assumed here.
 
 ---
 

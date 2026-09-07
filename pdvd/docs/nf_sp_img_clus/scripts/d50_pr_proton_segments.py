@@ -58,9 +58,6 @@ def main():
                 continue
             idx.append((a.det, ev, int(kk), int(m.sum()), int(g.sum()),
                         float(np.nanmax(rr)), float(np.median(v[g]))))
-            for j in np.where(m)[0]:
-                if not (np.isfinite(v[np.where(m)[0] == j]).all()):
-                    pass
             o = np.argsort(rr[g])
             for r, val, xx, yy, zz, dd in zip(rr[g][o], v[g][o], t["x"][m][g][o], t["y"][m][g][o],
                                               t["z"][m][g][o], dx[g][o]):
