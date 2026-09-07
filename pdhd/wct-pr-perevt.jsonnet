@@ -141,6 +141,38 @@ function(
     // but sample far from it in 3D, and it needs a 3D support test instead.
     retile_bad_blob_max_run = 20,
     retile_bad_blob_report = false,
+    // doc pdhd/08.  Both default null = the C++ 0 = OFF = the pre-doc-08 path,
+    // so this file compiles byte-identically until one is set.
+    //   retile_hack_max_bridge (cm) caps the tube hack_activity_improved paints
+    //     across a gap in the cluster's own shortest path.  Uncapped today, as in
+    //     the prototype (ImprovePR3DCluster.cxx:973-990); the longest single gap
+    //     measured on 029107/991 is 480 cm, and 0.3-0.7 % of bridges (>20 cm)
+    //     make 49-62 % of every cell the retiler invents (doc pdhd/08 sec 2).
+    //   retile_bad_blob_run_merge (cm) merges the runs of ONE component whose
+    //     boxes lie within this distance before retile_bad_blob_max_run judges
+    //     them, so a fabricated column broken into short pieces is bounded whole
+    //     (doc pdhd/08 sec 3).  Needs retile_bad_blob_max_run > 0, which is set
+    //     above.  SENSITIVE: extra removal runs 12 % -> 74 % of survivors as this
+    //     goes 1 -> 8 cm; 3 cm is the measured operating point, 5 cm already
+    //     fuses two objects.  Scan before flipping either.
+    // Arms: -S retile_hack_max_bridge=null (the pre-flip path) -S retile_bad_blob_run_merge=3
+    //
+    // FLIPPED TO 10 cm, PDHD PRODUCTION, owner decision 2026-09-06 (doc pdhd/08
+    // sec 8-9).  30 events, 774 matched clusters: Steiner points more than 30 cm
+    // from any live charge 17 -> 0, more than 10 cm 1419 -> 6, the worst ghost
+    // 39.2 -> 11.3 cm, the TGM tagged set unchanged, wall time 50.0 -> 49.0 s.
+    // The criterion is fabrication, not the tag census: 0.88 of what a >60 cm
+    // bridge paints is a cell that did not exist, while cells already flagged
+    // dead are 0.3-0.8 % of what any bridge touches, so these bridges are
+    // inventing rather than crossing dead regions.  Cost: 45 of 174 STM objects
+    // flip (21 gained / 24 lost); the 45-object blind hand scan
+    // (pdhd/d08_scan, work/d08_scan_labels/d08flip0) scored the cap and the
+    // baseline EQUAL, 5/10, on the objects that could be judged.
+    // retile_bad_blob_run_merge stays OFF: every run it can merge is by
+    // construction shorter than retile_bad_blob_max_run, so it never reaches a
+    // far ghost -- the worst stayed 39.2 -> 39.2 cm at 1/3/5 cm (doc 08 sec 6).
+    retile_hack_max_bridge = 10,
+    retile_bad_blob_run_merge = null,
     // Readout window in ticks: clamps T_bad_ch time ranges in the Magnify /
     // PrDisplay writers (SBND 3427; PDVD 10000; PDHD 6000 = 3 ms at 0.5 us,
     // 5999 after the Resampler -- run_pr_evt.sh passes the real value from the
@@ -3907,6 +3939,8 @@ function(
                              retile_steiner_terminal_charge=retile_steiner_terminal_charge,
                              retile_bad_blob_max_run=retile_bad_blob_max_run,
                              retile_bad_blob_report=retile_bad_blob_report,
+                             retile_hack_max_bridge=retile_hack_max_bridge,
+                             retile_bad_blob_run_merge=retile_bad_blob_run_merge,
                              stm_anode_dist_fix=stm_anode_dist_fix,
                              stm_second_track_guard=stm_second_track_guard,
                              stm_deficit_guard=stm_deficit_guard,

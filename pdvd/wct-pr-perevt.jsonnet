@@ -142,6 +142,23 @@ function(
     // but sample far from it in 3D, and it needs a 3D support test instead.
     retile_bad_blob_max_run = 20,
     retile_bad_blob_report = false,
+    // doc pdhd/08.  retile_hack_max_bridge (cm; C++ default 0 = uncapped, the
+    // prototype ImprovePR3DCluster.cxx:973-990) caps the tube
+    // hack_activity_improved paints across a gap in the cluster's own shortest
+    // path.  null = OFF = the pre-doc-08 path and a byte-identical config.
+    //
+    // FLIPPED TO 10 cm, PDVD PRODUCTION, owner decision 2026-09-06, on the same
+    // fabrication argument PDHD was flipped on and PDVD's own census (doc
+    // pdhd/08 sec 7): 0.13-0.23 % of PDVD bridges (those over 20 cm) create
+    // 55-66 % of every cell the retiler invents, the same shape as PDHD's
+    // 0.3-0.7 % / 49-62 %.
+    //
+    // NOT GRADED ON PDVD.  The 30-event scan, the matched-cluster ghost metric
+    // and the hand scan behind the 10 cm value are all PDHD; PDVD has a
+    // knob-off byte-identity gate (3/3) and a knob-on smoke run, nothing more.
+    // Its PR tail is also a different consumer (CheckSTM_Michel, doc pdvd/48).
+    // Pre-flip arm: -S retile_hack_max_bridge=null.
+    retile_hack_max_bridge = 10,
     // Readout window in ticks: clamps T_bad_ch time ranges in the Magnify /
     // PrDisplay writers (SBND 3427; PDVD 10000 = 5 ms at 0.5 us).
     readout_window_ticks = 10000,
@@ -3921,6 +3938,7 @@ function(
                              retile_steiner_terminal_charge=retile_steiner_terminal_charge,
                              retile_bad_blob_max_run=retile_bad_blob_max_run,
                              retile_bad_blob_report=retile_bad_blob_report,
+                             retile_hack_max_bridge=retile_hack_max_bridge,
                              stm_anode_dist_fix=stm_anode_dist_fix,
                              stm_second_track_guard=stm_second_track_guard,
                              stm_deficit_guard=stm_deficit_guard,
