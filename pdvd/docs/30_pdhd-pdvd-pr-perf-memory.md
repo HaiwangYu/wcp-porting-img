@@ -703,6 +703,13 @@ Three design points worth keeping:
 * **The row-level skip.** With the filter on, a row none of whose cells survive is dropped
   *before* its `global_rb_map` probe — 10.3 % of the flat profile. This is why the CPU win
   (-28.8 %) exceeds `fill_fitted_charge_2d`'s own 19.9 % share.
+* **The keep-set key is range-checked, not masked** (toolkit `59cf4c89`). The set is keyed
+  by `(apa, face, plane, wire, time)` packed into 64 bits. A masked overflow would not fail
+  — it would alias two cells onto one key and silently keep the wrong one, with a wrong 2-D
+  display as the only symptom. Out of range now sets `overflow`, logs one WARN and makes the
+  filter **fail open** (store everything), so the failure direction is "shows too much",
+  never "shows the wrong cell". Verified to change nothing on PDHD: 2/2 events PASS against
+  the pre-guard binary with the knob both off and on, zero WARN lines.
 
 The time pad is in slices and converted per `(apa, face)` with
 `Grouping::get_nticks_per_slice()`, the same map `PrDisplayDump` and the Magnify writers use;
@@ -823,6 +830,13 @@ The knob is **OFF in the shipped tree and in every detector's config** — the g
 literally `grep -rn proj_pad_wire cfg/` returning nothing. `TrackFitting.cxx` is shared with
 SBND and uBooNE, and this is what keeps them still: not an argument about their code paths,
 but the absence of the key from `sbnd_track_fitting.json` and the uBooNE presets.
+
+`TrackFittingPresets::create_with_current_values()` does **not** assign these two fields —
+same as `proj_skip_unmapped_face` and `good_point_pitch_frac`, and unlike
+`skip_revert_iso_xext_cut` — so they keep the C++ default through the preset, and
+`load_trackfitting_config` (which runs *after* construction) can still set them. The knob is
+therefore reachable from any detector's `*_track_fitting.json`, including SBND's and
+uBooNE's; nothing about their code paths keeps them still, only the absent key.
 
 To turn it on for one detector, add two lines to that detector's file — nothing else:
 
