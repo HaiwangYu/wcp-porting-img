@@ -37,7 +37,7 @@ pdhd/stm/perf/d30_run_a.sh          # PIN=/home/xqian/tmp/d30_libpin, PDHD_MAX_J
 # 1b. the instrument check of sec 1 (reported peak vs the job's own ladder, every job)
 pdhd/stm/perf/d30_c1_scan.sh pdhd/work > c1_pdhd.txt   # and pdvd/work
 
-# 2. live heap: jemalloc sampling, then the converter (jeprof is NOT installed)  (sec 4)
+# 2. live heap: jemalloc sampling, then the converter (jeprof is not on PATH)  (sec 4)
 cd pdhd/work/029107_18_d30hp
 env LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
     MALLOC_CONF=prof:true,prof_prefix:$H/je,lg_prof_sample:19,lg_prof_interval:31,prof_final:true \
@@ -150,10 +150,24 @@ RSS cannot distinguish a retained live structure from allocator-retained free me
 the two have different fixes. jemalloc sampling on 029107/18 (`lg_prof_sample:19`,
 dump `i29`):
 
-**`jeprof` is not installed on this host and `google-pprof` rejects the `heap_v2` header
+**`jeprof` is not on `PATH` and is in none of the usual prefixes** (`/usr/bin`,
+`/usr/local/bin`, `local/bin`), and **`google-pprof` rejects the `heap_v2` header
 outright** — and reading the dump without jeprof's sampling correction understates it by
 four orders of magnitude. `pdhd/stm/perf/je2pprof.py` (committed with this doc) converts
 the dump and applies jeprof's own `1/(1-exp(-s/R))` per-record correction.
+
+**Cross-checked against the reference.** A working `jeprof` does exist on the machine,
+inside a CVMFS container image, and being a perl script it runs from the host:
+
+```bash
+/cvmfs/icarus.opensciencegrid.org/containers/tritonserver/nugraph-v0/usr/bin/jeprof     --text --cum --inuse_space $(which wire-cell) $H/je.<pid>.29.i29.heap
+```
+
+It reports **Total: 5791.5 MB** — identical to the converter's, and every frame value below
+matches it to the decimal (2059.7, 1965.2, 5641.5, 5782.6). It prints raw addresses rather
+than symbols, which is why the converter + `google-pprof` route is still the one to use, but
+the number this section rests on is validated against the reference implementation, not
+merely self-consistent.
 
 Scaled live heap **5.79 GB** against that run's 4.81 GB resident plateau — the correction
 overestimates by ~17 % at this sample rate, but the conclusion does not depend on the
@@ -404,7 +418,7 @@ clusters are worse.
 | `pdvd/docs/30_pdhd-pdvd-pr-perf-memory.md` | this doc |
 | `pdhd/stm/perf/d30_pr_census.py` | per-event CPU+memory census, either detector; publishes the corrected peak and asserts stage coverage |
 | `pdhd/stm/perf/d30_hash_gate.py` | the byte-identity gate (zip members + calib + ROOT **tree** content, explicit tree list) |
-| `pdhd/stm/perf/je2pprof.py` | jemalloc `heap_v2` → pprof, with jeprof's sampling correction (jeprof is not installed here) |
+| `pdhd/stm/perf/je2pprof.py` | jemalloc `heap_v2` → pprof, with jeprof's sampling correction (jeprof is not on PATH; output cross-checked against the CVMFS copy, §4) |
 | `pdhd/stm/perf/d30_law.py` | the log-log scaling fits of §8 |
 | `pdhd/stm/perf/d30_c1_scan.sh` | reported vs ladder peak, every job (§1) |
 | `pdhd/stm/perf/d30_stage.sh`, `d30_run_a.sh`, `d30_run_pdvd_arm.sh` | staging + the §3 bracket + the PDVD arm driver |
