@@ -388,6 +388,13 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
    `WCT_..._DUMP`-style probe before it is trusted.
 4. `min_chain_coverage` does not separate (sec 6.5); the persisted `chain_coverage` is the input
    for a better shape test (transverse width of the cluster about the chain?).
+
+   > **2026-09-07** -- sec 10 item 2 of this doc noted that the PDHD operating point was chosen by
+   > reading ~40 panels of 166 candidates, "not by a blind scan".  `doc pdhd/12`
+   > (`pdhd/stm_michel_scan/`) is that scan, built as an interactive display for both detectors:
+   > 3-D + X-Y / Y-Z / Z-X projections over the imaged charge, the fitted chain with its dQ/dx, a
+   > hand-placed stopping point labelled by APA / CRU, and the chain's own answer behind a REVEAL
+   > toggle that every label records.
 5. Wire-parallel tracks (sec 9 item 2) need a direction-to-wire angle guard; the x < 0 / x > 0
    charge asymmetry (sec 9 item 1) is a calibration question for the detector.
 6. The STM tagger itself still bridges its single-track fit 40-60 cm into detached fragments and

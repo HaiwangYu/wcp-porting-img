@@ -557,6 +557,13 @@ KE, which is why the window ships ON at 0.6):
 1. **The STM + Michel subsample needs no new code**: `T_stm_michel` already persists
    `michel_found`, `michel_kink_deg`, `michel_ke_best`, `michel_conn_type` per candidate.  The
    development left is purity/efficiency of that flag, not plumbing.
+
+   > **2026-09-07 — the instrument for that measurement exists.**
+   > `doc pdhd/12` (`pdhd/stm_michel_scan/`) is a hand-scan display, both detectors, on the
+   > `d51hnu` / `d51vnu` arms: 302 PDHD + 568 PDVD candidates, four-way stratified on exactly
+   > `is_stm` x `michel_found`, with the chain's answer behind a REVEAL toggle and the scorer
+   > reporting stratum-reweighted purity and efficiency.  Item 2 below is what it is pointed at
+   > first.
 2. **Next round: `shape_flat`** (69 sole rejects, 26 with a Michel) -- the tagger's KS shape test,
    on chains whose Bragg verdict is otherwise clean.
 3. Then the 13 above (`plateau_mip_lo`) and the 11 `profile_sparse`.

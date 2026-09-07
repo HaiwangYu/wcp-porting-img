@@ -1,0 +1,406 @@
+#!/usr/bin/env python3
+"""doc pdhd/12 -- build the STM + Michel hand-scan sheet, key and payloads.
+
+READ-ONLY apart from what it writes under --outdir and --sheetdir.
+
+For every CheckSTM_Michel candidate in an arm it writes one compact JSON sidecar
+carrying exactly what the display draws, plus two TSVs:
+
+  <sheetdir>/<det>_stm_michel_scan_sheet.tsv   the item list, NO verdict
+  <sheetdir>/<det>_stm_michel_scan_key.tsv     the answer key, closed until scoring
+
+WHAT IS DELIBERATELY SPLIT OUT OF THE PAYLOAD'S TOP LEVEL
+  Everything the chain decided lives under the single key "verdict" and nowhere
+  else: roles 2/3/4 (delta / Michel / dot), is_stm, reject_bits, michel_*, n_dots,
+  contrast, plateau_med, tail_med, in_fv, bragg_valid, entry/stop/tagger_stop, and
+  the tagger's own STM fit.  The viewer reads that key ONLY when REVEAL is on and
+  records `revealed_before_label` with the label.  Colouring the main view by
+  `role` would hand the scanner `michel_found` in pixels and make the agreement
+  number circular (feedback_blind_the_scan_sheet).
+
+WHAT IS ALWAYS IN THE PAYLOAD, AND WHY
+  The other half of that rule (feedback_scan_display_must_show_the_evidence):
+  a display that draws only a reconstruction PRODUCT withholds the measurement
+  the verdict is about.  So the evidence is unconditional --
+
+    muon        the role-1 chain: x,y,z (cm), q = dQ/dx in e/cm ALREADY
+                (CheckSTM_Michel.cxx:673), L and rr in cm, and pw joined from
+                T_rec_charge so the stop can be labelled by readout unit.
+    image_near  every mabc-pr.zip `clustering-global` point within IMAGE_NEAR_R
+                of any role-1 point, FULL density.  Purely geometric over all the
+                charge in the event -- never "the points the chain assigned to
+                this cluster", which would draw the clustering decision.
+    image_far   the rest of the event, thinned to IMAGE_FAR_MAX, for containment.
+
+  Only `clustering-global` is opened.  The same archive carries `shower_track`
+  (the chain paints Michel/dot segments there via pdg 11), `stm_tagged` and
+  `stm_fit`; those are the answer and are not read here at all.
+
+dQ/dx REFERENCE
+  From calib-pr-evt*.json's `dqdx_ref` block (401 points, rr 0..100 cm, step
+  0.25, e/cm, source ParticleDataSet).  Verified identical across events within
+  a detector, so it is written once per detector as dqdx_ref_<det>.json rather
+  than 181 times.  NOTE: meta.mip_dqdx_median in that dump is the C++ default
+  43000, not the 48000/47000 the taggers run with -- so nothing here normalises
+  by it (feedback_dump_meta_is_not_the_config).  The panel plots absolute e/cm
+  against the absolute reference and needs no mip at all.
+
+Repro:
+  ./prep_stm_michel_scan.py --det pdhd
+  ./prep_stm_michel_scan.py --det pdvd
+"""
+import argparse, glob, json, os, random, sys, zipfile
+
+import numpy as np
+import uproot
+from scipy.spatial import cKDTree
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import smgeom                                                     # noqa: E402
+
+PDHD = os.path.dirname(HERE)
+IMG = os.path.dirname(PDHD)
+
+DET = {
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d51hnu"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d51vnu"),
+}
+IMAGE_MEMBER = "clustering-global"
+IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
+IMAGE_STOP_R = 40.0       # cm, full density inside this of the chain's rr=0 END.
+#   Without it a Michel that runs 20 cm off the stop leaves the near set and is
+#   thinned 1-in-N -- i.e. the display would hide the object being judged.  The
+#   ball is centred on the muon polyline's own last point, so it carries no
+#   chain verdict: it is the same geometric rule as the 40 cm dense context in
+#   pdhd/stm_scan (feedback_fragment_label_carries_object_verdict).
+IMAGE_FAR_MAX = 8000      # thin the rest of the event to at most this many
+MIN_PROFILE_PTS = 20
+MIN_MUON_LEN = 10.0       # cm
+SEED = 20260907           # fixed: tranche 1 is random, not "the interesting ones"
+TRANCHE1 = 60             # items per detector served first
+T1_S1_CAP = 24            # at most this many from the reco-positive stratum
+T1_FLOOR = 8              # per-stratum floor for S2/S3/S4
+
+# clus/inc/WireCellClus/StmMichelFunctions.h:169-183
+BITS = ["no_chain", "stop_unmatched", "no_bragg", "shape_flat", "not_muon_pid",
+        "continuation", "stop_near_boundary", "vertex_hadron", "short",
+        "profile_sparse", "plateau_off_mip", "stop_into_dead", "cluster_not_track"]
+
+# T_stm_michel scalars carried into the reveal block, verbatim.
+VERDICT_SCALARS = [
+    "is_stm", "in_fv", "bragg_valid", "reject_bits", "has_pass", "pass",
+    "kink_num", "n_profile_pts", "n_live_pts", "n_dead_pts", "muon_len",
+    "michel_found", "michel_conn_type", "n_michel_segs", "michel_len",
+    "michel_mip", "michel_kink_deg", "michel_far_len",
+    "michel_ke_dqdx", "michel_ke_range", "michel_ke_best",
+    "n_dots", "dots_ke_dqdx", "n_dot_clusters_unfit", "dots_charge_unfit",
+    "n_delta", "delta_len", "n_body_hadron", "n_stop_arms",
+    "cont_len", "cont_angle_deg", "cont_mip", "n_ext", "ext_len", "dead_ahead",
+    "contrast", "contrast_expected", "plateau_med", "tail_med",
+    "n_tail", "n_plateau", "short_track", "ks_mu", "ks_flat",
+    "stop_dis", "t0_us", "gid", "chain_coverage", "n_cluster_pts",
+]
+VERDICT_POINTS = ["entry_x", "entry_y", "entry_z", "stop_x", "stop_y", "stop_z",
+                  "tagger_stop_x", "tagger_stop_y", "tagger_stop_z"]
+
+
+def bit_names(bits):
+    b = int(bits)
+    return [n for i, n in enumerate(BITS) if b & (1 << i)] or (["STM"] if b == 0 else [])
+
+
+def r1(v):
+    return [round(float(t), 1) for t in v]
+
+
+def r2(v):
+    return [round(float(t), 2) for t in v]
+
+
+def event_dirs(det):
+    d = DET[det]
+    out = []
+    for p in sorted(glob.glob(os.path.join(d["root"], "work", "*_" + d["arm"]))):
+        if os.path.exists(os.path.join(p, "tracking-pr.root")):
+            out.append(p)
+    return out
+
+
+def load_image(evtdir, muon_xyz, stop_xyz=None):
+    """(near, far, members_read).  Geometric split only, over ALL the charge."""
+    zp = os.path.join(evtdir, "mabc-pr.zip")
+    empty = dict(x=[], y=[], z=[], q=[])
+    if not os.path.exists(zp) or not len(muon_xyz):
+        return empty, dict(x=[], y=[], z=[]), []
+    with zipfile.ZipFile(zp) as z:
+        names = [n for n in z.namelist() if n.endswith(IMAGE_MEMBER + ".json")]
+        if not names:
+            return empty, dict(x=[], y=[], z=[]), []
+        read = [names[0]]
+        g = json.loads(z.read(names[0]))
+    X = np.asarray(g.get("x") or [], float)
+    if X.size == 0:
+        return empty, dict(x=[], y=[], z=[]), read
+    Y = np.asarray(g["y"], float); Z = np.asarray(g["z"], float)
+    Q = np.asarray(g.get("q") or [0.0] * X.size, float)
+    # nearest muon-chain point for every image point, once.  cKDTree is an
+    # accelerator here, not a requirement -- selftest reimplements this by brute
+    # force on a sample and demands the same index set.
+    P = np.c_[X, Y, Z]
+    d, _ = cKDTree(muon_xyz).query(P, k=1, distance_upper_bound=IMAGE_NEAR_R)
+    m = np.isfinite(d)
+    if stop_xyz is not None:
+        s2 = ((P - np.asarray(stop_xyz, float)) ** 2).sum(axis=1)
+        m |= s2 < IMAGE_STOP_R ** 2
+    near = dict(x=r1(X[m]), y=r1(Y[m]), z=r1(Z[m]), q=r1(Q[m]))
+    fx, fy, fz = X[~m], Y[~m], Z[~m]
+    st = max(1, -(-fx.size // IMAGE_FAR_MAX))
+    far = dict(x=r1(fx[::st]), y=r1(fy[::st]), z=r1(fz[::st]))
+    return near, far, read
+
+
+def build_event(det, evtdir, with_tagger_fit=True):
+    """[(row dict, payload dict)] for every candidate in one event."""
+    f = uproot.open(os.path.join(evtdir, "tracking-pr.root"))
+    keys = {k.split(";")[0] for k in f.keys()}
+    if "T_stm_michel" not in keys:
+        return []
+    m = f["T_stm_michel"].arrays(library="np")
+    p = f["T_stm_michel_pts"].arrays(library="np")
+    rc = f["T_rec_charge"].arrays(["x", "y", "z", "pw", "cluster_id"], library="np")
+    run = f["Trun"].arrays(["runNo", "eventNo"], library="np")
+    runno, evtno = int(run["runNo"][0]), int(run["eventNo"][0])
+    ev = os.path.basename(evtdir).rsplit("_", 1)[0]          # <run6>_<evt>
+
+    # pw for every fit point of the whole event, once.  The role-1 points ARE
+    # T_rec_charge points -- measured NN distance 0.00000 cm and cluster_id
+    # agreement 1.0000 on both detectors (doc pdhd/12 sec 4.2) -- so this join
+    # is an index lookup dressed as a query, not an approximation.
+    RC = np.c_[rc["x"], rc["y"], rc["z"]]
+    rc_tree = cKDTree(RC) if RC.size else None
+
+    tagfit = {}
+    if with_tagger_fit:
+        sp = os.path.join(evtdir, "tracking-stm.root")
+        if os.path.exists(sp):
+            try:
+                g = uproot.open(sp)
+                t = g["T_rec_charge"].arrays(
+                    ["x", "y", "z", "q", "nq", "rr", "cluster_id", "pass", "status"],
+                    library="np")
+                tr = g["Trun"].arrays(["dQdx_scale", "dQdx_offset"], library="np")
+                sc, off = float(tr["dQdx_scale"][0]), float(tr["dQdx_offset"][0])
+                ok = t["status"] == 0
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    dq = np.where(t["nq"] > 0, (t["q"] - off) / sc / t["nq"], np.nan)
+                for cid in np.unique(t["cluster_id"][ok]):
+                    for ps in np.unique(t["pass"][ok & (t["cluster_id"] == cid)]):
+                        k = ok & (t["cluster_id"] == cid) & (t["pass"] == ps)
+                        tagfit.setdefault(int(cid), []).append(dict(
+                            pass_=int(ps), x=r2(t["x"][k]), y=r2(t["y"][k]),
+                            z=r2(t["z"][k]), rr=r2(t["rr"][k]),
+                            dqdx=r1(np.nan_to_num(dq[k], nan=-1.0))))
+            except Exception as ex:                       # a short/absent file
+                print("#  no tagger fit for %s: %s" % (ev, ex), file=sys.stderr)
+
+    out = []
+    for i, cid in enumerate(m["cluster_id"]):
+        cid = int(cid)
+        if not int(m["has_pass"][i]):
+            continue
+        if int(m["n_profile_pts"][i]) < MIN_PROFILE_PTS:
+            continue
+        if float(m["muon_len"][i]) < MIN_MUON_LEN:
+            continue
+        sel = p["cluster_id"] == cid
+        mu = sel & (p["role"] == 1)
+        if not mu.sum():
+            continue
+        MX = np.c_[p["x"][mu], p["y"][mu], p["z"][mu]]
+        pw = np.full(MX.shape[0], np.nan)
+        if rc_tree is not None:
+            d, j = rc_tree.query(MX, k=1)
+            good = d < 0.05
+            pw[good] = rc["pw"][j[good]]
+        rr_mu = p["rr"][mu]
+        stop_pt = MX[int(np.argmin(rr_mu))] if rr_mu.size else None
+        near, far, src = load_image(evtdir, MX, stop_pt)
+
+        # the readout unit of every chain point, from the wire coordinate
+        units = [smgeom.unit_from_wire(det, None if not np.isfinite(w) else w)[0]
+                 for w in pw]
+        crus = [smgeom.unit_from_wire(det, None if not np.isfinite(w) else w)[1]
+                for w in pw]
+
+        pay = dict(
+            det=det, arm=DET[det]["arm"], event=ev, run=runno, evtno=evtno,
+            cluster_id=cid, npts=int(mu.sum()),
+            muon_len_cm=round(float(m["muon_len"][i]), 2),
+            image_src=src, image_near_r=IMAGE_NEAR_R, image_stop_r=IMAGE_STOP_R,
+            muon=dict(x=r2(p["x"][mu]), y=r2(p["y"][mu]), z=r2(p["z"][mu]),
+                      q=r1(p["q"][mu]), L=r2(p["L"][mu]), rr=r2(p["rr"][mu]),
+                      pw=[None if not np.isfinite(w) else round(float(w), 2) for w in pw],
+                      unit=units, cru=crus),
+            image_near=near, image_far=far,
+        )
+        v = {k: (float(m[k][i]) if m[k].dtype.kind == "f" else int(m[k][i]))
+             for k in VERDICT_SCALARS if k in m}
+        v["reject_names"] = bit_names(m["reject_bits"][i])
+        for k in VERDICT_POINTS:
+            if k in m:
+                v[k] = round(float(m[k][i]), 2)
+        for role, name in ((2, "delta"), (3, "michel"), (4, "dots")):
+            k = sel & (p["role"] == role)
+            v[name] = dict(x=r2(p["x"][k]), y=r2(p["y"][k]), z=r2(p["z"][k]),
+                           q=r1(p["q"][k]), seg=[int(s) for s in p["seg_id"][k]])
+        v["tagger_fit"] = tagfit.get(cid, [])
+        pay["verdict"] = v
+
+        row = dict(event=ev, cluster=cid, npts=pay["npts"],
+                   muon_len_cm=pay["muon_len_cm"],
+                   n_near=len(near["x"]), n_far=len(far["x"]))
+        key = dict(row, is_stm=int(m["is_stm"][i]),
+                   michel_found=int(m["michel_found"][i]),
+                   michel_conn_type=int(m["michel_conn_type"][i]),
+                   michel_len=round(float(m["michel_len"][i]), 2),
+                   michel_ke_best=round(float(m["michel_ke_best"][i]), 2),
+                   michel_kink_deg=round(float(m["michel_kink_deg"][i]), 1),
+                   n_dots=int(m["n_dots"][i]), in_fv=int(m["in_fv"][i]),
+                   reject_bits=int(m["reject_bits"][i]),
+                   reject_names="|".join(v["reject_names"]))
+        out.append((row, key, pay))
+    return out
+
+
+def stratum(k):
+    if k["is_stm"] and k["michel_found"]:
+        return "S1"
+    if k["is_stm"]:
+        return "S2"
+    if k["michel_found"]:
+        return "S3"
+    return "S4"
+
+
+def tranche(keys):
+    """Fixed-seed tranche-1 membership.  Returns {(event, cluster): 1 or 2}."""
+    by = {}
+    for k in keys:
+        by.setdefault(stratum(k), []).append((k["event"], k["cluster"]))
+    rnd = random.Random(SEED)
+    for s in by:
+        by[s].sort()
+        rnd.shuffle(by[s])
+    picked = list(by.get("S1", [])[:T1_S1_CAP])
+    rest = [s for s in ("S2", "S3", "S4") if by.get(s)]
+    for s in rest:                                     # floor first
+        picked += by[s][:T1_FLOOR]
+    cur = {s: T1_FLOOR for s in rest}
+    while len(picked) < TRANCHE1 and any(cur[s] < len(by[s]) for s in rest):
+        for s in rest:
+            if len(picked) >= TRANCHE1:
+                break
+            if cur[s] < len(by[s]):
+                picked.append(by[s][cur[s]]); cur[s] += 1
+    return {p: 1 for p in picked}
+
+
+def write_tsv(path, rows, cols, header):
+    tmp = path + ".tmp"
+    with open(tmp, "w") as fh:
+        fh.write(header)
+        fh.write("\t".join(cols) + "\n")
+        for r in rows:
+            fh.write("\t".join(str(r[c]) for c in cols) + "\n")
+    os.replace(tmp, path)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--det", required=True, choices=sorted(DET))
+    ap.add_argument("--outdir", default=None)
+    ap.add_argument("--sheetdir", default=None)
+    ap.add_argument("--no-tagger-fit", action="store_true")
+    ap.add_argument("--limit", type=int, default=0, help="first N events (debug)")
+    a = ap.parse_args()
+    det = a.det
+    outdir = a.outdir or os.path.join(HERE, "prep-" + det)
+    sheetdir = a.sheetdir or os.path.join(DET[det]["root"], "docs", "scan")
+    os.makedirs(outdir, exist_ok=True)
+    os.makedirs(sheetdir, exist_ok=True)
+
+    dirs = event_dirs(det)
+    if a.limit:
+        dirs = dirs[:a.limit]
+    if not dirs:
+        raise SystemExit("no %s event dirs for arm %s" % (det, DET[det]["arm"]))
+
+    rows, keys, nmissing = [], [], 0
+    for i, d in enumerate(dirs):
+        got = build_event(det, d, not a.no_tagger_fit)
+        if not got:
+            nmissing += 1
+        for row, key, pay in got:
+            p = os.path.join(outdir, "smprep-%s-c%d.json" % (row["event"], row["cluster"]))
+            with open(p + ".tmp", "w") as fh:
+                json.dump(pay, fh)
+            os.replace(p + ".tmp", p)
+            rows.append(row); keys.append(key)
+        print("  [%3d/%3d] %-24s %2d candidates" %
+              (i + 1, len(dirs), os.path.basename(d), len(got)), flush=True)
+
+    # the reference curves, once per detector (verified identical across events)
+    ref = None
+    for d in dirs:
+        c = glob.glob(os.path.join(d, "calib-pr-evt*.json"))
+        if c:
+            ref = json.load(open(c[0])).get("dqdx_ref")
+            if ref:
+                break
+    if ref:
+        with open(os.path.join(outdir, "dqdx_ref_%s.json" % det), "w") as fh:
+            json.dump(ref, fh)
+
+    order = sorted(range(len(rows)), key=lambda i: (rows[i]["event"], rows[i]["cluster"]))
+    rows = [rows[i] for i in order]; keys = [keys[i] for i in order]
+    t1 = tranche(keys)
+    for n, (r, k) in enumerate(zip(rows, keys), start=1):
+        r["scan_id"] = k["scan_id"] = n
+        r["tranche"] = k["tranche"] = t1.get((r["event"], r["cluster"]), 2)
+        k["stratum"] = stratum(k)
+    # tranche 1 first, then scan_id -- the viewer serves the list in file order
+    rows.sort(key=lambda r: (r["tranche"], r["scan_id"]))
+    keys.sort(key=lambda r: (r["tranche"], r["scan_id"]))
+
+    sheet = os.path.join(sheetdir, "%s_stm_michel_scan_sheet.tsv" % det)
+    keyf = os.path.join(sheetdir, "%s_stm_michel_scan_key.tsv" % det)
+    write_tsv(sheet, rows,
+              ["scan_id", "tranche", "event", "cluster", "npts", "muon_len_cm",
+               "n_near", "n_far"],
+              "# doc pdhd/12 -- STM + Michel hand-scan sheet, det=%s arm=%s\n"
+              "# NO verdict, NO stratum, NO chain flag: those are in the KEY.\n"
+              "# seed=%d tranche1=%d (S1 cap %d, floor %d per other stratum)\n"
+              % (det, DET[det]["arm"], SEED, TRANCHE1, T1_S1_CAP, T1_FLOOR))
+    write_tsv(keyf, keys,
+              ["scan_id", "tranche", "stratum", "event", "cluster", "npts",
+               "muon_len_cm", "is_stm", "michel_found", "michel_conn_type",
+               "michel_len", "michel_ke_best", "michel_kink_deg", "n_dots",
+               "in_fv", "reject_bits", "reject_names", "n_near", "n_far"],
+              "# doc pdhd/12 -- ANSWER KEY for the %s STM + Michel scan.\n"
+              "# DO NOT OPEN WHILE SCANNING.  score_stm_michel_scan.py reads it;\n"
+              "# stm_michel_viewer.py never does.\n" % det)
+
+    cnt = {}
+    for k in keys:
+        cnt[k["stratum"]] = cnt.get(k["stratum"], 0) + 1
+    print("\n%s: %d events (%d with no candidate), %d items"
+          % (det, len(dirs), nmissing, len(rows)))
+    print("  strata: " + "  ".join("%s=%d" % (s, cnt[s]) for s in sorted(cnt)))
+    print("  tranche 1: %d" % sum(1 for r in rows if r["tranche"] == 1))
+    print("  sheet: %s\n  key:   %s\n  prep:  %s" % (sheet, keyf, outdir))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
