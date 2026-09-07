@@ -1,7 +1,8 @@
 # doc sbnd_xin/pr/148 — evt 137238: the scan says the object is EM, and the tag is firing where it should not
 
-**Status: SCANNED (24/24, 2026-09-06). THE ROUND INVERTED. Fix designed,
-default OFF, not yet implemented.** No code changed, no default flipped.
+**Status: SCAN 0 DONE (24/24, 2026-09-06). THE ROUND INVERTED. Fix designed
+(§8), default OFF, not yet implemented. SCAN 2 (§11) built and running on
+port 5017 — it is what decides the fix's precision and recall.** No code changed, no default flipped.
 
 The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
 **The owner's own blind scan calls it EM** — and calls every one of the twelve
@@ -64,10 +65,17 @@ cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin
 ./scripts/pr148_score_scan.py
 #   -> EM 19  MIXED 2  HADRONIC 3;  guard at nseg>10 declines 7, dEnu -790.5 MeV
 
+# Scan 2 -- the 12-object sheet (sec 11)
+./scripts/pr148_pidset2.py --census docs/pr/pr148-a5-census.tsv \
+    --labelled docs/pr/pr148-pidscan.KEY.tsv \
+    --sheet docs/pr/pr148-pidscan2-manifest.tsv \
+    --key   docs/pr/pr148-pidscan2.KEY.tsv
+
 # The display (sec 7)
 /nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/python \
-    pr148_scan/selftest_pr148_scan.py          # rc 0 or do not serve
-./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan0
+    pr148_scan/selftest_pr148_scan.py --expect 12      # rc 0 or do not serve
+./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan1 \
+    --sheet docs/pr/pr148-pidscan2-manifest.tsv
 #   ssh -o ServerAliveInterval=30 -L 5017:localhost:5017 <user>@wcgpu1.phy.bnl.gov
 #   http://localhost:5017/pr148_scan_viewer
 #   labels land in work/pr148_scan_labels/<tag>/; the committed copy of the
@@ -822,22 +830,67 @@ assertion (doc 91 §12.3).
   scattering it is the upstream fix, and it is not in this doc — and §6.2 says
   the scan now points there.
 
-## 11. Recommended next step
+## 11. Scan 2 — 12 objects, built and running
 
-**A second scan of 12, on the display that is already built — then implement
-§8.** The guard's direction rests on four labels; twelve more make it a
-measurement, and the instrument cost is one sitting:
+`docs/pr/pr148-pidscan2-manifest.tsv` (+ `pr148-pidscan2.KEY.tsv`), built by
+`scripts/pr148_pidset2.py`, **forked by duplication** from `pr148_pidset.py`
+(M10) — scan 0's builder produced a finished record and stays byte-untouched.
 
-- the **3 unlabelled objects above the bar** — 406125, 318769, 321015 — which
-  measures the guard's **precision** on exactly the set it removes;
-- **~9 sampled from the 53 below the bar**, which measures its **recall**: if
-  those come back HADRONIC the guard is safe, and if some come back EM then A5
-  is mis-firing below the bar too and `nseg` is not the whole answer.
+**Every object on this sheet is one the reconstruction already re-typed from
+electron to pion. The question is whether it was right to.** Three strata,
+each answering a different question:
 
-A fresh `--scan-tag` (M13 — never write into `scan0`).
+| stratum | n | what it measures |
+|---|---|---|
+| **A** — all 3 remaining objects **above the bar** (census `nseg` > 10) | 3 | with scan 0's four, this labels the guard's **entire cut set**, so its **precision** stops being an estimate |
+| **B** — all 4 remaining **stem-branch** fires | 4 | the stem branch has never been tested: 5 fires, one label, and it came back EM. 0 of 1 is not a measurement. This makes it 5 of 5 |
+| **C** — 5 **growth-branch** fires **below the bar**, at `kine_best` quantiles (min / p25 / median / p75 / max) of the 45 unlabelled | 5 | the guard's **recall**. If these come back HADRONIC the guard is safe; if some come back EM then A5 mis-fires below the bar too and `nseg` is not the whole answer |
+
+**Quantiles, not top-N, and that is a correction of scan 0's own method.** S4
+was the top six by energy out of sixty whose median was 58 MeV, and §6.1.3 had
+to spend a paragraph discounting its own headline because of it. Stratum C
+spans the population instead.
+
+**Still not covered, said rather than quietly dropped:** the **bragg branch**
+— 2 fires in the whole population (25.2 and 173.7 MeV). Two of twelve slots is
+a poor trade against 45 unlabelled growth fires, so it stays open.
+
+### 11.1 The blind moved, because the proxy moved
+
+Scan 0 withheld growth / bragg / stem / `f_heavy` / the stratum / `nue_score`.
+§8's discriminant is the **segment count**, so scan 2 withholds that too — from
+the sheet **and** from the screen. The display no longer prints
+*"segments drawn N"*: a count shown next to a bar of 10 is the verdict shown.
+Length and both energies stay, because they are what the object *is*, not what
+the guard thinks of it.
+
+`selftest_pr148_scan.py` now carries `nseg` in its forbidden set and takes
+`--sheet` / `--expect`, so both sheets are checked by the same instrument:
+**22/22 on the 12-object sheet and 22/22 on the 24-object one.** Live: 12
+objects served on 5017, no forbidden word in any Div, no count on screen.
+
+```bash
+./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan1 \
+    --sheet docs/pr/pr148-pidscan2-manifest.tsv
+#   ssh -o ServerAliveInterval=30 -L 5017:localhost:5017 <user>@wcgpu1.phy.bnl.gov
+#   http://localhost:5017/pr148_scan_viewer
+```
+
+A **fresh tag** (`scan1`), never written into `scan0` (M13).
+
+### 11.2 After it comes back
+
+1. Re-score with `pr148_score_scan.py --labels work/pr148_scan_labels/scan1/filled_sheet.tsv`.
+2. **Precision** = the labelled fraction of stratum A ∪ scan 0's four that is
+   EM; that is the number the §8 guard is worth.
+3. **Recall** = stratum C. Any EM verdict there means the guard is necessary
+   but not sufficient, and §8 needs a second term.
+4. **The stem branch** decides its own fate on stratum B: if it is 5/5 EM it
+   should be turned off outright, not guarded.
+5. Then implement §8.4 and score §9.1's pre-registration.
 
 **And the round after that is the splitter, not another typing round.** Three
-of the twenty-four objects point at absorption — 137238 itself under the §6.2
-reading, plus both `MIXED` verdicts at 81 and 35 segments — and none point at
-the tag. Doc pr/137-139 owns that machinery. §6.2's question decides it, and
+of scan 0's twenty-four objects point at absorption — 137238 itself under the
+§6.2 reading, plus both `MIXED` verdicts at 81 and 35 segments — and none point
+at the tag. Doc pr/137-139 owns that machinery. §6.2's question decides it, and
 it is the owner's to answer.

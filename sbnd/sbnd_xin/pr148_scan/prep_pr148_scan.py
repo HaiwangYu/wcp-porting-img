@@ -11,7 +11,8 @@ panels draw.
 WHAT IS DELIBERATELY NOT IN THE PAYLOAD, so it cannot reach the browser:
 the A5 discriminants (growth / bragg / stem), the derived candidates
 (n_heavy / f_heavy / star / stem_run), the A5 verdict, the stratum, the nue
-BDT score -- and also every segment's `particle_id`, `particle_score` and
+BDT score, **the segment count** (doc sec 11: it became sec 8's discriminant,
+so it left both the sheet and the screen) -- and also every segment's `particle_id`, `particle_score` and
 `flag_shower`, which are the reconstruction's OWN typing answer.  The scanner
 judges charge and geometry, which is what Bee shows; being told what the
 reconstruction already decided makes the agreement circular
@@ -103,7 +104,7 @@ def build(row, outdir):
         event=int(evt), shower_id=sid, obj=obj,
         kine_charge_mev=float(row["kine_charge_mev"]),
         kine_best_mev=float(row["kine_best_mev"]),
-        total_len_cm=float(row["total_len_cm"]), nseg=int(row["nseg"]),
+        total_len_cm=float(row["total_len_cm"]),
         mip_used=mip, start=[round(c, 2) for c in V], far=far,
         far_dist_cm=round(far_d, 2), members=mem, others=oth)
     p = os.path.join(outdir, "pr148prep-evt%s-s%d.json" % (evt, sid))

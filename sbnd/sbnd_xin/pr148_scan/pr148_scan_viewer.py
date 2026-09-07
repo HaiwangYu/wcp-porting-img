@@ -35,8 +35,9 @@ WHAT IS ON SCREEN, AND WHY EACH THING IS THERE
 
 WHAT IS DELIBERATELY ABSENT.  The A5 discriminants (growth / bragg / stem),
 the derived candidates (n_heavy / f_heavy / star), the A5 verdict, the
-stratum, the nue BDT score, and every segment's particle_id / particle_score
-/ flag_shower.  The last group matters most: it is the reconstruction's own
+stratum, the nue BDT score, the SEGMENT COUNT (doc sec 11 -- it became sec 8's
+discriminant, and a count printed next to a bar of 10 is the verdict printed),
+and every segment's particle_id / particle_score / flag_shower.  The last group matters most: it is the reconstruction's own
 typing answer, and the scan exists to check that answer.
 selftest_pr148_scan.py proves the absence by enumerating the keys of every
 ColumnDataSource this module builds, rather than asserting it.
@@ -230,7 +231,6 @@ def label_of(i):
 
 def refresh_texts():
     p = PAYLOAD[state["i"]]
-    r = SHEET[state["i"]]
     lab = label_of(state["i"])
     v = lab.get("verdict", "")
     hdr.text = (
@@ -244,7 +244,6 @@ def refresh_texts():
         "<div style='font-size:13px;color:#333'>"
         "charge energy <b>%.1f MeV</b> &nbsp;|&nbsp; best energy <b>%.1f MeV</b> "
         "&nbsp;|&nbsp; total length <b>%.1f cm</b> &nbsp;|&nbsp; "
-        "segments drawn <b>%d</b> (dump reports %s) &nbsp;|&nbsp; "
         "farthest point from the start vertex <b>%.1f cm</b>"
         "<br/><span style='color:#777'>colour is dQ/dx in MIP units, fixed "
         "%.1f&ndash;%.1f across every object; grey is all other charge in the "
@@ -252,7 +251,7 @@ def refresh_texts():
         "Question: is this object an EM shower, a hadronic interaction, or "
         "both clustered together?</span></div>"
         % (p["kine_charge_mev"], p["kine_best_mev"], p["total_len_cm"],
-           len(p["members"]), r["nseg"], p["far_dist_cm"], MIP_LO, MIP_HI))
+           p["far_dist_cm"], MIP_LO, MIP_HI))
     done = sum(1 for k in LABELS if LABELS[k].get("verdict"))
     prog.text = ("<div style='font-size:13px'><b>%d of %d labelled.</b> "
                  "Written on every click to<br/><code>%s</code><br/>"

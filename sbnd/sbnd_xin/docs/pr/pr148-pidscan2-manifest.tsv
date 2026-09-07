@@ -1,0 +1,34 @@
+# doc pr/148 sec 11 -- BLIND scan 2, 12 objects.  Every one of
+# these is an object the reconstruction ALREADY re-typed from
+# electron to pion; the question is whether it was right to.
+#
+# Withheld, because printing the proxy's answer on the sheet you
+# then judge makes the agreement circular: the A5 discriminants
+# (growth, bragg, stem), which branch fired, the nue BDT score,
+# the stratum -- and NEW this round, the SEGMENT COUNT, which is
+# what sec 8's proposed guard keys on.  They are all in
+# pr148-pidscan2.KEY.tsv, which the display never opens.
+#
+# verdict: EM | HADRONIC | MIXED      weak: 1 if not confident
+#   EM       -- an electron or photon shower.  The re-type was
+#               WRONG and production is mis-valuing this object.
+#   HADRONIC -- a pion/proton/neutron interaction.  The re-type
+#               was right.
+#   MIXED    -- both, clustered into one object.
+#
+# The display fills this in for you:
+#   ./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan1 \
+#       --sheet docs/pr/pr148-pidscan2-manifest.tsv
+idx	sample	run	subrun	event	obj	shower_id	kine_charge_mev	kine_best_mev	total_len_cm	verdict	weak	note
+0	nuecc48	18342	1	30504	11017	0	179.526	173.774	34.752			
+1	mcp2k	18259	1	177068	5013	2	35.734	7.753	2.723			
+2	mcp1k	18255	1	315167	8034	1	152.542	227.583	62.098			
+3	mcp2k	18255	1	321015	16013	16	100.094	96.518	35.67			
+4	mcp1k	18255	1	399328	12007	0	109.064	110.687	17.611			
+5	mcp2k	18255	1	355106	7001	0	76.545	47.331	20.384			
+6	nuecc48	18255	1	163543	14124	3	63.742	73.95	34.167			
+7	mcp2k	18255	1	406125	8063	0	180.171	139.656	36.785			
+8	mcp2k	18259	1	174771	15019	4	132.306	132.306	24.994			
+9	mcp2k	18259	1	165767	7022	0	39.747	34.192	14.015			
+10	mcp2k	18255	1	318769	31030	0	107.429	107.429	24.623			
+11	mcp2k	18255	1	92904	15002	0	136.655	104.753	26.877			

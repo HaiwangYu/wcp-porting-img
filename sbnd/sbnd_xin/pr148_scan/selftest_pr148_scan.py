@@ -34,24 +34,37 @@ browser (feedback_bokeh_client_session_false_negative).
       filled_sheet.tsv back, then restore the tag directory to exactly what
       it was.  Uses a throwaway --scan-tag, never a real one (M13).
 """
-import builtins, csv, glob, io, json, os, shutil, sys, tempfile
+import argparse, builtins, csv, glob, io, json, os, shutil, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SX = os.path.dirname(HERE)
-SHEET = os.path.join(SX, "docs", "pr", "pr148-pidscan-manifest.tsv")
-KEY = os.path.join(SX, "docs", "pr", "pr148-pidscan.KEY.tsv")
+
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--sheet", default=os.path.join(
+    SX, "docs", "pr", "pr148-pidscan2-manifest.tsv"))
+_ap.add_argument("--key", default=None,
+                 help="defaults to the sheet's name with -manifest -> .KEY")
+_ap.add_argument("--expect", type=int, default=None,
+                 help="expected row count; defaults to whatever the sheet has")
+ARGS, _ = _ap.parse_known_args()
+SHEET = ARGS.sheet
+KEY = ARGS.key or SHEET.replace("-manifest.tsv", ".KEY.tsv")
 
 CDS_ALLOWED = {"x", "y", "z", "mip", "xs", "ys"}
 PAYLOAD_ALLOWED = {"idx", "sample", "run", "subrun", "event", "shower_id",
                    "obj", "kine_charge_mev", "kine_best_mev", "total_len_cm",
-                   "nseg", "mip_used", "start", "far", "far_dist_cm",
+                   "mip_used", "start", "far", "far_dist_cm",
                    "members", "others"}
 SEG_ALLOWED = {"id", "len", "x", "y", "z", "mip"}
 FORBIDDEN = {"growth", "bragg", "stem", "stem_mip", "f_heavy", "n_heavy",
              "len_heavy_cm", "max_mip", "star_n", "star_dist_cm", "stem_run_cm",
              "verdict_a5", "a5_verdict", "stratum", "nue_score", "numu_score",
              "particle_id", "particle_score", "flag_shower", "pdg",
-             "n_early", "n_late", "dqdx_trunk", "dqdx_term"}
+             "n_early", "n_late", "dqdx_trunk", "dqdx_term",
+             # doc sec 11: the segment count became sec 8's discriminant, so it
+             # is now withheld too -- from the payload AND from the screen.
+             "nseg", "nseg_census", "nseg_final", "num_segments",
+             "segments drawn"}
 
 fails = []
 
@@ -79,7 +92,8 @@ def main():
     print("T1/T2/T3  build the document with open() under a spy")
     builtins.open = spy_open
     try:
-        sys.argv = ["pr148_scan_viewer.py", "--scan-tag", tag]
+        sys.argv = ["pr148_scan_viewer.py", "--scan-tag", tag,
+                    "--sheet", SHEET]
         sys.path.insert(0, HERE)
         import importlib
         V = importlib.import_module("pr148_scan_viewer")
@@ -87,7 +101,9 @@ def main():
         builtins.open = real_open
 
     rows = V.SHEET
-    check(len(rows) == 24, "sheet has 24 rows (got %d)" % len(rows))
+    want = ARGS.expect or len(rows)
+    check(len(rows) == want and len(rows) > 0,
+          "sheet has %d row(s)" % len(rows))
     check(len(V.PAYLOAD) == len(rows),
           "every row has a payload (%d/%d)" % (len(V.PAYLOAD), len(rows)))
     bad = [r["event"] for r in rows
@@ -138,9 +154,9 @@ def main():
     check(os.path.exists(KEY), "the KEY file exists (%s)" % os.path.basename(KEY))
     check(os.path.abspath(KEY) not in opened,
           "the KEY file was never opened while building the document")
-    check(any(p.endswith("pr148-pidscan-manifest.tsv") for p in opened),
-          "the manifest WAS opened (the spy is live, so the negative means "
-          "something)")
+    check(os.path.abspath(SHEET) in opened,
+          "the manifest WAS opened (the spy is live, so the KEY negative above "
+          "means something)")
 
     # T4 -- framing
     print("T4  panel framing")
@@ -166,7 +182,8 @@ def main():
         body = [l for l in fh if not l.startswith("#")]
     fr = list(csv.DictReader(body, delimiter="\t"))
     check(fr[0]["verdict"] == "HADRONIC", "filled_sheet.tsv carries the verdict")
-    check(len(fr) == 24 and [r["event"] for r in fr] == [r["event"] for r in rows],
+    check(len(fr) == len(rows)
+          and [r["event"] for r in fr] == [r["event"] for r in rows],
           "filled_sheet.tsv keeps the sheet's rows and order")
     shutil.rmtree(labdir, ignore_errors=True)
     check(not os.path.exists(labdir), "the self-test's label dir is removed")

@@ -41,6 +41,19 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 PORT=${1:-5017}
 shift || true
 
+# --sheet selects which scan is served; it must reach BOTH prep and the viewer,
+# or prep builds payloads for one sheet while the app reads another and the
+# viewer dies on a missing file.
+SHEET=""
+PASS=()
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --sheet)   SHEET="$2"; PASS+=(--sheet "$2"); shift 2 ;;
+        --sheet=*) SHEET="${1#*=}"; PASS+=(--sheet "$SHEET"); shift ;;
+        *)         PASS+=("$1"); shift ;;
+    esac
+done
+
 if ss -ltn 2>/dev/null | grep -q ":${PORT} "; then
     echo "REFUSING: something is already listening on ${PORT}." >&2
     echo "  ss -ltnp | grep ${PORT}   -- bokeh would fail SOFT and leave the" >&2
@@ -48,7 +61,11 @@ if ss -ltn 2>/dev/null | grep -q ":${PORT} "; then
     exit 3
 fi
 
-python3 "$HERE/prep_pr148_scan.py" >/dev/null
+if [ -n "$SHEET" ]; then
+    python3 "$HERE/prep_pr148_scan.py" --sheet "$SHEET" >/dev/null
+else
+    python3 "$HERE/prep_pr148_scan.py" >/dev/null
+fi
 
 BOKEH=/nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/bokeh
 
@@ -58,4 +75,4 @@ exec "$BOKEH" serve --port "$PORT" \
     --allow-websocket-origin="127.0.0.1:${PORT}" \
     --allow-websocket-origin="wcgpu1.phy.bnl.gov:${PORT}" \
     --allow-websocket-origin="wcgpu1:${PORT}" \
-    "$HERE/pr148_scan_viewer.py" --args "$@"
+    "$HERE/pr148_scan_viewer.py" --args "${PASS[@]+"${PASS[@]}"}"
