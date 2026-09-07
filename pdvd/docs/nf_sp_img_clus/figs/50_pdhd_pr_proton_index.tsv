@@ -1,0 +1,4 @@
+# doc pdvd/50 d50_pr_proton_segments.py det=pdhd pdg=2212 files=61
+det	event	seg	npts	ngood	range_cm	med_dqdx
+pdhd	028084_1_d30hnupost	215729117	69	62	64.33962214938865	81610.97164779302
+pdhd	029107_25_d30hnupost	210253409	24	16	37.36794571532979	119257.77295907526
