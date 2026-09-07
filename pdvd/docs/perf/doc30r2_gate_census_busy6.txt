@@ -1,0 +1,1 @@
+GATE d30r2a vs d30r2g (/nfs/data/1/xqian/toolkit-dev/wcp-porting-img/pdhd/work): PASS 6  FAIL 0  MISSING 0  of 6 events, 4 products each

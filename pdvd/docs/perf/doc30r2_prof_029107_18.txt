@@ -1,0 +1,70 @@
+Total: 16744 samples
+       0   0.0%   0.0%    16676  99.6% __libc_start_call_main
+       0   0.0%   0.0%    16676  99.6% __libc_start_main_impl
+       0   0.0%   0.0%    16676  99.6% _start
+       0   0.0%   0.0%    16675  99.6% main
+       0   0.0%   0.0%    16578  99.0% WireCell::Main::operator
+       0   0.0%   0.0%    16578  99.0% WireCell::Pgraph::Graph::call_node
+       0   0.0%   0.0%    16578  99.0% WireCell::Pgraph::Graph::execute
+       0   0.0%   0.0%    16578  99.0% WireCell::Pgraph::Pgrapher::execute
+       0   0.0%   0.0%    16456  98.3% WireCell::Clus::MultiAlgBlobClustering::operator
+       0   0.0%   0.0%    16456  98.3% WireCell::IFunctionNode::operator
+       0   0.0%   0.0%    16456  98.3% WireCell::Pgraph::Function::operator
+       0   0.0%   0.0%     9745  58.2% TaggerCheckSTM::visit
+       0   0.0%   0.0%     9716  58.0% TaggerCheckSTM::check_stm_conditions
+       0   0.0%   0.0%     9691  57.9% TaggerCheckSTM::check_stm_conditions::{lambda#2}::operator
+       0   0.0%   0.0%     8113  48.5% WireCell::Clus::TrackFitting::do_single_tracking
+      61   0.4%   0.4%     7165  42.8% WireCell::Clus::TrackFitting::dQ_dx_fit
+       0   0.0%   0.4%     4414  26.4% WireCell::Clus::Steiner::CreateSteinerGraph::visit
+       0   0.0%   0.4%     4414  26.4% WireCell::Clus::Steiner::CreateSteinerGraph::visit::{lambda#2}::operator [clone .isra.0]
+       0   0.0%   0.4%     3335  19.9% WireCell::Clus::TrackFitting::fill_fitted_charge_2d
+       0   0.0%   0.4%     3139  18.7% WireCell::Clus::ImproveCluster_2::mutate
+     233   1.4%   1.8%     2995  17.9% WireCell::Clus::TrackFitting::fill_fitted_charge_2d::{lambda#1}::operator
+       0   0.0%   1.8%     2373  14.2% TaggerCheckSTM::search_other_tracks
+       8   0.0%   1.8%     1961  11.7% std::_Hashtable::_M_find_node (inline)
+     484   2.9%   4.7%     1892  11.3% std::_Rb_tree::_M_lower_bound (inline)
+     261   1.6%   6.3%     1803  10.8% std::_Hashtable::_M_find_before_node
+       2   0.0%   6.3%     1697  10.1% std::unordered_map::find (inline)
+    1016   6.1%  12.3%     1689  10.1% std::operator<  (inline)
+       6   0.0%  12.4%     1607   9.6% std::_Hashtable::find
+      27   0.2%  12.5%     1541   9.2% std::map::operator[] (inline)
+       0   0.0%  12.5%     1532   9.1% WireCell::Clus::Facade::Cluster::find_graph@2f0400
+       6   0.0%  12.6%     1486   8.9% std::_Rb_tree::~_Rb_tree (inline)
+       0   0.0%  12.6%     1479   8.8% WireCell::Clus::Graphs::make_graph_ctpc_pid
+      93   0.6%  13.1%     1460   8.7% std::_Rb_tree::_M_erase
+       0   0.0%  13.1%     1456   8.7% std::_Rb_tree::_M_drop_node (inline)
+       0   0.0%  13.1%     1448   8.6% std::allocator_traits::destroy (inline)
+       0   0.0%  13.1%     1440   8.6% std::__new_allocator::destroy (inline)
+       0   0.0%  13.1%     1438   8.6% std::pair::~pair (inline)
+      12   0.1%  13.2%     1419   8.5% std::less::operator (inline)
+     652   3.9%  17.1%     1389   8.3% std::_Rb_tree::_M_erase (inline)
+       0   0.0%  17.1%     1357   8.1% std::map::~map (inline)
+       0   0.0%  17.1%     1345   8.0% std::_Rb_tree::_M_destroy_node (inline)
+      46   0.3%  17.4%     1305   7.8% std::__detail::_Hashtable_base::_M_equals (inline)
+     188   1.1%  18.5%     1292   7.7% std::__new_allocator::allocate (inline)
+       0   0.0%  18.5%     1291   7.7% std::allocator_traits::allocate (inline)
+Total: 16744 samples
+    1072   6.4%   6.4%     1072   6.4% std::__detail::_Hashtable_base::_S_equals (inline)
+    1016   6.1%  12.5%     1689  10.1% std::operator<  (inline)
+     652   3.9%  16.4%     1389   8.3% std::_Rb_tree::_M_erase (inline)
+     557   3.3%  19.7%      557   3.3% std::_Rb_tree_increment@@GLIBCXX_3.4@bfcb0
+     484   2.9%  22.6%     1892  11.3% std::_Rb_tree::_M_lower_bound (inline)
+     482   2.9%  25.5%      482   2.9% __memcmp_evex_movbe
+     463   2.8%  28.2%      463   2.8% tc_new
+     422   2.5%  30.7%      991   5.9% std::__new_allocator::construct (inline)
+     413   2.5%  33.2%      413   2.5% std::_Rb_tree::_S_right (inline)
+     384   2.3%  35.5%      384   2.3% std::__detail::_Mod_range_hashing::operator (inline)
+     353   2.1%  37.6%      363   2.2% Eigen::internal::sparse_time_dense_product_impl::run (inline)
+     348   2.1%  39.7%      582   3.5% nanoflann::KDTreeSingleIndexAdaptor::searchLevel
+     329   2.0%  41.7%      333   2.0% tcmalloc::CentralFreeList::FetchFromOneSpans
+     322   1.9%  43.6%      376   2.2% tcmalloc::CentralFreeList::Populate
+     306   1.8%  45.4%      306   1.8% tc_delete_sized
+     280   1.7%  47.1%      280   1.7% std::_Rb_tree_insert_and_rebalance@@GLIBCXX_3.4
+     261   1.6%  48.6%     1803  10.8% std::_Hashtable::_M_find_before_node
+     233   1.4%  50.0%     2995  17.9% WireCell::Clus::TrackFitting::fill_fitted_charge_2d::{lambda#1}::operator
+     188   1.1%  51.2%     1292   7.7% std::__new_allocator::allocate (inline)
+     181   1.1%  52.2%      201   1.2% tcmalloc::CentralFreeList::ReleaseToSpans
+     180   1.1%  53.3%      180   1.1% WireCell::Clus::TrackFitting::CoordReadout::operator< (inline)
+     179   1.1%  54.4%      811   4.8% std::__new_allocator::deallocate (inline)
+     166   1.0%  55.4%      166   1.0% __memcpy_avx512_unaligned_erms
+     153   0.9%  56.3%      238   1.4% nanoflann::L2_Simple_Adaptor::evalMetric (inline)

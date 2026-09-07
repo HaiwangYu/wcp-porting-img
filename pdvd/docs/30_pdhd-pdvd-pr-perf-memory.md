@@ -7,6 +7,13 @@ line, and shipped the fix. PDHD's worst event went **7.51 → 5.00 GB** and no e
 (2083.3 → 2072.8). Gates in §7: **362 events x 4 products, all identical** — PDHD 61/61 and
 PDVD 120/120 in both `-stm` and `-nu`, including the ROOT tree the change writes.
 
+**Round 2 (2026-09-07, §12).** Asked whether there is more. Profiled the CPU for the first
+time, tried the three byte-identical levers the profile suggested, and **measured all three
+at noise (−0.2 % core-s, 0.00 GB)** — none shipped, with the census that says why (PDHD's
+wrapped wires falsify both preconditions). The one large room left is a 40–45× over-storage
+in `fill_fitted_charge_2d`, sized in §12.4 and referred to the owner because taking it would
+change `T_proj_data`. Only a log-only sizing census shipped (gated PASS 6/6).
+
 **One-line cause.** Every STM fit pass's 2-D charge map was held in **three** live copies
 at once. Two of the three were copies of a container that was dead on the next line. Two
 `std::move`s remove them, and the output is byte-identical by construction.
@@ -440,8 +447,138 @@ After that, the ranked list's top row is the structural one: restricting
 `fill_fitted_charge_2d` to the cells a fit actually predicts. That one is knob-required and
 is a round of its own — it changes which cells exist in every downstream product.
 
+## 12. Round 2 (2026-09-07): is there more? The CPU profile, and three levers that measure as noise
+
+**Answer up front: no further byte-identical headroom was found.** Round 1 took PDHD's worst
+event 7.51 -> 5.00 GB. Round 2 profiled the CPU for the first time, tried the three
+byte-identical levers the profile suggested, and **measured all three at noise (-0.2 % core-s,
+0.00 GB)**. None shipped. The one large room that remains is real and is sized in §12.4 --
+but it changes `T_proj_data`, so it is an owner question, not a lever.
+
+### 12.0 Repro
+
+```bash
+cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img
+# pins: r1-post a315be6b7b24 ; census build 22f909f771c0 (this round's only code)
+# CPU profile (precompiled cfg -- SIGPROF corrupts gojsonnet, M17; tcmalloc, never setarch -R)
+pdhd/stm/perf/d30_stage.sh 029107 18 d09ctl2 d30r2p
+LD_LIBRARY_PATH=/home/xqian/tmp/d30_libpin_post TAG=d30r2p pdhd/profile_pr.sh 029107 18 out.prof
+google-pprof --text --cum $(which wire-cell) out.prof | head -45   # docs/perf/doc30r2_prof_029107_18.txt
+
+# the sizing census (log-only, env-gated, byte-neutral when unset)
+WCT_D30_FILL_CENSUS=1 PDHD_MAX_JOBS=1 pdhd/run_pr_evt.sh -s <tag> -stm-fit 29107 18
+grep -o 'd30_fill_census: .*' pdhd/work/029107_18_<tag>/wct_pr_*.log | tail -1
+
+# sequential A/B of two pins on the busy set of 6 (JOBS=1: a 3 % claim is inside
+# batch-contention noise at JOBS=6)
+/home/xqian/tmp/d30r2/ab_seq.sh d30r2a=<pinA> d30r2b=<pinB>
+python3 pdhd/stm/perf/d30_pr_census.py --tsv docs/perf/doc30r2_ab_busy6.tsv pdhd/work d30r2a d30r2b
+```
+
+### 12.1 The CPU profile (PDHD 029107/18, `-stm -stm-fit`, 16744 samples)
+
+The first CPU profile of the PR job in this campaign. Full text:
+`docs/perf/doc30r2_prof_029107_18.txt`.
+
+| region | % of job |
+|---|---|
+| `TaggerCheckSTM::visit` | **58.2** |
+| &nbsp;&nbsp;`TrackFitting::do_single_tracking` | 48.5 |
+| &nbsp;&nbsp;&nbsp;&nbsp;`dQ_dx_fit` | 42.8 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**`fill_fitted_charge_2d`** | **19.9** |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`build_dqdx_rows` | 4.5 |
+| &nbsp;&nbsp;`search_other_tracks` | 14.2 |
+| `CreateSteinerGraph::visit` | **26.4** |
+| &nbsp;&nbsp;`ImproveCluster_2::mutate` | 18.7 (spread over graph build + sampling; no local win) |
+| &nbsp;&nbsp;`make_graph_ctpc_pid` | 8.8 |
+| `record_cluster_fitted_charge_2d` | **0.0** — `m_cluster_filter` is unset in the STM path, so the copy there never runs. One candidate killed for free. |
+
+Flat profile: **~40 % of the whole job is container machinery, not physics** — red-black-tree
+ops 14.3 %, `std::operator<` 6.1 % + `__memcmp_evex_movbe` 2.9 % (the tuple/pair keys),
+hashtable 10.3 %, tcmalloc 9.6 %. That is what made the three levers below look attractive.
+
+### 12.2 Three byte-identical levers, all measured at noise — NOT shipped
+
+Sequential (`JOBS=1`) A/B on the PDHD busy set of 6, r1-post pin vs a pin carrying levers
+(a) and (b). TSV: `docs/perf/doc30r2_ab_busy6.tsv`.
+
+| event | r1 core-s | with levers | delta |
+|---|---|---|---|
+| 028084/18 | 78.7 | 79.5 | +1.0 % |
+| 028084/2 | 65.7 | 65.3 | −0.6 |
+| 029107/12 | 46.2 | 46.3 | +0.2 |
+| 029107/15 | 44.5 | 44.1 | −1.1 |
+| 029107/18 | 64.9 | 64.2 | −1.0 |
+| 029107/9 | 13.2 | 13.3 | +0.5 |
+| **sum** | **313.2** | **312.6** | **−0.2 %** |
+
+Peak RSS unchanged on all six. **Why they don't pay — the census says both preconditions
+are false on PDHD, and the reason is the same in each case: wrapped wires.**
+
+| lever | precondition it needs | measured |
+|---|---|---|
+| (a) cache the outer-map (`APAFacePlane`) pointer instead of walking the tuple-keyed tree per cell | `afp` repeats consecutively | **hit rate 40 %** (029107/18 0.4047, 028084/2 0.3937). Rows arrive in `CoordReadout` (apa, time, channel) order and one channel maps to wires on both faces, so `face` alternates. The added compare on every cell roughly cancels the walks saved on 40 %. |
+| (b) `std::move` the cluster set on a row's last `Coord2D` instead of copying it | rows are mostly single-`Coord2D` | **only 30–33 %** are (0.3252 / 0.2995) — wrapped wires again. |
+| (c) `std::move` `m_acc_fitted_charge` into the holder — the "third copy", verified free in §9 | the merged map is a meaningful share of the peak | peak **4.29 → 4.31** and **5.00 → 5.00 GB**. It is small next to the snapshots, and the peak has already passed by the hand-off. §9's row was right that it is free; it was wrong that it was worth anything. |
+
+All three were reverted. A byte-identical change that buys noise still costs a review and a
+gate.
+
+### 12.3 What did ship: the sizing census only
+
+`WCT_D30_FILL_CENSUS` (log-only, off unless set), matching the existing `WCT_*_CENSUS`
+idiom. Three counters and one DEBUG line; when the env is unset the cost is one
+`static const bool` read.
+
+**Gate:** PDHD busy set of 6, census binary with the env **unset** vs the r1 binary —
+**PASS 6/6**, 4 products each (`docs/perf/doc30r2_gate_census_busy6.txt`), and zero
+`d30_fill_census` lines in the gate arm's logs. Four full arms were not re-run for a log
+line. Note this round's file is `TrackFitting.cxx`, which **SBND and uBooNE do reach** —
+r1 §7's "SBND is exempt" argument does *not* carry over, and does not need to: the code is
+inert when the env is unset.
+`./build/clus/wcdoctest-clus` 328/328, 23108/23108. Freshness proof done; pin `22f909f771c0`.
+
+### 12.4 The one large room, sized — and why it was not taken
+
+`fill_fitted_charge_2d` stores an entry for **every** cell of the fit's charge map, whether
+or not the fit predicts anything there (`pred_charge` just stays 0). The census, per event
+(counters are process-cumulative over all `fill_fitted_charge_2d` calls, not per fit):
+
+| event | calls | cells summed | **per call** | cells with a prediction | share | ratio |
+|---|---|---|---|---|---|---|
+| 029107/18 | 103 | 37.27 M | **362 k** | 902 722 | **2.42 %** | 41× |
+| 028084/2 | 103 | 45.91 M | **446 k** | 1 029 846 | **2.24 %** | 45× |
+
+(103 calls, not 34/36: the persisted passes each run a round-1 and a round-2 fit. The
+`stored_this_fit=20` in the log line is the number of `APAFacePlane` groups in the outer
+map, not a cell count.)
+
+So each fit builds a ~400 k-cell structure of which **~2 %** carries a prediction, and does
+it 103 times. That is the 19.9 % of CPU and the bulk of the remaining memory carrier — a
+40–45× ratio, by far the largest room left.
+
+**It was not taken, and this is a question for the owner rather than a lever.** Those ~98 %
+of cells are the *measured*-charge context: doc pdvd/42 validated the STM fit by comparing
+measured against predicted 2-D charge, and seeing charge the fit does **not** explain is the
+point of that display. Restricting the fill to predicted cells would change `T_proj_data`
+and `PrDisplayDump::dump_proj` — a knob could keep the default byte-identical, but whether
+the ON path is *useful* is a physics call, not a performance one.
+
+**Owner question:** is the off-fit (unpredicted) charge load-bearing for your 2-D scan, or
+is it context you could accept losing on the STM fit dump in exchange for ~20 % of the PR
+job's CPU and most of what remains of its memory?
+
+A narrower version of the same question, and the better next round either way: cells with
+`pred_charge == 0` still each carry a `std::set<Facade::Cluster*>` — 20.5 % of live heap in
+§4's profile. If `dump_proj` does not read `clusters` on unpredicted cells, dropping it
+there may be **byte-identical** to the products, and is a much smaller change than
+restricting the fill.
+
 ## Milestone log
 
+- 2026-09-07 (round 2) — first CPU profile (§12.1); three byte-identical levers tried,
+  all measured at noise, none shipped (§12.2); the sizing census shipped and gated (§12.3);
+  the 40–45x over-storage in `fill_fitted_charge_2d` sized and referred to the owner (§12.4).
 - 2026-09-07 — instrument bias found and quantified (§1); the `save_stm_fit` bracket
   located the carrier (§3); jemalloc live-heap named the two copy sites (§4); root cause
   §5; two `std::move`s shipped as toolkit `c61de88a`; gates §7; scaling law §8;
