@@ -587,6 +587,58 @@ The recommended first move, in order:
 Items 3 and 4 change output and are therefore **blocking asks** (CLAUDE.md
 §5.1); nothing here has been implemented.
 
+## 8.1 The scan set (owner request, 2026-09-07)
+
+Ten events, one APA2 pass each, in `figs/scan10/`. Selected from
+`figs/10_coverage_blocks.tsv` as `apa == 2 and frac_hi96 > 0.8 and cov_w < 0.4`
+— i.e. passes that live in the corner and whose fitted points mostly find no
+charge — taking the largest pass per event. There are 28 such passes over 24
+events; these are the 10 largest.
+
+| # | event | block | points | L [cm] | cov_W | corner frac |
+|---|---|---|---|---|---|---|
+| 1 | 028084_16 | 500 | 833 | 499 | 0.10 | 0.88 |
+| 2 | 029107_20 | 461 | 728 | 435 | 0.07 | 1.00 |
+| 3 | 029107_21 | 500 | 709 | 430 | 0.08 | 1.00 |
+| 4 | 028084_20 | 601 | 675 | 409 | 0.08 | 0.94 |
+| 5 | 028084_9 | 360 | 660 | 397 | 0.07 | 1.00 |
+| 6 | 029107_23 | 421 | 656 | 395 | 0.11 | 1.00 |
+| 7 | 029107_28 | 320 | 612 | 370 | 0.10 | 1.00 |
+| 8 | 028084_3 | 370 | 525 | 315 | 0.08 | 1.00 |
+| 9 | 029107_15 | 521 | 517 | 311 | 0.10 | 1.00 |
+| 10 | 028084_8 | 480 | 426 | 255 | 0.08 | 1.00 |
+
+Each display (`d10_scan_display.py`) carries three layers per plane so the scan
+can decide what the numbers cannot:
+
+- **grey** — every SP gauss charge the detector recorded in that APA (the truth,
+  independent of any reconstruction);
+- **blue** — the ctpc cells this pass's block actually holds (what imaging and
+  clustering kept);
+- **red** — the fitted STM trajectory.
+
+Read it as: *grey with no blue* ⇒ imaging dropped real charge; *blue with no
+red* ⇒ the fit ignored charge it was given; *red over empty grey* ⇒ the
+trajectory is where nothing was recorded. A fifth panel gives the fitted
+dQ/dx vs residual range.
+
+**First-pass read of 3 of the 10 (s02, s05, s08) — the owner's scan is the
+authority, this is only what they look like to me.** In the collection-plane
+zoom the grey shows a field of **short, near-vertical streaks**: charge spanning
+many wires within a few time slices, i.e. ordinary track crossings at many
+different drift times. The blue cells sit on those streaks — **imaging kept the
+charge**. What the red trajectory does is run **nearly horizontally across the
+whole 1 100-slice readout at roughly constant wire**, zig-zagging from one
+streak to the next. The result is a 250–500 cm object that spans the full drift
+at fixed y and z, with dQ/dx that never reaches the muon plateau and is negative
+for 29–49 % of its points.
+
+If that read survives the scan, the failure is **over-clustering along the drift
+direction** — unrelated deposits at different times on neighbouring wires
+stitched into one object — and it belongs to clustering/pattern recognition, not
+to imaging, SP, NF or any mapping. `clus/docs/clustering-connect-isochronous.md`
+is the relevant existing treatment.
+
 ## 9. Limits
 
 - The coverage measure uses a ±2-slice match window. Widening it to ±10 slices
@@ -622,5 +674,7 @@ Items 3 and 4 change output and are therefore **blocking asks** (CLAUDE.md
 | `docs/figs/10_apa2_anatomy_profiles.tsv` | hit fraction vs wire index and vs y, per APA, all 61 events |
 | `docs/figs/10_coverage_{summary,blocks}.tsv` | §3's numbers; `blocks.tsv` also carries `wire_med` and `frac_hi96` per pass, which give §5's per-track corner statistic and the list the §8 item 1 scan set is selected from (`apa == 2 and cov_w < 0.3`) |
 | `docs/figs/10_plane_census.tsv` | §4.0 and §4.1 |
+| `docs/scripts/d10_scan_display.py` | the three-layer hand-scan display of §8.1 |
+| `docs/figs/scan10/s{01..10}_*.png` | the ten-event scan set |
 | `docs/figs/10_tube_{028084,029107}_summary.tsv` | §4's stage table, per run |
 | `docs/figs/10_tube_adc_028084_summary.tsv` | §4's ADC table |
