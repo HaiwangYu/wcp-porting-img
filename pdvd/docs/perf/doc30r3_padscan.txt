@@ -1,0 +1,16 @@
+# doc 30 round 3 -- the pad scan (PDHD 029107/18 and 028084/2, sequential, WCT_D30_FILL_CENSUS=1)
+# census counters are process-cumulative over all fill_fitted_charge_2d calls;
+# T_proj_data cells are the STORED (unique-key) cells the writer emits.
+tag        event       wall_s  peak_gb       cells        kept keep_frac   blocks proj_cells
+d30r3off   029107_18       68     4.31    37271207    37271207    1.0000 blocks=34 cells=917331
+d30r3off   028084_2        70     5.00    45906889    45906889    1.0000 blocks=36 cells=1082588
+d30r3p0    029107_18       46     2.17    37271207      902722    0.0242 blocks=34 cells=157212
+d30r3p0    028084_2        44     1.98    45906889     1029846    0.0224 blocks=36 cells=193782
+d30r3p1    029107_18       47     2.18    37271207      959719    0.0257 blocks=34 cells=164359
+d30r3p1    028084_2        43     2.19    45906889     1080276    0.0235 blocks=36 cells=203042
+d30r3p2    029107_18       47     2.18    37271207      997388    0.0268 blocks=34 cells=168419
+d30r3p2    028084_2        45     2.19    45906889     1116457    0.0243 blocks=36 cells=208502
+d30r3p3    029107_18       49     2.18    37271207     1027958    0.0276 blocks=34 cells=171567
+d30r3p3    028084_2        44     1.94    45906889     1148629    0.0250 blocks=36 cells=212559
+d30r3p5    029107_18       46     2.05    37271207     1079910    0.0290 blocks=34 cells=176214
+d30r3p5    028084_2        45     2.20    45906889     1207978    0.0263 blocks=36 cells=218347

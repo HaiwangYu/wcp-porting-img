@@ -1,0 +1,25 @@
+# doc 30 round 3 gate B -- knob ON (pad 3) vs OFF, per tree.  PDHD -stm busy 6, then PDVD -nu busy 7.
+# d30_tree_diff.py pdhd/work d30r3off d30r3p3
+028084_2       tracking-stm.root:T_proj_data
+028084_18      tracking-stm.root:T_proj_data
+029107_9       tracking-stm.root:T_proj_data
+029107_12      tracking-stm.root:T_proj_data
+029107_15      tracking-stm.root:T_proj_data
+029107_18      tracking-stm.root:T_proj_data
+
+DIFF d30r3off vs d30r3p3: 0 of 6 events identical everywhere
+  tracking-stm.root:T_proj_data changed on 6/6 events
+
+# d30_tree_diff.py pdvd/work d30r3voff d30r3vp3
+039252_5       tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039252_8       tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039252_15      tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039253_11      tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039253_15      tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039349_6       tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+039349_7       tracking-stm.root:T_proj_data,tracking-pr.root:T_proj_data,calib(proj kept)
+
+DIFF d30r3voff vs d30r3vp3: 0 of 7 events identical everywhere
+  calib(proj kept)             changed on 7/7 events
+  tracking-pr.root:T_proj_data changed on 7/7 events
+  tracking-stm.root:T_proj_data changed on 7/7 events

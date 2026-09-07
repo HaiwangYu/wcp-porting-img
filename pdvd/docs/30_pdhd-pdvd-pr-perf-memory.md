@@ -436,6 +436,18 @@ clusters are worse.
 shares of node core-s on a PDVD arm) and carries a PDVD-only stage list. `d30_pr_census.py`
 is a new tool for doc 30's question. The PDVD script is untouched.
 
+**Round 3 adds** (toolkit `TrackFitting.{h,cxx}` — the `proj_pad_wire`/`proj_pad_time` knob
+and its filter; `clus/test/doctest_doc30_proj_pad.cxx`; a case in
+`doctest_clus_knob_defaults.cxx`) and, in wcp-porting-img:
+
+| file | what |
+|---|---|
+| `pdhd/stm/perf/d30_hash_proj.py` | **new** — a `T_proj_data` content hash that is not vacuous (§13.2) |
+| `pdhd/stm/perf/d30_tree_diff.py` | **new** — per-tree diff: *which* product changed, for the knob-ON arm (§13.7) |
+| `pdhd/stm/perf/d30_hash_gate.py` | **edited** — carries `T_proj_data` as a fifth product; earlier runs reported four |
+| `pdhd/stm/perf/d30r3_{scan,busy6,scan_pdvd,retro_proj}.sh` | the round-3 arm drivers |
+| `pdvd/docs/perf/doc30r3_*.{txt,tsv}` | the pad scan, both A/B TSVs, both gates, the 362-event retro-check |
+
 ## 11. Recommended next step
 
 **Take the third copy** — the §9 row above, now verified free rather than merely plausible.
@@ -574,8 +586,274 @@ A narrower version of the same question, and the better next round either way: c
 there may be **byte-identical** to the products, and is a much smaller change than
 restricting the fill.
 
+
+## 13. Round 3 (2026-09-07): the owner's question answered, and the large room taken
+
+Round 2 closed with a question for the owner: is the off-fit (unpredicted) charge in the
+2-D display load-bearing? The owner's answer set this round's task:
+
+> "for this fill_fitted_charge_2d, I think we only need the actual fitted charge and their
+> nearby one, no need to include everything ... This one is only for debugging, and does not
+> really have an impact on the results, right?"
+
+Both halves are confirmed below — the second from primary source and then empirically —
+and the lever is shipped behind a default-OFF knob. **On the PDHD busy set of 6 the knob at
+pad 3 takes 329.4 -> 234.6 core-s (-28.8 %) and the peak RSS of the worst event 5.00 -> 2.19
+GB (-56 %), with every physics product byte-identical.** Round 2's three levers measured at
+-0.2 %; this one is 140x that, because it removes work rather than reorganising it.
+
+### 13.0 Repro
+
+```bash
+cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img
+# pin: r3 binary f1ba2956d921 (/home/xqian/tmp/d30_libpin_r3); freshness proof done
+# arm files: a byte-identical copy of the detector's *_track_fitting.json plus the 2 keys
+sed 's|^\( *\)"div_sigma": \(.*\)$|\1"proj_pad_wire": 3,\n\1"proj_pad_time": 3,\n\1"div_sigma": \2|' \
+    ../toolkit/cfg/pgrapher/experiment/pdhd/pdhd_track_fitting.json > /home/xqian/tmp/d30r3/pdhd_tf_pad3.json
+
+# OFF arm (knob absent = production) and ON arm, sequential, JOBS=1
+LD_LIBRARY_PATH=/home/xqian/tmp/d30_libpin_r3 PDHD_MAX_JOBS=1 WCT_D30_FILL_CENSUS=1 \
+    pdhd/run_pr_evt.sh -s d30r3off -stm-fit 29107 18
+LD_LIBRARY_PATH=/home/xqian/tmp/d30_libpin_r3 PDHD_MAX_JOBS=1 WCT_D30_FILL_CENSUS=1 \
+    PDHD_PR_TLA="-A trackfitting_config=/home/xqian/tmp/d30r3/pdhd_tf_pad3.json" \
+    pdhd/run_pr_evt.sh -s d30r3p3 -stm-fit 29107 18
+
+python3 pdhd/stm/perf/d30_pr_census.py --tsv pdvd/docs/perf/doc30r3_busy6.tsv pdhd/work d30r3off d30r3p3
+python3 pdhd/stm/perf/d30_hash_gate.py  pdhd/work d30r2a    d30r3off   # gate A, 5 products
+python3 pdhd/stm/perf/d30_tree_diff.py  pdhd/work d30r3off  d30r3p3    # gate B, per tree
+python3 pdhd/stm/perf/d30_hash_proj.py  pdhd/work/029107_18_d30r3{off,p3}/tracking-stm.root
+```
+
+Committed artifacts, all regenerable by the commands above:
+`pdhd/stm/perf/d30r3_{scan,busy6,scan_pdvd,retro_proj}.sh` (the arm drivers),
+`pdvd/docs/perf/doc30r3_{padscan.txt,busy6.tsv,pdvd7.tsv,gateA_busy6.txt,gateB_ON_vs_OFF.txt,retro_proj_362.txt}`.
+
+### 13.1 "Only for debugging" — the consumer census
+
+Every reader of the two accessors, repo-wide (`grep -rn 'get_fitted_charge_2d\|get_cluster_fitted_charge_2d'`,
+no `head`, which is how the last one below was nearly missed):
+
+| reader | what it writes |
+|---|---|
+| `root/src/{Pdvd,PdvdPr,Sbnd,SbndPr,Uboone}MagnifyTrackingVisitor.cxx` | the `T_proj_data` tree |
+| `clus/src/PrDisplayDump.cxx:1182` (`dump_proj`) | the calib JSON's `proj` block |
+| `clus/src/TaggerCheckSTM.cxx:917,922` | *writes* the accumulators; reads only its own |
+| `clus/test/doctest_pr109_*.cxx`, `doctest_trackfitting_snapshot_pass.cxx` | tests |
+
+Nothing in `clus/` reads either map to reach a decision, and nothing downstream of the
+`fill_fitted_charge_2d` call inside `dQ_dx_fit` touches `m_fitted_charge_2d` — the reduced-chi2
+loop that follows works off `RU/RV/RW` and `pred_data_*`. `PrDisplayDump.cxx:1173` says it
+in the code's own words:
+
+> "Blast radius is diagnostic-only: the merged map is read by this dumper, the Magnify
+> writers' fallback path and TaggerCheckSTM's stm_fit record. **No tagger verdict, Bee layer
+> or pctree tensor depends on it.**"
+
+That is the grep-level answer. §13.6's Gate B is the empirical one, and it is stronger.
+
+### 13.2 A gate blindness, found here and applying to rounds 1-2
+
+`d30_hash_gate.py`'s docstring made a point of passing `--trees ...,T_proj_data` because
+`hash_root_trees.py`'s default list omits it. **Naming the tree was necessary and not
+sufficient.** `hash_root_trees.py`'s row-sorted hash drops every branch of dtype `object`,
+and when that leaves no columns it returns `sha256("")`. Every branch of `T_proj_data` is
+jagged (one entry holding N per-block vectors), so its per-tree digest was the constant
+`e3b0c442...b7852b855` — sha256 of the empty string — in every file ever hashed. Rounds 1
+and 2 ran a gate that named the display tree and could not read it.
+
+Fixed with `pdhd/stm/perf/d30_hash_proj.py`: the sorted multiset of
+`(cluster_id, channel, time_slice, charge, charge_err, charge_pred)` cell tuples, which is
+order-insensitive and value-sensitive. `d30_hash_gate.py` now carries it as a **fifth
+product**.
+
+**The round-1 arms were then re-checked with it, after the fact:**
+
+| pair | mode | events | `T_proj_data` identical |
+|---|---|---|---|
+| `d30hpre` vs `d30hpost` | PDHD `-stm` | 61 | **61** |
+| `d30hnupre` vs `d30hnupost` | PDHD `-nu` | 61 | **61** |
+| `d30vpre` vs `d30vpost` | PDVD `-stm` | 120 | **120** |
+| `d30vnupre` vs `d30vnupost` | PDVD `-nu` | 120 | **120** |
+
+**362 of 362.** The blindness hid no defect — round 1's two `std::move`s really are
+value-neutral on the display product too — but that was luck, not evidence, until now.
+The general lesson is one step past `feedback_gate_tree_list_explicit`: an explicit tree
+list does not help if the hasher cannot read that tree's branch type. Check that a gate can
+see a *difference* before trusting it to report *no* difference; §13.6 uses the ON arm as
+that negative control.
+
+### 13.3 What shipped
+
+`TrackFitting::Parameters::proj_pad_wire` (**C++ default -1 = OFF**) and `proj_pad_time`
+(pad in *slices*), read by both `fill_fitted_charge_2d` flavours. When on, a cell is stored
+only if it lies within `proj_pad_wire` wires **and** `proj_pad_time` slices of a seed cell,
+in the same `(apa, face, plane)`.
+
+Three design points worth keeping:
+
+* **The seed is the RAW prediction** `pred_data(idx) != 0`, not `pred_charge != 0`.
+  `pred_charge` is forced to 0 by the `charge > 0 && flag != 0` gate, so a dead or
+  below-threshold channel crossed by the track would be dropped by the narrower test and
+  the display would be holed exactly where the fit is most interesting. Measured, the two
+  sets coincide on these events (`seed=902722 predicted=902722`) because the fit excludes
+  dead rows from `R` — so this costs nothing and removes a trap.
+* **OFF is byte-identical by construction, not by gate.** The filter is one predicate that
+  short-circuits to `true` when the knob is off; the legacy loop keeps its exact row order
+  and its last-writer-wins overwrite on cells two rows share. There is no separate OFF body.
+* **The row-level skip.** With the filter on, a row none of whose cells survive is dropped
+  *before* its `global_rb_map` probe — 10.3 % of the flat profile. This is why the CPU win
+  (-28.8 %) exceeds `fill_fitted_charge_2d`'s own 19.9 % share.
+
+The time pad is in slices and converted per `(apa, face)` with
+`Grouping::get_nticks_per_slice()`, the same map `PrDisplayDump` and the Magnify writers use;
+stored times are slice-quantized (`floor(tick/n)*n`), so a pad in raw ticks would keep
+nothing. Tests: `clus/test/doctest_doc30_proj_pad.cxx` (5 cases, incl. the raw-prediction
+seed and the per-plane isolation) plus a knob-default case in `doctest_clus_knob_defaults.cxx`.
+
+### 13.4 The pad is nearly free — measured, not assumed
+
+The worry going in was that a pad would re-admit most of what pad 0 removes: if the seeds
+formed a thin 1-D band, dilating by p would grow the kept set roughly like (3+2p)/3, i.e.
+~2.3x at pad 3. **It does not**, because the seed set is a thick region, not a curve:
+
+| `proj_pad_wire`/`_time` | kept cells, 029107/18 | 028084/2 | stored in `T_proj_data`, 029107/18 | ratio vs OFF |
+|---|---|---|---|---|
+| **OFF** | 37 271 207 (100 %) | 45 906 889 (100 %) | 917 331 | 1.0x |
+| 0 | 902 722 (**2.42 %**) | 1 029 846 (**2.24 %**) | 157 212 | **5.8x** |
+| 1 | 959 719 (2.57 %) | 1 080 276 (2.35 %) | 164 359 | 5.6x |
+| 2 | 997 388 (2.68 %) | 1 116 457 (2.43 %) | 168 419 | 5.4x |
+| 3 | 1 027 958 (2.76 %) | 1 148 629 (2.50 %) | 171 567 | 5.3x |
+| 5 | 1 079 910 (2.90 %) | 1 207 978 (2.63 %) | 176 214 | 5.2x |
+
+Going from **no** context band to a **five**-cell one costs 0.5 percentage points of the
+map and 12 % of the stored cells. Peak RSS and wall are flat across the whole column
+(2.17 / 2.18 / 2.18 / 2.18 / 2.05 GB on 029107/18). **So be generous: pad 3 is the
+recommendation, and pad 5 would also be affordable.**
+
+**A correction to §12.4 while we are here.** That section's "40-45x over-storage" is the
+ratio of *cell writes*, which is the CPU-side quantity. The *stored* map is smaller than the
+write count because `m_fitted_charge_2d` is keyed by `(afp, wire, time)` and many writes
+collapse onto one key: OFF stores 917 331 cells from 37.3 M writes. The memory-side ratio is
+therefore **~5x, not 40x**. Both numbers are real; they answer different questions, and §12.4
+should have said which.
+
+### 13.5 Result — PDHD busy set of 6, sequential (`JOBS=1`), pad 3
+
+`pdvd/docs/perf/doc30r3_busy6.tsv`. `d30r3off` is the same binary with the knob absent, so this
+isolates the knob and not the build.
+
+| event | core-s OFF | core-s pad 3 | delta | peak GB OFF | peak GB pad 3 | delta | `TaggerCheckSTM` res delta OFF -> pad 3 |
+|---|---|---|---|---|---|---|---|
+| 028084/2 | 68.1 | 42.9 | **-37.1 %** | 5.00 | 2.19 | **-56.2 %** | 3.35 -> 0.50 GB |
+| 028084/18 | 84.8 | 63.0 | -25.7 % | 4.58 | 2.41 | -47.4 % | 2.05 -> 0.03 |
+| 029107/9 | 13.3 | 12.5 | -6.0 % | 1.39 | 1.10 | -20.8 % | 0.43 -> 0.14 |
+| 029107/12 | 50.2 | 35.0 | -30.4 % | 3.17 | 1.73 | -45.3 % | 1.76 -> 0.32 |
+| 029107/15 | 47.2 | 34.2 | -27.5 % | 3.51 | 1.94 | -44.6 % | 1.90 -> 0.32 |
+| 029107/18 | 65.7 | 47.0 | -28.5 % | 4.31 | 2.18 | -49.4 % | 2.59 -> 0.46 |
+| **sum / max** | **329.4** | **234.6** | **-28.8 %** | **5.00** | **2.41** | **-51.8 %** | |
+
+029107/9 is the light event (13 s, 1.4 GB) and moves least, as it should: it has little
+2-D map to not build. The census reports `nclus 102, nfit 29, sum_npts 10819` identically
+in both arms — the fits themselves are untouched.
+
+**Stacked on round 1**, PDHD's worst observed event goes 7.51 GB (pre-round-1) -> 5.00
+(round 1) -> **2.19 GB** (round 3 at pad 3), and the two rounds together take about a third
+of the CPU out of the heavy events.
+
+### 13.6 PDVD — smaller, and that is the expected shape
+
+Same knob, same pin, PDVD `-nu -stm-fit` on the doc-28 busy set of 7 (`d48nu7` pctrees),
+sequential. `pdvd/docs/perf/doc30r3_pdvd7.tsv`.
+
+| event | core-s OFF | core-s pad 3 | delta | peak GB OFF | peak GB pad 3 | delta | STM res delta |
+|---|---|---|---|---|---|---|---|
+| 039252/5 | 45.7 | 41.4 | -9.4 % | 2.28 | 2.03 | -10.9 % | 0.18 -> 0.01 |
+| 039252/8 | 72.3 | 64.6 | -10.6 % | 2.73 | 2.39 | -12.5 % | 0.26 -> 0.00 |
+| 039252/15 | 25.0 | 22.4 | -10.5 % | 2.38 | 2.08 | -12.6 % | 0.45 -> 0.17 |
+| 039253/11 | 42.3 | 36.8 | -13.1 % | 2.85 | 2.39 | -16.2 % | 0.48 -> 0.03 |
+| 039253/15 | 27.6 | 25.1 | -9.1 % | 2.08 | 1.87 | -10.1 % | 0.36 -> 0.16 |
+| 039349/6 | 12.4 | 11.3 | -9.1 % | 1.15 | 1.04 | -9.7 % | 0.21 -> 0.10 |
+| 039349/7 | 21.2 | 20.1 | -5.5 % | 1.94 | 1.68 | -13.2 % | 0.38 -> 0.14 |
+| **sum / max** | **246.6** | **221.6** | **-10.1 %** | **2.85** | **2.39** | **-16.2 %** | |
+
+**-10 % CPU and -10..16 % peak, against PDHD's -29 % and -56 %**, and the reason is the one
+§2 already established: on PDVD the STM stage is a *small* part of the job (0.18-0.48 GB of
+a 1.2-2.9 GB peak, vs PDHD's 2.0-3.4 GB of a 1.4-5.0 GB peak). The lever removes the same
+fraction of the same thing; PDVD simply has less of it. Two-thirds of PDVD's remaining
+peak is `CreateSteinerGraph` and the loaded tree, which this round does not touch.
+
+Reported, not averaged away: pooling the two detectors would have advertised ~-20 % CPU,
+which is true of neither.
+
+### 13.7 Gates
+
+**Gate A — knob OFF is byte-identical.** `d30r2a` (round-1/2 pin `a315be6b7b24`) vs
+`d30r3off` (round-3 pin `f1ba2956d921`, knob absent from every `*_track_fitting.json`),
+PDHD busy 6: **PASS 6/6, five products each** — `mabc-pr.zip` by member content, the calib
+dump minus timers, both `tracking-*.root` by tree content, and `T_proj_data` by the new
+cell hash. `pdvd/docs/perf/doc30r3_gateA_busy6.txt`; gate B's output is
+`pdvd/docs/perf/doc30r3_gateB_ON_vs_OFF.txt` and the pad scan is
+`pdvd/docs/perf/doc30r3_padscan.txt`.
+
+**Gate B — knob ON changes the display product and nothing else.** This is the empirical
+form of §13.1, and it doubles as the negative control that proves the instrument can see a
+difference at all.
+
+| arm pair | events | what changed |
+|---|---|---|
+| PDHD `-stm` `d30r3off` vs `d30r3p3` | 6 | `tracking-stm.root:T_proj_data` — **only** |
+| PDVD `-nu` `d30r3voff` vs `d30r3vp3` | 7 | `T_proj_data` in both ROOT files, and the calib JSON **only when its `proj` block is included** (`calib(proj kept)`: identical with `proj` dropped) — **nothing else** |
+
+Products verified *non-vacuously* identical (present and non-empty on both sides, per
+`hash_root_trees.py --per-tree`): `mabc-pr.zip`; `T_rec_charge`, `T_stm_pass`, `T_stm_eval`
+(PDHD and PDVD); `T_stm_michel`, `T_stm_michel_pts` and the non-`proj` calib dump (PDVD).
+**Stated so it is not over-read:** `T_tagger` and `T_kine` are *absent* from the PR job's
+ROOT files (the Q/L job writes them), and PDHD `-stm` writes no calib dump, so those
+comparisons were `NONE == NONE` and prove nothing. What the gate does cover is the STM
+verdicts, the Michel result, the fitted points and the Bee clustering output.
+
+`./build/clus/wcdoctest-clus`: **334/334 test cases, 23144/23144 assertions** (328 before;
+the 6 new cases are this round's). Freshness proof done before every arm (installed
+`libWireCellClus.so` 08:48 vs last source edit 08:47); pin fingerprint `f1ba2956d921`
+unchanged before and after.
+
+### 13.8 How to turn it on, and what is left
+
+The knob is **OFF in the shipped tree and in every detector's config** — the guarantee is
+literally `grep -rn proj_pad_wire cfg/` returning nothing. `TrackFitting.cxx` is shared with
+SBND and uBooNE, and this is what keeps them still: not an argument about their code paths,
+but the absence of the key from `sbnd_track_fitting.json` and the uBooNE presets.
+
+To turn it on for one detector, add two lines to that detector's file — nothing else:
+
+```json
+    "proj_pad_wire": 3,
+    "proj_pad_time": 3,
+```
+
+That is an owner decision, not a performance one, and it is deliberately not done here: it
+changes what the 2-D scan displays. The evidence for making it is §13.4 (a five-cell context
+band costs 12 % of the stored cells) and §13.7 (nothing but the display moves).
+
+**The next lever, and it needs no knob at all.** `check_stm_conditions` fits each pass
+twice: a round-1 fit on the rough path (`TaggerCheckSTM.cxx:3606`) and a round-2 fit on the
+adjusted path (`:3622`), and `begin_pass_record` captures the 2-D map only after the round-2
+fit (`:3624`). The round-1 fit's `fill_fitted_charge_2d` output is therefore built in full
+and then thrown away by the next fill's `m_fitted_charge_2d.clear()` — **about half of the
+103 fills per event are never read by anyone.** A `want_2d` flag threaded through
+`do_single_tracking` would drop them, byte-identically, with no knob. It is worth less now
+than it was before this round (each fill is ~5x cheaper), which is why it is named here and
+not built: measure it before believing a number, per round 2.
+
+Still untouched and still the largest remaining block on PDVD: `CreateSteinerGraph` (26.4 %
+of CPU in §12.1, spread with no local win) and the loaded live tree.
+
 ## Milestone log
 
+- 2026-09-07 (round 3) — the owner answered §12.4's question; `proj_pad_wire`/`proj_pad_time`
+  shipped default-OFF (toolkit, doctest_doc30_proj_pad.cxx); the pad measured nearly free
+  (§13.4); PDHD busy 6 −28.8 % core-s and −51.8 % peak, PDVD busy 7 −10.1 %/−16.2 % (§13.5,
+  §13.6); a gate blindness to `T_proj_data` found and the 362 round-1 arms re-checked (§13.2).
 - 2026-09-07 (round 2) — first CPU profile (§12.1); three byte-identical levers tried,
   all measured at noise, none shipped (§12.2); the sizing census shipped and gated (§12.3);
   the 40–45x over-storage in `fill_fitted_charge_2d` sized and referred to the owner (§12.4).

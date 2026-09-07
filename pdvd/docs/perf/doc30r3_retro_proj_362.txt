@@ -1,0 +1,4 @@
+pdhd d30hpre vs d30hpost : T_proj_data same=61 diff=0 missing=0
+pdhd d30hnupre vs d30hnupost : T_proj_data same=61 diff=0 missing=0
+pdvd d30vpre vs d30vpost : T_proj_data same=120 diff=0 missing=0
+pdvd d30vnupre vs d30vnupost : T_proj_data same=120 diff=0 missing=0
