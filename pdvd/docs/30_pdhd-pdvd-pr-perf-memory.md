@@ -53,8 +53,9 @@ ARM=d30vpost PIN=/home/xqian/tmp/d30_libpin_post JOBS=5 pdhd/stm/perf/d30_run_pd
 #    ... and the same four with MODE=-nu (arms d30{h,v}nu{pre,post})
 
 # 4. census and the scaling law
-python3 pdhd/stm/perf/d30_pr_census.py --tsv <out>.tsv pdhd/work d30hpre d30hpost
-python3 pdhd/stm/perf/d30_law.py <out>.tsv
+python3 pdhd/stm/perf/d30_pr_census.py --tsv pdvd/docs/perf/doc30_pdhd_stm.tsv pdhd/work d30hpre d30hpost
+python3 pdhd/stm/perf/d30_pr_census.py --tsv pdvd/docs/perf/doc30_pdvd_stm.tsv pdvd/work d30vpre d30vpost
+python3 pdhd/stm/perf/d30_law.py pdvd/docs/perf/doc30_pdhd_stm.tsv
 
 # 5. gates (member content / ROOT TREE content, never md5 on an archive -- M2)
 python3 pdhd/stm/perf/d30_hash_gate.py pdhd/work d30hpre d30hpost
@@ -272,6 +273,10 @@ The `TrackFitting.h` change is purely additive — a new rvalue overload; the `c
 overload and every existing caller are untouched, and the only non-test caller is the one
 line changed here.
 
+**Trigger for a future reader:** the SBND argument rests entirely on `save_stm_fit = false`.
+**If SBND ever flips it true, this change becomes ungated on SBND** and needs the §7 gate
+run there before that flip ships.
+
 **Stated limitation:** no SBND PR arm was run. SBND's staged PR inputs were retired in the
 2026-09-05/06 cleanup rounds (0 `pctree-evt*.tar.gz` under `sbnd_xin/work`), so an SBND
 gate would mean regenerating imaging + clustering first. Given the two proofs above that
@@ -377,7 +382,7 @@ clusters are worse.
 |---|---|---|---|---|
 | `fill_fitted_charge_2d` stores a cell for **every** entry of the fit's charge map, dead ones included | `TrackFitting.cxx:1313-1345` — `process_plane` writes an entry even when `charge <= 0 \|\| flag == 0` (it just sets `pred_charge = 0`) | the structural win: it is why per-fit cost tracks the event's charge extent, not the track's length (the §8 law, R² 0.854 against `sum_npts × load_gb`, is the measurement of that) | **high**: changes which cells exist in every downstream product | default-OFF knob + full A/B on every binder |
 | drop the per-cell `std::set<Cluster*>` for consumers that never read it | `TrackFitting.h:614`, filled `TrackFitting.cxx:1345` | the set is 20.5 % of live heap (§4) | changes `T_proj_data` / `PrDisplayDump::dump_proj` | default-OFF knob |
-| move the merged map too (`merge_fitted_charge_2d(m_acc_fitted_charge)`) | `TaggerCheckSTM.cxx:628` | ~0.4 GB | none if the merge target is empty — **unverified**, which is why it was not taken | byte-identical |
+| **move the merged map too** — the third and last copy | `TaggerCheckSTM.cxx:628` → `merge_fitted_charge_2d` | not sized; it is the de-duplicated union of every pass's cells, so smaller than the snapshots but not small | **none — verified free.** The merge is a per-cell insert into `m_fitted_charge_2d`, a *different* member from the snapshots; the `saved` holder is freshly constructed at `:621` and `add_segment` never touches that member, so the target is empty and a whole-map move is exactly equivalent | byte-identical, same gate as §7 |
 | `release_post_nu` in the production pipeline | declared at `pdhd/pr.jsonnet:1654`, in no pipeline | small. **Checked:** `release_fit_scratch()` clears 18 members and `m_cluster_fitted_charge_2d` / `m_fitted_charge_2d` are not among them, so with `slots:['stm']` it cannot reach the carrier at all; it would only take the per-cluster graphs and `GraphAlgorithms` caches | placement before `protect_bundle` would change output; after `pr_display` is safe | byte-identical at that position |
 | `GraphAlgorithms` shortest-path LRU (50 entries × \|V\| per graph per cluster) | `Graphs.h:135` | inside the 0.36–0.44 GB residual of `d30a3` | recompute cost | byte-identical + no core-s regression |
 | the harness `peak_rss_gb` bug (§1) | `run_pr_evt.sh`, both detectors | none — it is an instrument fix | none | n/a |
@@ -409,6 +414,17 @@ clusters are worse.
 `pdvd/stm/perf/pr_perf_profile.py` was **not** forked: it answers doc 28's question (stage
 shares of node core-s on a PDVD arm) and carries a PDVD-only stage list. `d30_pr_census.py`
 is a new tool for doc 30's question. The PDVD script is untouched.
+
+## 11. Recommended next step
+
+**Take the third copy** — the §9 row above, now verified free rather than merely plausible.
+It is the same `std::move` pattern shipped here, one more rvalue overload, and it reuses
+this round's gate unchanged (`d30_hash_gate.py` on four fresh arms, ~1.5 h unattended). It
+was not taken in this round only to keep one gated change per commit.
+
+After that, the ranked list's top row is the structural one: restricting
+`fill_fitted_charge_2d` to the cells a fit actually predicts. That one is knob-required and
+is a round of its own — it changes which cells exist in every downstream product.
 
 ## Milestone log
 
