@@ -1,0 +1,57 @@
+# doc pr/148 sec 14 -- RESCAN, 36 objects, now with the 3-D
+# imaged charge overlaid on the best-fit trajectory.
+#
+# These are the same objects you labelled on 2026-09-06, in a
+# DIFFERENT order, and your earlier verdict is deliberately not
+# on this sheet: a rescan that shows you your own previous
+# answer measures nothing.  Judge each one fresh.
+#
+# Still withheld, as before: the A5 discriminants (growth,
+# bragg, stem), which branch fired, the nue BDT score, the
+# stratum, and the segment count.
+#
+# verdict: EM | HADRONIC | MIXED      weak: 1 if not confident
+#   EM       -- an electron or photon shower
+#   HADRONIC -- a pion/proton/neutron interaction
+#   MIXED    -- both, clustered into one object
+#
+# The display fills this in for you:
+#   ./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan2 \
+#       --sheet docs/pr/pr148-pidscan3-manifest.tsv
+idx	sample	run	subrun	event	obj	shower_id	kine_charge_mev	kine_best_mev	total_len_cm	verdict	weak	note
+0	mcp1k			280972	7031	0	823.486	823.486	88.262	HADRONIC		
+1	mcp1k			399328	12007	0	109.064	110.687	17.611	HADRONIC		
+2	mcp2k			177068	5013	2	35.734	7.753	2.723	EM		
+3	ncpi0			56982	22023	0	563.718	563.718	89.391	EM		
+4	nuecc48			256587	11139	0	3383.619	3383.619	843.004	EM		
+5	mcp2k			406125	8063	0	180.171	139.656	36.785	EM		
+6	nuecc48			122660	9019	1	633.431	633.431	207.25	EM		
+7	mcp1k			386948	92085	17	571.014	571.014	147.556	EM		
+8	nuecc48			54095	17044	0	2489.772	2489.772	518.573	EM		
+9	ncpi0			399860	17051	1	913.831	913.831	254.15	EM		
+10	mcp2k			92904	15002	0	136.655	104.753	26.877	HADRONIC		
+11	ncpi0			463565	13015	0	539.927	539.927	130.157	EM		
+12	nuecc48			239794	2148	0	2487.368	2487.368	447.187	EM		
+13	mcp2k			98844	6019	0	326.923	241.88	138.677	HADRONIC		
+14	ncpi0			21073	11115	0	612.93	612.93	219.457	EM		
+15	nuecc48			74544	12096	0	1915.02	1915.02	344.377	EM		
+16	mcp2k			321015	16013	16	100.094	96.518	35.67	HADRONIC		
+17	mcp1k			281837	63040	0	414.284	284.224	69.62	HADRONIC		
+18	nuecc48			163543	14019	0	394.632	414.217	87.049	EM		
+19	mcp2k			355106	7001	0	76.545	47.331	20.384	EM		
+20	nuecc48			38856	12085	4	396.344	390.753	58.134	EM		
+21	nuecc48			30504	11017	0	179.526	173.774	34.752	EM		
+22	mcp1k			401450	23021	0	1062.898	1062.898	264.791	EM		
+23	mcp2k			76350	12090	0	838.146	838.146	237.475	EM		
+24	nuecc48			163543	14124	3	63.742	73.95	34.167	EM		
+25	nuecc48			433451	4040	0	1880.035	1880.035	438.109	EM		
+26	mcp2k			318769	31030	0	107.429	107.429	24.623	EM		
+27	nuecc48			388	23030	0	724.457	677.089	142.134	EM		
+28	nuecc48			137238	144050	0	555.349	555.349	142.854	MIXED		
+29	mcp1k			315167	8034	1	152.542	227.583	62.098	HADRONIC		
+30	nuecc48			30504	11071	2	836.724	836.724	206.319	EM		
+31	mcp2k			100222	113225	2	1905.075	1905.075	489.207	MIXED		
+32	mcp2k			98294	17002	0	315.617	286.007	69.342	EM		
+33	mcp2k			174771	15019	4	132.306	132.306	24.994	HADRONIC		
+34	mcp2k			165767	7022	0	39.747	34.192	14.015	EM		
+35	nuecc48			38856	12021	1	492.275	492.275	145.297	EM		
