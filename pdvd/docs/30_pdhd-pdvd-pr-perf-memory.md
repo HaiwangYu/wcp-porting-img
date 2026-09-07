@@ -862,8 +862,54 @@ not built: measure it before believing a number, per round 2.
 Still untouched and still the largest remaining block on PDVD: `CreateSteinerGraph` (26.4 %
 of CPU in §12.1, spread with no local win) and the loaded live tree.
 
+### 13.9 FLIPPED ON for PDHD and PDVD (owner, 2026-09-07)
+
+The owner flipped it the same day: `"proj_pad_wire": 3, "proj_pad_time": 3` added to
+`cfg/pgrapher/experiment/pdhd/pdhd_track_fitting.json` and
+`cfg/pgrapher/experiment/protodunevd/pdvd_track_fitting.json` (toolkit `0316086d`), each
+with a `_comment_proj_pad` stating the C++ default, the blast radius and this section.
+`sbnd_track_fitting.json` and the uBooNE presets are **untouched** — `grep -rn proj_pad_wire
+cfg/` returns exactly these two files.
+
+**Scope.** Three components per detector read the file at runtime — `tagger_check_stm`,
+`check_stm_michel`, `tagger_check_neutrino` (`pr.jsonnet:1471,1613,1767`), reached through the
+runners' single `trackfitting_config` (`{pdhd,pdvd}/wct-pr-perevt.jsonnet`). So the flip
+covers the whole PR chain in both `-stm` and `-nu`, and nothing else: no sim, imaging, Q/L or
+uBooNE job binds these files.
+
+**The flip's own gate — the shipped path must reproduce the arm the numbers came from.**
+These files are read at *runtime*, so a compiled-config proof would prove nothing (the file's
+own `_comment_canonical` says so). Fresh arms with **no TLA at all**, gated against the
+measured TLA arms:
+
+| production-config arm | vs measured arm | events | result |
+|---|---|---|---|
+| `d30r3hon` PDHD `-stm` | `d30r3p3` | 6 | **PASS 6/6, 5 products** |
+| `d30r3von` PDVD `-nu` | `d30r3vp3` | 7 | **PASS 7/7, 5 products** |
+
+`pdvd/docs/perf/doc30r3_flip_gate.txt`. The PDHD row also re-confirms the `59cf4c89` range
+guard changes nothing: it compares the guarded binary against the pre-guard one.
+
+**Effect as shipped** (`doc30r3_flip_{pdhd6,pdvd7}.tsv`), knob-absent arm -> production:
+
+| | core-s p50 | peak p50 | peak max | `TaggerCheckSTM` res delta p50 |
+|---|---|---|---|---|
+| PDHD busy 6 | 65.7 -> **42.6** | 4.31 -> **2.18** | 5.00 -> **2.40** | 2.05 -> **0.34 GB** |
+| PDVD busy 7 | 27.6 -> **25.2** | 2.28 -> **2.02** | 2.85 -> **2.39** | 0.36 -> **0.10 GB** |
+
+`nclus`, `nfit` and `sum_npts` are identical in every arm pair — the fits are untouched.
+
+**What a scanner will notice:** `T_proj_data` and the calib `proj` block now carry ~5x fewer
+cells (917 331 -> 171 567 on PDHD 029107/18), i.e. the 2-D panels show a band around the
+fitted trajectory instead of the whole loaded region. That is the intended change and the
+only one. To get the old display back for one job, drop the two keys or set
+`proj_pad_wire` to -1.
+
 ## Milestone log
 
+- 2026-09-07 (round 3, flip) — **`proj_pad_wire`/`proj_pad_time` = 3 turned ON for PDHD and
+  PDVD production** (toolkit `0316086d`, §13.9); the shipped config path gated against the
+  measured arms, PASS 6/6 and 7/7 on five products. SBND and uBooNE untouched.
 - 2026-09-07 (round 3) — the owner answered §12.4's question; `proj_pad_wire`/`proj_pad_time`
   shipped default-OFF (toolkit, doctest_doc30_proj_pad.cxx); the pad measured nearly free
   (§13.4); PDHD busy 6 −28.8 % core-s and −51.8 % peak, PDVD busy 7 −10.1 %/−16.2 % (§13.5,

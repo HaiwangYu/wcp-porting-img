@@ -1,0 +1,9 @@
+# doc 30 round 3 FLIP -- the shipped config path vs the measured TLA arms.
+# The knob now lives in cfg/.../{pdhd,protodunevd}/*_track_fitting.json; these arms carry NO TLA.
+# Both must be PASS: the config edit must reproduce the arm the numbers came from, exactly.
+
+## PDHD: d30r3p3 (TLA, pre-guard binary) vs d30r3hon (production config, guarded binary)
+GATE d30r3p3 vs d30r3hon (pdhd/work): PASS 6  FAIL 0  MISSING 0  of 6 events, 5 products each
+
+## PDVD: d30r3vp3 (TLA) vs d30r3von (production config)
+GATE d30r3vp3 vs d30r3von (pdvd/work): PASS 7  FAIL 0  MISSING 0  of 7 events, 5 products each
