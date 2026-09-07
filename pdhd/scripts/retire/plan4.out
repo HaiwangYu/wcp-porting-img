@@ -1,0 +1,174 @@
+
+==============================================================================
+== sbnd   (/home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present)
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 72 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 18 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 446 arms, 14 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: t2 22f/0d, t3 26f/0d, t4 66f/72d; missing=none ungrounded=none; tier2 already executed, tier3 already executed
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 155 dirs | KEEP 83 | TIER 1 0 = 0.00 GiB | TIER 2 0 = 0.00 GiB | TIER 3 0 = 0.00 GiB | TIER 4 72 = 1.71 GiB | out-of-scope (untouched) 39
+  --- TIER 4 ---   arm                       dirs      GiB  cited
+                    d144dropon                   1     0.11      1
+                    d144dropoff                  1     0.11      1
+                    doc25_r2post5                1     0.10      8
+                    pr143-gateref                1     0.09      1
+                    d37sbndbase                  1     0.09      2
+                    d37sbndnew                   1     0.09      2
+                    d145cont2                    2     0.09      7
+                    d147-on1                     2     0.08      4
+                    d147-off2                    2     0.08      6
+                    d145bridge2                  3     0.07      1
+                    d144np2                      3     0.07      5
+                    d145bridge                   3     0.07      3
+                    d147-tailoff                 2     0.07      0
+                    d147-tailon                  2     0.07      1
+                    d144fire-on                  1     0.04      4
+                    d144fire-off                 1     0.04      3
+                    d45sbnd-on                   1     0.03      0
+                    d45sbnd-on2                  1     0.03      0
+                    d45sbnd-ref                  1     0.03      2
+                    d45sbnd-off3                 1     0.03      2
+                    d45sbnd-off4                 1     0.03      0
+                    d45sbnd-off                  1     0.03      0
+                    d45sbnd-off2                 1     0.03      0
+                    d147-gap1                    1     0.02      0
+                    d31r7probe2                  1     0.02      7
+                    d147-beeon                   1     0.01      0
+                    d147-beeoff                  1     0.01      0
+                    d147-cont1                   1     0.01      2
+                    d46probe                     1     0.01      8
+                    d147-mg0                     1     0.01      1
+                    d45sbnd-off2b                1     0.01      0
+                    d45sbnd-refb                 1     0.01      0
+                    stmcamp-d45g3n3              1     0.01      1
+                    stmcamp-d45g3new             1     0.01      0
+                    stmcamp-d45g3ref             1     0.01      1
+                    stmcamp-d48gatenew           1     0.01      0
+                    stmcamp-d48gatenew2          1     0.01      0
+                    stmcamp-d48gatenew3          1     0.01      0
+                    stmcamp-d48gatenew4          1     0.01      0
+                    stmcamp-d48gateold           1     0.01      0
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_sbnd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_sbnd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 3 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier3_sbnd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 4 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier4_sbnd_20260906.txt  (72 lines, 1.71 GiB)
+
+==============================================================================
+== pdvd   (/home/xqian/toolkit-dev/wcp-porting-img/pdvd/work)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present; partial coverage (by design for probe substrate): {'d28dlfp': 3, 'd34base': 3})
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 55 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 1 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 0 arms, 0 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: t2 10f/0d, t3 7f/0d, t4 54f/55d; missing=none ungrounded=none; tier2 already executed, tier3 already executed
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 1804 dirs | KEEP 1749 | TIER 1 0 = 0.00 GiB | TIER 2 0 = 0.00 GiB | TIER 3 0 = 0.00 GiB | TIER 4 55 = 0.43 GiB | out-of-scope (untouched) 269
+  --- TIER 4 ---   arm                       dirs      GiB  cited
+                    d45onkeep                    2     0.02      2
+                    d48legnew3                   2     0.02      0
+                    d143fleg                     2     0.02      0
+                    d48legnew2                   2     0.02      0
+                    d48legnew4                   2     0.02      2
+                    d48legref2                   2     0.02      3
+                    d45g1n2                      2     0.02      3
+                    d45g1n3                      2     0.02      3
+                    d45g1new                     2     0.02      1
+                    d45on2                       1     0.02      4
+                    d45keep                      1     0.01      4
+                    d45both                      1     0.01      4
+                    d45exoff                     1     0.01      5
+                    d45dump                      1     0.01      4
+                    d45on1                       1     0.01      2
+                    d48smoke                     1     0.01      0
+                    d48smoke2                    1     0.01      3
+                    d48smoke4                    1     0.01      0
+                    d48smoke5                    1     0.01      0
+                    d48smoke3                    1     0.01      1
+                    d45g2n2                      2     0.01      3
+                    d45g2n3                      2     0.01      3
+                    d48stmnew3                   2     0.01      0
+                    d03stmnew11                  2     0.01      1
+                    d143fstm                     2     0.01      0
+                    d45g2new                     2     0.01      1
+                    d48stmnew2                   2     0.01      1
+                    d48stmnew4                   2     0.01      2
+                    d48stmref2                   2     0.01      4
+                    d48legnew                    2     0.00      0
+                    d48legref                    2     0.00      0
+                    d48stmnew                    2     0.00      0
+                    d48stmref                    2     0.00      0
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdvd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdvd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 3 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier3_pdvd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 4 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier4_pdvd_20260906.txt  (55 lines, 0.43 GiB)
+
+==============================================================================
+== pdhd   (/home/xqian/toolkit-dev/wcp-porting-img/pdhd/work)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present; partial coverage (by design for probe substrate): {'d06base': 2, 'd06um': 2, 'd02prod': 2, 'wcc': 1, 'd05mON': 6})
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 43 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 7 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 0 arms, 0 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: t2 8f/0d, t3 10f/0d, t4 49f/43d; missing=none ungrounded=none; tier2 already executed, tier3 already executed
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 619 dirs | KEEP 576 | TIER 1 0 = 0.00 GiB | TIER 2 0 = 0.00 GiB | TIER 3 0 = 0.00 GiB | TIER 4 43 = 0.22 GiB | out-of-scope (untouched) 48
+  --- TIER 4 ---   arm                       dirs      GiB  cited
+                    d04prb                       6     0.02      3
+                    d03stmnew11                  2     0.01      1
+                    d03stmref                    2     0.01      1
+                    d143fstm                     2     0.01      0
+                    d04tgmB                      1     0.01      2
+                    d04tgmD2                     1     0.01      2
+                    d143nu2                      1     0.01      2
+                    d05p                         1     0.01      2
+                    d04probe                     1     0.01      1
+                    d04tgmE2                     1     0.01      2
+                    d04tgmA                      1     0.01      2
+                    d04tgmC                      1     0.01      2
+                    d143fleg                     2     0.01      0
+                    d143fnu                      2     0.01      1
+                    d08bbum                      2     0.01      4
+                    d08bb                        2     0.01      6
+                    d07bbum                      2     0.01    893
+                    d07bb                        2     0.01    271
+                    d08xval                      1     0.00      2
+                    d08von                       1     0.00      2
+                    d08off                       1     0.00      3
+                    d08v1                        1     0.00      1
+                    d08offum                     1     0.00      2
+                    d04tgmF                      1     0.00      5
+                    d03cfg                       1     0.00      2
+                    d08cfgA                      1     0.00      2
+                    d08cfgB                      1     0.00      0
+                    d08cfgC                      1     0.00      1
+                    d08cfgD                      1     0.00      1
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdhd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdhd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 3 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier3_pdhd_20260906.txt  (0 lines, 0.00 GiB)
+  tier 4 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier4_pdhd_20260906.txt  (43 lines, 0.22 GiB)
+
+==============================================================================
+GRAND TOTAL  tier 1 0.00   tier 2 0.00   tier 3 0.00   tier 4 2.36 GiB   all 2.36 GiB
+interlock failures: NONE
+
+This script retired nothing.  Review the tier files, then the owner runs the retire driver (CONFIRM=yes), tier 1 and tier 2 separately.

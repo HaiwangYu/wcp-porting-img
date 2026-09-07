@@ -1,7 +1,7 @@
 #!/bin/bash
 # Cleanup round 2026-09-06 -- deletion driver.  DRY RUN unless CONFIRM=yes.
 #
-#   ./retire_20260906.sh <tier> [tree ...]        tier = 1 | 2 | 3
+#   ./retire_20260906.sh <tier> [tree ...]        tier = 1 | 2 | 3 | 4
 #   CONFIRM=yes ./retire_20260906.sh 1 sbnd pdvd pdhd
 #
 # TIER 1 is what the owner's instruction plainly licenses: uncited, non-input,
@@ -10,8 +10,12 @@
 # on the owner's "intermediate ones can be cleaned up, right? retire them") is
 # the SWEEP POINTS around a shipped value whose shipped arm and gate survive --
 # and, unlike tier 2, it needs no edit to any PROTECTED.txt.  Each carries a
-# stated cost in plan_20260906.py.  Separate runs on purpose: agreeing to one
-# tier is not agreeing to the next.
+# stated cost in plan_20260906.py.  TIER 4 is doc 91's round rather than a disk
+# round -- owner: "many work* directories ... many of them seem to be
+# intermediate files" -- so its grounds are written PER ROUND, not per arm, and
+# what it releases is per-iteration probe arms whose shipped arm and negative
+# controls survive.  Separate runs on purpose: agreeing to one tier is not
+# agreeing to the next.
 #
 # THE TRAP THIS GUARDS (doc 100 catch 2): the 08-31 driver built its tier
 # filename by interpolation, a literal rename missed it, and the first dry run
@@ -22,8 +26,8 @@
 set -u
 D="$(cd "$(dirname "$0")" && pwd)"
 
-TIER=${1:?tier (1, 2 or 3)}; shift || true
-case "$TIER" in 1|2|3) ;; *) echo "tier must be 1, 2 or 3"; exit 1;; esac
+TIER=${1:?tier (1-4)}; shift || true
+case "$TIER" in 1|2|3|4) ;; *) echo "tier must be 1, 2, 3 or 4"; exit 1;; esac
 TREES=${*:-sbnd pdvd pdhd}
 CONFIRM=${CONFIRM:-no}
 

@@ -133,6 +133,60 @@ TREES = {
      "work-stmcamp-d44sig":"as work-stmcamp-d42fit (doc pdvd/44).",
      "work-stmcamp-d46skip":"as work-stmcamp-d42fit (doc pdvd/46).",
    },
+   # TIER 4 (2026-09-06, count-driven).  Owner: "I see many work* directories in
+   # sbnd_xin, do we need all of them there? many of them seem to be
+   # intermediate files."  This is doc 91's round, not a disk round -- 155 dirs
+   # for ~2 GiB.  Grounds are written PER ROUND, not per arm, which is what
+   # makes ~70 dirs about 10 decisions instead of 70.
+   #
+   # CHECKED AND KEPT, each for a measured reason rather than a hunch:
+   #   s144pos/s144neg/s144posleg/s144negleg (14 dirs) -- pr127_sentinels.py:311
+   #     names work-s144pos-mcp2k vs work-s144neg-dvtx as the 2x2 that
+   #     establishes which registry entries are INERT, and doc pr/144:131 runs
+   #     the suite WITH 'work-s144pos-*'.  They are the negative-control layer,
+   #     the only on-disk proof the suite CAN fail -- doc 98's lesson, where
+   #     releasing the OFF baseline would have destroyed the only 31/31 arm.
+   #     work-s144posleg-mcp2k is additionally the sole surviving carrier of
+   #     work-mcp2k-d144off's bytes (byte-identical 6/6, doc pr/144 sec 16.2).
+   #   d147-c8, d147-tail8 -- doc pr/147 secs 13/14 and sec 15.3 item 3 (the
+   #     RECOMMENDED next step) read these two arms by name.
+   #   87flip/87knob-*/87grp-*, vtx105-base, pr134-f086, pr130r1-probe*,
+   #     sent97, d99r3prod*, probe178410a, tfix388-r9 -- PROTECTED.txt.
+   tier4={
+     "d147-off1":"pr/147 CLOSED 2026-09-06 (owner: \"things are good, we can conclude this campaign now\").  These are its per-iteration probe arms: the shipped state is carried by d147-tailflip + d147-flipchk (flip-equivalence 34/34 and 44/44, both PROTECTED) and the two open-item arms d147-c8/d147-tail8 are KEPT.  COST: the intermediate iterations of secs 7-12 become text-only.",
+     "d147-off2":"as d147-off1.", "d147-on1":"as d147-off1.", "d147-on1dump":"as d147-off1.",
+     "d147-on2dump":"as d147-off1.", "d147-tailoff":"as d147-off1.", "d147-tailon":"as d147-off1.",
+     "d147-tailondump":"as d147-off1.", "d147-tailon2dump":"as d147-off1.", "d147-det1":"as d147-off1.",
+     "d147-det2":"as d147-off1.", "d147-tdet1":"as d147-off1.", "d147-tdet2":"as d147-off1.",
+     "d147-gap1":"as d147-off1.", "d147-cont1":"as d147-off1.", "d147-mg0":"as d147-off1.",
+     "d147-beeon":"as d147-off1.", "d147-beeoff":"as d147-off1.",
+     "d144bisboth":"pr/144 single-event bisect and fix-iteration probes, 1 dir each.  The round's shipped arm work-*-d144fixprod (3067 evts) is KEPT and is what sec 16 re-baselined the sentinels onto.  COST: the sec 6.4 crash-fix bisect steps become text-only.",
+     "d144bisframe":"as d144bisboth.", "d144bisguard":"as d144bisboth.", "d144fix":"as d144bisboth.",
+     "d144fix2":"as d144bisboth.", "d144fixchk":"as d144bisboth.", "d144prepr143":"as d144bisboth.",
+     "d144np":"as d144bisboth.", "d144np2":"as d144bisboth.", "d144dropon":"as d144bisboth.",
+     "d144dropoff":"as d144bisboth.", "d144fire-on":"as d144bisboth.", "d144fire-off":"as d144bisboth.",
+     "d145bridge":"pr/145 intermediate sweep arms.  The SHIPPED point work-*-d145prod and the full-sample work-*-d145np (which doc pr/148 sec 16 reads) are both KEPT.  COST: the sweep's middle rows.",
+     "d145bridge2":"as d145bridge.", "d145cont":"as d145bridge.", "d145cont2":"as d145bridge.",
+     "d45sbnd-off":"the SBND side of PDVD doc 45, a CLOSED round whose PDVD arm d45prod is kept; tier 3 already took its off3all/on3all pair.  Checked against BOTH repos' docs first (the doc 100 sec 10 cross-detector casualty shape).  COST: doc pdvd/45's SBND cross-check becomes text-only.",
+     "d45sbnd-off2":"as d45sbnd-off.", "d45sbnd-off2b":"as d45sbnd-off.", "d45sbnd-off2dump":"as d45sbnd-off.",
+     "d45sbnd-off3":"as d45sbnd-off.", "d45sbnd-off4":"as d45sbnd-off.", "d45sbnd-on":"as d45sbnd-off.",
+     "d45sbnd-on2":"as d45sbnd-off.", "d45sbnd-on2dump":"as d45sbnd-off.", "d45sbnd-ref":"as d45sbnd-off.",
+     "d45sbnd-refb":"as d45sbnd-off.",
+     "stmcamp-d45g3n3":"SBND stm-campaign gate arms for closed PDVD/PDHD rounds; tier 3 took the d42/d44/d46 ones and this is the remainder, ~7 MB each.  COST: the SBND side of those docs' cross-checks.",
+     "stmcamp-d45g3n4":"as stmcamp-d45g3n3.", "stmcamp-d45g3new":"as stmcamp-d45g3n3.",
+     "stmcamp-d45g3ref":"as stmcamp-d45g3n3.", "stmcamp-d45sbnddump":"as stmcamp-d45g3n3.",
+     "stmcamp-d46probe":"as stmcamp-d45g3n3.", "stmcamp-d48gatenew":"as stmcamp-d45g3n3.",
+     "stmcamp-d48gatenew2":"as stmcamp-d45g3n3.", "stmcamp-d48gatenew3":"as stmcamp-d45g3n3.",
+     "stmcamp-d48gatenew4":"as stmcamp-d45g3n3.", "stmcamp-d48gateold":"as stmcamp-d45g3n3.",
+     "stmcamp-d48gateold2":"as stmcamp-d45g3n3.", "stmcamp-d143gate":"as stmcamp-d45g3n3.",
+     "stmcamp-d143fgate":"as stmcamp-d45g3n3.",
+     "d37sbndbase":"the SBND pair behind doc pdvd/37's Steiner-terminal cross-check; doc 37 SHIPPED 0.5 cm to three detectors 2026-09-04 and the constant is in the configs.  COST: the SBND half of doc 37's A/B.",
+     "d37sbndnew":"as d37sbndbase.",
+     "doc25_r2post5":"the last surviving arm of PDVD doc 25's SBND regression gate; that round is CLOSED (executed 2026-09-02) and tier 3 took its siblings.",
+     "pr143-gateref":"pr/143's gate reference; the round is CLOSED and tier 2 released its three 3000-event arms, so this is the leftover reference side of a gate whose subject is already gone.",
+     "d31r7probe2":"a single-event probe of doc pdvd/31 (Steiner terminals, SOLVED rounds 1-8).",
+     "d46probe":"a single-event probe of doc pdvd/46's cross-detector defect census; the defects are tracked in doc 46 itself.",
+   },
  ),
  "pdvd": dict(
    root=f"{R}/pdvd", work=f"{R}/pdvd/work", unit="armsuffix",
@@ -172,6 +226,29 @@ TREES = {
      "d43fvd50":"as d43fvoff.", "d43p80c3":"as d43fvoff.", "d43p90c3":"as d43fvoff.",
      "d46dump":"a single-event dump probe behind doc pdvd/46; the census it fed is in the doc.",
    },
+   tier4={
+     "d48legnew2":"doc pdvd/48's per-iteration leg/stm 2-event probes, ~10 MB each.  The round's shipped arm d48nu7, its census arm d48nu3 and the compiled-config proof d48flipcfg are all KEPT.  COST: the per-iteration leg tables become text-only.",
+     "d48legnew3":"as d48legnew2.", "d48legnew4":"as d48legnew2.", "d48legref2":"as d48legnew2.",
+     "d48legnew":"as d48legnew2.", "d48legref":"as d48legnew2.", "d48stmnew":"as d48legnew2.",
+     "d48stmnew2":"as d48legnew2.", "d48stmnew3":"as d48legnew2.", "d48stmnew4":"as d48legnew2.",
+     "d48stmref":"as d48legnew2.", "d48stmref2":"as d48legnew2.",
+     "d48smoke":"doc pdvd/48's single-event smoke probes (sec 8.1); the smoke event's numbers are in the doc and the 120-event arms are kept.",
+     "d48smoke2":"as d48smoke.", "d48smoke3":"as d48smoke.", "d48smoke4":"as d48smoke.", "d48smoke5":"as d48smoke.",
+     "d45g1n2":"doc pdvd/45's 2-event gate probes around an operating point whose arm (d45prod) is KEPT.",
+     "d45g1n3":"as d45g1n2.", "d45g1n4":"as d45g1n2.", "d45g1new":"as d45g1n2.",
+     "d45g2n2":"as d45g1n2.", "d45g2n3":"as d45g1n2.", "d45g2n4":"as d45g1n2.", "d45g2new":"as d45g1n2.",
+     "d45onkeep":"as d45g1n2.", "d45on1":"as d45g1n2.", "d45on2":"as d45g1n2.", "d45both":"as d45g1n2.",
+     "d45exoff":"as d45g1n2.", "d45dump":"as d45g1n2.", "d45keep":"as d45g1n2.",
+     "d45ptdbg":"as d45g1n2.", "d45ptdbg2":"as d45g1n2.", "d45skipdet1":"as d45g1n2.", "d45skipdet2":"as d45g1n2.",
+     "d45skipcanon":"as d45g1n2.", "d45skipcanonnu":"as d45g1n2.",
+     "d03legnew":"the PDVD side of doc pdhd/03's per-iteration leg/stm probes, 2 dirs each.  pdhd tier 2 released the d03nu1..8 arms these accompany; d03nu9, the shipped bag, is kept on the pdhd side.",
+     "d03legnew7":"as d03legnew.", "d03legnew8":"as d03legnew.", "d03legnew9":"as d03legnew.",
+     "d03legnew10":"as d03legnew.", "d03legnew11":"as d03legnew.", "d03stmnew":"as d03legnew.",
+     "d03stmnew7":"as d03legnew.", "d03stmnew8":"as d03legnew.", "d03stmnew9":"as d03legnew.",
+     "d03stmnew10":"as d03legnew.", "d03stmnew11":"as d03legnew.",
+     "d143leg":"pr/143's PDVD leg/stm probes; sec 7.3 states the PDVD chain is not production and tier 2 released d143pref.  d143pnew is KEPT as the substrate today's d08 arms were staged from.",
+     "d143stm":"as d143leg.", "d143fleg":"as d143leg.", "d143fstm":"as d143leg.",
+   },
  ),
  "pdhd": dict(
    root=f"{R}/pdhd", work=f"{R}/pdhd/work", unit="armsuffix",
@@ -179,7 +256,18 @@ TREES = {
    # clusters-apa archives, opflash): 471 inbound directly and 2086 more through
    # stm0, which every other stm arm then borrows from.  Same shape as d27fresh.
    substrate=["(bare)","stm0","stmwc","d06base","d06um","d02prod","wcc","d05mON"],
-   production=["d03nu9","d08both","d08cap20b","stmw"],
+   # CORRECTED 2026-09-06 after INTERLOCK 11 caught the contradiction this list
+   # caused.  It named d08cap20b as production; doc pdhd/08 sec 9.1 and line 616
+   # say the arm taken to the hand scan AND to production is the cap-10 one --
+   # "retile_hack_max_bridge = 10 cm, PDHD **and** PDVD production" -- i.e.
+   # d08cap10, which tier 3 then released as a "sweep point".  THE LESSON: a doc
+   # names the shipped VALUE in its flip section and the ARM in its sweep table,
+   # in different sentences, so a co-occurrence grep for "shipped near <arm>"
+   # cannot see the link.  Audit value-first: read the flip section for the
+   # value, then find the arm that carries it.
+   # d08cap10 is being regenerated (pin d08_libpin/new2 survives, substrate
+   # intact, 30/30 manifests frozen); it re-enters this list once verified.
+   production=["d03nu9","d08both","d08gref","d08goff","stmw"],
    flip_evidence=["stmc4000","stmc2000","stmc1000","stmc250",
                   "phdump","phdumpw","phdumpx","phdumpwc","wccdump","wccdumpw",
                   "qlt","perfslide"],
@@ -207,6 +295,29 @@ TREES = {
      "d08cap20":"as d08cap10.", "d08cap20b":"as d08cap10.", "d08cap40":"as d08cap10.",
      "d08mrg1":"as d08cap10.", "d08mrg3":"as d08cap10.", "d08mrg5":"as d08cap10.",
      "d08mr10":"as d08cap10.", "d08mr15":"as d08cap10.", "d08mr30":"as d08cap10.",
+   },
+   tier4={
+     "d03legnew":"doc pdhd/03's per-iteration leg/stm 2-event probes.  Tier 2 released the d03nu1..8 iteration arms they accompany; d03nu9, the SHIPPED bag, and its pin d47_libpin/new11 are kept.",
+     "d03legnew0":"as d03legnew.", "d03legnew7":"as d03legnew.", "d03legnew8":"as d03legnew.",
+     "d03legnew9":"as d03legnew.", "d03legnew10":"as d03legnew.", "d03legnew11":"as d03legnew.",
+     "d03stmnew":"as d03legnew.", "d03stmnew7":"as d03legnew.", "d03stmnew8":"as d03legnew.",
+     "d03stmnew9":"as d03legnew.", "d03stmnew10":"as d03legnew.", "d03stmnew11":"as d03legnew.",
+     "d03stmref":"as d03legnew.", "d03cfg":"as d03legnew (a compiled-config probe of the same round).",
+     "d143leg":"pr/143's PDHD leg/stm/nu probes; the round is CLOSED and tier 2 released its SBND 3000-event arms.",
+     "d143stm":"as d143leg.", "d143nu":"as d143leg.", "d143nu2":"as d143leg.",
+     "d143fleg":"as d143leg.", "d143fstm":"as d143leg.", "d143fnu":"as d143leg.",
+     "d04tgmA":"doc pdhd/04's single-event TGM probe series, ~7 MB each; the scan they fed is doc 04 itself and its labels under work/stm_scan_labels are untouched.",
+     "d04tgmB":"as d04tgmA.", "d04tgmC":"as d04tgmA.", "d04tgmD":"as d04tgmA.", "d04tgmD2":"as d04tgmA.",
+     "d04tgmE":"as d04tgmA.", "d04tgmE2":"as d04tgmA.", "d04tgmF":"as d04tgmA.",
+     "d04probe":"as d04tgmA.", "d04pgate":"as d04tgmA.", "d04prb":"as d04tgmA.",
+     "d05gate":"doc pdhd/05's single-event gate/probe arms; the mover-scan display it fed reads the labels, which are untouched.",
+     "d05p":"as d05gate.", "d06guard":"a single-event guard probe of doc pdhd/06 (unmerge_assoc), a closed round.",
+     "d08xval":"doc pdhd/08's single-event cross-validation and config probes; the round SHIPPED 2026-09-06 and its arm d08both plus the gate pair d08gref/d08goff are KEPT.",
+     "d08von":"as d08xval.", "d08v1":"as d08xval.", "d08off":"as d08xval.", "d08offum":"as d08xval.",
+     "d08bb":"as d08xval.", "d08bbum":"as d08xval.", "d08cfgA":"as d08xval.", "d08cfgB":"as d08xval.",
+     "d08cfgC":"as d08xval.", "d08cfgD":"as d08xval.",
+     "d07bb":"doc pdhd/07's ghost-census probe pair; the census numbers are in doc 07 and doc 08 shipped the fix.",
+     "d07bbum":"as d07bb.",
    },
  ),
 }
@@ -288,7 +399,7 @@ def plan_tree(tree, cfg):
     # --- what a KEEP is made of -------------------------------------------
     keep_names = (set(cfg["substrate"]) | set(cfg["production"])
                   | set(cfg["flip_evidence"]) | set(cfg["keep_arms"]))
-    tier2_names = set(cfg["tier2"]); tier3_names = set(cfg.get("tier3", {}))
+    tier2_names = set(cfg["tier2"]); tier3_names = set(cfg.get("tier3", {})); tier4_names = set(cfg.get("tier4", {}))
     def is_open(d, a):
         return d.startswith(cfg["open_prefix"]) or (a or "").startswith(cfg["open_prefix"])
     keep_dirs = {d for d, a in universe.items()
@@ -301,12 +412,14 @@ def plan_tree(tree, cfg):
     # matching, and INTERLOCK 10 makes sure that override was intentional.
     keep_dirs -= {d for d, a in universe.items()
                   if d in tier2_names or a in tier2_names
-                  or d in tier3_names or a in tier3_names}
+                  or d in tier3_names or a in tier3_names
+                  or d in tier4_names or a in tier4_names}
 
     cand = {d for d in universe} - keep_dirs
     tier2 = sorted(d for d in cand if d in tier2_names or universe[d] in tier2_names)
     tier3 = sorted(d for d in cand if d in tier3_names or universe[d] in tier3_names)
-    rest  = sorted(cand - set(tier2) - set(tier3))
+    tier4 = sorted(d for d in cand if d in tier4_names or universe[d] in tier4_names)
+    rest  = sorted(cand - set(tier2) - set(tier3) - set(tier4))
 
     # --- INTERLOCK 6 first: citation pulls a dir OUT of tier 1 -------------
     def cited(d):
@@ -318,7 +431,7 @@ def plan_tree(tree, cfg):
     keep_dirs |= set(CITED)
 
     # --- transitive closure: keeping a dir means keeping its substrate -----
-    relset = set(tier1) | set(tier2) | set(tier3)
+    relset = set(tier1) | set(tier2) | set(tier3) | set(tier4)
     for _ in range(12):
         pull = set()
         for d in keep_dirs:
@@ -330,10 +443,11 @@ def plan_tree(tree, cfg):
                         if o in relset: pull.add(o)
         if not pull: break
         keep_dirs |= pull; relset -= pull
-    closure = sorted((set(tier1) | set(tier2) | set(tier3)) - relset)
+    closure = sorted((set(tier1) | set(tier2) | set(tier3) | set(tier4)) - relset)
     tier1 = [d for d in tier1 if d in relset]
     tier2 = [d for d in tier2 if d in relset]
     tier3 = [d for d in tier3 if d in relset]
+    tier4 = [d for d in tier4 if d in relset]
     if closure:
         print(f"        closure: +{len(closure)} dirs pulled back as substrate of a kept dir")
 
@@ -377,7 +491,7 @@ def plan_tree(tree, cfg):
                 if len(acc) > 3000: break
             out[d] = (len(acc), max(acc) if acc else 0)
         return out
-    rel    = tier1 + tier2 + tier3
+    rel    = tier1 + tier2 + tier3 + tier4
     sample = rel[::max(1, len(rel)//120)] if rel else []
     before = snap(sample)
     ps  = subprocess.run(["ps","-eo","cmd"], capture_output=True, text=True).stdout
@@ -451,8 +565,8 @@ def plan_tree(tree, cfg):
         return len(g) >= 40
     noground = sorted(n for n in allt if not grounded(n))
     check(tree, 10, not missing and not noground,
-          f"tier 2: {len(tier2_names)} fam/{len(tier2)} dirs, tier 3: "
-          f"{len(tier3_names)} fam/{len(tier3)} dirs; "
+          f"t2 {len(tier2_names)}f/{len(tier2)}d, t3 {len(tier3_names)}f/{len(tier3)}d, "
+          f"t4 {len(tier4_names)}f/{len(tier4)}d; "
           f"missing={missing or 'none'} ungrounded={noground or 'none'}"
           f"{'; ' + ', '.join(executed) if executed else ''}")
 
@@ -464,15 +578,16 @@ def plan_tree(tree, cfg):
     check(tree, 11, not unres, f"every substrate/production name resolves ({unres or 'all resolve'})")
 
     # ------------------------------------------------------------- report --
-    sz = du_kb([os.path.join(WORK, d) for d in tier1 + tier2 + tier3 + KEEP])
+    sz = du_kb([os.path.join(WORK, d) for d in tier1 + tier2 + tier3 + tier4 + KEEP])
     t1kb = sum(sz.get(d, 0) for d in tier1); t2kb = sum(sz.get(d, 0) for d in tier2)
-    t3kb = sum(sz.get(d, 0) for d in tier3)
+    t3kb = sum(sz.get(d, 0) for d in tier3); t4kb = sum(sz.get(d, 0) for d in tier4)
     print(f"\n  universe {len(universe)} dirs | KEEP {len(KEEP)}"
           f" | TIER 1 {len(tier1)} = {t1kb/1048576:.2f} GiB"
           f" | TIER 2 {len(tier2)} = {t2kb/1048576:.2f} GiB"
           f" | TIER 3 {len(tier3)} = {t3kb/1048576:.2f} GiB"
+          f" | TIER 4 {len(tier4)} = {t4kb/1048576:.2f} GiB"
           f" | out-of-scope (untouched) {len(out_scope)}")
-    for label, dirs in (("TIER 1", tier1), ("TIER 2", tier2), ("TIER 3", tier3)):
+    for label, dirs in (("TIER 1", tier1), ("TIER 2", tier2), ("TIER 3", tier3), ("TIER 4", tier4)):
         byarm = collections.Counter()
         for d in dirs: byarm[universe[d]] += sz.get(d, 0)
         if not byarm: continue
@@ -480,20 +595,21 @@ def plan_tree(tree, cfg):
         for a, kb in byarm.most_common(40):
             n = sum(1 for d in dirs if universe[d] == a)
             print(f"                    {a:<24}{n:>6}{kb/1048576:>9.2f}{CIT.get(a,0):>7}")
-    for tier, dirs, kb in (("1", tier1, t1kb), ("2", tier2, t2kb), ("3", tier3, t3kb)):
+    for tier, dirs, kb in (("1", tier1, t1kb), ("2", tier2, t2kb), ("3", tier3, t3kb), ("4", tier4, t4kb)):
         tf = os.path.join(HERE, f"tier{tier}_{tree}_{STAMP}.txt")
         with open(tf, "w") as fh:
             for d in dirs: fh.write(os.path.join(WORK, d) + "\n")
         print(f"  tier {tier} file: {tf}  ({len(dirs)} lines, {kb/1048576:.2f} GiB)")
-    return t1kb, t2kb, t3kb
+    return t1kb, t2kb, t3kb, t4kb
 
 if __name__ == "__main__":
     want = [a for a in sys.argv[1:] if a in TREES] or list(TREES)
-    g1 = g2 = g3 = 0
+    g1 = g2 = g3 = g4 = 0
     for t in want:
-        a, b, c = plan_tree(t, TREES[t]); g1 += a; g2 += b; g3 += c
+        a, b, c, d4 = plan_tree(t, TREES[t]); g1 += a; g2 += b; g3 += c; g4 += d4
     print(f"\n{'='*78}\nGRAND TOTAL  tier 1 {g1/1048576:.2f}   tier 2 {g2/1048576:.2f}   "
-          f"tier 3 {g3/1048576:.2f} GiB   all {(g1+g2+g3)/1048576:.2f} GiB")
+          f"tier 3 {g3/1048576:.2f}   tier 4 {g4/1048576:.2f} GiB   "
+          f"all {(g1+g2+g3+g4)/1048576:.2f} GiB")
     print(f"interlock failures: {fails or 'NONE'}")
     print("\nThis script retired nothing.  Review the tier files, then the owner "
           "runs the retire driver (CONFIRM=yes), tier 1 and tier 2 separately.")

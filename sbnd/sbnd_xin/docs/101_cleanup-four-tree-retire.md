@@ -509,6 +509,63 @@ the registry, not the data: pr/145 **lifted its waiver on 09-06** (commit
 knob-off control, so it now fails that entry **by design**. Run the suite against
 `d145np` for the current point — it is 0 FAIL there.
 
+## 8.9 TIER 4 — the count-driven round, and the arm it cost
+
+Owner: *"I see many work* directories in sbnd_xin, do we need all of them there?
+many of them seem to be intermediate files."* This is doc 91's round, not a disk
+round. Grounds are written **per round**, not per arm, which turns 170 dirs into
+about 12 decisions.
+
+**Released 170 dirs / 2.36 GiB** (sbnd 72 / 1.70, pdvd 55 / 0.43, pdhd 43 /
+0.22). **sbnd_xin: 155 → 83 work dirs**, and 227 → 83 across the whole round.
+
+Two families were checked and **kept**, each for a measured reason:
+
+- **`s144pos`/`s144neg`/`s144posleg`/`s144negleg` (14 dirs).**
+  `pr127_sentinels.py:311` names `work-s144pos-mcp2k` vs `work-s144neg-dvtx` as
+  the 2×2 that establishes which registry entries are INERT, and doc pr/144:131
+  runs the suite *with* `'work-s144pos-*'`. They are the negative-control layer —
+  the only on-disk proof the suite **can** fail, which is doc 98's lesson, where
+  releasing the OFF baseline would have destroyed the only 31/31 arm. And
+  `work-s144posleg-mcp2k` is now the sole surviving carrier of
+  `work-mcp2k-d144off`'s bytes (byte-identical 6/6).
+- **`d147-c8`, `d147-tail8`.** doc pr/147 §§13–14 and §15.3 item 3 — the
+  *recommended* next step — read these two arms by name.
+
+### THE ARM THIS ROUND COST: `029107_*_d08cap10`
+
+**Tier 3 released the arm backing a value that shipped to PDHD *and* PDVD
+production the same day.** doc pdhd/08 §9.1: *"FLIPPED — `retile_hack_max_bridge
+= 10 cm`, PDHD **and** PDVD production, owner 2026-09-06"*, and line 616: *"the
+arm taken to the hand scan, and now to production: `retile_hack_max_bridge = 10`,
+merge off."* That arm is `d08cap10` (§6 table line 377: *bridge cap **10 cm***).
+Tier 3's ground asserted the shipped arm was `d08both` and released the rest of
+the sweep. It was wrong, and it violated the very doctrine this doc quotes
+elsewhere — an arm backing a just-made decision is not superseded.
+
+**How it was caught, and why not sooner.** INTERLOCK 11 flagged it on the *next*
+plan: `d08cap20b` was in pdhd's `production` list and no longer resolved. That
+was a contradiction I had written into the planner myself — `production` said one
+arm, tier 3's ground said another — and the interlock could only see it after the
+deletion, because before it, both names resolved.
+
+**The audit instrument was the real failure.** My first check grepped for
+ship/flip words *near* each arm name and returned "no ship/flip sentence" for all
+17 tier-3 families, `d08cap10` included. It could not work: a doc names the
+shipped **value** in its flip section and the **arm** in its sweep table, in
+different sentences. **Audit value-first** — read the flip section for the value,
+then find the arm that carries it. Re-audited that way, the other two shipped
+constants were fine: pdvd `d43p90c5` (kept) and `d45prod` (kept); the released
+`d45skip*` pair carries a null result the doc records (STM 594 = 594, TGM
+2549 = 2549).
+
+**Repair.** Owner: *"it is OK, we can reproduce the production run."* Everything
+needed survived: the pin `~/tmp/d08_libpin/new2`, the 38-dir input substrate, the
+hand-scan labels in `work/d08_scan_labels/`, and **30/30 frozen manifests** with
+a SHA-256 per file. Regenerated with the doc's own repro line
+(`ARM=d08cap10 PIN=… EXTRA="-S retile_hack_max_bridge=10"`) and checked against
+the frozen record — see §8.10.
+
 ## 9. Files
 
 Machinery (`pdhd/scripts/retire/`): `toks_20260906.py`, `cit_20260906.py`,
