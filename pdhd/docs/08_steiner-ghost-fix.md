@@ -752,6 +752,57 @@ Blind-safety was re-established for PDVD rather than assumed: `clustering-global
 point set and charges in **all 30 events**, and the 2 events where any point changes cluster touch
 clusters 164 and 237, neither of which is a scan item — so every item has `partition_moved = 0`.
 
+### 9.4 The PDVD scan result — the bar fails, and the way it fails is the finding
+
+`work/d08pv_scan_labels/d08pvflip0/`, 12/12 labelled, **none revealed**.
+`python3 pdvd/d08_scan/score_d08pv_scan.py`.
+
+| id | evt | cluster | key | label | tagger STM, base / cap |
+|---|---|---|---|---|---|
+| 1 | 2 | 41 | lost | UNCLEAR | STM / — |
+| 2 | 21 | 61 | control_none | **STM** | — / — |
+| 3 | 5 | 54 | gained | **STM** | — / STM |
+| 4 | 18 | 40 | control_stm | STM | STM / STM |
+| 5 | 4 | 53 | control_none | UNCLEAR | — / — |
+| 6 | 8 | 55 | lost | **STM** | STM / — |
+| 7 | 5 | 26 | control_none | **STM** | — / — |
+| 8 | 18 | 44 | lost | UNCLEAR | STM / — |
+| 9 | 19 | 28 | control_none | UNCLEAR | — / — |
+| 10 | 28 | 53 | control_stm | STM | STM / STM |
+| 11 | 26 | 16 | control_stm | STM | STM / STM |
+| 12 | 23 | 43 | control_stm | UNCLEAR | STM / STM |
+
+**C0 fails**: 5 of 8 controls scored (bar 6), 3 of 5 agreeing (bar 80 %). By the pre-registered rule
+C1 therefore decides nothing, and it is a tie anyway — of the 4 flips only 2 were scored, one each
+way (item 3 gained and called STM, so the cap is right; item 6 lost and called STM, so the cap is
+wrong). **This scan does not clear the cap on PDVD, and it does not condemn it either.**
+
+**But the failure is not noise, and that is the actual result.** The disagreement is entirely
+one-directional and sits entirely on one class:
+
+- on the 4 objects the tagger calls STM in **both** arms: **3 of 3 scored agree**;
+- on the 4 it calls STM in **neither** arm: **0 of 2 scored agree**.
+
+Every object the scanner could judge — all seven — was called **STM**. Not one THRU. So where the
+tagger says "stopper" the human agrees perfectly, and where it says "not a stopper" the human
+disagrees every time. Both of those objects are *identical in the two arms* (they are controls), so
+this has nothing to do with the bridge cap. Their fit lines say which test rejected them:
+
+| item | | base and cap arm (identical) |
+|---|---|---|
+| 2 | evt 21 cl 61 | `status=3 kink=71 exit_L=46.2 left_L=0.0 npts=71` — `flag_pass` false with the kink at the very last point and no leftover at all |
+| 7 | evt 5 cl 26 | `pass=0 status=5` (`detect_proton`), then `pass=1 status=3` |
+
+`flag_pass` and `detect_proton` — **the same two tests that produce the flips** (§8.2 on PDHD, §9.2
+on PDVD). The scan went looking for a cost of the bridge cap and found, on n = 2, a candidate defect
+in the tagger that is independent of it.
+
+**A flaw in the bar, stated plainly.** `control_none` was drawn from clusters that *were* fitted and
+then rejected — the hardest possible control class. As a calibration gate that conflates "the
+scanner is noisy" with "the tagger over-rejects", and the result above is consistent with the second.
+A control set that also drew from TGM-tagged, unambiguously through-going objects would separate the
+two. C0 as written cannot, so its failure must not be read as "the labels are unreliable".
+
 ### The limit that remains on the PDVD half
 
 PDVD now has its own 30-event grade (§9.2) and a hand scan ready to take labels (§9.3). Until those
@@ -767,8 +818,9 @@ labels exist, the four moved objects rest on the numbers alone. PDVD's consumer 
   production; the C++ defaults of both are still 0.
 - **PDVD is graded now** (§9.2, 30 events on run 039349): > 10 cm 22 → 0, worst 13.0 → 7.6 cm, TGM and
   FC unmoved, 4 STM flips in 147 and all four with an unchanged fit. What is still missing there is a
-  **hand scan** — the app is built and serving (§9.3) but nobody has labelled it yet, and PDVD's
-  consumer is `CheckSTM_Michel`, not PDHD's tagger. No Michel-side effect has been measured at all.
+  **hand scan that can decide it** — the 12-item scan is labelled (§9.4) but its calibration clause
+  fails, one-directionally, in a way that implicates the tagger rather than the cap. PDVD's consumer
+  is `CheckSTM_Michel`, not PDHD's tagger, and no Michel-side effect has been measured at all.
 - **The SBND runtime gate was not run** (§5): no QL pctree for its default sample, and its runner
   `rm -rf`s a PR dir inside a peer's live work root. Substituted by the compiled-config proof that
   SBND's `ImproveCluster_2` block is byte-identical and carries neither key. This is a gap.
