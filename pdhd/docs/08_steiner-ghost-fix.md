@@ -711,12 +711,52 @@ PDVD the whole STM cost of this flip is 4 objects in 147, and not one of them is
 reshaped. That is a tagger-sensitivity question (`flag_pass`, `detect_proton`), and it is the same one
 PDHD's §8.2 raises.
 
+### 9.3 The PDVD hand scan — built, 12 items, port 5017
+
+```bash
+cd wcp-porting-img/pdvd/d08_scan && ./serve_d08pv_scan.sh 5017
+ssh -L 5017:localhost:5017 user@wcgpu1   # http://localhost:5017/d08pv_scan_viewer
+python3 score_d08pv_scan.py              # after labelling
+```
+
+`pdvd/d08_scan/`, forked by duplication from `pdhd/d08_scan/` (untouched). **12 items: the 4 flips
+plus 8 controls** — four clusters tagged STM in *both* arms, four in *neither*, from the same events
+and size band. Four items where every item is a flip announces to the scanner that something changed
+on all of them; the controls remove that, and they are also the only way to measure the scanner's own
+agreement rate on a sheet this small. The sheet carries no verdict, no direction, and **not
+`is_flip`**.
+
+**The bar, fixed in `score_d08pv_scan.py` before any label existed.** `C0` calibration gates
+everything else: at least 6 of the 8 controls must be *scored* (a control called MESSY is not
+evidence and must not count as a disagreement), and agreement on those must be ≥ 80 %. Only then does
+`C1` — the cap must be right at least as often as the baseline on the 4 flips — mean anything. "At
+least", not "strictly more": four items cannot show an improvement and are not asked to. `C2` prints
+any flip scored against the cap together with both arms' `persist_stm_fit` lines, because §9.2 showed
+all four have an unchanged fit, so such a label is a statement about the tagger. `C3` reports blind
+and revealed labels apart.
+
+**Two PDVD-specific things the app had to handle, both found by its selftest (65 checks, all pass):**
+
+1. **Unresolved-t0 points.** 13 518 points across the scan events carry `|x| ≈ 1.5 × 10⁸ cm` — the
+   drift coordinate of a cluster whose t0 was never resolved. Drawn, they collapse every axis. They
+   are dropped in all three point readers, and the selftest asserts the sentinel is really present so
+   the filter cannot be vacuous.
+2. **The STM Bee layers are scoped to the tagged set** (doc pdvd/39 r3), which PDHD's app never had
+   to deal with. Under REVEAL an arm that did not tag the object draws **nothing**, so an empty
+   overlay is that arm's *verdict*, not a missing file. The first selftest run failed on PDHD's
+   inherited assertion "every overlay carries points"; the check is now the true contract —
+   **overlay drawn ⟺ that arm tagged it**, verified for all 24 (item, arm) pairs, 12 of which are
+   tagged so it is non-vacuous in both directions — and the banner says it in words.
+
+Blind-safety was re-established for PDVD rather than assumed: `clustering-global` has the identical
+point set and charges in **all 30 events**, and the 2 events where any point changes cluster touch
+clusters 164 and 237, neither of which is a scan item — so every item has `partition_moved = 0`.
+
 ### The limit that remains on the PDVD half
 
-PDVD now has its own 30-event grade (§9.2) and it supports the flip on PDVD's own data. What it does
-**not** have is a **hand scan**: the four STM objects that move have not been looked at by a person,
-and PDVD's consumer (`CheckSTM_Michel`, doc pdvd/48) is not PDHD's. With TGM and FC both at zero
-flips and all four fits unchanged, the residual risk is small and named; it is not zero.
+PDVD now has its own 30-event grade (§9.2) and a hand scan ready to take labels (§9.3). Until those
+labels exist, the four moved objects rest on the numbers alone. PDVD's consumer is `CheckSTM_Michel`
+(doc pdvd/48), not PDHD's tagger, and no Michel-side effect has been measured at all.
 
 ---
 
@@ -727,8 +767,8 @@ flips and all four fits unchanged, the residual risk is small and named; it is n
   production; the C++ defaults of both are still 0.
 - **PDVD is graded now** (§9.2, 30 events on run 039349): > 10 cm 22 → 0, worst 13.0 → 7.6 cm, TGM and
   FC unmoved, 4 STM flips in 147 and all four with an unchanged fit. What is still missing there is a
-  **hand scan** — nobody has looked at those four objects, and PDVD's consumer is `CheckSTM_Michel`,
-  not PDHD's tagger.
+  **hand scan** — the app is built and serving (§9.3) but nobody has labelled it yet, and PDVD's
+  consumer is `CheckSTM_Michel`, not PDHD's tagger. No Michel-side effect has been measured at all.
 - **The SBND runtime gate was not run** (§5): no QL pctree for its default sample, and its runner
   `rm -rf`s a PR dir inside a peer's live work root. Substituted by the compiled-config proof that
   SBND's `ImproveCluster_2` block is byte-identical and carries neither key. This is a gap.

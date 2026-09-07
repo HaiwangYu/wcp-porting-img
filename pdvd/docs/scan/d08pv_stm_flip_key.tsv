@@ -1,0 +1,13 @@
+scan_id	event	cluster	direction	is_flip	partition_moved
+1	2	41	lost	1	0
+2	21	61	control_none	0	0
+3	5	54	gained	1	0
+4	18	40	control_stm	0	0
+5	4	53	control_none	0	0
+6	8	55	lost	1	0
+7	5	26	control_none	0	0
+8	18	44	lost	1	0
+9	19	28	control_none	0	0
+10	28	53	control_stm	0	0
+11	26	16	control_stm	0	0
+12	23	43	control_stm	0	0

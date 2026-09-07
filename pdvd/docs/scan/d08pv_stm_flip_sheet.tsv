@@ -1,0 +1,16 @@
+# doc pdhd/08 sec 9.3 PDVD STM hand scan -- ITEM LIST, no verdicts.
+# base=d08pv30off arm=d08pv30on run=039349 seed=20260906.  DIRECTION IS DELIBERATELY ABSENT,
+# and so is whether an item flipped at all: 8 of these did not.
+scan_id	tranche	event	cluster	npts	length_cm	partition_moved
+1	1	2	41	1067	81.0	0
+2	1	21	61	316	46.4	0
+3	1	5	54	2034	304.5	0
+4	1	18	40	2110	288.8	0
+5	1	4	53	137	19.6	0
+6	1	8	55	355	73.8	0
+7	2	5	26	864	103.1	0
+8	2	18	44	336	58.8	0
+9	2	19	28	167	21.8	0
+10	2	28	53	575	88.3	0
+11	2	26	16	1329	189.3	0
+12	2	23	43	1170	132.3	0
