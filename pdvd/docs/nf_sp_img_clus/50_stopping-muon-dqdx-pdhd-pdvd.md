@@ -20,12 +20,18 @@ that would be good to add as well."*
    charge-complete tracks (k = 0.89 vs 0.94) and follow the *same* k-vs-
    completeness curve. They differ only in how many fitted points carry full
    charge: median f_low **0.262 on PDHD vs 0.042 on PDVD**.
-3. The cut that destroys the PDHD sample is doc-55's **muon shape rms ≤ 0.10**
+3. **PDHD's two drift volumes disagree by a factor 1.63.** APA0+APA2 (x<0,
+   face 0) read **0.573** of the muon table on the plateau; APA1+APA3 (x>0,
+   face 1) read 0.935-0.941 — with no free scale, on 21 of 26 events. It is
+   **not a gain shift**: the surviving points agree to 5 % in all four APAs,
+   and what differs is the share of points killed (43-47 % vs 29 %). PDVD's
+   control asymmetry is 1.18 with 4-19 % killed. §4.2-§4.4.
+4. The cut that destroys the PDHD sample is doc-55's **muon shape rms ≤ 0.10**
    (33 → 1 tracks). It is not a stopping-muon selector; it is a charge-
    completeness selector in disguise. Replacing it with an explicit
    completeness cut gives **6 PDHD / 67 PDVD** clean stopping muons and both
    detectors then agree with their own expectation.
-4. **No usable stopping-proton population exists in either sample**, and the
+5. **No usable stopping-proton population exists in either sample**, and the
    dQ/dx-vs-rr shape cannot supply one: the proton and muon tables differ by a
    ×1.6 *normalisation* but only 0.06 in *shape*. Section 7 gives the four
    independent searches and what each returned.
@@ -62,7 +68,15 @@ python3 $P --det pdvd --out $S/ana/d50_pdvd_prp pdvd/work/*_d30vnupost/tracking-
 # 4. figures
 python3 pdvd/docs/nf_sp_img_clus/scripts/d50_dqdx_rr_plots.py \
       --ana $S/ana --figs pdvd/docs/nf_sp_img_clus/figs
+for D in pdhd pdvd; do
+  python3 pdvd/docs/nf_sp_img_clus/scripts/d50_deficit_plots.py \
+      --det $D --ana $S/ana --figs pdvd/docs/nf_sp_img_clus/figs
+done
 ```
+
+Readout-unit assignment in `d50_deficit_plots.py` is geometric, read from the
+production wire files: `protodunehd-wires-larsoft-v1.json.bz2` (PDHD, 4 APAs)
+and `protodunevd-wires-larsoft-v7-uvwfit.json.bz2` (PDVD, 8 anodes x 2 faces).
 
 **Arms and epoch.**
 
@@ -228,76 +242,120 @@ The check that it lands on the right population is that on PDVD it reproduces
 the established doc-55 tier's scale — 0.952 (67 tracks) vs 0.931 (45 tracks) —
 with 50 % more tracks and a *better* χ² (40.0 vs 69.6).
 
-### 4.2 What a charge-deficient PDHD track actually looks like
+### 4.2 What the PDHD deficit actually is: a drift-volume effect
 
-The deficiency is not per-point noise. Consecutive-deficient-point run lengths:
+![](figs/50_pdhd_deficit_anatomy.png)
 
-| | median run | mean run | share of deficient points in runs ≥ 10 | longest run |
-|---|---|---|---|---|
-| PDHD | 4 | 11.1 | **78 %** | 345 pts |
-| PDVD | 2 | 3.6 | 32 % | 136 pts |
+*PDHD. (a) plateau charge split by drift volume; (b) per APA, all plateau points
+(solid) against only the points above 0.5 x plateau (hatched), with the share
+killed printed below; (c,d) the deficient fraction mapped in (y, z), one panel
+per drift volume, APA boundary drawn; (e) one typical track from each volume;
+(f) the per-event ratio between the volumes.*
 
-So a typical affected PDHD track has one or more *extended stretches* — tens of
-points, i.e. tens of centimetres — where the fit gets little charge, separated by
-stretches that are near-normal. Example, `029107_21` block 1100 (193 live
-points, f_low 0.38), dQ/dx in ke/cm along the trajectory, every 4th point:
+**The deficit tracks the drift volume, not a region.** Assigning every fit point
+to its APA geometrically from `protodunehd-wires-larsoft-v1.json.bz2`
+(APA0: x<0 z<231; APA1: x>0 z<231; APA2: x<0 z>=231; APA3: x>0 z>=231), the
+plateau (rr 40-60 cm) charge against the table, **with no free scale**:
 
-```
- 22   5   4  11  20  29  37  43  44  43  39  33  27  20  12   8  11  19  30  44  61
- 78  92 101 104  99  88  72  55  38  24  15  10   8   1   8  23  42  61  77  85  83
- 72  53  31   9   5   6  11
-```
+| APA | drift volume | plateau dQ/dx / table | points |
+|---|---|---|---|
+| APA0 | x < 0 (face 0) | **0.573** | 2 128 |
+| APA1 | x > 0 (face 1) | **0.941** | 1 378 |
+| APA2 | x < 0 (face 0) | **0.573** | 1 774 |
+| APA3 | x > 0 (face 1) | **0.935** | 1 643 |
 
-Four stretches of 15–23 consecutive deficient points, all in the same corner of
-the detector (y 20–56 cm, z 394–458 cm), with the same track's *other* points at
-47 945 e/cm = 0.88 of plateau. The track is not globally wrong; specific
-stretches of it are.
+APA0 and APA2 agree with each other to three decimal places, as do APA1 and
+APA3, and `cfg/pgrapher/experiment/pdhd/clus.jsonnet` groups them exactly that
+way: **APA0+APA2 = face 0 (drift -x), APA1+APA3 = face 1 (drift +x)**. On PDHD
+the sign of x *is* the drift volume, so this is a **factor 1.63 between the two
+halves of the detector**, not an APA0 problem and not the corner effect an
+earlier version of this section reported (that reading was an artifact of
+pooling the two volumes: panel (c) shows the x<0 deficit is detector-wide).
 
-**The charge is lost, not merely mis-assigned.** The oscillation invites the
-reading that charge is being shuffled between neighbouring points. It is not:
-per track over rr 20–100 cm, the *integral* sum(dQ)/sum(dx) falls with the
-per-point median rather than staying flat —
+It is on **every event**, not a few: over the 26 events with >=40 plateau points
+in both volumes, median(x<0)/median(x>0) has median **0.56**, and **21 of 26**
+events fall below 0.8 (panel f).
 
-| f_low | PDHD median / plateau | PDHD integral / plateau | PDVD median | PDVD integral |
-|---|---|---|---|---|
-| 0.00–0.05 | 1.073 | 1.103 | 1.008 | 1.061 |
-| 0.15–0.30 | 0.947 | 0.944 | 0.818 | 0.801 |
-| 0.30–0.50 | 0.540 | 0.630 | 0.484 | 0.561 |
-| 0.50–1.00 | 0.226 | 0.323 | 0.277 | 0.386 |
+**It is not a gain shift.** If one volume were simply mis-calibrated, its whole
+charge distribution would slide. It does not — the distribution is **bimodal**
+(panel a), and the points that survive land in the same place everywhere:
 
-(the integral sits slightly above the median at high f_low, so *some* charge is
-recovered by the peaks, but most of it is genuinely missing).
+| APA | all plateau points | only points > 0.5 x plateau | share killed |
+|---|---|---|---|
+| APA0 | 0.573 | **0.952** | 43 % |
+| APA1 | 0.941 | **1.045** | 29 % |
+| APA2 | 0.573 | **1.032** | 47 % |
+| APA3 | 0.935 | **1.043** | 29 % |
 
-**Where it happens.** Deficient fraction is strongly localised on PDHD and flat
-on PDVD: PDHD z 424–462 cm gives 0.482 and y 8–82 cm gives 0.511, against
-0.10–0.25 elsewhere; every PDVD bin is 0.05–0.13. And it tracks how close the
-claimed stopping point is to a y/z detector edge:
+So the surviving charge is right to within 5 % in all four APAs. What differs is
+**how many points get killed**. That is a charge-attribution failure, not a
+calorimetry constant, and it is why a *scale* correction cannot repair it.
 
-| stop distance from nearest y/z edge | PDHD tracks (median f_low) | PDVD tracks (median f_low) |
+**The two bad APAs fail differently**, which matters for where to look. Binning
+the plateau points by fraction of the expectation:
+
+| APA | < 0.2 (dead) | 0.2-0.5 (partial) | 0.5-0.8 | 0.8-1.2 | > 1.2 |
+|---|---|---|---|---|---|
+| APA0 | 0.13 | **0.29** | 0.21 | 0.21 | 0.16 |
+| APA1 | 0.16 | 0.12 | 0.09 | 0.42 | 0.21 |
+| APA2 | **0.31** | 0.16 | 0.13 | 0.27 | 0.13 |
+| APA3 | 0.14 | 0.15 | 0.11 | 0.40 | 0.20 |
+
+APA0's excess sits in the **partial** band — points that keep some charge but
+not enough. That is the signature of a *weakened* plane, and PDHD has a
+documented one: `pdhd/docs/sp-apa0-plane2.md` records that **APA0's collection
+plane behaves like an induction plane with much weaker signals because of a
+hardware fault**. APA2's excess sits in the **dead** band instead, so whatever
+APA2 suffers from is not the APA0 fault. The face-0 grouping is common to both.
+
+### 4.3 PDVD as the control: this is PDHD-specific
+
+![](figs/50_pdvd_deficit_anatomy.png)
+
+*The identical analysis on PDVD, whose 16 CRP quadrants (2 drift volumes x 4 y
+bands x 2 z bands) come from `protodunevd-wires-larsoft-v7-uvwfit.json.bz2`.*
+
+PDVD does have a drift-volume asymmetry, and that is the useful part of the
+control — it is **mild, uniform, and the opposite sign**:
+
+| | PDHD | PDVD |
 |---|---|---|
-| 0–15 cm | 45 (0.51) | 25 (0.14) |
-| 15–30 cm | 35 (0.30) | 82 (0.060) |
-| 30–60 cm | 92 (0.30) | 149 (0.043) |
-| 60–120 cm | 69 (0.17) | 194 (0.036) |
-| > 120 cm | 48 (0.089) | 54 (0.041) |
+| plateau ratio, x<0 volume | **0.573** | 1.00 - 1.07 |
+| plateau ratio, x>0 volume | 0.935 - 0.941 | 0.86 - 0.92 |
+| volume asymmetry | **0.61** | 1.18 |
+| share of points killed | **29 % (good volume) - 47 %** | **4 - 19 %** |
+| spread across readout units *within* a volume | 0.000 (2 APAs) | <= 0.08 (8 CRPs) |
+| per-event ratio | median 0.56, **21/26 events below 0.8** | median 1.20, **0/44 below 0.8** |
 
-PDHD stops within 15 cm of a y/z edge **16 %** of the time against PDVD's 5 %,
-and those tracks are the worst. But edge proximity is not the whole story:
-PDHD's most interior tracks still sit at f_low 0.089 against PDVD's 0.041.
+Three things follow. **First**, a modest uniform volume asymmetry is normal in
+this chain — PDVD's 18 % is there and nobody has chased it — so PDHD's factor
+1.63 is the anomaly, not the existence of an asymmetry. **Second**, PDVD's 16
+quadrants are homogeneous *within* each volume (1.00-1.07 and 0.86-0.92), so the
+effect is per-volume on both detectors, not per-readout-unit. **Third, even
+PDHD's good volume is worse than PDVD's bad one** — 29 % of points killed
+against 9-19 % — so PDHD carries a baseline attribution problem on top of the
+volume split. Panel (e) makes the difference visible directly: PDVD's tracks
+scatter around the expectation, PDHD's x<0 track spends most of its length
+below the deficient threshold.
 
-**What this is not.** The tempting explanation — that edge stops are *fake*
-stops, i.e. the charge fading out is being read as a Bragg end — is **not
-supported**. Bragg contrast is flat against edge distance on both detectors
-(PDHD 0.69–1.19, PDVD 0.94–1.09 across every distance bin). Poor contrast is
-the population-purity issue of §4.0, present equally on PDVD, and it is
-independent of the completeness issue.
+### 4.4 What this does and does not invalidate
 
-**What causes it is still open.** The characterisation above — long stretches,
-real loss, concentrated in the low-y / high-z corner, worse near edges, same
-k-vs-f_low relation as PDVD so the same failure mode at higher prevalence — is
-consistent with the wrapped-plane charge attribution of `pdhd/docs/04` §8 and
-the retiler ghosts of `pdhd/docs/07`, but **this round does not test that**. §9
-names the concrete next test.
+**Does not**: the doc-50 clean tier survives. Its 6 PDHD tracks have median
+dQ/dx 53 500 - 62 900 e/cm, i.e. all normal, and they split 3 purely x>0, 2
+purely x<0, 1 mixed. The completeness cut removes the killed points *before* the
+scale is measured, which is why §5's k_pop = 1.049 stands and why restricting to
+either volume moves it only to 1.076 (x>0) or 1.014 (x<0). The cut is doing
+exactly what §4.1 says it does.
+
+**Does**: any PDHD quantity built on *pooled, unselected* per-point dQ/dx. That
+includes the raw plateau of §5's decode cross-check when read as a calorimetry
+statement, and — more importantly — anything inside the reconstruction that
+consumes dQ/dx without a completeness cut. `TaggerCheckSTM`'s own Bragg and KS
+tests are in that category: they run on the same points, they are normalised to
+a single `mip_dqdx = 56000 e/cm` for the whole detector, and in the x<0 volume
+the median plateau point is at 32 000. That is a plausible mechanism for the
+purity finding of §4.0 (median accepted Bragg contrast 0.90 on PDHD against 1.07
+on PDVD) but it is **not tested here** and should not be quoted as established.
 
 ## 5. The comparison the owner asked for
 
@@ -433,6 +491,9 @@ protons, or a dedicated selection over PR segments rather than STM fits.
 - **The lowest rr bins are the least trustworthy on both detectors** — doc
   pdvd/32 showed the STM trajectory's track ends are amputated, and doc 38's
   end trim moves points near the stop. The Bragg bin sits exactly there.
+- **PDHD's pooled per-point dQ/dx is not a calorimetry measurement** until the
+  drift-volume split of §4.2 is understood. Only the completeness-selected tier
+  is quoted here as a scale, and §4.4 says what that does and does not cover.
 - **f_low is a diagnostic, not a fix.** It selects tracks whose charge was
   reconstructed completely; it does not recover the charge missing from the
   other 78 % of PDHD passes.
@@ -442,41 +503,50 @@ protons, or a dedicated selection over PR segments rather than STM fits.
 
 ## 9. Recommended next step
 
-**Measure the PDHD charge deficit, not more PDHD events.** Imaging the two
-un-imaged PDHD runs (027980, 027305, ≈ 66 events) would roughly double every
-tier — 6 → ~12 clean tracks — and still not settle the hump. The 78 % of PDHD
-passes with f_low > 0.05 are the real target: if the wrapped-plane attribution
-of `pdhd/docs/04` §8 is the cause, fixing it converts PDHD's 303 accepted passes
-into a sample the size of PDVD's and makes the hump decidable on two detectors.
-§4.2 narrows the target considerably. The deficit is real charge loss over
-extended stretches, concentrated in the **low-y / high-z corner** (y < 82 cm and
-z > 424 cm each run ~0.50 deficient against 0.10–0.25 elsewhere), and it is
-worse the closer the track's stop is to a y/z boundary. Two concrete tests, both
-needing no new dump:
+The target moved. §4.2 replaces "PDHD loses charge in a corner" with a specific,
+first-order defect: **the x<0 drift volume (APA0+APA2, face 0) kills 43-47 % of
+its fit points where the x>0 volume kills 29 %, and the surviving points in both
+are correct to 5 %.** Imaging more PDHD events buys nothing against this.
 
-1. **Overlay the deficient stretches on the PDHD wire map.** `T_rec_charge`
-   carries `pu/pv/pw` per point; if the wrapped U/V attribution of
-   `pdhd/docs/04` §8 is the cause, the stretches should land on identifiable
-   wrapped-wire regions rather than scattering over the corner.
-2. **Cross-check against the dead-channel map** (`T_bad_ch`, present in the same
-   file). If the stretches coincide with dead channels this is a masking
-   problem, not an attribution one — and the two have different fixes. The
-   periodic collapse-and-recover of the §4.2 example argues against a static
-   dead-channel map, but that is an impression, not a test.
+Four tests, in the order that narrows fastest. None needs a new dump.
 
-Second, an open offer rather than a plan: the completeness cut is new, and
-nothing here confirms by eye that it selects *real* stopping muons. The 6 PDHD
-and 67 PDVD clean stoppers are listed by event and block in
+1. **Is the charge already missing before the fit?** Compare the per-point fit
+   charge against the *imaging* charge in the same region (the
+   `clusters-apa-apa{0..3}-ms-active.tar.gz` products, one per APA, are already
+   on disk). If the imaging charge is there and the fit does not pick it up, it
+   is `TrackFitting`; if the imaging charge is already absent, it is upstream in
+   SP/imaging. **This single test splits the problem in half** and should come
+   first.
+2. **Separate the APA0 hardware fault from whatever APA2 has.** §4.2 shows they
+   fail differently — APA0 in the partial band (0.29), APA2 in the dead band
+   (0.31). `pdhd/docs/sp-apa0-plane2.md` explains APA0. APA2 needs its own
+   explanation, and the fact that both are face 0 is the clue.
+3. **Check `T_bad_ch`**, present in the same ROOT files, against the killed
+   points. If they coincide this is a masking problem with a different fix than
+   an attribution problem.
+4. **Ask whether the tagger inherits it.** `TaggerCheckSTM` normalises to a
+   single `mip_dqdx = 56000 e/cm` for the whole detector while the x<0 volume's
+   median plateau point sits at 32 000. §4.4 flags this as a plausible mechanism
+   for PDHD's low accepted-population Bragg contrast; a per-volume census of the
+   tagger's own contrast would confirm or kill it.
+
+The two earlier suggestions still stand but are now lower priority: overlaying
+the killed points on the wrapped U/V wire map (`pu/pv/pw` are in
+`T_rec_charge`), and imaging runs 027980/027305, which the owner has already
+declined and which §4.2 makes clearly not worth it.
+
+Finally, an offer rather than a plan: the completeness cut is new, and nothing
+here confirms by eye that it selects *real* stopping muons. The 6 PDHD and 67
+PDVD clean stoppers are listed by event and block in
 `figs/50_pdhd_s0_tracks.tsv` / `figs/50_pdvd_s0_tracks.tsv` (rows with
 `complete = 1` and `contrast >= 2`), so a Bee scan set of the 6 PDHD ones is
-cheap to build on request. Worth having before this tier is used for anything
-beyond doc 50, but it costs owner scan time, so it is not assumed here.
+cheap to build on request.
 
 ---
 
 **Committed products.** This doc;
-`scripts/{d50_dqdx_rr_cross,d50_pr_proton_segments,d50_dqdx_rr_plots}.py`;
-`figs/50_dqdx_rr_{overlay,diagnosis}.png`;
+`scripts/{d50_dqdx_rr_cross,d50_pr_proton_segments,d50_dqdx_rr_plots,d50_deficit_plots}.py`;
+`figs/50_dqdx_rr_{overlay,diagnosis}.png`; `figs/50_{pdhd,pdvd}_deficit_anatomy.png`;
 `figs/50_{pdhd,pdvd}_s{0,5}_{tracks,summary}.tsv`;
 `figs/50_{pdhd,pdvd}_pr_proton_{index,points}.tsv`. The per-point TSVs (7.5–14 MB
 each) are regenerable from the Repro block and are not committed. `d42_dqdx_rr.py`
