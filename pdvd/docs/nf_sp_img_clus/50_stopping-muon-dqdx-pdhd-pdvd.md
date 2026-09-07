@@ -944,6 +944,14 @@ changed.*
 | PDVD | **complete + Bragg ≥ 2** | old | 67 | 17 973 | 0.952 | 40.0 | 0.012 | 1.523 |
 | PDVD | **complete + Bragg ≥ 2** | **new** | 57 | 15 982 | 0.951 | 47.8 | 0.017 | 1.522 |
 
+*`pts_per_cm` is `ngood / (max(rr) − min(rr))` over the kept points. That
+denominator is an arclength span on a coordinate the tagger re-anchors at the
+kink for a third of the tracks, so it was cross-checked against an independent
+3-D `Σ|p[i+1] − p[i]|` over the same points: the two agree to **1 part in 10⁴**
+on both arms and on both the `has_left = 0` and `has_left = 1` populations
+(median ratio 1.0000). `rr` is cumulative arclength by construction
+(`TaggerCheckSTM.cxx:975-999`), so the span is the path length.*
+
 **PDHD's clean stopping-muon sample goes 6 → 40 tracks, and it is recovery, not
 bookkeeping.** `f_low` falls 0.262 → 0.082 *while* the point density rises
 1.519 → 1.563 and the total point count rises 77 801 → 95 971. Deletion cannot do
@@ -1030,6 +1038,12 @@ accepted status-0 points, 61 events:
 
 **APA1, APA2 and APA3 now read the muon table to within 3.3 % with no free
 parameter. APA0 reads 0.654.** Excluding APA0, PDHD's plateau is 1.022.
+
+*Read the "killed" column with its denominator: it is a share of plateau points,
+and the plateau point count itself grew (APA0 2 128 → 2 679, APA2 1 774 → 2 059).
+APA0's 42 % → 37 % is therefore **not** 5 % of its points being repaired — its
+absolute count of deficient points rose with the sample. §13.3 gives the
+unambiguous version in absolute counts, and that is the table to quote.*
 
 ### 13.2 This contradicts §4.2, and §4.2 was right about its own arm
 
@@ -1201,6 +1215,12 @@ the plateau by 0.6 % (PDVD) and 1.6 % (PDHD), both inside the 3 % systematic
 floor. §14.1 keeps PDVD at 305 and PDHD uncut so the tables stay comparable with
 round 1; **the derived value for a future round is no cut on either detector.**
 
+What that does *not* contaminate: `pdhd/docs/01` §12.5 and `pdhd/docs/02` §7 quote
+`k_pop` only as an **A/B comparator between arms on the same events with the same
+cut**, where the 305 cut applies to both sides and cancels. They need no marker.
+`pdhd/docs/stm-tagger-chain.md` §6 does quote it as a statement about PDHD, and
+carries one.
+
 ## 15. A runner bug found on the way: `-nounmerge` was a silent no-op
 
 **Symptom.** The PDHD control arm `d51hnoum` (`-nounmerge`) produced numbers
@@ -1293,6 +1313,14 @@ What round 2 does **not** change:
 - **`f_low` is still a diagnostic, not a fix**, and the completeness tier is still
   a selection: it removes the tracks whose charge was reconstructed badly, it does
   not repair them. What changed is how few there are.
+- **Old → new is not a matched-track comparison.** `block = cluster*10 + pass` and
+  cluster ids do not survive re-clustering, so every before/after table here is a
+  **population** delta over the same 61 (PDHD) / 120 (PDVD) events, not a
+  track-by-track one. "6 → 40 tracks" means the new chain's selection admits 40
+  clean stoppers from the same material, not that 34 individual tracks improved.
+  `d51_arm_ladder.py` prints the event sets and their intersection for exactly
+  this reason, and an arm missing an event there means that event yielded no
+  accepted pass — itself a chain effect, not a coverage gap.
 
 **Recommended next step, in the order that narrows fastest.**
 
