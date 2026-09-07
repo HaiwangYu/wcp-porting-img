@@ -1,9 +1,15 @@
-# doc sbnd_xin/pr/148 — evt 137238: the hadronic shower typed electron, and why the A5 tag misses it
+# doc sbnd_xin/pr/148 — evt 137238: the scan says the object is EM, and the tag is firing where it should not
 
-**Status: DIAGNOSIS COMPLETE, IMPROVEMENT NOT YET DESIGNED — a scan is
-requested.** No code changed, no default flipped, nothing byte-identical to
-prove. Two deliverables: this doc plus its census, and a hand-scan display on
-port 5017.
+**Status: SCANNED (24/24, 2026-09-06). THE ROUND INVERTED. Fix designed,
+default OFF, not yet implemented.** No code changed, no default flipped.
+
+The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
+**The owner's own blind scan calls it EM** — and calls every one of the twelve
+suspects EM or MIXED. What the scan did find is the opposite defect: of the six
+already-re-typed control objects, **three are EM**, i.e. `shower_hadronic_tag`
+is firing on real electron showers in production today. §8 designs the guard
+for that. §6.1 has the verdicts; §6.2 is the question this leaves for the
+owner.
 
 *Numbered 148, not 147: a concurrent session claimed `docs/pr/147_cathode/` and
 `scripts/pr147_cathode_*.py` while this round was being written. 147 was free
@@ -19,10 +25,15 @@ round: *"For this scan, you should build a display like stm_display one, with
 X-Y, Y-Z, Z-X projection view, and then ask me to put in the answer. Please use
 port 5017."*
 
-Answers, in order: **yes — §6, 24 objects, and the display is built and
-running**; **§1 — this is the owner's own item 5, open since doc pr/144 §8**;
-**§2 — the idea is A5 `shower_hadronic_tag` (doc pr/99 round 3), and §4 is why
-it does not fire here.**
+Answers, in order: **yes — §6, 24 objects, scanned; §7 is the display**;
+**§1 — this is the owner's own item 5, open since doc pr/144 §8**; **§2 — the
+idea is A5 `shower_hadronic_tag` (doc pr/99 round 3), §4 is why it does not
+fire here, and §6.1 is why that turns out not to be the defect.**
+
+§§1-5 are the diagnosis as it stood before the scan and are left as written;
+they are still the answer to *why* A5 does not fire on 137238, which remains
+correct and remains useful. §5.5 says what the scan later did to their
+premise.
 
 ---
 
@@ -49,12 +60,18 @@ cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin
     --sheet docs/pr/pr148-pidscan-manifest.tsv \
     --key   docs/pr/pr148-pidscan.KEY.tsv
 
+# The scan, once it is labelled (sec 6.1, sec 8) -- reproduces every table
+./scripts/pr148_score_scan.py
+#   -> EM 19  MIXED 2  HADRONIC 3;  guard at nseg>10 declines 7, dEnu -790.5 MeV
+
 # The display (sec 7)
 /nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/python \
     pr148_scan/selftest_pr148_scan.py          # rc 0 or do not serve
 ./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan0
 #   ssh -o ServerAliveInterval=30 -L 5017:localhost:5017 <user>@wcgpu1.phy.bnl.gov
 #   http://localhost:5017/pr148_scan_viewer
+#   labels land in work/pr148_scan_labels/<tag>/; the committed copy of the
+#   2026-09-06 pass is docs/pr/pr148-pidscan-verdicts.tsv
 
 # The raw log line this doc is built on
 grep "A5 hadronic" work-nuecc48-d145np/pr_evt137238/wct_pr_evt137238.log
@@ -91,7 +108,7 @@ Searched, as asked. 137238 appears in eleven docs. The chain that matters:
 ```
 
 So this round is item 5, attempt 2. Nothing below re-opens the pr/93 r4 /
-pr/127 fix, which is alive in this event and unaffected — §8.2.
+pr/127 fix, which is alive in this event and unaffected — §9.2.
 
 ## 1.1 The similar cases already have a name
 
@@ -308,7 +325,7 @@ this doc.**
 
 Control set for everything below: the **62** censused showers in events the νe
 BDT selects (`nue_score ≥ 3`) — the same proxy pr/99 used for its 36 protected
-primaries. Its circularity is stated in §9.
+primaries. Its circularity is stated in §10.
 
 **And it is scored at the resolution pr/99 used, not one coarser.** pr/99 §5
 found *"11 nuecc48 satellite hadrons in nue events — none a selected primary"*:
@@ -384,8 +401,17 @@ cannot be re-made.
 ### 5.5 What that adds up to
 
 **Every discriminant computable offline from the dumps has now been
-pre-registered and measured, and all three died against the control.** That is
-the honest state of the round. Two consequences:
+pre-registered and measured, and all three died against the control.**
+
+*Written before the scan. After it (§6.1) there is a better explanation than
+three unlucky variables: all three were searching for a population of mis-typed
+hadronic showers among conn-1 pdg-11 showers, and the scan says that population
+is not there — 12 of 12 suspects came back EM or MIXED. A discriminant cannot
+separate a class with no members. The measurements below stand; their
+interpretation changes from "these variables are weak" to "there was nothing
+for them to find."*
+
+Two consequences, as written at the time:
 
 1. **The missing ingredient is labels, not cleverness.** The control is a
    proxy, and the proxy is what killed all three; a scan is what replaces it.
@@ -395,7 +421,7 @@ the honest state of the round. Two consequences:
    is why the leading-bin population reads ~11 for essentially every shower in
    the census. A5's own `growth` counts IMAGED points in an 8 cm cylinder with
    an ownership filter and has **no offline equivalent**. A shape or density
-   discriminant cannot be prototyped from this file at all. Hence §8's round 2.
+   discriminant cannot be prototyped from this file at all. Hence §9's round 2.
 
 ---
 
@@ -438,6 +464,90 @@ kine_best total_len nseg`. Withheld: `growth`, `bragg`, `stem`, `n_heavy`,
 proxy's answer on the sheet you then judge makes the agreement circular. They
 are written to `docs/pr/pr148-pidscan.KEY.tsv`, so the record exists; the
 display and its self-test never open that file, and the self-test asserts it.
+
+---
+
+## 6.1 What came back — 24/24, and the round inverts
+
+`work/pr148_scan_labels/scan0/filled_sheet.tsv`, 2026-09-06. All 24 labelled,
+**no `weak` ticks and no notes** — the owner was confident on every object.
+
+| stratum | EM | MIXED | HADRONIC |
+|---|---|---|---|
+| S1 suspects — top energy, νe-BDT rejected | **6** | 0 | 0 |
+| S2 suspects — heavy-prong star | **5** | 1 | 0 |
+| S3 control — νe-selected (expected EM) | **5** | 1 | 0 |
+| S4 control — A5 already re-typed (expected HADRONIC) | **3** | 0 | **3** |
+| **total** | 19 | 2 | 3 |
+
+### 6.1.1 The scan validated itself before it is allowed to overturn anything
+
+The obvious objection to "19 of 24 are EM" is that the display flatters EM. It
+does not, and the controls are what prove it:
+
+- **S3 behaved.** Five of six νe-selected primaries came back EM, which is what
+  a real electron should look like.
+- **S4 can say HADRONIC.** Three of six came back HADRONIC, so the vocabulary
+  is reachable and the display is not painting everything into one class.
+- **`MIXED` was used, twice**, on the two largest absorbed objects — so the
+  owner had a middle option and spent it deliberately rather than defaulting.
+
+That makes **12 of 12 on S1+S2 a measurement, not an instrument artifact.**
+
+### 6.1.2 The direction this round was chartered to fix has no target
+
+Every suspect — the six highest-energy not-re-typed objects in BDT-rejected
+events, and the six carrying a heavy-prong star — came back EM or MIXED. There
+is no reservoir of mis-typed hadronic showers among conn-1 pdg-11 showers
+waiting to be recovered. **§5's three dead discriminants were not unlucky; they
+were searching an empty class.**
+
+### 6.1.3 The defect is the other direction, and it is live in production
+
+`shower_hadronic_tag` re-typed **68** showers over the 3067-event production
+set. Six were put in front of the owner and **three came back EM** — real
+electron showers that production stamps pdg 211, values with the hadronic
+dQ/dx estimator instead of the charge estimator, and charges a spurious
+**+139.57 MeV** π rest term in `kine_reco_Enu` (`kine_mass_rules` and
+`kine_hadronic_dqdx` are both SBND-ON; verified in the compiled config and in
+evt 388's `kine_particle_type`, which carries a 211 row).
+
+**The honest size of that claim, stated because it limits what §8 may argue.**
+S4 was built as "the highest `kine_best` among the already-re-typed", and it is
+literally the top six of sixty — 241.9 … 677.1 MeV against a population median
+of **58.1**. So *"three of six"* is the precision of A5's **energy tail**, not
+of A5. The supportable statement is the narrower one §8 rests on: of the seven
+objects the proposed guard declines, four carry labels and **three of those
+four are EM**.
+
+## 6.2 The question the scan leaves open, and does not answer
+
+**137238's own object came back EM.** The blind verdict on shower 0 — the only
+candidate in the event, 555 MeV, 48 % of its `Enu` — is EM, from the same
+person who wrote of this event in doc pr/144 §8: *"the hadronic shower made to
+an EM shower."*
+
+Those are not necessarily in conflict. pr/145 §5.1 already read the pr/144
+comment as *"a hadronic shower **absorbed into** an EM shower"*, and pr/144 §15
+measured the absorption: this shower grew 354.3 MeV / 102.7 cm → 555.3 /
+142.9 when the exclusion pool emptied. Shown the merged object, the EM part
+dominates and EM is the right word for it — while the complaint remains about
+what was swallowed.
+
+**Two more objects point the same way.** Both `MIXED` verdicts are large
+absorbed objects — 100222 shower 2 at 81 segments / 489 cm, and 21073 shower 0
+at 35 segments / 219 cm — and neither is re-typed. So three of the twenty-four
+point at the splitter and **none point at the tag**.
+
+This doc does not resolve it. The question for the owner is:
+
+> On 137238, is the 555 MeV object itself wrong — or is the complaint that
+> hadronic content was absorbed into a real EM shower, which is the splitter's
+> problem and not the tag's?
+
+The answer decides whether the follow-up is doc pr/137-139's splitter or
+another typing round. §11 recommends the former on the evidence above, but it
+is the owner's call.
 
 ---
 
@@ -502,34 +612,162 @@ operator to check.
 
 ---
 
-## 8. What happens next
+## 8. The design of the fix — `shower_hadronic_max_nseg`
 
-### 8.1 Round 2 — after the verdicts
+Not "make A5 fire more". **Make A5 stop firing on EM cascades.** One new knob,
+C++ default `0` = off, so the legacy path is byte-identical:
 
-A **log-only** extension of the A5 census line (a DEBUG line changes no output;
-the knob-off gate is byte-identical by construction and will still be run),
-emitting the three quantities the C++ can measure and the dumps provably cannot
-(§5.5): the per-bin profile **shape** rather than its ends-ratio, the
-contiguous-body Bragg of §4.2, and an ownership-filtered heavy-prong count.
-Run over the 259 candidate events only, not 3067. Then calibrate against the
-owner's labels — S3 and S4 are the bar — then a new A5 branch, **default OFF**,
-with the usual byte-identical knob-off gate on every detector that binds
-`NeutrinoShowerClustering`.
+> **A5 declines to re-type a shower whose segment count at evaluation time
+> exceeds `shower_hadronic_max_nseg`.** Recommended SBND value **10**.
 
-**Pre-registered energy consequence for 137238, so it cannot be adjusted
-later** — and note it goes **UP**, which may not be expected:
+### 8.1 Why the segment count, and why 10
 
-- `kine_best` 555.35 → `kine_dQdx` **478.38** via `apply_hadronic_dqdx_best`
-  (`clus/src/NeutrinoEnergyReco.cxx:516-537`; `kine_hadronic_dqdx` is SBND-ON,
-  `num_segments` 20 > 1, so it is eligible) — **−76.97 MeV**
-- `kine_mass_rules` (SBND-ON) adds the π rest term **+139.57 MeV** where pdg 11
-  contributes 0 (`clus/src/NeutrinoKinematics.cxx:102-112`, `:227-241`)
-- first order: **`Enu` 1161.2 → ≈ 1223.8 MeV (+62.6)**
+**The labels pick the variable.** Sorted by the shower's *final* segment count:
 
-`nue_score` is −4.31, so **no selection flip in this event**. The aggregate
-νeCC48 selection cost is what S3 must bound.
+| verdict | `num_segments` |
+|---|---|
+| HADRONIC | 4, 4, **9** |
+| EM | **11**, 17, 18, 19, 20, 27, 32, 33, 33, 33, 34, 38, 39, 43, 51, 84, 90, 115, 146 |
+| MIXED | 35, 81 |
 
-### 8.2 Two things reported, not fixed
+Clean, with an **empty bin at 10** across all 24 labels. Physically it is the
+obvious statement: an EM cascade fragments into many segments; a pion or proton
+that travels and interacts once does not.
+
+**But the final count is not available where the decision is made.** A5 runs
+mid-pipeline, before the shower has finished growing. On the *census-time*
+count — the `nseg=` field A5 already logs, and the only one it can read — the
+same three HADRONIC objects read **4, 4, 26**: 98844 was 26 segments when A5
+judged it and 9 by the end. So the implementable variable is the imperfect one,
+and the doc says so rather than quoting the clean number as if it were usable.
+Same shape as pr/146's rejected "is the continuation partner counted?" rule:
+the physically right variable is not readable at the seat.
+
+**The bar is not fitted to four labels.** The census-time `nseg` histogram of
+the 60 joined re-types is
+
+```
+nseg:  1   2   3   4   5   6   7   8   9  10  11  18  26  27
+  n:   1  21  14   9   1   5   1   1   .   .   4   1   1   1
+```
+
+**Nothing at 9 or 10.** The bar sits in an empty bin of the very population it
+cuts, which is the pr/145 §5.8 label-free-threshold argument and is independent
+of the verdicts. That is most of what makes n=4 tolerable.
+
+### 8.2 What it does, and what it costs
+
+At `> 10` the guard declines **7 of the 60** joined re-types (68 total), one
+per event:
+
+| evt | shower | nseg (census / final) | branch that fired | `kine_best` now | `kine_charge` | ΔEnu if spared | label |
+|---|---|---|---|---|---|---|---|
+| 388 | 0 | 27 / 27 | growth | 677.1 | 724.5 | **−92.2** | **EM** |
+| 163543 | 0 | 11 / 11 | growth | 414.2 | 394.6 | **−159.2** | **EM** |
+| 98844 | 0 | 26 / 9 | growth | 241.9 | 326.9 | −54.5 | HADRONIC |
+| 98294 | 0 | 18 / 18 | **stem** | 286.0 | 315.6 | **−110.0** | **EM** |
+| 406125 | 0 | 11 / 11 | growth | 139.7 | 180.2 | −99.1 | — |
+| 318769 | 0 | 11 / 7 | growth | 107.4 | 107.4 | −139.6 | — |
+| 321015 | 16 | 11 / 11 | growth | 96.5 | 100.1 | −136.0 | — |
+| | | | | | | **−790.5 MeV** | 3 EM removed, 1 HADRONIC lost |
+
+**Four of the seven carry labels and three of those four are EM.** The guard
+removes three wrong re-types and one right one. That is the whole evidential
+claim; it is not a precision figure for A5 (§6.1.3).
+
+`ΔEnu = (kine_charge − kine_best_now) − 139.57` per object — the re-typed
+object reverts from the hadronic dQ/dx estimate to its EM charge estimate and
+gives back the π rest term. **The assumption, stated:** that a spared object's
+`kine_best` reverts to its `kine_charge`. That holds exactly for **204 of the
+240** EM-typed showers in the census (85 %); on the other 36 the median gap is
+20.7 MeV. So −790.5 is a pre-registration to be scored against the knob-on arm,
+not a measurement.
+
+**137238 is untouched.** It is not re-typed and would not be.
+
+### 8.3 What this design does NOT cover
+
+- **The stem branch.** It fired 5 of the 68 times. Its only label — 98294,
+  stem 5.06 MIP — came back **EM**, so its measured precision is **0 / 1**, and
+  the guard catches that one only incidentally (its census `nseg` is 18). The
+  other four stem fires sit at `nseg` 1-3, below any bar this guard could set.
+  **The stem branch is untested and unguarded and needs its own round.**
+- **The bragg branch**: 2 fires, `nseg` 2 and 3, no labels.
+- **§4.2's Bragg window** — `dqdx_term` measured on absorbed members up to
+  70 cm past the object's body. Unchanged, still its own round.
+- **The absorption / splitter question** of §6.2. Nothing here touches it.
+
+### 8.4 Implementation sketch (round 2 — not done in this doc)
+
+| file | change |
+|---|---|
+| `clus/inc/WireCellClus/TaggerCheckNeutrino.h` | `int m_shower_hadronic_max_nseg{0};   // doc pr/148; 0 = off` |
+| `clus/inc/WireCellClus/NeutrinoPatternBase.h` | the mirror member, same default |
+| `clus/src/TaggerCheckNeutrino.cxx` | `configure()`, `default_configuration()`, and the copy — **unscaled**, it is a count, not a length |
+| `clus/src/NeutrinoShowerClustering.cxx` | in the A5 loop, **after** the census line and **before** the stamp (§9.1) |
+| `clus/test/doctest_clus_knob_defaults.cxx` | `CHECK_KNOB_NUM(cfg, "shower_hadronic_max_nseg", 0)` |
+| `cfg/pgrapher/experiment/sbnd/wct-pr-perevt.jsonnet` | **SBND only**, `= null` plus the key-suppression idiom |
+
+```cpp
+// doc sbnd_xin/pr/148 sec 8: the owner's blind scan found A5 re-typing real
+// EM cascades (3 of the 4 labelled objects above this bar came back EM).  An
+// EM cascade fragments into many segments; a hadron that interacts once does
+// not.  The bar sits in an empty bin of the re-typed population's own nseg
+// histogram (nothing at 9 or 10 across 60 re-types), so it is not fitted to
+// the four labels.  0 => no guard => byte-identical legacy.
+if (verdict && m_shower_hadronic_max_nseg > 0 &&
+    shower->get_num_segments() > m_shower_hadronic_max_nseg) {
+    SPDLOG_LOGGER_DEBUG(s_log,
+        "A5 hadronic decline: shower id={} nseg={} > max_nseg={} "
+        "(growth={:.2f} bragg={:.2f} stem={:.2f})",
+        shower->get_shower_id(), shower->get_num_segments(),
+        m_shower_hadronic_max_nseg, growth, bragg, stem_med);
+    continue;
+}
+```
+
+**The census line must keep firing on every evaluated shower** — it is the
+calibration channel this whole doc is built on, and a guard placed before it
+would blind the next round. Hence the decline is logged separately and placed
+after.
+
+---
+
+## 9. What happens next
+
+### 9.1 Round 2 — implement §8, gate it, and score the pre-registration
+
+Build `shower_hadronic_max_nseg` per §8.4 (**default OFF**), then:
+
+- **Knob-off byte-identical** on the standard manifest of every detector that
+  binds `NeutrinoShowerClustering` — SBND, PDVD, PDHD and the uBooNE chain —
+  member-content hashes only, never `cmp`/`md5sum` on an archive (M2).
+- **M1 freshness** and the **M6 compiled-config proof** (the key absent when
+  off, present at 10) on the arm-produced `.wct-cfg-evt<ID>.json`, not a bare
+  `wcsonnet` — doc pr/146 records why the standalone compile proves nothing.
+- **`./build/clus/wcdoctest-clus`** with the new default asserted.
+- **Sentinels** no worse than `20 PASS / 0 FAIL / 3 OPEN / 7 INERT`. 137238 is
+  one of the 3 OPEN and this change does not touch it.
+
+**Pre-registered, so it cannot be adjusted afterwards:**
+
+1. Exactly **7** showers stop being re-typed, in 7 events, and they are the
+   seven named in §8.2. The `A5 hadronic decline:` line fires 7 times.
+2. **ΔEnu = −790.5 MeV** in total, under §8.2's stated counterfactual. Anything
+   outside roughly ±100 MeV of that means the counterfactual is wrong and the
+   36-of-240 exception class is the first place to look.
+3. **137238 is byte-identical.**
+4. **Selection risk, flagged rather than predicted.** Two of the seven sit in
+   νe-selected events — 388 (`nue_score` 9.69, ΔEnu −92) and 163543 (3.11,
+   ΔEnu −159). 163543 is 0.11 above the acceptance threshold of 3, so a flip
+   there is plausible. This is a number to *measure*, not one to predict; if
+   it flips, that is a real cost of the guard and belongs in the owner's
+   decision, not in a footnote.
+
+The knob ships **OFF**. Turning it on for SBND is a CLAUDE.md §5.1 production
+default flip and is the owner's call, with these numbers in front of them.
+
+### 9.2 Two things reported, not fixed
 
 1. **A guard fires and is defeated.** In this event
    `pr130 pass3_backfill_guard: decline seg=146066 pdg=13 len=16.4cm` fires —
@@ -550,11 +788,20 @@ assertion (doc 91 §12.3).
 
 ---
 
-## 9. Honest limits
+## 10. Honest limits
 
-- **The diagnosis is solid; the improvement is not yet designed.** Three
-  candidates were pre-registered and all three died. Saying so is the point of
-  measuring before building.
+- **The round's own charter was refuted by the round's own scan.** It was
+  opened to re-type 137238 from EM to hadronic; the owner's blind verdict on
+  that object is EM. §§1-5 are kept as written, and §5.5 carries the note that
+  their three dead discriminants were searching a class the scan says is empty.
+  Erasing the refuted half would make the record useless.
+- **The evidence for §8 is four labels.** Three EM and one HADRONIC among the
+  seven objects the guard declines. The bar itself rests on a stronger,
+  label-free argument (§8.1's empty bin), but the *direction* — that A5
+  re-types real EM cascades — rests on those four. §11 is how to widen it.
+- **S4 is the energy tail, not a sample of A5.** It is literally the top six
+  re-types by `kine_best` out of sixty whose median is 58.1 MeV. "Three of six
+  are EM" is a statement about the tail. Do not quote it as A5's precision.
 - **The control is a proxy and is partly circular.** 137238's `nue_score` is
   −4.31 in part *because* the BDT sees a hadronic-looking object, so "not
   selected" is not independent evidence that the object is hadronic. The νe-
@@ -567,15 +814,30 @@ assertion (doc 91 §12.3).
 - **A5's `growth` cannot be reproduced offline at all** — imaged points in a
   cylinder with an ownership filter. Everything in §5 is a *different* variable
   measured on fit points, not a reconstruction of A5's own.
+- **The counterfactual in §8.2 is an assumption, not a measurement.** It holds
+  for 204 of 240 EM-typed showers; the arm decides.
 - **This is still a patch on fragmentation.** 137238's muon structure is
   scattered across clusters 7, 144 and 146, and the "shower" reaches 108 cm by
   absorbing a blob 70 cm away. Typing the object correctly is right; not
-  scattering it is the upstream fix, and it is not in this doc.
+  scattering it is the upstream fix, and it is not in this doc — and §6.2 says
+  the scan now points there.
 
-## 10. Recommended next step
+## 11. Recommended next step
 
-**Scan the 24 on port 5017.** Every threshold this round could have proposed
-was killed by the proxy control, so the labels are the round's only route
-forward — and S4 answers a question production has never been asked: is the
-tag that already ships over-firing? Round 2 (§8.1) starts the moment
-`work/pr148_scan_labels/scan0/filled_sheet.tsv` has verdicts in it.
+**A second scan of 12, on the display that is already built — then implement
+§8.** The guard's direction rests on four labels; twelve more make it a
+measurement, and the instrument cost is one sitting:
+
+- the **3 unlabelled objects above the bar** — 406125, 318769, 321015 — which
+  measures the guard's **precision** on exactly the set it removes;
+- **~9 sampled from the 53 below the bar**, which measures its **recall**: if
+  those come back HADRONIC the guard is safe, and if some come back EM then A5
+  is mis-firing below the bar too and `nseg` is not the whole answer.
+
+A fresh `--scan-tag` (M13 — never write into `scan0`).
+
+**And the round after that is the splitter, not another typing round.** Three
+of the twenty-four objects point at absorption — 137238 itself under the §6.2
+reading, plus both `MIXED` verdicts at 81 and 35 segments — and none point at
+the tag. Doc pr/137-139 owns that machinery. §6.2's question decides it, and
+it is the owner's to answer.
