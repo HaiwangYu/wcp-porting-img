@@ -483,7 +483,27 @@ two-faces-per-anode configuration.
 
 ## 8. Bee links
 
-*(added below when uploaded — outward-facing, §5.6, asked first)*
+Same six events, same slot order, same pctree; only the two default-OFF knobs differ. Slot **3 is
+event 9**, which carries all four of the owner's clusters. All six layers verified from the server's
+own contents listing, not from a URL probe (`feedback_bee_layer_url_200_when_missing`): `clustering`,
+`stm`, `stm_fit`, `stm_tagged`, `steiner_graph`, `steiner_terminals`, plus `channel-deadarea-*`.
+
+| | link |
+|---|---|
+| **before** — production, both knobs off (`d11off`; byte-identical to `d30hpost` on 31/31 events, gate 5) | https://www.phy.bnl.gov/twister/bee/set/a0dc6dac-19fb-4f51-95e3-75d04221c9b6/event/list/ |
+| **after** — `rough_path_require_connected` + `traj_final_fill_charge_test` (`d11both`) | https://www.phy.bnl.gov/twister/bee/set/99ca3205-b4a1-4f1e-8ff1-8d7c4e1b6935/event/list/ |
+
+| slot | event | DAQ ident | blocks with median fit→charge > 3 cm, before → after |
+|---|---|---|---|
+| 0 | 6 | 28084-0-74456 | 12 → 3 |
+| 1 | 7 | 28084-0-74464 | 7 → 1 |
+| 2 | 8 | 28084-0-74472 | 9 → 0 |
+| **3** | **9** | **28084-0-74480** | **7 → 0** — clusters 126, 36, 27, 121 |
+| 4 | 19 | 28084-0-74560 | 6 → 0 |
+| 5 | 29 | 28084-0-74640 | 8 → 2 |
+
+Records: `pdhd/bee-pr-run028084-d11{before,after}.{url,index.txt}`.  The doc pdhd/10 sets stay valid
+and are a different comparison.
 
 ---
 

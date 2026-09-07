@@ -1,0 +1,9 @@
+# doc pdhd/11 -- BEFORE (production, both knobs off; arm d11off).  Built 2026-09-07.
+# Byte-identical to the production d30hpost arm on all 31 events (gate 5).
+# bee_idx  event  DAQ ident  blocks with median fit->charge > 3 cm
+0  6   28084-0-74456  12
+1  7   28084-0-74464   7
+2  8   28084-0-74472   9
+3  9   28084-0-74480   7   <- the owner's clusters 126, 36, 27, 121
+4  19  28084-0-74560   6
+5  29  28084-0-74640   8

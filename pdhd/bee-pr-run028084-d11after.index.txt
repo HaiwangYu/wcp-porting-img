@@ -1,0 +1,10 @@
+# doc pdhd/11 -- AFTER (arm d11both: rough_path_require_connected=1 AND
+# traj_final_fill_charge_test=1, both default-OFF knobs, set per-run via -S/-A).
+# Same pctree, same events, same slot order as bee-pr-run028084-d11before.
+# bee_idx  event  DAQ ident  blocks with median fit->charge > 3 cm
+0  6   28084-0-74456   3
+1  7   28084-0-74464   1
+2  8   28084-0-74472   0
+3  9   28084-0-74480   0   <- the owner's clusters 126, 36, 27, 121
+4  19  28084-0-74560   0
+5  29  28084-0-74640   2
