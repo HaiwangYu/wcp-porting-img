@@ -1,0 +1,160 @@
+
+==============================================================================
+== sbnd   (/home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present)
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 46 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 81 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 446 arms, 14 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: tier 2: 22 families, 22 dirs; missing=none ungrounded=none
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 227 dirs | KEEP 181 | TIER 1 24 = 0.42 GiB | TIER 2 22 = 72.49 GiB | out-of-scope (untouched) 39
+  --- TIER 1 ---   arm                       dirs      GiB  cited
+                    d144fixon                    1     0.10      0
+                    d144fixoff                   1     0.10      0
+                    d145cont                     2     0.09      0
+                    s144negleg-dvtx              1     0.01      0
+                    s144negleg-prox              1     0.01      0
+                    s144negleg-gf                1     0.01      0
+                    s144negleg-sccc              1     0.01      0
+                    stmcamp-d03gatenew           1     0.01      0
+                    stmcamp-d03gatenew10         1     0.01      0
+                    stmcamp-d03gatenew11         1     0.01      0
+                    stmcamp-d03gatenew7          1     0.01      0
+                    stmcamp-d03gatenew8          1     0.01      0
+                    stmcamp-d03gatenew9          1     0.01      0
+                    stmcamp-d143fgate            1     0.01      0
+                    stmcamp-d143gate             1     0.01      0
+                    stmcamp-d45g3n4              1     0.01      0
+                    s144negleg-memgeo            1     0.01      0
+                    s144negleg-backg             1     0.01      0
+                    s144negleg-cone              1     0.00      0
+                    pr143-t0base                 1     0.00      0
+                    s144negleg-bfill             1     0.00      0
+                    d144fix2                     1     0.00      0
+                    d144fixchk                   1     0.00      0
+  --- TIER 2 ---   arm                       dirs      GiB  cited
+                    d144off                      4    10.23     32
+                    d144fixframeonly             4    10.23      2
+                    d144on                       4    10.23     28
+                    d97fvpr2                     4    10.21     75
+                    pr143-on                     1     9.85      9
+                    pr143-off                    1     9.85      7
+                    pr143-final                  1     9.85      3
+                    d145np200                    3     2.03      3
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_sbnd_20260906.txt  (24 lines, 0.42 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_sbnd_20260906.txt  (22 lines, 72.49 GiB)
+
+==============================================================================
+== pdvd   (/home/xqian/toolkit-dev/wcp-porting-img/pdvd/work)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present; partial coverage (by design for probe substrate): {'d28dlfp': 3, 'd34base': 3})
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 124 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 264 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 0 arms, 0 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: tier 2: 10 families, 1200 dirs; missing=none ungrounded=none
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 3680 dirs | KEEP 2441 | TIER 1 39 = 0.27 GiB | TIER 2 1200 = 12.11 GiB | out-of-scope (untouched) 269
+  --- TIER 1 ---   arm                       dirs      GiB  cited
+                    d03legnew                    2     0.02      0
+                    d03legnew10                  2     0.02      0
+                    d03legnew11                  2     0.02      0
+                    d03legnew7                   2     0.02      0
+                    d03legnew8                   2     0.02      0
+                    d03legnew9                   2     0.02      0
+                    d143leg                      2     0.02      0
+                    d45g1n4                      2     0.02      0
+                    d45skipcanonnu               2     0.02      0
+                    d45skipcanon                 2     0.01      0
+                    d03stmnew                    2     0.01      0
+                    d03stmnew10                  2     0.01      0
+                    d03stmnew9                   2     0.01      0
+                    d45g2n4                      2     0.01      0
+                    d03stmnew7                   2     0.01      0
+                    d03stmnew8                   2     0.01      0
+                    d143stm                      2     0.01      0
+                    d45ptdbg2                    1     0.00      0
+                    d45ptdbg                     1     0.00      0
+                    d45skipdet1                  1     0.00      0
+                    d45skipdet2                  1     0.00      0
+                    d05cfg                       1     0.00      0
+  --- TIER 2 ---   arm                       dirs      GiB  cited
+                    d45on                      120     1.29     11
+                    d45on3                     120     1.29     11
+                    d45skipnu                  120     1.29      1
+                    d143pref                   120     1.29      0
+                    d45nu0                     120     1.21     18
+                    d48nu6                     120     1.15      0
+                    d48nu5                     120     1.15      1
+                    d48nu4                     120     1.15      2
+                    d48nu                      120     1.15      5
+                    d48nu2                     120     1.15      3
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdvd_20260906.txt  (39 lines, 0.27 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdvd_20260906.txt  (1200 lines, 12.11 GiB)
+
+==============================================================================
+== pdhd   (/home/xqian/toolkit-dev/wcp-porting-img/pdhd/work)
+==============================================================================
+  PASS  INTERLOCK 1: substrate present (all present; partial coverage (by design for probe substrate): {'d06base': 2, 'd06um': 2, 'd02prod': 2, 'wcc': 1, 'd05mON': 6})
+  PASS  INTERLOCK 2: no kept symlink resolves into a releasing dir (0 would dangle)
+  PASS  INTERLOCK 3: no live writer (0 of 137 sampled dirs moved, 0 tree-scoped wire-cell procs)
+  PASS  INTERLOCK 4: pre-existing broken symlinks recorded: 0 (the post-state number only means something against this)
+  PASS  INTERLOCK 5: PROTECTED.txt clear of tier 1 (clear)
+  PASS  INTERLOCK 6: 30 cited dirs pulled from tier 1 and KEPT; 0 cited dirs remain in it (must be 0)
+  PASS  INTERLOCK 7: no record/label dir in the release (clear)
+  PASS  INTERLOCK 8: no target is itself a symlink (clear)
+  PASS  INTERLOCK 9: manifests name 0 arms, 0 exist, 0 in the release (none)
+  PASS  INTERLOCK 10: tier 2: 8 families, 240 dirs; missing=none ungrounded=none
+  PASS  INTERLOCK 11: every substrate/production name resolves (all resolve)
+
+  universe 1191 dirs | KEEP 917 | TIER 1 34 = 0.20 GiB | TIER 2 240 = 5.86 GiB | out-of-scope (untouched) 47
+  --- TIER 1 ---   arm                       dirs      GiB  cited
+                    d03stmnew                    2     0.01      0
+                    d03stmnew10                  2     0.01      0
+                    d03stmnew7                   2     0.01      0
+                    d03stmnew8                   2     0.01      0
+                    d03stmnew9                   2     0.01      0
+                    d143stm                      2     0.01      0
+                    d05gate                      1     0.01      0
+                    d04pgate                     1     0.01      0
+                    d03legnew                    2     0.01      0
+                    d03legnew10                  2     0.01      0
+                    d03legnew11                  2     0.01      0
+                    d03legnew7                   2     0.01      0
+                    d03legnew8                   2     0.01      0
+                    d03legnew9                   2     0.01      0
+                    d143leg                      2     0.01      0
+                    d03legnew0                   1     0.01      0
+                    d143nu                       2     0.01      0
+                    d04tgmD                      1     0.00      0
+                    d04tgmE                      1     0.00      0
+                    d06guard                     1     0.00      0
+  --- TIER 2 ---   arm                       dirs      GiB  cited
+                    d03nu8                      30     0.74      3
+                    d03nu7                      30     0.74      3
+                    d03nu6                      30     0.74      4
+                    d03nu3                      30     0.74      2
+                    d03nu4                      30     0.74      3
+                    d03nu2                      30     0.74      7
+                    d03nu5                      30     0.74      8
+                    d03nu1                      30     0.67      9
+  tier 1 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdhd_20260906.txt  (34 lines, 0.20 GiB)
+  tier 2 file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdhd_20260906.txt  (240 lines, 5.86 GiB)
+
+==============================================================================
+GRAND TOTAL  tier 1 0.90 GiB   tier 2 90.46 GiB   both 91.36 GiB
+interlock failures: NONE
+
+This script retired nothing.  Review the tier files, then the owner runs the retire driver (CONFIRM=yes), tier 1 and tier 2 separately.

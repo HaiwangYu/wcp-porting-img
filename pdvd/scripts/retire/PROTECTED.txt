@@ -1,0 +1,55 @@
+# pdvd -- arms that must survive any retire round
+#
+# WHY THIS FILE EXISTS.  pdvd had retire machinery from 2026-09-04 but no
+# carry-forward protection list: each round's planner carried its keep set
+# inline, so an arm named in one round is invisible to the next unless a human
+# retypes it.  The sbnd_xin file of the same name explains the general problem;
+# pdhd got its copy on 09-05; this is pdvd's, written 2026-09-06 (doc 101).
+#
+# It does NOT retire anything and is not executable.  A round's planner must
+# union its inline keep set with every line below.  Removing a line is a
+# deliberate decision; never remove one because a doc "already has the numbers"
+# -- CLAUDE.md M13 protects the record, not the summary of it.
+#
+# Format: <arm-or-path>  TAB  why it must survive  TAB  who cites it
+# Field 1 may hold several whitespace-separated names.
+# Housekeeping: when something is genuinely superseded, move its line to the
+# RETIRED section at the bottom with the date; do not delete it.
+#
+# The unit here is the ARM SUFFIX over work/<run6>_<idx>_<arm>, not a sibling
+# work-* dir: `work*` globs to ~200 dirs in sbnd_xin but to exactly ONE
+# directory in pdvd.  A planner forked from the sbnd one gives dirs=0 or a
+# single rm -rf work/.
+
+# --- THE INPUT: the substrate chain, measured not assumed -----------------
+# Symlink census 2026-09-06 (both target spellings; anchoring on `work/` alone
+# misses every ../<evt>_<arm>/... relative target and undercounts by ~3x):
+#   d41prov 8255 inbound   d27fresh 2095   d39r2prov 1525   keep 968
+keep	SUBSTRATE, not an old arm: it holds the SP+DNNROI frames d27fresh borrows.  Doc pdvd/24:143,234 says outright that _keep is never removed, and it holds despite `keep` having few inbound links of its own -- it is the far end of the chain	doc pdvd/24
+d27fresh	stage_pr_tag.sh:7's DOCUMENTED DEFAULT src_tag ("src_tag defaults to d27fresh, the v7-uvwfit baseline") -- primary source, not a name-read.  Every PR-only tag in the tree is seeded from it	doc pdvd/27, scripts/stage_pr_tag.sh:7,11
+d41prov	the staging source doc 43 sec 6 built its 99-event production set from; the biggest hub in the tree at 8255 inbound links	doc pdvd/43 sec 6
+d39r2prov	provenance arm the doc-39 round's arms borrow from (1525 inbound)	doc pdvd/39
+d143pnew	the src_tag today's d08* PDVD arms were staged from (36 inbound); releasing it breaks arms created 2026-09-06	doc pdhd/08
+d28dlfp d34base	the two mid-chain links of keep -> d27fresh -> d28dlfp -> d34base -> d37*; 3 dirs each, and d37off1/d37on05 borrow img-provenance.txt from d34base.  Keeping a dir means keeping its substrate -- this needs a transitive closure to a fixed point, not a one-pass exclusion	symlink census
+
+# --- THE CURRENT OPERATING POINT (2026-09-06 owner flip) ------------------
+d48nu7	doc pdvd/48 sec 11: the 120-event arm the 2026-09-06 flip RESTS ON -- PDHD's knob bag measured pre-flip, and sec 11's "a fresh arm on the flipped default is NOT taken here: d48nu7 already is that".  Pin /home/xqian/tmp/d47_libpin/new11, the shipped binary	doc pdvd/48 sec 11
+d48nu3	doc pdvd/48 sec 8.2's census arm (120/120 rc=0), the C++-defaults side of sec 11's before/after table	doc pdvd/48 sec 8.2
+d48flipcfg	the compiled-config proof of the 09-06 flip (event 039252/0).  A config proof that cannot be re-read is a claim, not a proof	doc pdvd/48 sec 11
+d45prod	doc pdvd/45's operating-point arm	doc pdvd/45
+d43p90c5 d43prod d43fvoff d43fvd50 d43p90c3 d43p80c3	the exit-gap quantile fiducial A/B set; d43p90c5 backs the constant shipped to PDVD production 2026-09-05	doc pdvd/43 sec 6
+d42fit d44sig d44sigb d44sign6 d44ref d44prod	the transverse-smearing and STM-fit arms behind the sigma constants shipped 2026-09-05.  An arm backing a just-made decision is not superseded (the 08-31 prod0825 doctrine)	doc pdvd/42, doc pdvd/44
+d41prod d38qnewprod	production arms of the curved-fiducial and gap-aware-trim rounds	doc pdvd/41, doc pdvd/38
+d31r6e2e	end-to-end arm with 25 citations across both repos, incl. the cross-detector comparisons	doc pdvd/31
+magnify	the Magnify dump root; not an arm	-
+
+# --- label dirs: CLAUDE.md M13 -------------------------------------------
+work/d08_scan_labels/ work/d08pv_scan_labels/	hand-scan labels, the scientific record itself.  They are not <run6>_<idx>_<arm> dirs so a planner's arm grammar leaves them out of scope -- that is luck, not protection, so they are named here	M13
+
+# ================= RETIRED =================
+# 2026-09-06 (doc 101 tier 2): d48nu, d48nu2 (superseded inside doc 48 sec 8.0
+# by d48nu3, which the doc says outright), d48nu4, d48nu5, d48nu6 (sec 10
+# iterations superseded by d48nu7), d45on, d45on3, d45skipnu, d45nu0 (doc 45
+# iterations superseded by d45prod), d143pref (pr/143's PDVD reference arm; sec
+# 7.3 states the PDVD chain is not production).  Manifests + record layer frozen
+# in sbnd_xin/archive/records/cleanup-20260906/pdvd-tier2/ before deletion.

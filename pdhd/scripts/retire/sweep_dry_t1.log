@@ -1,0 +1,23 @@
+=== TMP TIER 1: pin subdirs NOTHING names, in either repo ===
+    (an un-named pin cannot even be invoked -- and a missing
+     LD_LIBRARY_PATH entry is silently ignored, so it is already inert)
+   /home/xqian/tmp/d144_libpin3           1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d144_libpin3
+   /home/xqian/tmp/d144_libpin5           1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d144_libpin5
+   /home/xqian/tmp/d45_libpin/dbg         1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d45_libpin/dbg
+   /home/xqian/tmp/d41_libpin/new2        1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d41_libpin/new2
+   /home/xqian/tmp/d41_libpin/new3        1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d41_libpin/new3
+   /home/xqian/tmp/d41_libpin/new4        1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d41_libpin/new4
+   /home/xqian/tmp/d41_libpin/new5        1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d41_libpin/new5
+   /home/xqian/tmp/d41_libpin/ref         1.2G  named_by=0  100% .so
+   would remove: /home/xqian/tmp/d41_libpin/ref
+
+/dev/nvme2n1p6  1.8T  1.3T  398G  77% /home/xqian
+
+DRY RUN.  Re-run with CONFIRM=yes to execute.

@@ -308,7 +308,36 @@ work	bare work/ -- nusel_labels/ hand-scan record (M13) + pr137_sheets/	doc 89
 # results for Q/L matching as well as PR results".  After doc 97's flip that is
 # these eight dirs, and they are the reason every other full-sample arm went.
 work-mcp1k-d97fv work-mcp2k-d97fv work-ncpi0-d97fv work-nuecc48-d97fv	LATEST PRODUCTION stage A (Q/L) at ref/prod-2026-09-04, sep_fv_point ON, 3067 evts	doc 97, doc 98
-work-mcp1k-d97fvpr2 work-mcp2k-d97fvpr2 work-ncpi0-d97fvpr2 work-nuecc48-d97fvpr2	LATEST PRODUCTION stage B (PR tail) on it, 3067 evts	doc 97, doc 98
+# --- STAGE B MOVED 2026-09-06 (doc 101) ----------------------------------
+# doc pr/144 sec 16.3.1 cut a new full-sample stage B -- work-*-d144fixprod,
+# 3067/3067 rc=0, the COMMITTED DEFAULT on the crash-fixed binary -- and
+# re-baselined the sentinel suite onto it.  So the line below is no longer
+# "LATEST PRODUCTION stage B"; the line under it is.  The 09-06 round put the
+# d97fvpr2 arms in TIER 2, which is the tier that needs an explicit owner yes
+# precisely BECAUSE it edits this file rather than only the disk.
+# What survives the arm: products/prod0902/ (the committed reference tables,
+# computed from d97fvpr2), ref/prod-2026-09-04's README, and the frozen
+# member-content manifests in archive/records/cleanup-20260906/sbnd-tier2/.
+# RELEASED 2026-09-06 (doc 101 tier 2) -- move to the RETIRED section when the
+# owner confirms; until then this line still protects the arms.
+work-mcp1k-d97fvpr2 work-mcp2k-d97fvpr2 work-ncpi0-d97fvpr2 work-nuecc48-d97fvpr2	the PREVIOUS production stage B (3067 evts, ref/prod-2026-09-04); superseded by work-*-d144fixprod -- doc pr/144 sec 16.3.1	doc 97, doc 98, doc 101
+work-mcp1k-d144fixprod work-mcp2k-d144fixprod work-ncpi0-d144fixprod work-nuecc48-d144fixprod	**LATEST PRODUCTION stage B (PR tail)**, 3067/3067 rc=0, the committed default on the crash-fixed binary; the sentinel suite is re-baselined onto it.  Reads work-*-d97fv (pr144_arms.sh:52).  Pin /home/xqian/tmp/d144_libpin4	doc pr/144 sec 16.3.1, doc 101
+
+# --- the post-d144fixprod flips (added 2026-09-06, doc 101) ---------------
+# FOUR flips landed AFTER d144fixprod was cut, so "latest production" is a SET,
+# not one arm, and there is no full-sample arm at today's operating point:
+#   pr/145 item 4  kine_near_pointing_impact 200 / miss_deg 30   SBND ON 09-06
+#   pr/146         ang_sv, default OFF; kine_sat_cont_keep_deg 25 RECOMMENDED
+#   pr/147         long_muon_cathode_bridge_track_types          SBND ON 09-06
+#   pr/147         ..._tail_min_len 20 cm                        SBND ON 09-06
+# Each arm below is the on-disk evidence for one of them.  Dropping the
+# bare-config / flip-equivalence arm is the mistake this file already records
+# twice (work-pr87-postflip-*, work-cbr3-bare2evt): the "shipped config ==
+# validated arm" claim becomes text-only the same day.
+work-mcp1k-d145prod work-mcp2k-d145prod work-ncpi0-d145prod work-nuecc48-d145prod	pr/145 item 4 SHIPPED arm: no PR_EXTRA_TLA at all, 35/35 rc=0, gated against work-*-d144fixprod (4 events move, all four the owner called cosmics)	doc pr/145 sec 8.3
+work-d147-tailflip-mcp1k work-d147-tailflip-mcp2k work-d147-flipchk-mcp1k work-d147-flipchk-mcp2k	pr/147's two flip-equivalence arms -- 34/34 for the tail-absorb flip, 44/44 for track_types.  These are the post-flip BARE runs that prove the shipped jsonnet reproduces the validated arm	doc pr/147 sec 15.1
+work-mcp1k-d146sv25 work-mcp2k-d146sv25 work-ncpi0-d146sv25 work-nuecc48-d146sv25	pr/146 sec 12's RECOMMENDED but not-yet-flipped operating point (kine_sat_cont_keep_deg 25).  An open owner decision needs its arm on disk	doc pr/146 sec 12
+work-mcp1k-d145np work-mcp2k-d145np work-ncpi0-d145np work-nuecc48-d145np	the full-sample (3067) arm doc pr/148 sec 16 names as what the NEXT round reads -- item 3's bisect and 137238's log lines.  A doc whose last section is a plan for the next session is an OPEN round	doc pr/148 sec 16
 #
 # THE SENTINEL WITNESS.  ITS ORIGINAL REASON IS SPENT, and the honest restatement
 # is below.  It was built because production was 30 PASS / 1 FAIL and 105074

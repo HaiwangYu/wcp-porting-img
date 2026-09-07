@@ -47,3 +47,26 @@ input_data_14_old_coh_grouping	symlink -> /nfs/data/1/xning/wirecell-working/dat
 
 # ================= RETIRED =================
 # (nothing yet)
+
+# --- added 2026-09-06 (doc 101): the CheckSTM_Michel chain -----------------
+# doc pdhd/03 sec 2 is an explicit pin <-> arm <-> commit ledger, which is what
+# makes the superseded iterations releasable at all: new5 1af4cbbf -> d03nu1/2,
+# new6 3482ded8 -> d03nu3/4, new7 b4bd5aca -> d03nu5, new8 c557f0ff -> d03nu6,
+# new9 ea8d5540 -> d03nu7, new10 425577d6 -> d03nu8, new11 a4ff5439 -> d03nu9.
+029107_*_d03nu9	THE CENSUS ARM (doc pdhd/03 sec 7): 30 events, 166 STM-tagged candidates, run on the SHIPPED binary at the driver's DEFAULT bag -- i.e. the operating point doc pdvd/48 sec 11 then adopted as the PDVD default on 2026-09-06.  Every sec-7 number is read off this arm	docs/03_check-stm-michel-pdhd.md sec 2, sec 7
+/home/xqian/tmp/d47_libpin/new11	the shipped binary (libWireCellClus.so a4ff5439) behind d03nu9 AND pdvd d48nu7.  A missing LD_LIBRARY_PATH entry is silently ignored (M1 shape), so dropping this makes both arms re-readable but not re-runnable, with no error	docs/03 sec 2, doc pdvd/48 sec 11, doc pr/143 sec 6.1
+029107_*_d48ref2 029107_*_d48new4	doc pdvd/48 sec 7.2 row 4: the PDHD side of the byte-identity gate on the shared PdvdPrMagnifyTrackingVisitor class (zip 13 members SAME, both ROOT files' trees SAME).  A PDVD-only blast-radius check would not see these -- the doc 100 sec 10 shape	doc pdvd/48 sec 7.2, sec 9
+
+# --- doc pdhd/08, the retiler bridge cap (round closed 2026-09-06) ---------
+029107_*_d08*	the whole d08 family: the cap sweep (d08cap10/20/20b/40), the merge sweep (d08mrg1/3/5, d08mr10/15/30), the gate pair (d08gref/d08goff), the shipped-both arm (d08both) and the PDVD cross-check (d08pv*).  Protected by PREFIX, not enumeration: the round shipped toolkit 4119a78a TODAY and a live round's arm families must not be frozen at plan time (the 09-04 lesson -- seven new families appeared between plan and confirm)	docs/08_steiner-ghost-fix.md
+
+# ================= RETIRED =================
+# 2026-09-06 (doc 101 tier 2): 029107_*_d03nu1 .. _d03nu8 -- the eight knob-bag
+# iterations of doc pdhd/03 sec 2, superseded by d03nu9, which IS the shipped
+# bag.  Each is re-buildable from the commit sec 2 records against the pinned
+# subdir it names.  COST, stated: the per-iteration deltas in secs 3-6 (the
+# exclusion-frame step d03nu1->d03nu2, the profile knob d03nu3->d03nu4, the
+# continuation fix ->d03nu5, the three cuts d03nu6/7/8) become text-only; sec
+# 7's before/after columns survive because d03nu1's numbers are quoted there and
+# d03nu9 is on disk.  Manifests + record layer frozen in
+# sbnd_xin/archive/records/cleanup-20260906/pdhd-tier2/ before deletion.

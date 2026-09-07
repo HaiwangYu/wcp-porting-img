@@ -1,0 +1,33 @@
+=== TMP TIER 2: the pins of the arms work-tier 2 releases ===
+    A pin goes WITH its arms (doc 98).  Each line names the arms it
+    backs and the commit its doc records, which is the rebuild path.
+   /home/xqian/tmp/d47_libpin/new5        1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new5
+   /home/xqian/tmp/d47_libpin/new6        1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new6
+   /home/xqian/tmp/d47_libpin/new7        1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new7
+   /home/xqian/tmp/d47_libpin/new8        1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new8
+   /home/xqian/tmp/d47_libpin/new9        1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new9
+   /home/xqian/tmp/d47_libpin/new10       1.2G  backs d03nu* (pdhd tier 2); doc pdhd/03 sec 2 records its commit
+   would remove: /home/xqian/tmp/d47_libpin/new10
+   /home/xqian/tmp/d143_libpin/final      1.2G  backs work-pr143-* (sbnd tier 2); doc pr/143 sec 6.1 records its md5
+   would remove: /home/xqian/tmp/d143_libpin/final
+   /home/xqian/tmp/d143_libpin/final2     1.2G  backs work-pr143-* (sbnd tier 2); doc pr/143 sec 6.1 records its md5
+   would remove: /home/xqian/tmp/d143_libpin/final2
+   /home/xqian/tmp/d143_libpin/new        1.2G  backs work-pr143-* (sbnd tier 2); doc pr/143 sec 6.1 records its md5
+   would remove: /home/xqian/tmp/d143_libpin/new
+   /home/xqian/tmp/d144_libpin            1.2G  backs work-*-d144on/off (sbnd tier 2); doc pr/144:51 records its md5
+   would remove: /home/xqian/tmp/d144_libpin
+
+   NOT dropped, deliberately: d47_libpin/new11 (the SHIPPED pdhd/03 +
+   pdvd/48 binary, backs d03nu9 and d48nu7), d144_libpin4 (the current
+   sbnd production arm d144fixprod), d144_libpin2, d145_libpin*,
+   d146_libpin*, d08_libpin, d97b-libsnap (the stage-A production
+   binary behind work-*-d97fv) and pdhdstm_libpin (pdhd PROTECTED.txt).
+
+/dev/nvme2n1p6  1.8T  1.3T  398G  77% /home/xqian
+
+DRY RUN.  Re-run with CONFIRM=yes to execute.

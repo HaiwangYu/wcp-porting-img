@@ -1,0 +1,15 @@
+=== TMP TIER 3: scratchpads of DEAD sessions ===
+    Frozen at plan time; each is re-verified against ps AND against a
+    recent mtime, because the peer that started mid-round runs a bare
+    'claude' whose session id is not in its argv.
+   7117f9b1-c512-4158-8c4b-eb56f686d997          18G  ps: dead, mtime > 60 min, cited by nothing
+   would remove: /home/xqian/tmp/claude-25225/-home-xqian-toolkit-dev-toolkit/7117f9b1-c512-4158-8c4b-eb56f686d997
+   790e6df6-e027-4fa3-904f-970589be627f         2.9G  ps: dead, mtime > 60 min, cited by nothing
+   would remove: /home/xqian/tmp/claude-25225/-home-xqian-toolkit-dev-toolkit/790e6df6-e027-4fa3-904f-970589be627f
+
+   KEPT: b48747db (this session) and af86aedf (its scratchpad), plus
+   claude-25225/pr33..pr36f, which doc pr/33-36 name by path.
+
+/dev/nvme2n1p6  1.8T  1.3T  398G  77% /home/xqian
+
+DRY RUN.  Re-run with CONFIRM=yes to execute.
