@@ -2,7 +2,10 @@
 
 **Status: BOTH SCANS DONE — 24/24 and 12/12, 2026-09-06, 36 labels.
 THE ROUND INVERTED, THEN THE FIX WAS REFUTED BY THE SECOND SCAN.
-No knob is proposed. §12 is what was measured; §13 is the recommendation.**
+No knob is proposed. §12 is what was measured; §13 is the recommendation.
+A RESCAN OF ALL 36 IS RUNNING (§14) — the first two scans drew only the
+best-fit trajectory, and the display now overlays the 3-D imaged charge.
+Every number in §12 is provisional until it comes back.**
 
 The round was chartered to recover 137238's 555 MeV object from EM to hadronic.
 Scan 0 (§6.1) called that object **EM** and found the opposite defect —
@@ -1131,3 +1134,98 @@ Two things go back to the owner, both §5.1 calls, neither taken here:
 And one investigation that stands on its own, with a cause to chase rather than
 a threshold to tune: **§12.3, why 395148's stem collapsed from ~3 MIP to 0.44**
 and took the proton-stem branch's only calibration object with it.
+
+---
+
+## 14. The rescan — the same 36 objects, with the 3-D image overlaid
+
+Owner, 2026-09-06: *"I would like to rescan these events, in addition to the
+best-fit trajectory can you also overlay the 3D image on them?"*
+
+**He is right, and it is a defect in the instrument, not a preference.** Both
+scans so far drew only **fit points** — the reconstruction's trajectory samples.
+But EM-versus-hadronic is a judgement about **charge**: a cone that opens, or a
+track that ends in a star. The scanner was being asked the right question with
+the wrong picture, and 36 labels were taken that way. §12.1's headline — that
+no measured variable separates the two classes — is now also a candidate
+symptom of that: the labels may carry instrument noise the rescan removes.
+
+### 14.1 What the overlay draws, and what it must not
+
+From `mabc-pr.zip`, member **`data/0/0-clustering-global.json`** — ~64 k
+imaged points per event, the same 3-D charge Bee draws.
+
+| layer | selection | drawn as |
+|---|---|---|
+| `image_near` | every image point within **15 cm** of any member fit point, **full density** | pale blue |
+| `image_far` | the rest of the event, thinned to ≤ 8000 | near-white |
+| the fit | unchanged — MIP-coloured members, grey other segments, red X / O | on top |
+
+Both selections are **purely geometric** over all the charge in the event.
+They are deliberately *not* "the points the reconstruction assigned to this
+cluster": that would draw the clustering decision, which is part of what the
+scan is checking, and matching on a stage-local ident is unsound anyway
+(`feedback_retile_ident_is_not_bee_cluster_id`).
+
+**Only `clustering-global` is read.** The same archive carries
+`shower_track-global`, whose `q` is the literal marker **15000.0** for *"the
+chain called this a shower"* (`MultiAlgBlobClustering.cxx:880`, doc pr/67
+§3.1). Drawing that would hand the scanner the answer. Each payload records
+which members it was built from and **`selftest_pr148_scan.py` asserts the list
+is exactly clustering-global**, that no banned member (`shower_track`,
+`track_fit`, `vertices`, `mc`) was read, and that every object's near layer is
+non-empty — so an image that silently failed to load cannot pass as "blind".
+
+Two `Toggle`s let the image and the fit be turned off independently, so the
+old picture is still reachable. Implementation note: the near-field search is
+a **voxel hash**, not the obvious double loop — the image is 64 k points and a
+big object's trajectory is a few thousand, which is ~10⁸ distance checks per
+object in pure Python. Binned at the search radius with a 27-cell probe, all
+36 objects prep in **5.8 s**.
+
+### 14.2 The sheet, and why it is blind to the first pass
+
+`docs/pr/pr148-pidscan3-manifest.tsv`, all **36** previously-labelled objects
+(scan 0's 24 + scan 2's 12; **18 of them A5 re-types**), built by
+`scripts/pr148_pidset3.py`.
+
+**A rescan that shows the scanner their own previous answer measures nothing.**
+So the first-pass verdict lives in the KEY, never on the sheet, and the row
+order is reshuffled under a third seed so position carries no memory either.
+Everything the earlier sheets withheld stays withheld: the A5 discriminants,
+the branch, the νe score, the stratum, and the segment count.
+
+That makes the comparison a real measurement of two things at once — **how
+stable the labels are**, and **how much the image changes the answer.**
+
+```bash
+./scripts/pr148_pidset3.py --sheet docs/pr/pr148-pidscan3-manifest.tsv \
+    --key docs/pr/pr148-pidscan3.KEY.tsv
+/nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/python \
+    pr148_scan/selftest_pr148_scan.py \
+    --sheet docs/pr/pr148-pidscan3-manifest.tsv --expect 36    # 27/27
+./pr148_scan/serve_pr148_scan.sh 5017 --scan-tag scan2 \
+    --sheet docs/pr/pr148-pidscan3-manifest.tsv
+```
+
+Fresh tag `scan2`; `scan0` and `scan1` are untouched records (M13). Partial
+labelling is fine — the scorers skip blank verdicts — but the **18 A5 re-types
+are the ones that carry §12**, and they are scattered through the order by
+design.
+
+### 14.3 What the rescan can change, stated before it runs
+
+- **§12.1** — precision 0.444, CI [0.25, 0.66]. If the image moves several
+  verdicts the interval moves with them, in either direction. It will not get
+  narrower: 36 labels is 36 labels.
+- **§12.1's "nothing separates"** — twelve overlapping variables. If the
+  first-pass labels carried instrument noise, a separator could appear. This
+  is the outcome to hope for and the one to be most suspicious of, because it
+  is also what over-fitting looks like.
+- **§11.3 / §8** — the guard's cut set is 7 objects. Two verdict flips there
+  would change its Fisher *p* materially. §8 stays refuted unless that happens.
+- **§6.2 and 137238** — the object whose EM verdict opened the whole question.
+  Its charge, not its fit, is what the owner will be looking at this time.
+
+Nothing above is re-derived until the labels are in, and the pre-registration
+is here so it cannot be adjusted afterwards.

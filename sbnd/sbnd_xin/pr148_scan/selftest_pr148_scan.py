@@ -19,6 +19,13 @@ browser (feedback_bokeh_client_session_false_negative).
       segments, 246.6 of 432.5 cm.  Judging an object at 57 % of its length
       is judging a different object; the sheet builder now excludes those and
       this asserts the sheet it built.
+  T1c THE IMAGE SOURCE.  Every payload records which mabc-pr.zip members its
+      image layer was built from, and that list must be exactly
+      clustering-global.  The same archive carries shower_track-global, whose
+      q is the literal 15000.0 marker for "the chain called this a shower"
+      (MultiAlgBlobClustering.cxx:880) -- drawing it would hand over the
+      answer.  Also asserts the near layer is non-empty, so an image that
+      silently failed to load cannot pass as "blind".
   T2  THE BLIND.  Every key of every ColumnDataSource the module builds, and
       every payload key, is on an allow-list.  An absence has to be PROVEN,
       not asserted, so this enumerates what IS there rather than looking for
@@ -54,7 +61,9 @@ CDS_ALLOWED = {"x", "y", "z", "mip", "xs", "ys"}
 PAYLOAD_ALLOWED = {"idx", "sample", "run", "subrun", "event", "shower_id",
                    "obj", "kine_charge_mev", "kine_best_mev", "total_len_cm",
                    "mip_used", "start", "far", "far_dist_cm",
-                   "members", "others"}
+                   "members", "others", "image_near", "image_far", "image_src"}
+IMAGE_OK = {"data/0/0-clustering-global.json"}
+IMAGE_BANNED = ("shower_track", "track_fit", "vertices", "mc.json")
 SEG_ALLOWED = {"id", "len", "x", "y", "z", "mip"}
 FORBIDDEN = {"growth", "bragg", "stem", "stem_mip", "f_heavy", "n_heavy",
              "len_heavy_cm", "max_mip", "star_n", "star_dist_cm", "stem_run_cm",
@@ -110,6 +119,21 @@ def main():
            if V.PAYLOAD[int(r["idx"])]["obj"] != int(r["obj"])]
     check(not bad, "payload start segment matches the sheet obj (bad: %s)" % bad)
 
+    srcs_used, empty_img = set(), []
+    for r in rows:
+        p = V.PAYLOAD[int(r["idx"])]
+        srcs_used |= set(p.get("image_src", []))
+        if not p.get("image_near", {}).get("x"):
+            empty_img.append(r["event"])
+    check(srcs_used == IMAGE_OK,
+          "the image layer reads ONLY clustering-global; saw %s" % sorted(srcs_used))
+    check(not any(b in n for n in srcs_used for b in IMAGE_BANNED),
+          "no banned mabc member (shower_track / track_fit / vertices / mc) was read")
+    check(not empty_img,
+          "every object has a non-empty near-image layer (empty: %s)" % empty_img)
+    npts = sum(len(V.PAYLOAD[int(r["idx"])]["image_near"]["x"]) for r in rows)
+    print("       (image: %d near-field points across %d objects)" % (npts, len(rows)))
+
     thin = []
     for r in rows:
         p = V.PAYLOAD[int(r["idx"])]
@@ -122,7 +146,7 @@ def main():
 
     # T2 -- enumerate what actually reaches the browser
     srcs = {"mem_src": V.mem_src, "oth_src": V.oth_src, "st_src": V.st_src,
-            "fa_src": V.fa_src}
+            "fa_src": V.fa_src, "imgn_src": V.imgn_src, "imgf_src": V.imgf_src}
     for k, s in V.lin_src.items():
         srcs["lin_src[%s]" % k] = s
     for k, s in V.box_src.items():
@@ -139,6 +163,8 @@ def main():
         pk |= set(p.keys())
         for s in p["members"] + p["others"]:
             sk |= set(s.keys())
+        for lay in ("image_near", "image_far"):
+            sk |= set(p[lay].keys())
     check(pk <= PAYLOAD_ALLOWED, "payload keys on the allow-list; saw %s"
           % sorted(pk - PAYLOAD_ALLOWED))
     check(sk <= SEG_ALLOWED, "segment keys on the allow-list; saw %s"
@@ -169,6 +195,10 @@ def main():
     check([f.name for f, _, _ in V.PROJ] == ["f_xy", "f_yz", "f_zx"],
           "the three panels are X-Y, Y-Z, Z-X")
     check(V.zoomer.active is False, "Zoom to object defaults OFF")
+    check(V.show_img.active is True, "the 3-D image defaults ON")
+    check(len(V.imgn_src.data["x"]) > 0,
+          "the first object's near-image actually reached its CDS (%d points)"
+          % len(V.imgn_src.data["x"]))
 
     # T5 -- label round-trip, then leave no trace
     print("T5  label round-trip")

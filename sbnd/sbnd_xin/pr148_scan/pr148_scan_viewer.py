@@ -23,6 +23,14 @@ WHAT IS ON SCREEN, AND WHY EACH THING IS THERE
   "is this a 30 cm stub or a 5 m cascade" judgement.  `Zoom to object` exists
   and is not the default.
 
+  IMAGE     the 3-D imaged charge from mabc-pr.zip -- the same points Bee
+            draws.  Pale blue inside 15 cm of the trajectory at full density,
+            near-white for the rest of the event, thinned.  Added at the
+            owner's request 2026-09-06: until then the display drew only fit
+            points, so the scanner was judging the RECONSTRUCTION'S FIT rather
+            than the charge, and EM-vs-hadronic is a judgement about charge --
+            a cone that opens, or a track that ends in a star.  Toggle it off
+            to see the fit alone.
   coloured  the object's own segments, one dot per fit point, coloured by
             dQ/dx in MIP units on a FIXED 0.5-3.5 scale.  Fixed, not
             per-object: a per-object rescale makes every object contain its
@@ -38,7 +46,10 @@ the derived candidates (n_heavy / f_heavy / star), the A5 verdict, the
 stratum, the nue BDT score, the SEGMENT COUNT (doc sec 11 -- it became sec 8's
 discriminant, and a count printed next to a bar of 10 is the verdict printed),
 and every segment's particle_id / particle_score / flag_shower.  The last group matters most: it is the reconstruction's own
-typing answer, and the scan exists to check that answer.
+typing answer, and the scan exists to check that answer.  For the same reason
+the image layer reads ONLY `clustering-global` out of mabc-pr.zip: the same
+archive's `shower_track-global` carries q = 15000 as the literal "the chain
+called this a shower" marker, and drawing it would hand over the answer.
 selftest_pr148_scan.py proves the absence by enumerating the keys of every
 ColumnDataSource this module builds, rather than asserting it.
 
@@ -148,6 +159,8 @@ PROJ = ((f_xy, "x", "y"), (f_yz, "z", "y"), (f_zx, "z", "x"))
 
 # One CDS per layer, shared by all three panels: a point carries x/y/z and
 # each figure names the two columns it needs.
+imgf_src = ColumnDataSource(data=dict(x=[], y=[], z=[]))   # event context
+imgn_src = ColumnDataSource(data=dict(x=[], y=[], z=[]))   # near the object
 mem_src = ColumnDataSource(data=dict(x=[], y=[], z=[], mip=[]))
 oth_src = ColumnDataSource(data=dict(x=[], y=[], z=[]))
 lin_src = {k: ColumnDataSource(data=dict(xs=[], ys=[])) for k in ("xy", "yz", "zx")}
@@ -156,15 +169,21 @@ st_src = ColumnDataSource(data=dict(x=[], y=[], z=[]))
 fa_src = ColumnDataSource(data=dict(x=[], y=[], z=[]))
 
 cmap = linear_cmap("mip", Turbo256, MIP_LO, MIP_HI)
-psize = Slider(start=1, end=8, value=3, step=1, title="point size", width=200)
-gsize = Slider(start=1, end=6, value=2, step=1, title="context size", width=200)
+psize = Slider(start=1, end=8, value=3, step=1, title="fit point size", width=180)
+gsize = Slider(start=1, end=6, value=2, step=1, title="image point size", width=180)
+show_img = Toggle(label="3-D image ON", active=True, width=150)
+show_fit = Toggle(label="best-fit trajectory ON", active=True, width=190)
 
 for f, ax, ay in PROJ:
     k = {"f_xy": "xy", "f_yz": "yz", "f_zx": "zx"}[f.name]
     f.multi_line("xs", "ys", source=box_src[k], line_color="#888888",
                  line_dash="dashed", line_width=1)
-    f.scatter(ax, ay, source=oth_src, size=gsize.value, color="#b9b9b9",
-              alpha=0.55, name="ctx_%s" % k)
+    f.scatter(ax, ay, source=imgf_src, size=max(1, gsize.value - 1),
+              color="#c9d6e4", alpha=0.45, name="imgf_%s" % k)
+    f.scatter(ax, ay, source=imgn_src, size=gsize.value, color="#5b8db8",
+              alpha=0.55, name="imgn_%s" % k)
+    f.scatter(ax, ay, source=oth_src, size=max(1, gsize.value - 1),
+              color="#9a9a9a", alpha=0.5, name="ctx_%s" % k)
     f.multi_line("xs", "ys", source=lin_src[k], line_color="#404040",
                  line_width=1, alpha=0.35)
     f.scatter(ax, ay, source=mem_src, size=psize.value, color=cmap,
@@ -183,15 +202,35 @@ cbar = ColorBar(color_mapper=LinearColorMapper(palette=Turbo256, low=MIP_LO,
                 title="dQ/dx  (MIP)", width=12)
 f_xy.add_layout(cbar, "right")
 
-def _sizes(attr, old, new):
+def _apply_sizes():
     for k in ("xy", "yz", "zx"):
         f = {"xy": f_xy, "yz": f_yz, "zx": f_zx}[k]
         f.select(name="mem_%s" % k)[0].glyph.size = psize.value
-        f.select(name="ctx_%s" % k)[0].glyph.size = gsize.value
+        f.select(name="ctx_%s" % k)[0].glyph.size = max(1, gsize.value - 1)
+        f.select(name="imgn_%s" % k)[0].glyph.size = gsize.value
+        f.select(name="imgf_%s" % k)[0].glyph.size = max(1, gsize.value - 1)
+
+
+def _sizes(attr, old, new):
+    _apply_sizes()
 
 
 psize.on_change("value", _sizes)
 gsize.on_change("value", _sizes)
+
+
+def _layers(active=None):
+    """Toggle whole layers by emptying/refilling their sources: a renderer
+    hidden with .visible can still be picked up by an auto-ranging axis, and
+    an empty CDS is unambiguous."""
+    show_img.label = "3-D image ON" if show_img.active else "3-D image off"
+    show_fit.label = ("best-fit trajectory ON" if show_fit.active
+                      else "best-fit trajectory off")
+    draw()
+
+
+show_img.on_click(_layers)
+show_fit.on_click(_layers)
 
 
 def det_lines(ax, ay):
@@ -245,9 +284,12 @@ def refresh_texts():
         "charge energy <b>%.1f MeV</b> &nbsp;|&nbsp; best energy <b>%.1f MeV</b> "
         "&nbsp;|&nbsp; total length <b>%.1f cm</b> &nbsp;|&nbsp; "
         "farthest point from the start vertex <b>%.1f cm</b>"
-        "<br/><span style='color:#777'>colour is dQ/dx in MIP units, fixed "
-        "%.1f&ndash;%.1f across every object; grey is all other charge in the "
-        "event; red X is the start vertex, red O the far end. "
+        "<br/><span style='color:#777'>pale blue is the 3-D imaged charge "
+        "within 15 cm of the object and near-white is the rest of the event "
+        "(thinned); the coloured dots are the best-fit trajectory, dQ/dx in "
+        "MIP units on a fixed %.1f&ndash;%.1f scale across every object; grey "
+        "is other fitted segments; red X is the start vertex, red O the far "
+        "end. "
         "Question: is this object an EM shower, a hadronic interaction, or "
         "both clustered together?</span></div>"
         % (p["kine_charge_mev"], p["kine_best_mev"], p["total_len_cm"],
@@ -265,20 +307,30 @@ def refresh_texts():
     sel.value = str(state["i"])
 
 
+EMPTY3 = dict(x=[], y=[], z=[])
+
+
 def draw():
     p = PAYLOAD[state["i"]]
+    imgn_src.data = dict(p["image_near"]) if show_img.active else dict(EMPTY3)
+    imgf_src.data = dict(p["image_far"]) if show_img.active else dict(EMPTY3)
     mx, my, mz, mm = [], [], [], []
     for s in p["members"]:
         mx += s["x"]; my += s["y"]; mz += s["z"]; mm += s["mip"]
     ox, oy, oz = [], [], []
     for s in p["others"]:
         ox += s["x"]; oy += s["y"]; oz += s["z"]
-    mem_src.data = dict(x=mx, y=my, z=mz, mip=mm)
-    oth_src.data = dict(x=ox, y=oy, z=oz)
+    if show_fit.active:
+        mem_src.data = dict(x=mx, y=my, z=mz, mip=mm)
+        oth_src.data = dict(x=ox, y=oy, z=oz)
+    else:
+        mem_src.data = dict(x=[], y=[], z=[], mip=[])
+        oth_src.data = dict(EMPTY3)
     for k, (ax, ay) in (("xy", ("x", "y")), ("yz", ("z", "y")),
                         ("zx", ("z", "x"))):
-        lin_src[k].data = dict(xs=[s[ax] for s in p["members"]],
-                               ys=[s[ay] for s in p["members"]])
+        lin_src[k].data = (dict(xs=[s[ax] for s in p["members"]],
+                                ys=[s[ay] for s in p["members"]])
+                           if show_fit.active else dict(xs=[], ys=[]))
     st_src.data = dict(x=[p["start"][0]], y=[p["start"][1]], z=[p["start"][2]])
     fa_src.data = dict(x=[p["far"][0]], y=[p["far"][1]], z=[p["far"][2]])
     apply_zoom()
@@ -360,7 +412,8 @@ LEGEND = Div(width=1120, text=
 
 curdoc().add_root(column(
     hdr, info, LEGEND,
-    row(sel, b_prev, b_next, zoomer, psize, gsize),
+    row(sel, b_prev, b_next, zoomer),
+    row(show_img, show_fit, psize, gsize),
     row(f_xy, f_yz),
     row(f_zx, column(Div(text="<div style='height:14px'></div>"),
                      row(b_em, b_had, b_mix),
