@@ -54,8 +54,16 @@ CITROOTS="$R/pdhd/docs $R/pdhd/scripts $R/pdvd/docs $R/pdvd/scripts
           $R/sbnd/sbnd_xin/docs $R/sbnd/sbnd_xin/scripts $R/qlport/scripts
           $R/pdvd/stm $R/pdhd/stm_scan $R/pdhd/ql_scan
           /home/xqian/toolkit-dev/toolkit/clus/docs"
+# EXCLUDE THIS ROUND'S OWN DOC.  doc 101 sec 5 lists these paths in order to say
+# that nothing names them, and grep -F then finds `d45_libpin/dbg` there and
+# refuses the tier -- after two entries have already gone.  That is doc 91's
+# "protected because protected" defect recurring on a new artifact: the round's
+# own RECORD instead of its own tier file.  What the guard checks is therefore
+# "nothing OUTSIDE this round's own record names them".
 named() {
-  grep -rlI --exclude-dir=.git --exclude-dir=retire -F "${1#$T/}" $CITROOTS 2>/dev/null | wc -l
+  grep -rlI --exclude-dir=.git --exclude-dir=retire \
+       --exclude=101_cleanup-four-tree-retire.md \
+       -F "${1#$T/}" $CITROOTS 2>/dev/null | wc -l
 }
 
 case "$TIER" in
@@ -136,6 +144,15 @@ case "$TIER" in
       echo "   REFUSING $id: a doc or script names it."; exit 8
     fi
     printf '   %-40s %8s  ps: dead, mtime > 60 min, cited by nothing\n' "$id" "$(du -sh "$d"|cut -f1)"
+    # Every work dir this round releases keeps a SHA-256 per file.  A scratchpad
+    # holding 111578 non-.so files should not be held to a lower standard just
+    # because it lives under ~/tmp: record the listing before the bytes go.
+    L="$R/sbnd/sbnd_xin/archive/records/cleanup-20260906/tmp-tier3-$id.listing.txt"
+    if [ "$CONFIRM" = yes ]; then
+      mkdir -p "$(dirname "$L")"
+      find "$d" -printf '%y\t%s\t%p\n' > "$L" 2>/dev/null
+      echo "      listing -> $L ($(wc -l < "$L") entries)"
+    fi
     run "$d"
   done
   echo

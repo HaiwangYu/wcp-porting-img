@@ -46,9 +46,12 @@ CONFIRM=yes ./sweep_tmp_20260906.sh 3
 | `pdvd` | 54 G (3680 arm dirs, 122 arms) | 39 dirs / **0.27 GiB** | 1200 dirs / **12.11 GiB** | ~42 G |
 | `pdhd` | 42 G (1191 arm dirs, 114 arms) | 34 dirs / **0.20 GiB** | 240 dirs / **5.86 GiB** | ~36 G |
 | `~/tmp` | 98 G | **8.92 GiB** | 11.20 + 20.37 = **31.57 GiB** | ~57 G |
-| | | **10.71 GiB** | **122.03 GiB** | |
+| | | **9.81 GiB** | **122.03 GiB** | |
 
-**132.74 GiB total**, against 399 G free on `/home/xqian` at plan time.
+**131.84 GiB total**, against 399 G free on `/home/xqian` at plan time.
+(Corrected: the first cut of this table and commit `01fc606e`'s subject line
+said 10.71 / 132.74 — the work-dir subtotal 0.90 had been added on top of its
+own three components. Tier 2 was right.)
 
 The split is deliberately lopsided and that is the honest shape of this tree:
 almost everything worth releasing is a **closed round's A/B family**, and every
@@ -184,7 +187,8 @@ bytes**. Dropping one removes zero record bytes by construction, and
 `pure_so()` re-checks that at run time rather than trusting this paragraph.
 
 - **tier 1, 8.92 GiB** — `d144_libpin{3,5}`, `d45_libpin/dbg`,
-  `d41_libpin/{new2,new3,new4,new5,ref}`. **Nothing in either repo names them.**
+  `d41_libpin/{new2,new3,new4,new5,ref}`. **Nothing outside this round's own
+  record names them** — and that qualifier is load-bearing, see §7.1.
   An un-named pin cannot even be invoked, and a missing `LD_LIBRARY_PATH`
   directory is silently ignored (the M1 shape that bit `dbg25_run.sh`), so these
   are already inert. `named()` re-checks at run time and refuses if the count is
@@ -244,7 +248,59 @@ The record tree is **on disk only** — `sbnd/sbnd_xin/archive/` is excluded in
 not committed and live at 274 MiB in the tree. What *is* committed is the
 machinery that produced them and this doc.
 
-## 7. Tier 2 — the fat, with its cost stated
+## 7.1 Four defects found reviewing the STAGED round, before handing it over
+
+The dry runs were clean, all 33 interlocks passed, and three of these four would
+still have destroyed part of the round. All three script bugs are reachable
+**only under `CONFIRM=yes`**, which is exactly what a dry run cannot exercise.
+
+1. **The driver would have deleted sbnd and pdvd, then aborted on pdhd.** The
+   "record layer must be frozen first" precondition built its path relative to
+   `pdhd/` (`$D/../../archive/...`) and resolved to a directory that never
+   exists, *and* was gated on `[ "$t" = pdhd ]` — which is **last** in the
+   default tree list. So under `CONFIRM=yes` it would have deleted two trees and
+   then refused. Recovery would then have hit the "already gone" refusal and
+   needed a re-plan. Now points at the real per-tree, per-tier output of
+   `archive_records_20260906.py`, for every tree.
+2. **The `~/tmp` tier-1 guard read this doc.** `named()` asserts "nothing names
+   this path" — and §5 above lists the paths in order to say so, so `grep -F`
+   found `d45_libpin/dbg` in §5 and refused the tier **after `d144_libpin{3,5}`
+   had already gone**. Doc 91's *protected because protected* defect recurring on
+   a new artifact: the round's own **record** instead of its own tier file. The
+   round's doc is now excluded and the claim is stated as "nothing outside this
+   round's own record".
+3. **INTERLOCK A would have refused tier 2 because tier 1 had run.** It compared
+   *every* tier file; once tier 1's 97 dirs are gone, the confirm-time re-plan
+   regenerates `tier1_*.txt` as **empty** — legitimately — and the comparison
+   reports CHANGED. The owner would have seen a peer-session alarm raised by the
+   round's own first pass, and the only documented escape (`REPLAN=no`) disables
+   the guard entirely. Scoped to the tier being run.
+4. **The headline number was wrong.** 10.71 / 132.74 GiB double-counted the
+   work-dir subtotal on top of its own three components; the correct figures are
+   **9.81 / 131.84**. Corrected in §1 rather than by rewriting history.
+
+**Each of the three script fixes re-verified against a stub whose `rm -rf` is an
+`echo`, with a negative control**, because the whole point is that the dry run
+could not see them:
+
+| run | result |
+|---|---|
+| `1 pdhd`, archive present | reaches the stub, `would rm -rf 34 targets` |
+| `1 pdhd`, archive path made unreachable | `REFUSING: ...NOSUCH-pdhd missing -- run 'python3 archive_records_20260906.py 1' first.` |
+| `1` (all three trees), archive unreachable | refuses on **sbnd**, the FIRST tree — the old code refused on pdhd, the last, after deleting the other two |
+| tier-1 sweep, unpatched `named()` | refused on `d45_libpin/dbg` after two entries had gone |
+| tier-1 sweep, patched | 8 entries, `named_by=0`, `100% .so`, no refusal |
+
+All five dry runs re-run clean afterwards (`retire_dry_t{1,2}.log`,
+`sweep_dry_t{1,2,3}.log`).
+
+Also raised, and taken: **tmp tier 3 held a lower standard than the rest of the
+round.** Every released work dir keeps a SHA-256 per file, while tier 3 removed
+a scratchpad containing **111 578 non-`.so` files** with no record at all. It now
+writes `find`-listing to
+`archive/records/cleanup-20260906/tmp-tier3-<id>.listing.txt` before deleting.
+
+## 7.2 Tier 2 — the fat, with its cost stated
 
 Every family below is cited **only by its own closed round's doc**. The full
 grounds are in `plan_20260906.py`'s `tier2` dicts, one string per family.

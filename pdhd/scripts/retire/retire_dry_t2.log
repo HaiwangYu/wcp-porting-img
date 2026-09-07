@@ -1,0 +1,29 @@
+==================================================================
+== sbnd   tier 2   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_sbnd_20260906.txt
+   lines 22 | present 22 | already gone 0 | 72.49 GiB
+   DRY RUN -- first 3 targets:
+      /home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin/work-mcp1k-d144fixframeonly
+      /home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin/work-mcp1k-d144off
+      /home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin/work-mcp1k-d144on
+==================================================================
+== pdvd   tier 2   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdvd_20260906.txt
+   lines 1200 | present 1200 | already gone 0 | 12.11 GiB
+   DRY RUN -- first 3 targets:
+      /home/xqian/toolkit-dev/wcp-porting-img/pdvd/work/039252_0_d143pref
+      /home/xqian/toolkit-dev/wcp-porting-img/pdvd/work/039252_0_d45nu0
+      /home/xqian/toolkit-dev/wcp-porting-img/pdvd/work/039252_0_d45on
+==================================================================
+== pdhd   tier 2   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier2_pdhd_20260906.txt
+   lines 240 | present 240 | already gone 0 | 5.85 GiB
+   DRY RUN -- first 3 targets:
+      /home/xqian/toolkit-dev/wcp-porting-img/pdhd/work/029107_0_d03nu1
+      /home/xqian/toolkit-dev/wcp-porting-img/pdhd/work/029107_0_d03nu2
+      /home/xqian/toolkit-dev/wcp-porting-img/pdhd/work/029107_0_d03nu3
+
+POST-STATE CHECK.  interlock 4 recorded the PRE-existing broken-symlink
+count per tree; this number only means something compared against that.
+   pdhd: 0 broken symlinks
+   pdvd: 0 broken symlinks
+   sbnd/sbnd_xin: 0 broken symlinks
+
+DRY RUN.  Re-run with CONFIRM=yes to execute.

@@ -28,13 +28,18 @@ D="$(cd "$(dirname "$0")" && pwd)"
 # peer.  Set REPLAN=no only to re-confirm a plan you just re-ran by hand.
 if [ "${CONFIRM:-no}" = yes ] && [ "${REPLAN:-yes}" = yes ]; then
   echo "== INTERLOCK A: re-planning before deleting (peer-session guard)"
-  mkdir -p "$D/.preplan"; cp "$D"/tier?_*_20260906.txt "$D/.preplan/"
+  # Compare ONLY the tier being run.  Comparing every tier file means that
+  # once tier 1 has executed, its files legitimately re-plan to EMPTY (those
+  # dirs are gone), and tier 2's confirm then reports "CHANGED" and refuses --
+  # a peer-session alarm raised by the round's own first pass.  REPLAN=no is
+  # the wrong escape from that; it disables the guard entirely.
+  mkdir -p "$D/.preplan"; cp "$D"/tier${TIER}_*_20260906.txt "$D/.preplan/"
   if ! python3 "$D/plan_20260906.py" > "$D/plan_20260906.confirm.out" 2>&1; then
     echo "   REFUSING: the plan no longer passes its interlocks. See"
     echo "   $D/plan_20260906.confirm.out"; exit 10
   fi
   changed=0
-  for f in "$D"/tier?_*_20260906.txt; do
+  for f in "$D"/tier${TIER}_*_20260906.txt; do
     b=$(basename "$f")
     cmp -s "$f" "$D/.preplan/$b" || { echo "   CHANGED since plan time: $b"; changed=1; }
   done
@@ -71,11 +76,19 @@ for t in $TREES; do
   if [ -n "$bad" ]; then echo "   REFUSING: symlink in the target list:"; echo "$bad"; exit 4; fi
   out=$(grep -cv '^/home/xqian/toolkit-dev/wcp-porting-img/' "$TF" || true)
   if [ "$out" != 0 ]; then echo "   REFUSING: $out targets outside wcp-porting-img"; exit 5; fi
-  # the record layer must be frozen BEFORE the bytes go (M13: the doc keeps the
-  # summary, the archive keeps the record).
-  REC="$D/../../archive/records/cleanup-20260906"
-  if [ "$CONFIRM" = yes ] && [ ! -d "$REC" ] && [ "$t" = pdhd ]; then
-    echo "   REFUSING: $REC missing -- run archive_records_20260906.py first."; exit 6
+  # The record layer must be frozen BEFORE the bytes go (M13: the doc keeps the
+  # summary, the archive keeps the record).  Two bugs lived here and both were
+  # only reachable under CONFIRM=yes, which a dry run cannot exercise:
+  #   * the path was built relative to pdhd/ and resolved to a directory that
+  #     never exists, and
+  #   * it was gated on `$t = pdhd`, which is LAST in the default tree list --
+  #     so sbnd and pdvd were already deleted by the time it refused.
+  # It now points at the real output of archive_records_20260906.py, per tree
+  # AND per tier, and applies to every tree.
+  REC="$D/../../../sbnd/sbnd_xin/archive/records/cleanup-20260906/${t}-tier${TIER}"
+  if [ "$CONFIRM" = yes ] && [ ! -d "$REC" ]; then
+    echo "   REFUSING: $REC missing -- run 'python3 archive_records_20260906.py $TIER' first."
+    exit 6
   fi
 
   if [ "$CONFIRM" = yes ]; then
