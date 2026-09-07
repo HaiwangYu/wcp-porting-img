@@ -1,0 +1,8 @@
+arms: work-mcp1k-d144fixprod:mcp1k work-mcp2k-d144fixprod:mcp2k work-ncpi0-d144fixprod:ncpi0 work-nuecc48-d144fixprod:nuecc48
+cfg : angle=25.0 gap=20.0 lever=15.0 min_len=5.0 short_gap=8.0 short_gap_angle=10.0 short_gap_len=50.0 track_partner=True x=0.0 xcut=6.0
+events with a calib dump      : 1435
+events with >=1 candidate pair: 83
+candidate pairs by verdict:
+   receiver_type         248 rows    28 events
+   angle_gap               3 rows     1 events
+   partner_type            2 rows     2 events

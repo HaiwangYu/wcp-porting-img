@@ -1699,6 +1699,12 @@ fi
 [ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_short_gap=${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP}")
 [ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP_ANGLE:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_short_gap_angle=${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP_ANGLE}")
 [ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP_LEN:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_short_gap_len=${SBND_LONG_MUON_CATHODE_BRIDGE_SHORT_GAP_LEN}")
+# doc pr/147: admit BOTH sides of the cathode bridge on track-likeness instead
+# of PID.  EMPTY env = no TLA = the job default (false) = byte-identical.
+[ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_TRACK_TYPES:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_track_types=$([ "${SBND_LONG_MUON_CATHODE_BRIDGE_TRACK_TYPES}" = 0 ] && echo false || echo true)")
+[ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_DQDX_LO:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_trk_dqdx_lo=${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_DQDX_LO}")
+[ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_DQDX_HI:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_trk_dqdx_hi=${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_DQDX_HI}")
+[ -n "${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_STRAIGHT:-}" ] && CATH_TLA+=(--tla-code "long_muon_cathode_bridge_trk_straight=${SBND_LONG_MUON_CATHODE_BRIDGE_TRK_STRAIGHT}")
 
 # doc pr/128 -- PF/kine completeness.  EMPTY env = no TLA = the job default
 # false = byte-identical.  PF knobs move only the picture; the KINE twins move
