@@ -661,14 +661,62 @@ than `retile_bad_blob_max_run`, so it never reaches a far ghost (worst 39.2 → 
 | PDVD knob-ON smoke, 3 events, installed lib | rc=0 ×3; member hashes **DIFFER** on evt 0 and 10 (`b07c0f88…`→`ee16d8e6…`, `f279f6fc…`→`33ce636a…`), identical on evt 11 (no `steiner_graph` layer in either arm) |
 | PDVD wall time | 18/24/25 s → **11/16/16 s** — the cap is cheaper, there is less invented cloud to carry |
 
-### The honest limit on the PDVD half
+### 9.2 The PDVD 30-event grade — run after the flip, and it holds
 
-**PDVD is flipped on the fabrication argument and PDHD's grade, not on its own.** Its 3-event smoke
-shows the knob runs and changes output; it does **not** show an improvement, because that sample has
-no far ghosts to remove — `> 10 cm` is **0** and the worst distance **3.9 cm** in both arms, with
-`> 3 cm` 28 → 26. Three events is far too small to see a defect that lives in 0.3–0.7 % of bridges.
-PDVD's own 30-event grade, and a PDVD hand scan of its STM/Michel consumer (`CheckSTM_Michel`, doc
-pdvd/48 — a *different* consumer from PDHD's), are the outstanding work.
+```bash
+ARM=d08pv30off TLA="-S retile_hack_max_bridge=null" JOBS=12 bash run_pdvd30.sh
+ARM=d08pv30on  TLA=""                                JOBS=12 bash run_pdvd30.sh
+python3 pdhd/docs/scripts/d08_steiner_ghost.py d08pv30off d08pv30on --pair \
+        --run6 039349 --work ../pdvd/work
+python3 pdhd/docs/scripts/d08_tag_flips.py d08pv30off d08pv30on 039349 ../pdvd/work
+```
+
+Run 039349, events 0–29 (the sample docs 45 and 48 grade on), both arms 30/30 rc=0. The knob-off arm
+is the *same* build with `-S retile_hack_max_bridge=null`, which was verified to compile the key away
+before the arms were launched.
+
+| PDVD, 144 matched clusters | knobs off | cap 10 cm |
+|---|---|---|
+| Steiner points | 134 163 | 133 610 |
+| > 3 cm from live charge | 688 | **374 (−45.6 %)** |
+| **> 10 cm** | **22** | **0** |
+| > 30 cm | 0 | 0 |
+| worst ghost | 13.0 cm | **7.6 cm** |
+| wall time, 30 events | 630 s (median 22) | 633 s (median 22) |
+
+**PDVD had ghosts of its own and the cap removes all of them.** The 3-event smoke of §9.1 saw none
+(> 10 cm = 0 in both arms) and understated the case; at 30 events the defect is there — milder than
+PDHD's, worst 13.0 cm against 39.2 cm, but real, and the cap takes the > 10 cm population to zero.
+
+**The cost is far smaller than PDHD's:**
+
+| tag | base | arm | gained | lost | events touched |
+|---|---|---|---|---|---|
+| TGM | 494 | 494 | 0 | 0 | none |
+| FC | 522 | 522 | 0 | 0 | none |
+| STM | 147 | 145 | **1** | **3** | 4 of 30 |
+
+**And all four STM flips have an essentially unchanged fit** — the §8.2 pattern, cleaner here because
+there are only four to read:
+
+| evt | cluster | | status | kink | exit_L |
+|---|---|---|---|---|---|
+| 5 | 54 | gained | **5 → 0** (`detect_proton` stops firing) | 492 → 488 | 310.3 → 311.2 |
+| 2 | 41 | lost | 0 → 3 | 167 → 162 | 103.2 → 100.3 |
+| 8 | 55 | lost | 0 → 3 | **114 → 114** | **74.0 → 74.0** |
+| 18 | 44 | lost | 0 → 3 (pass 1) | 78 → 77 | 49.0 → 49.5 |
+
+Event 8 cluster 55 is the clean case: **every fit number is identical** and only the status moves. On
+PDVD the whole STM cost of this flip is 4 objects in 147, and not one of them is a track the cap
+reshaped. That is a tagger-sensitivity question (`flag_pass`, `detect_proton`), and it is the same one
+PDHD's §8.2 raises.
+
+### The limit that remains on the PDVD half
+
+PDVD now has its own 30-event grade (§9.2) and it supports the flip on PDVD's own data. What it does
+**not** have is a **hand scan**: the four STM objects that move have not been looked at by a person,
+and PDVD's consumer (`CheckSTM_Michel`, doc pdvd/48) is not PDHD's. With TGM and FC both at zero
+flips and all four fits unchanged, the residual risk is small and named; it is not zero.
 
 ---
 
@@ -677,8 +725,10 @@ pdvd/48 — a *different* consumer from PDHD's), are the outstanding work.
 - ~~No default was flipped~~ — **`retile_hack_max_bridge = 10` is PDHD and PDVD production as of
   2026-09-06 (§9.1).** `retile_bad_blob_run_merge` is still `null` everywhere and remains ungraded in
   production; the C++ defaults of both are still 0.
-- **PDVD is flipped without a PDVD grade** (§9.1). It has a 3-event knob-ON smoke that shows no far
-  ghosts in that sample, and no hand scan of its own consumer. This is the largest open item.
+- **PDVD is graded now** (§9.2, 30 events on run 039349): > 10 cm 22 → 0, worst 13.0 → 7.6 cm, TGM and
+  FC unmoved, 4 STM flips in 147 and all four with an unchanged fit. What is still missing there is a
+  **hand scan** — nobody has looked at those four objects, and PDVD's consumer is `CheckSTM_Michel`,
+  not PDHD's tagger.
 - **The SBND runtime gate was not run** (§5): no QL pctree for its default sample, and its runner
   `rm -rf`s a PR dir inside a peer's live work root. Substituted by the compiled-config proof that
   SBND's `ImproveCluster_2` block is byte-identical and carries neither key. This is a gap.

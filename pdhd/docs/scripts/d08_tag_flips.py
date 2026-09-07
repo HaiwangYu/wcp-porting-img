@@ -9,11 +9,18 @@ SET of (event, cluster) tagged in each arm and the symmetric difference, so a
 Cluster ids are the tagger's own, stable across arms here because the doc-08 knobs
 change only the retiled SHADOW cloud, never the live clustering the pctree carries.
 
-Usage: d08_tag_flips.py <base_tag> <arm_tag> [run6=029107]
+Usage: d08_tag_flips.py <base_tag> <arm_tag> [run6=029107] [work_dir]
+
+`work_dir` lets the same census run on PDVD (doc pdhd/08 sec 9.2):
+  d08_tag_flips.py d08pv30off d08pv30on 039349 ../pdvd/work
+PDVD's stage logs `CheckSTM: cluster N -> STM= TGM=` where PDHD's logs
+`TaggerCheckSTM: ...`, so the regex takes an optional `Tagger` prefix.  It cannot
+swallow TaggerCheckTGM/FC: those spell a different component and carry their own
+STM-free lines.
 """
 import sys, os, re, glob
 
-RE_STM = re.compile(r"TaggerCheckSTM: cluster (\d+) . STM=(\d) TGM=(\d)")
+RE_STM = re.compile(r"(?:Tagger)?CheckSTM: cluster (\d+) . STM=(\d) TGM=(\d)")
 RE_TGM = re.compile(r"TaggerCheckTGM: cluster (\d+) . TGM=([tf])")
 RE_FC  = re.compile(r"TaggerCheckFC: cluster (\d+) . FC=([tf01])")
 
@@ -22,6 +29,7 @@ W = os.path.join(PDHD, "work")
 
 
 def read(tag, run6):
+    global W
     out = {"STM": set(), "TGM": set(), "FC": set()}
     evts = set()
     for d in sorted(glob.glob(os.path.join(W, "%s_*_%s" % (run6, tag)))):
@@ -48,6 +56,9 @@ def read(tag, run6):
 def main():
     base, arm = sys.argv[1], sys.argv[2]
     run6 = sys.argv[3] if len(sys.argv) > 3 else "029107"
+    if len(sys.argv) > 4:
+        globals()["W"] = os.path.abspath(sys.argv[4])
+    print("work root: %s" % W)
     A, ea = read(base, run6)
     B, eb = read(arm, run6)
     common = ea & eb

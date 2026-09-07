@@ -112,8 +112,8 @@ def by_cluster(armdir):
     return out, len(live)
 
 
-def pair(base_tag, arm_tag, run6, tol):
-    W = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+def pair(base_tag, arm_tag, run6, tol, work=None):
+    W = work or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.abspath(__file__)))), "work")
     import glob, re
     evts = sorted({re.match(r".*/(%s)_(\d+)_%s$" % (run6, base_tag), d).group(2)
@@ -182,11 +182,14 @@ def main():
     ap.add_argument("--pair", action="store_true")
     ap.add_argument("--run6", default="029107")
     ap.add_argument("--tol", type=float, default=50.0)
+    ap.add_argument("--work", default=None,
+                    help="arm work root; defaults to this script's own detector "
+                         "(pdhd/work).  Use ../pdvd/work to grade PDVD.")
     a = ap.parse_args()
     if a.pair:
         if len(a.arms) != 2:
             sys.exit("--pair takes exactly two TAGS (not dirs)")
-        pair(a.arms[0], a.arms[1], a.run6, a.tol)
+        pair(a.arms[0], a.arms[1], a.run6, a.tol, a.work)
         return
     rows = [r for r in (one(x) for x in sorted(a.arms)) if r]
     ok = [r for r in rows if not r.get("skip")]
