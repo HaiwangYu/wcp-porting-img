@@ -252,6 +252,19 @@ never merges them. This is the `pdhd/d08_scan` pattern, and it is deliberately
 to open the layers) — here the chain's Michel is the thing under test, so it has
 to be showable; the discipline moves from "cannot" to "recorded".
 
+**Which half of the blind is structural, precisely.** In the *display* it is
+structural and proved: §10's first gate poisons the payload's `verdict` key with
+a value nothing else could produce and searches every `ColumnDataSource` on
+screen for it with `REVEAL` off. On the *key file* it is not. The key is
+committed beside the sheet, and that is a deliberate trade: a scan whose key
+lives only next to a `work/` arm stops being scorable the day that arm is
+retired (`feedback_gate_source_arm_retired`), and these arms will be. So the key
+carries a header saying in as many words that its blind is an **honour rule, not
+a structural one** — including for an assistant asked to help with a scan. The
+sibling scans in this tree (`pdhd_retile_scan_key.tsv`, `pr148`'s `.KEY.tsv`)
+make the same trade; this doc is only refusing to describe it as more than it
+is.
+
 ### 6.1 What the pin is
 
 The scanner places the muon's stopping point: tap any panel to snap to the
@@ -371,6 +384,8 @@ All run and passing at the time of writing.
 | gate | result |
 |---|---|
 | the blind — poison the payload's `verdict` key with a value nothing else could produce, render with REVEAL off, search **every** `ColumnDataSource` on screen for it | PASS, both detectors |
+| a `STM_MICHEL` label is **refused** while `michel_kind` is unset, rather than silently defaulting to `none` | PASS |
+| the scorer runs end to end on synthetic labels covering all 8 buttons, both FRAG variants, revealed and hidden rows, placed and unplaced pins; and hard-errors on an unknown label | PASS |
 | the answer lives under exactly one payload key | PASS |
 | REVEAL brings it on and `revealed_before_label` records both directions | PASS |
 | every one of the 8 labels round-trips; a `FRAG` label carries an object-level verdict | PASS |
@@ -379,7 +394,7 @@ All run and passing at the time of writing.
 | `unit_from_wire` vs the production wire file, 3 probes per (anode, face) block, plus out-of-range rejection, plus all 16 PDVD CRUs reachable | PASS |
 | the prep's near/far split reproduced by brute force with no KD-tree | PASS |
 | `dqdx_ref` grid, units, and the muon plateau against doc pdvd/50's published numbers | PASS |
-| **headless total** | **145 checks, 0 failures** |
+| **headless total** | **171 checks, 0 failures** (157 with `--quick`, which skips the two brute-force passes) |
 | a real mouse drag in headless chromium reaches the CustomJS; every layer moves with it; no row count changes; no point projects outside its own distance from the camera centre; no page errors | **19 checks each detector, 0 failures** |
 | `serve_*.sh` refuses a busy port (rc=2, names the owning pid) | PASS |
 | labels live in `work/stm_michel_labels/<tag>/`, a sibling of the per-event dirs | by construction |

@@ -82,8 +82,9 @@ panel's axis is signed arc length through your pin rather than `rr`.
 | `UNCLEAR` | you genuinely cannot tell |
 
 Then set **the Michel, if any, is:** `none` / `attached` / `detached dots` /
-`both`. That radio is the thing the downstream separation needs and the chain's
-`michel_conn_type` only guesses at.
+`both`. It starts at *not set* on every item and a `STM + MICHEL` label is
+**refused** until you answer it — that radio is what the downstream separation
+needs, and the chain's `michel_conn_type` only guesses at it.
 
 **Why `FRAG` is three buttons and not one.** "The chain ends but grey charge
 continues" holds two opposite physics truths: a fragment of a through-goer (an
@@ -131,6 +132,13 @@ This is the opposite of the sibling `../stm_scan` app, whose blind is structural
 under test, so it has to be showable — the discipline moves from "cannot" to
 "recorded".
 
+The **display's** blind is structural and proved (the self-test poisons the
+payload's verdict and looks for it in every data source). The **key file's** is
+not: `../docs/scan/<det>_stm_michel_scan_key.tsv` is committed beside the sheet,
+because a key that lives only next to a `work/` arm stops being scorable the day
+that arm is retired. Its header says so — the blind on that file is an honour
+rule, and that goes for an assistant asked to help with a scan too.
+
 ## Where the stopping point is
 
 The header badge names the readout unit: `APA2 (x<0, face 0, z>=231)` on PDHD,
@@ -156,11 +164,11 @@ writer's default wire.
 | `smx3d.py` | the 3-D trackball; fork of `sbnd_xin/em_display/em3d.py`, which is untouched |
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
-| `selftest_stm_michel_scan.py` | 145 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force |
+| `selftest_stm_michel_scan.py` | 171 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels |
 | `selftest_smx3d_browser.py` | 19 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, and no point projects outside its own distance from the camera |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |
-| `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — closed until scoring |
+| `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — committed as the record; its blind is an honour rule, see above |
 | `../work/stm_michel_labels/<tag>/labels.json` | your labels; a sibling of the per-event dirs, so re-running an arm cannot delete them |
 | `prep-<det>/` | the sidecars, gitignored (205 MB); rebuild with `prep_stm_michel_scan.py` |
 

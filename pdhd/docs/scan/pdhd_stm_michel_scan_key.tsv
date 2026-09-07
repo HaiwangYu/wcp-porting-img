@@ -1,6 +1,12 @@
 # doc pdhd/12 -- ANSWER KEY for the pdhd STM + Michel scan.
-# DO NOT OPEN WHILE SCANNING.  score_stm_michel_scan.py reads it;
-# stm_michel_viewer.py never does.
+# Committed on purpose: it is the record of the sample at arm d51hnu /
+# HEAD c0b1613b, and a scan whose key lives only beside a work/ arm stops
+# being scorable the day that arm is retired.
+# THE BLIND ON THIS FILE IS AN HONOUR RULE, NOT A STRUCTURAL ONE, and doc
+# pdhd/12 sec 6 says so.  What IS structural is the display: the viewer
+# never opens this file, and the chain's answer reaches no data source
+# unless REVEAL is on -- proved by poisoning it.  Do not open this while
+# scanning, and that goes for an assistant reading it on your behalf.
 scan_id	tranche	stratum	event	cluster	npts	muon_len_cm	is_stm	michel_found	michel_conn_type	michel_len	michel_ke_best	michel_kink_deg	n_dots	in_fv	reject_bits	reject_names	n_near	n_far
 3	1	S1	028084_0	97	105	62.03	1	1	1	8.4	23.84	69.5	0	1	0	STM	1033	7606
 9	1	S3	028084_1	39	290	180.99	0	1	1	6.41	8.99	167.1	0	1	1036	no_bragg|shape_flat|plateau_off_mip	497	7659

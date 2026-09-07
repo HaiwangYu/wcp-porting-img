@@ -82,6 +82,20 @@ TRANCHE1 = 60             # items per detector served first
 T1_S1_CAP = 24            # at most this many from the reco-positive stratum
 T1_FLOOR = 8              # per-stratum floor for S2/S3/S4
 
+# The key's header.  It states what the blind on THIS FILE actually is, because
+# doc pdhd/12 sec 6 argues that structural beats request and the file itself is
+# the one place where the blind is a request.
+KEY_HEADER = (
+    "# doc pdhd/12 -- ANSWER KEY for the %s STM + Michel scan.\n"
+    "# Committed on purpose: it is the record of the sample at arm %s /\n"
+    "# HEAD c0b1613b, and a scan whose key lives only beside a work/ arm stops\n"
+    "# being scorable the day that arm is retired.\n"
+    "# THE BLIND ON THIS FILE IS AN HONOUR RULE, NOT A STRUCTURAL ONE, and doc\n"
+    "# pdhd/12 sec 6 says so.  What IS structural is the display: the viewer\n"
+    "# never opens this file, and the chain's answer reaches no data source\n"
+    "# unless REVEAL is on -- proved by poisoning it.  Do not open this while\n"
+    "# scanning, and that goes for an assistant reading it on your behalf.\n")
+
 # clus/inc/WireCellClus/StmMichelFunctions.h:169-183
 BITS = ["no_chain", "stop_unmatched", "no_bragg", "shape_flat", "not_muon_pid",
         "continuation", "stop_near_boundary", "vertex_hadron", "short",
@@ -387,9 +401,7 @@ def main():
                "muon_len_cm", "is_stm", "michel_found", "michel_conn_type",
                "michel_len", "michel_ke_best", "michel_kink_deg", "n_dots",
                "in_fv", "reject_bits", "reject_names", "n_near", "n_far"],
-              "# doc pdhd/12 -- ANSWER KEY for the %s STM + Michel scan.\n"
-              "# DO NOT OPEN WHILE SCANNING.  score_stm_michel_scan.py reads it;\n"
-              "# stm_michel_viewer.py never does.\n" % det)
+              KEY_HEADER % (det, DET[det]["arm"]))
 
     cnt = {}
     for k in keys:

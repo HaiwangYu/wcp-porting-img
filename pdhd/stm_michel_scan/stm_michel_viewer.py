@@ -143,7 +143,13 @@ CHOICES = {
     "MESSY":           dict(label="MESSY", partial=False),
     "UNCLEAR":         dict(label="UNCLEAR", partial=False),
 }
-MICHEL_KINDS = ["none", "attached", "detached dots", "both"]
+# "not set" is a REAL option and the default, not padding.  The radio only
+# resets from a SAVED label, so without it a scanner who clicks STM + MICHEL
+# without touching the radio silently records michel_kind = "none" -- a
+# contradiction with their own label that no downstream check would catch, on
+# the one field doc pdhd/12 sec 7 says goal 2 depends on.
+MICHEL_UNSET = "— not set —"
+MICHEL_KINDS = [MICHEL_UNSET, "none", "attached", "detached dots", "both"]
 
 
 # ---------------------------------------------------------------------------
@@ -482,7 +488,7 @@ messy_btn = Button(label="MESSY (not one track)", button_type="warning", width=1
 uncl_btn = Button(label="UNCLEAR", button_type="warning", width=120)
 clear_btn = Button(label="clear this label", width=130)
 
-michel_kind = RadioButtonGroup(labels=MICHEL_KINDS, active=0, width=430)
+michel_kind = RadioButtonGroup(labels=MICHEL_KINDS, active=0, width=560)
 reveal_tog = Toggle(label="REVEAL the reconstruction", width=230)
 zoom_tog = Toggle(label="Zoom to object", width=140)
 rr_slider = Slider(start=0.0, end=100.0, value=0.0, step=0.1, width=430,
@@ -726,6 +732,7 @@ def render():
     notes.value = rec.get("notes", "")
     mk = rec.get("michel_kind")
     michel_kind.active = MICHEL_KINDS.index(mk) if mk in MICHEL_KINDS else 0
+    michel_kind.width = 560
     done = sum(1 for i in ITEMS if item_key(i) in LABELS)
     t1 = [i for i in ITEMS if i["tranche"] == 1]
     d1 = sum(1 for i in t1 if item_key(i) in LABELS)
@@ -860,6 +867,13 @@ def set_label(choice):
     it = current()
     pay = payload(it)
     c = CHOICES[choice]
+    # A Michel verdict with no Michel description is not a usable row.  Refuse
+    # rather than defaulting: this is the field goal 2 rests on.
+    if c["label"] == "STM_MICHEL" and MICHEL_KINDS[michel_kind.active] == MICHEL_UNSET:
+        status.text = ("<b style='color:#b00'>say what the Michel is</b> "
+                       "&mdash; pick attached, detached dots or both below the "
+                       "buttons, then click the label again.")
+        return
     P = pin_point(pay) if pay is not None else None
     pin = None
     if P is not None:
@@ -992,7 +1006,7 @@ curdoc().add_root(column(
              "&mdash; the verdict is for the FULL object:", width=1420),
     row(frag_mic_btn, frag_only_btn, frag_thru_btn),
     row(messy_btn, uncl_btn, clear_btn),
-    Div(text="<b>the Michel, if any, is:</b>", width=430),
+    Div(text="<b>the Michel, if any, is:</b> &mdash; required before a STM&nbsp;+&nbsp;MICHEL label is accepted", width=700),
     michel_kind,
     row(notes, progress),
     row(left, right),

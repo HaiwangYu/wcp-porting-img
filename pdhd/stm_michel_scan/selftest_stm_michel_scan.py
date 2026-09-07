@@ -256,6 +256,7 @@ def test_blind(det, tmp):
     ck(g["REND2"][("z", "y", "michel")].visible,
        "%s: the michel renderer stayed hidden after REVEAL" % det)
     ck("REVEALED" in g["reveal_div"].text, "%s: no REVEALED banner" % det)
+    g["michel_kind"].active = g["MICHEL_KINDS"].index("attached")
     g["set_label"]("STM_MICHEL")
     lab = json.load(open(g["LABEL_FILE"]))["labels"]
     k = list(lab)[0]
@@ -275,7 +276,25 @@ def test_blind(det, tmp):
 def test_labels(det, tmp):
     print("[C] the label alphabet, %s" % det)
     g = load_app(det, os.path.join(tmp, "lab2_" + det))
+    # A Michel verdict with michel_kind unset must be REFUSED, not defaulted:
+    # the radio only resets from a saved label, so a silent default would put
+    # michel_kind="none" on a row labelled STM_MICHEL.
+    g["michel_kind"].active = 0
+    before = len(json.load(open(g["LABEL_FILE"]))["labels"]) if \
+        os.path.exists(g["LABEL_FILE"]) else 0
+    g["set_label"]("STM_MICHEL")
+    after = len(json.load(open(g["LABEL_FILE"]))["labels"]) if \
+        os.path.exists(g["LABEL_FILE"]) else 0
+    ck(after == before and "say what the Michel is" in g["status"].text,
+       "%s: STM_MICHEL was accepted with michel_kind unset" % det)
+    g["set_label"]("FRAG_STM_MICHEL")
+    ck("say what the Michel is" in g["status"].text,
+       "%s: FRAG_STM_MICHEL was accepted with michel_kind unset" % det)
+    # render() resets the radio to "not set" on every item, which is correct --
+    # it is a per-object question -- so it has to be answered per label here too.
+    ATT = g["MICHEL_KINDS"].index("attached")
     for choice, spec in g["CHOICES"].items():
+        g["michel_kind"].active = ATT
         g["set_label"](choice)
         rec = [r for r in json.load(open(g["LABEL_FILE"]))["labels"].values()
                if r["choice"] == choice]
@@ -291,6 +310,9 @@ def test_labels(det, tmp):
        "%s: a FRAG label does not carry an object-level verdict" % det)
     ck(all("michel_kind" in r and "pin" in r for r in L.values()),
        "%s: a label is missing michel_kind or pin" % det)
+    ck(all(r["michel_kind"] != g["MICHEL_UNSET"] or r["label"] != "STM_MICHEL"
+           for r in L.values()),
+       "%s: a STM_MICHEL row was stored with michel_kind unset" % det)
     # an unknown label must not be storable through the same path
     ck("SOMETHING_ELSE" not in g["CHOICES"], "%s: CHOICES is not a closed set" % det)
     return g
@@ -414,6 +436,7 @@ def test_pin(det, tmp):
 
     # D6 -- the pin is saved with its readout unit
     g["set_pin_index"](i2)
+    g["michel_kind"].active = g["MICHEL_KINDS"].index("attached")
     g["set_label"]("STM_MICHEL")
     rec = json.load(open(g["LABEL_FILE"]))["labels"]
     r = [x for x in rec.values() if x["choice"] == "STM_MICHEL"][0]
@@ -490,6 +513,73 @@ def test_reference(det):
        "%s: muon plateau %.1f, doc 50 says %.1f" % (det, r["muon"][-1], want))
 
 
+def test_scorer(det, tmp):
+    """Drive score_stm_michel_scan.py on SYNTHETIC labels.
+
+    Without this the scorer is the one deliverable with no coverage, and a
+    traceback in it is discovered after somebody has spent three hours scanning.
+    Every branch is exercised: all five labels, both FRAG variants, revealed and
+    hidden rows, placed and unplaced pins, and the unknown-label hard error.
+    """
+    print("[G] the scorer, %s" % det)
+    import csv as _csv, random, subprocess
+    keyf = os.path.join(IMG, det, "docs", "scan",
+                        "%s_stm_michel_scan_key.tsv" % det)
+    ck(os.path.exists(keyf), "%s: no key at %s" % (det, keyf))
+    if not os.path.exists(keyf):
+        return
+    rows = list(_csv.DictReader([l for l in open(keyf) if not l.startswith("#")],
+                                delimiter="\t"))
+    t1 = [r for r in rows if r["tranche"] == "1"]
+    rnd = random.Random(7)
+    CH = {"STM_MICHEL": ("STM_MICHEL", False, "attached"),
+          "STM_ONLY": ("STM_ONLY", False, "none"),
+          "THRU": ("THRU", False, "none"),
+          "FRAG_STM_MICHEL": ("STM_MICHEL", True, "detached dots"),
+          "FRAG_STM_ONLY": ("STM_ONLY", True, "none"),
+          "FRAG_THRU": ("THRU", True, "none"),
+          "MESSY": ("MESSY", False, "none"),
+          "UNCLEAR": ("UNCLEAR", False, "none")}
+    order = list(CH)
+    lab = {}
+    for i, r in enumerate(t1):
+        c = order[i % len(order)]            # every branch, deterministically
+        L, part, mk = CH[c]
+        placed = (i % 2 == 0)
+        lab["%s/%s" % (r["event"], r["cluster"])] = dict(
+            label=L, partial=part, choice=c, michel_kind=mk,
+            pin=dict(x=1.0, y=2.0, z=3.0, rr=0.0, placed=placed, source="pin",
+                     moved_cm=round(rnd.uniform(0, 6), 2) if placed else None,
+                     off_fit=False, unit=0, cru=0, face=0, unit_source="wire"),
+            revealed_before_label=(i % 13 == 0), notes="",
+            scan_id=int(r["scan_id"]), tranche=1, event=r["event"],
+            cluster=int(r["cluster"]), npts=int(r["npts"]),
+            muon_len_cm=float(r["muon_len_cm"]), det=det)
+    good = os.path.join(tmp, "score_%s.json" % det)
+    with open(good, "w") as fh:
+        json.dump({"labels": lab}, fh)
+    bad = os.path.join(tmp, "score_%s_bogus.json" % det)
+    l2 = dict(lab)
+    k0 = list(l2)[0]
+    l2[k0] = dict(l2[k0], label="BOGUS")
+    with open(bad, "w") as fh:
+        json.dump({"labels": l2}, fh)
+    py = sys.executable
+    sc = os.path.join(HERE, "score_stm_michel_scan.py")
+    r1 = subprocess.run([py, sc, "--det", det, "--labels", good],
+                        capture_output=True, text=True)
+    ck(r1.returncode == 0, "%s: the scorer crashed:\n%s" % (det, r1.stderr[-800:]))
+    for want in ("purity", "efficiency", "confusion", "Michel only",
+                 "under-clustering", "pin moved off"):
+        ck(want in r1.stdout, "%s: the scorer printed no %r section" % (det, want))
+    ck("REVEALED" in r1.stdout and "hidden" in r1.stdout,
+       "%s: the scorer merged revealed and hidden labels" % det)
+    r2 = subprocess.run([py, sc, "--det", det, "--labels", bad],
+                        capture_output=True, text=True)
+    ck(r2.returncode != 0 and "refusing to guess" in (r2.stdout + r2.stderr),
+       "%s: the scorer accepted an unknown label" % det)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -506,6 +596,7 @@ def main():
             test_blind(det, tmp)
             test_labels(det, tmp)
             test_pin(det, tmp)
+            test_scorer(det, tmp)
             if not a.quick:
                 test_image_split(det)
                 agree[det] = test_unit_agreement(det, os.path.join(HERE, "prep-" + det))

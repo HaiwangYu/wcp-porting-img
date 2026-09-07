@@ -141,14 +141,21 @@ def main():
         print("  is_stm alone   purity     raw %3d/%-3d = %s   efficiency raw %3d/%-3d = %s"
               % (stp, scp, "%.3f" % (stp / scp) if scp else "  -  ",
                  stp, shp, "%.3f" % (stp / shp) if shp else "  -  "))
+        # All FOUR chain cells, because is_stm and michel_found are INDEPENDENT
+        # flags -- a Michel is deliberately not an STM criterion
+        # (StmMichelFunctions.h:167-168), so "Michel but not STM" is a real
+        # population (stratum S3, 50 items on PDHD and 59 on PDVD) and folding
+        # it into an "other" bucket would hide the cell the scan most wants.
         print("  confusion (human -> chain), raw counts:")
-        print("      %-22s %s" % ("", "chain: STM+Mic  STM only  neither"))
+        print("      %-22s %s" % ("", "chain: STM+Mic  STM only  Michel only  neither"))
         for hl, hv in (("STM + MICHEL", (True, True)), ("STM, no Michel", (True, False)),
                        ("THRU", (False, False))):
+            cols = ((1, 1), (1, 0), (0, 1), (0, 0))
             r = [sum(v for k, v in sub.items() if k[2] == hv and k[3] == c)
-                 for c in ((1, 1), (1, 0), (0, 0))]
-            r.append(sum(v for k, v in sub.items() if k[2] == hv) - sum(r))
-            print("      %-22s %8d %9d %8d   (other %d)" % (hl, r[0], r[1], r[2], r[3]))
+                 for c in cols]
+            tot = sum(v for k, v in sub.items() if k[2] == hv)
+            assert tot == sum(r), "the confusion columns do not partition the rows"
+            print("      %-22s %8d %9d %12d %8d" % (hl, r[0], r[1], r[2], r[3]))
 
     if partial:
         print("\nunder-clustering (FRAG) rate: " +
