@@ -470,3 +470,89 @@ Checked rather than assumed, because a flip in the wrong file is inert
 - No PDVD / PDHD / uBooNE gate — still owed, as in §8.
 - Round 1's §7 reading of 177536 was wrong and is corrected in place rather
   than deleted.
+
+---
+
+# Round 3 — the owner's 294174 question, reported not fixed
+
+Owner on the round-3 set (`e12de155`): **"These looks quite good, the only
+thing that is a bit weird is the event 294174, why the end point of the muon
+407 MeV is so far away???"**
+
+He is right, and the number is self-refuting on its face: shower 0 is
+**148.9 cm long** and its start-to-end distance is **360.7 cm**.
+
+## 13 Root cause — one 1.8 cm stub, 332.8 cm from the rest of its own shower
+
+`work-d147-tail8-mcp2k/pr_evt294174`, shower 0 (`id 16030`, pdg **13**,
+148.9 cm, `kine_best` 407.2 MeV, start = the main vertex at
+(122.9, −15.4, 159.4), end = (−202.3, −96.8, 292.5)) has **nine** members:
+
+| members | pdg | total length | where |
+|---|---|---|---|
+| 8 | **11** | **147.1 cm** | clustered at the vertex, x ≈ 122–137 |
+| 1 (`seg 76080`) | **13** | **1.8 cm** | (−202.0, −95.0, 292.5), **332.8 cm from every other member** |
+
+The shower's end point **is** `seg 76080`'s far end. So the arrow is not
+mis-drawn — it faithfully points at the most distant member of the object, and
+that member does not belong to the object.
+
+Two consequences, both visible in the dump:
+
+- **The type.** 147.1 of the 148.9 cm is EM-typed; the *only* `|13|` member is
+  the 1.8 cm stub. A 1.8 cm fragment is deciding that a 148.9 cm object is a
+  muon.
+- **The energy.** `kine_range = 3.81 MeV` — the range table evaluated on
+  1.8 cm — while `kine_best = 407.2` falls through to `kine_dQdx`. Doc 84 §4.3
+  note (iii) already flagged this event as 100 % charge contamination
+  (`dQ_frac_oth = 1.000`) and its `L_chain` as meaningless, but did not identify
+  the stub as the cause.
+
+**Where the stub belongs**: it sits **24.4 cm** from `seg 25036` — the real far
+muon, 78.2 cm, shower 8, 205.1 MeV — and 332.8 cm from its own shower. It is a
+fragment of *that* muon, assigned to a vertex EM shower a detector-width away.
+
+### 13.1 What it is NOT — checked, not assumed
+
+- **Not `long_muon_members_geometry`.** That was the first hypothesis, since
+  doc 84 R2.2 puts out-of-chain muon members into the endpoint search. A
+  control arm `work-d147-mg0-mcp2k` (`SBND_LONG_MUON_MEMBERS_GEOMETRY=0`)
+  returns the **identical** end point (−202.3, −96.8, 292.5), start-to-end
+  360.7 cm. The hypothesis is refuted; the endpoint logic is doing the right
+  thing with wrong input.
+- **Not anything doc pr/147 shipped.** No cathode bridge fires in 294174, so
+  `tail_min_len` is inert and `track_types` never runs a merge here. The event
+  is byte-identical across this round's arms.
+
+### 13.2 How common — 20 isolated members in 15 of 1368 events
+
+Censusing every multi-member shower (1058 of them) for a member whose nearest
+approach to *any* other member of its own shower exceeds 100 cm:
+
+| | |
+|---|---|
+| isolated members | **20** |
+| events | **15** |
+| of which the isolated member is `\|13\|` | **1 — 294174** |
+
+The other 19 are small EM fragments (0.2–8 cm, one 26.1 cm) inside EM showers,
+where they stretch the drawn extent but flip no PID and draw no muon arrow.
+**294174 is the only event in the sample where an isolated fragment is the
+type- and endpoint-determining member.** Worst isolations: 168526 (408.5 cm),
+407280 (394.8), 294174 (332.8), 316729 (316.5), 58006 (290.9).
+
+### 13.3 Not fixed here
+
+This is a **shower-membership** defect, upstream of everything this doc
+touched, and it is pre-existing — the arms show it identically on both sides of
+every pr/147 knob. Fixing it inside a cathode-bridge round would be changing a
+production physics number to make a picture look right, which is the thing
+CLAUDE.md §5.7 forbids.
+
+**Fix shape, for its own round:** a distance sanity check on shower membership
+— a member whose nearest approach to every other member of its own shower
+exceeds some cut is a mis-assignment, and either belongs to the shower it is
+actually adjacent to (294174's stub is 24.4 cm from shower 8) or belongs
+nowhere. The 15-event census above is the working set, and 19 of the 20 rows
+are free negative controls: they must not move, because their isolated members
+are EM fragments in EM showers where the current behaviour is harmless.
