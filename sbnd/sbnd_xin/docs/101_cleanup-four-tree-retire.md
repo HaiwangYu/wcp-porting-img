@@ -419,11 +419,43 @@ tiers 1-2 the three trees held 109.3 GiB:
 | 35.6 | **LATEST PRODUCTION** — `d97fv` 10.0, `d144fixprod` 10.2, `d145np` 10.2, pdvd `d48nu7`/`d48nu3`/`d45prod` 4.3, pdhd `d03nu9` 0.7 |
 | 9.6 | **pinned by labels or live manifests** — `vtx105-base` (1782 label refs), the `em_display` arms, pdhd's hand-scan source and structural blind |
 | 4.9 | arms backing constants shipped 09-05/06 |
-| **14.2** | **the genuinely intermediate remainder** |
+| **14.2** | the residual — **and this figure is wrong, see below** |
 
-So the honest ceiling was ~14 GiB, not another 90 — the trees are now what was
-asked for. **Tier 3 took 7.39 GiB of it (963 dirs)** and stopped where the next
-byte would have cost a record.
+So the ceiling was ~14 GiB, not another 90 — the trees are now what was asked
+for. **Tier 3 took 7.39 GiB (963 dirs)**.
+
+### CORRECTION: the 14.2 was a residual, not an inventory
+
+That row was computed by **subtraction** (109.3 − 95.1 accounted), and the
+accounting table above lists *representative* arms per category, not all of
+them. So the residual silently absorbed real keeps — `d97prodchk`, `sent97`,
+the `87flip`/`87knob`/`87grp` block, `d99r3prod`, the whole `d147` family. A
+residual is not evidence about its own contents, and quoting one as "genuinely
+intermediate" overstated what was releasable.
+
+**Inventoried instead of subtracted, after tier 3 ran**, the arms outside every
+keep category total **4.47 GiB in 191 arms**:
+
+| GiB | what |
+|---|---|
+| 0.85 | named in a `PROTECTED.txt` (`87flip`, `87knob-*`, `87grp-*`, …) — releasing these needs an explicit edit to that file, which is the tier-2 class of decision |
+| 0.64 | open rounds held by prefix — `d146` (pr/146's still-open `kine_sat_cont_keep_deg 25` recommendation), `d147` (pr/147 §15.3's three open items), `d08` (pdhd doc 08, shipped 09-06) |
+| **2.98** | **unclassified tail — 164 of its arms are under 50 MB, median 10 MB** |
+
+So the amount actually still available is **~3.0 GiB, not ~6.8**. Tier 3 stopped
+where it did because tier 3 had a *rule* — release the sweep points around a
+shipped value whose shipped arm and gate both survive — that could be stated
+once and applied to a whole family. The 2.98 GiB tail has no such rule: it is
+~164 separate arms at a median of 10 MB, and this project's bar is one written
+ground and one stated cost per family. That is roughly **19 MB per judgement
+call**, which is why it is priced here rather than done unasked — the same way
+doc pr/130's per-knob sentinel retarget was priced and declined.
+
+**If the motivation is tidiness rather than bytes, that changes the answer.**
+Doc 91's round was explicitly about directory COUNT, not size — owner: *"they do
+not take much disk space, but it is just difficult to look at them"* — and 191
+arms is exactly that complaint. A count-driven tier 4 is a different, legitimate
+round; it just should not be sold as a disk-space one.
 
 Tier 3's rule is narrower than tier 2's and needs **no `PROTECTED.txt` edit at
 all**: it releases the SWEEP POINTS around a shipped value whose shipped arm and
@@ -450,7 +482,8 @@ decomposition on ncpi0 + nuecc48 only).
 | `~/tmp` | 98 G | **31 G** |
 | `/home/xqian` free | 399 G | **564 G** |
 
-Released: tier 1 97 dirs / 0.89 GiB, tier 2 1462 / 90.46, tier 3 963 / 7.39,
+Remaining releasable after this round: **~3.0 GiB** (§8.7 correction), in 164
+arms under 50 MB each.  Released: tier 1 97 dirs / 0.89 GiB, tier 2 1462 / 90.46, tier 3 963 / 7.39,
 `~/tmp` sweep 40.49, `~/tmp` dedup 26.77 (nothing deleted). Record layer frozen
 for all 2522 released dirs — **97/97 + 1462/1462 + 963/963** — a SHA-256 per
 file, in `archive/records/cleanup-20260906/`.
