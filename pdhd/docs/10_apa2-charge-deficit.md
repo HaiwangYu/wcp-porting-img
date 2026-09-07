@@ -186,6 +186,21 @@ blocks:
 **PASS.** The ctpc is a faithful copy of the SP frame, and the mapping used
 throughout this doc is verified rather than assumed.
 
+**G1b — the pre-NF frames use the same row layout.** There is **no PDHD
+`wcls-nf-sp-out.jsonnet`** in either tree: the `protodunehd-orig-frames-anode{N}`
+archives are produced by an upstream art-side job (X. Ning), so the per-anode
+channel split that feeds §4's ADC ladder is not visible in any config here. It
+does not have to be — each archive carries its own `channels_*` array, and for
+all four anodes it is strictly ascending by 1 and equal to `2560·anode + row`,
+i.e. identical to the SP frames' layout:
+
+| archive | n | channels | `== 2560·anode + row` |
+|---|---|---|---|
+| orig anode0 | 2560 | 0–2559 | yes |
+| orig anode1 | 2560 | 2560–5119 | yes |
+| orig anode2 | 2560 | 5120–7679 | yes |
+| orig anode3 | 2560 | 7680–10239 | yes |
+
 **G2 — the drift↔time mapping is exact, per APA.** Fitting `x` against `pt` per
 track (cosmics have per-track t0, so this must be done per track, not pooled):
 
