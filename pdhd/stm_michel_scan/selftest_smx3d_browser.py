@@ -36,6 +36,17 @@ It then does the same for the two things added in the measurement round:
     real server callback; the in-process gate in selftest_stm_michel_scan.py
     cannot test that hop.
 
+and the one added on 2026-09-08, which is the reason this file exists:
+
+  * THE DRAG SURVIVES A SERVER REPAINT.  The camera the scanner drags to lives
+    ONLY in the browser -- JS_ROTATE mutates cam.data.az/el in place -- so the
+    server's copy is whatever it last pushed.  Every repaint re-sends the whole
+    of cam_src.data, and until camtxt was wired back that meant a label click
+    snapped the view to the iso preset.  Nothing in-process can see this: with
+    no browser there is no second copy of the camera to disagree with.  So:
+    drag, zoom, click a real label button, and assert the projected columns,
+    the camera angle and the ranges are all exactly where the drag left them.
+
 Four Bokeh 3 traps make a broken binding look like a working page with no
 console error, so a failure here is read as "the handler never bound", not as
 "the formula is wrong": see feedback_bokeh3_silent_js_traps.
@@ -201,8 +212,19 @@ def main():
                "the muon layer never reached the browser")
 
             cv = page.locator("canvas").first
+            # SCROLL IT IN FIRST.  A mouse.move to a point below the viewport
+            # reaches nothing and the drag silently does not happen -- which is
+            # how a taller header reads here as "JS_ROTATE is not bound".  The
+            # canvas must also be BELOW the fold-free part of the page for that
+            # to matter, so this is a real check on the layout as well.
+            cv.scroll_into_view_if_needed()
+            page.wait_for_timeout(300)
             box = cv.bounding_box()
             ck(box is not None, "no canvas bounding box")
+            vp = page.viewport_size or {"height": 1200}
+            ck(box is not None and box["y"] + box["height"] / 2 < vp["height"],
+               "the 3-D canvas centre is below the window even after scrolling "
+               "-- the page is too tall to hand-scan")
             cx = box["x"] + box["width"] / 2
             cy = box["y"] + box["height"] / 2
             page.mouse.move(cx, cy)
@@ -222,6 +244,16 @@ def main():
                 ck(len(a0["u"]) == len(b0["u"]),
                    "layer %r changed row count on a drag (%d -> %d)"
                    % (n, len(b0["u"]), len(a0["u"])))
+                if n == "pin":
+                    # The pin IS the rotation centre since 2026-09-08, so it
+                    # projects to (0, 0) at EVERY camera.  "Did it move" is the
+                    # wrong question for it, and its answer is the stronger
+                    # statement: it cannot move, and that is what makes a drag
+                    # keep the stopping point on screen.
+                    ck(all(abs(t) < 1e-9 for t in list(a0["u"]) + list(a0["v"])),
+                       "the pin does not sit at the rotation centre (u,v = %s)"
+                       % ([a0["u"][:1], a0["v"][:1]],))
+                    continue
                 moved = any(abs(p - q) > 1e-6 for p, q in zip(b0["u"], a0["u"]))
                 ck(moved, "layer %r did NOT move on the drag -- it is probably "
                           "missing from the pts list handed to JS_REDRAW" % n)
@@ -248,8 +280,125 @@ def main():
                 ck(bad == 0, "layer %r: %d sampled points project OUTSIDE their own "
                              "distance from the camera centre -- the JS basis is not "
                              "orthonormal" % (n, bad))
+            # ---- the drag survives a server repaint (owner 2026-09-08) ----
+            # The gate the in-process test cannot write, and the one that would
+            # have caught the snap-back: with no browser there is no second copy
+            # of the camera for the server's to disagree with.
+            drag_cam = (after.get("_cam") or {})
+            ck(abs(drag_cam.get("az", 0.0)
+                   - (before.get("_cam") or {}).get("az", 0.0)) > 1e-6,
+               "the drag did not change the camera azimuth at all")
+            page.evaluate(
+                "() => { const f = Bokeh.documents[0].get_model_by_name('f3d');"
+                " f.x_range.start = -25; f.x_range.end = 25;"
+                " f.y_range.start = -25; f.y_range.end = 25; }")
+            page.wait_for_timeout(600)
+            pre = page.evaluate(READ % json.dumps(["muon"]))
+            page.get_by_role("button", name="STM, no Michel").first.click()
+            page.wait_for_timeout(2000)
+            post = page.evaluate(READ % json.dumps(["muon"]))
+            rng = page.evaluate(
+                "() => { const f = Bokeh.documents[0].get_model_by_name('f3d');"
+                " return [f.x_range.start, f.x_range.end]; }")
+            pm, qm = pre.get("muon"), post.get("muon")
+            ck(pm and qm and len(pm["u"]) == len(qm["u"]),
+               "the muon layer changed row count on a label click")
+            if pm and qm and len(pm["u"]) == len(qm["u"]):
+                worst = max([abs(p - q) for p, q in zip(pm["u"], qm["u"])] or [0.0])
+                ck(worst < 1e-6,
+                   "a label click re-projected the muon layer by up to %.3f cm -- "
+                   "the server's stale camera reached the screen" % worst)
+            ck(abs((post.get("_cam") or {}).get("az", -9)
+                   - drag_cam.get("az", 0.0)) < 1e-9,
+               "a label click reset the camera azimuth the scanner dragged to")
+            ck(abs(rng[0] + 25.0) < 1e-6 and abs(rng[1] - 25.0) < 1e-6,
+               "a label click threw away the 3-D zoom (%s)" % (rng,))
+            ck(not errs, "javascript errors after the repaint checks: %s" % errs[:3])
+            print("     the drag survives a label click: az %.4f kept, zoom kept"
+                  % drag_cam.get("az", 0.0))
+
+            # ---- the rotation-centre tap, in the browser --------------------
+            # The in-process gate calls snap_2d/snap_3d as functions, so it
+            # proves the logic and NOT that a tap reaches it: the Tap handler
+            # shares the gesture with JS_ROTATE's PanStart/Pan/PanEnd, and the
+            # toggle that routes the tap has to have crossed the websocket
+            # first.  Both hops are only testable here.
+            def _cam():
+                return page.evaluate(
+                    "() => { const c = Bokeh.documents[0]"
+                    ".get_model_by_name('cam3');"
+                    " return [c.data.cx[0], c.data.cy[0], c.data.cz[0]]; }")
+
+            def _pin3():
+                return page.evaluate(
+                    "() => { const m = Bokeh.documents[0]"
+                    ".get_model_by_name('src3_pin');"
+                    " return [Array.from(m.data.x), Array.from(m.data.u),"
+                    " Array.from(m.data.v)]; }")
+
+            c_before, pin_before = _cam(), _pin3()
+            ck(abs(pin_before[1][0]) < 1e-9 and abs(pin_before[2][0]) < 1e-9,
+               "the pin is not at the origin of the view before the centre tap")
+            page.get_by_role(
+                "button", name="tap sets the 3-D rotation centre").first.click()
+            page.wait_for_timeout(800)
+            box2 = cv.bounding_box()
+            page.mouse.click(box2["x"] + box2["width"] * 0.62,
+                             box2["y"] + box2["height"] * 0.42)
+            page.wait_for_timeout(1800)
+            c_tap, pin_tap = _cam(), _pin3()
+            moved_c = max(abs(a - b) for a, b in zip(c_before, c_tap))
+            ck(moved_c > 1e-6,
+               "a tap with the centre toggle on did not move the rotation "
+               "centre -- the Tap handler never reached snap_3d")
+            ck(abs(pin_tap[0][0] - pin_before[0][0]) < 1e-9,
+               "a centre tap moved the stopping-point pin as well")
+            ck(abs(pin_tap[1][0]) > 1e-9 or abs(pin_tap[2][0]) > 1e-9,
+               "the pin still projects to the origin after the centre moved")
+            # ... and it is EXACTLY one of the points on screen.  The tap snaps
+            # to the nearest candidate IN PROJECTION, and the candidates are a
+            # near-1-D locus (the track and the thin cloud around it), so a
+            # click off the track lands back near it -- the distance moved is
+            # therefore not the assertion.  Membership is.
+            on_screen = page.evaluate("""(c) => {
+              const d = Bokeh.documents[0];
+              for (const n of ['src3_muon', 'src3_near', 'src3_outb']) {
+                const s = d.get_model_by_name(n);
+                if (!s) continue;
+                for (let i = 0; i < s.data.x.length; i++)
+                  if (Math.abs(s.data.x[i] - c[0]) < 1e-9 &&
+                      Math.abs(s.data.y[i] - c[1]) < 1e-9 &&
+                      Math.abs(s.data.z[i] - c[2]) < 1e-9) return true;
+              }
+              return false; }""", c_tap)
+            ck(on_screen,
+               "the new rotation centre is not one of the points on screen")
+            page.get_by_role("button", name="centre on the stop").first.click()
+            page.wait_for_timeout(1800)
+            c_back, pin_back = _cam(), _pin3()
+            ck(max(abs(a - b) for a, b in zip(c_before, c_back)) < 1e-9,
+               "'centre on the stop' did not restore the stopping point")
+            ck(abs(pin_back[1][0]) < 1e-9 and abs(pin_back[2][0]) < 1e-9,
+               "the pin is not back at the origin of the view")
+            page.get_by_role(
+                "button", name="tap sets the 3-D rotation centre").first.click()
+            page.wait_for_timeout(500)
+            ck(not errs, "javascript errors after the centre-tap checks: %s"
+               % errs[:3])
+            print("     centre tap moved the rotation centre by %.1f cm (the pin "
+                  "now projects at u %.1f v %.1f) and left the pin alone"
+                  % (moved_c, pin_tap[1][0], pin_tap[2][0]))
+
             # ---- the 2-D measurement tab --------------------------------
-            tab = page.get_by_text("2-D measurement", exact=True).first
+            # The TAB, not the words.  get_by_text matched the header prose
+            # first -- harmless while that prose was visible, a 30 s timeout the
+            # moment it moved inside a collapsed <details>.  Bokeh 3 tab headers
+            # carry .bk-tab, and Playwright's CSS engine pierces open shadow
+            # roots (trap 1 applies to querySelectorAll, not to locators).
+            tab = page.locator(".bk-tab").filter(
+                has_text="2-D measurement").first
+            if tab.count() == 0:
+                tab = page.get_by_text("2-D measurement", exact=True).last
             ck(tab.count() > 0, "no '2-D measurement' tab in the page")
             # Identify the measurement canvases by SIZE: those figures are the
             # only ones 250 px tall (projections and dQ/dx are 330, the 3-D view
@@ -405,10 +554,10 @@ def main():
             print("     bundle control: %d out-of-bundle points paint and unpaint" % n_out)
 
             # ---- the mu -> e flow panel (doc pdhd/14) ------------------------
-            # Blinded on load and painted by the REAL toggle.  Checked in the
-            # browser and not only in the payload because a Div whose text is
-            # set before its model reaches the page renders EMPTY with no error
-            # (feedback_bokeh3_silent_js_traps).
+            # PAINTED ON LOAD since 2026-09-08 -- the REVEAL toggle is gone.
+            # Checked in the browser and not only in the payload because a Div
+            # whose text is set before its model reaches the page renders EMPTY
+            # with no error (feedback_bokeh3_silent_js_traps).
             # The MODEL text proves the update crossed the websocket; the DOM
             # text proves it painted.  Both, because a Div whose text is set
             # before its model reaches the page renders empty with no error.
@@ -424,28 +573,23 @@ def main():
             def _painted(txt):
                 return page.get_by_text(txt, exact=False).count()
 
-            before_m = _model_text("flow_div")
-            ck(before_m is not None, "flow_div never reached the browser")
-            ck(before_m and "hidden" in before_m.lower(),
-               "the flow panel does not say it is hidden before REVEAL")
-            ck("MeV" not in (before_m or ""),
-               "the flow panel leaks an energy before REVEAL")
             FLOWMARK = "every field is a T_stm_michel branch"
-            ck(_painted(FLOWMARK) == 0,
-               "the flow panel is revealed before the toggle was pressed")
             st = _model_text("status_div") or ""
             ck("chain muon KE" in st or "no muon energy in this arm" in st,
-               "the un-blinded status line carries no muon KE statement")
+               "the status line carries no muon KE statement")
             ck(_painted("chain points over") > 0, "the status line did not paint")
+            ck(not page.get_by_role("button",
+                                    name="REVEAL the reconstruction").count(),
+               "a REVEAL button is still on the page")
 
-            page.get_by_role("button", name="REVEAL the reconstruction").first.click()
-            page.wait_for_timeout(1500)
             after_m = _model_text("flow_div") or ""
-            ck("REVEALED" in after_m, "REVEAL did not fill the flow panel")
+            ck(after_m, "flow_div never reached the browser")
+            ck("hidden" not in after_m.lower(),
+               "the flow panel still says it is hidden")
             n_rev = _painted(FLOWMARK)
-            ck(n_rev > 0, "the revealed flow panel did not paint")
-            ck("MeV" in after_m, "no energy reached the flow panel after REVEAL")
-            ck(_painted("MeV") > 0, "no energy painted after REVEAL")
+            ck(n_rev > 0, "the flow panel did not paint on load")
+            ck("MeV" in after_m, "no energy reached the flow panel")
+            ck(_painted("MeV") > 0, "no energy painted")
             ck("pdg 13" in after_m, "the flow panel names no mother particle")
             # doc pdhd/15: the Michel is ONE object.  Whatever the item, the
             # panel must state the link with the parent vertex, and when there
@@ -477,9 +621,45 @@ def main():
             ck("no parentage is persisted" not in after_m,
                "the flow panel still claims a bridged Michel has no persisted parentage")
             ck(not errs, "javascript errors after the flow checks: %s" % errs[:3])
-            print("     mu -> e flow panel: blinded on load, painted after REVEAL "
+            # ---- the copy box and the saved-labels table (owner 2026-09-08) --
+            key = page.evaluate(
+                "() => { const m = Bokeh.documents[0]"
+                ".get_model_by_name('copy_key'); return m ? m.value : null; }")
+            ck(key and "/" in key, "the copy box carries no event/cluster key")
+            # the MODEL value proves the server filled it; the DOM value proves
+            # it painted -- and Bokeh 3 puts the <input> inside a shadow root, so
+            # a flat querySelectorAll finds nothing (trap 1)
+            vals = page.evaluate("""() => {
+              const out = [];
+              const walk = (root) => {
+                for (const el of root.querySelectorAll('input')) out.push(el.value);
+                for (const el of root.querySelectorAll('*'))
+                  if (el.shadowRoot) walk(el.shadowRoot);
+              };
+              walk(document); return out; }""")
+            ck(key in vals, "the copy box's key reached no <input> on the page")
+            rows = page.evaluate(
+                "() => { const m = Bokeh.documents[0]"
+                ".get_model_by_name('saved_src');"
+                " return m ? Array.from(m.data.item) : null; }")
+            ck(rows is not None, "the saved-labels table never reached the browser")
+            ck(rows and key in rows,
+               "the item just labelled is not in the saved-labels table")
+            ck(_painted("what is in the scan") > 0,
+               "the saved-labels heading did not paint")
+            head = _model_text("saved_head") or ""
+            # the SAVED branch specifically: "not saved" contains "saved", so a
+            # substring test on the short word passes on the unsaved branch too
+            # and proves nothing (it would keep passing through a regression)
+            ck("is <b>saved</b> as" in head,
+               "the saved-labels heading does not report this item as saved: %r"
+               % head[-120:])
+            ck(not errs, "javascript errors after the table checks: %s" % errs[:3])
+
+            print("     mu -> e flow panel: painted on load "
                   "(%d MeV figures on the page, daughter=%s)"
                   % (_painted("MeV"), has_dau))
+            print("     copy box %s, saved table %d row(s)" % (key, len(rows or [])))
             b.close()
     finally:
         proc.terminate()

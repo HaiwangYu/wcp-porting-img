@@ -40,6 +40,17 @@ letting a second `bokeh serve` exit and leave the old app answering.
   The four preset buttons in the toolbar-less corner are reached from the 2-D
   tab instead; three of the presets reproduce the 2-D panels exactly, so if you
   lose your bearings you can step back to a view you already trust.
+  - **the drag rotates about the stopping point** (2026-09-08), not about the
+    middle of the track, so zooming into the Bragg end and turning it keeps it
+    on screen. Turn on `tap sets the 3-D rotation centre` and a tap puts the
+    centre on any drawn point instead of moving the pin; `centre on the stop`
+    puts it back. The price: a centre at one end of the track needs a framing
+    radius equal to the whole track, so the starting view is about twice as
+    wide as it was — one wheel-scroll, paid once per item, because
+  - **your zoom survives everything but a new item.** Labelling, tagging a PF
+    segment, moving the pin and switching bundles all repaint without touching
+    a range. `reset the view` and the two zoom toggles reframe on demand; so
+    does moving to another item.
 - **2-D projections** — Z-Y (side), Z-X (top), X-Y (end), at **full detector
   extent** with the active boundary as a red dashed box and the APA / CRP seams
   as purple dotted lines. Full extent is deliberate: a track auto-zoomed to its
@@ -55,7 +66,7 @@ letting a second `bokeh serve` exit and leave the old app answering.
     *nothing was there*. **Inside one, `measured` is the imaging model's filler,
     not a reading — the residual there means nothing.**
   - the thin black line is the CheckSTM_Michel PR fit in its own wire
-    coordinates; the Michel / delta / dot points join it under REVEAL.
+    coordinates, with the Michel / delta / dot points on it.
   - the colour scales are **fixed per plane**, so two items are comparable. The
     `×0.5 … ×4` buttons move all six together; `cell size` sets the marker in
     screen pixels; `window` switches between the whole cluster and ± 150
@@ -99,8 +110,8 @@ the thing you are here to judge — in bright yellow on a white page, and made t
 colour mean something different on every item.
 
 **The fit you see is the CheckSTM_Michel PR fit**, a uniform 0.600 cm step. The
-cosmic tagger's own fit (irregular, median 0.610 cm) is the grey `tagfit` layer
-behind REVEAL, and is not drawn in the measurement panels at all.
+cosmic tagger's own fit (irregular, median 0.610 cm) is the grey `tagfit` layer,
+and is not drawn in the measurement panels at all.
 
 ## What to answer
 
@@ -182,10 +193,10 @@ uses, so they can never be confused with the reconstruction's colours. Only
 boundary, so the question is well posed nearly always — but not always, which is
 why the fourth button exists.
 
-Under REVEAL the panel also prints what the chain calls the segment: its
-particle type and whether it called it a track or a shower. That is behind
-REVEAL because `CheckSTM_Michel` sets the Michel arm's type to electron, so it
-*is* the answer.
+The panel also prints what the chain calls the segment: its particle type and
+whether it called it a track or a shower. That *is* the chain's answer —
+`CheckSTM_Michel` sets the Michel arm's type to electron — and since 2026-09-08
+it is shown rather than hidden (see *The blind is gone* below).
 
 ## Energies, and the mu -> e link (doc pdhd/14)
 
@@ -204,7 +215,7 @@ Both routes are named because they disagree — by 20 % on `039252_15 / 77` — 
 you should see that rather than one number chosen for you. `muon_ke_best` is the
 range estimate for every chain over 4 cm, which is the toolkit's own rule.
 
-Under **REVEAL** a `particle flow` block prints the chain's `mu -> e` relation:
+A `particle flow` block prints the chain's `mu -> e` relation:
 
     mu   pdg 13   112.5 cm   278.0 MeV (range 278.0 / dQ/dx 222.1)   1 chain seg
       └─ attached at the shared stop vertex 77003
@@ -253,7 +264,20 @@ re-running — that output has no muon energy, or no object breakdown, to show.
 
 ## Am I sure it saved?
 
-Yes, and you can check without leaving the page. Labels are written atomically
+Yes, in two places, and you can check without leaving the page.
+
+**Top right, the scan table** (2026-09-08): every row the label file on disk
+actually holds — scan number, `event/cluster`, label, Michel kind, how far the
+pin was moved, how many PF segments are tagged — with the item you are on
+marked `▶`. It is built from the same read of the file that fills the green
+banner, so the two cannot disagree. The line above it says what is *not* saved:
+`this item is not saved; 2 PF tags held in memory only` is the case that used to
+be invisible.
+
+**And the copy box** beside the navigation buttons carries this item's
+`event/cluster` key as selectable text — click it, copy it. Pasting another
+item's key into it jumps there.
+ Labels are written atomically
 on every click, and every write is **read back from the file**: the green banner
 under the buttons says how many labels the file on disk actually holds, its size
 and when it was written. `what is saved on disk?` re-reads on demand and prints
@@ -283,23 +307,27 @@ Michel verdict, the Michel / delta / dot segmentation, the reject bits, and the
 cosmic tagger's own stop, which differs from `stop_*` by a median 0.64 cm and up
 to 266 cm on PDHD (0.45 cm and up to 34 cm on PDVD).
 
-## The blind, and why REVEAL exists anyway
+## The blind is gone (2026-09-08), and what that costs
 
-`REVEAL the reconstruction` shows the Michel / delta / dot segments, the entry
-and stop markers, the tagger's own STM fit, `is_stm`, the reject bits, the
-Michel energy and kink. It starts **off**. Every label records
-`revealed_before_label`, and `score_stm_michel_scan.py` scores revealed and
-hidden labels **separately** and never merges them — a label taken with the
-answer on screen cannot measure agreement with the answer.
+The `REVEAL the reconstruction` toggle has been **removed** at the owner's
+request: the Michel / delta / dot segments, the entry and stop markers, the
+tagger's own STM fit, `is_stm`, the reject bits and the Michel energy and kink
+are all on screen from the first paint.
 
-This is the opposite of the sibling `../stm_scan` app, whose blind is structural
-(it refuses to open the layers). Here the reconstruction's Michel *is* the thing
-under test, so it has to be showable — the discipline moves from "cannot" to
-"recorded".
+**Read the agreement number accordingly.** A label taken with the answer on
+screen cannot measure agreement with the answer — this is why the toggle existed.
+Every label still records `revealed_before_label` and `score_stm_michel_scan.py`
+still scores the two strata separately and never merges them; what changed is
+that the field is now always `true`. **The four labels taken before 2026-09-08
+are the only unbiased rows in the file.** Anything quoted from this scan from
+here on is *the chain's reconstruction reviewed by a physicist*, not an
+independent verdict, and must be reported as that.
 
-The **display's** blind is structural and proved (the self-test poisons the
-payload's verdict and looks for it in every data source). The **key file's** is
-not: `../docs/scan/<det>_stm_michel_scan_key.tsv` is committed beside the sheet,
+This is now the opposite of the sibling `../stm_scan` app, whose blind is
+structural (it refuses to open the layers).
+
+The **key file's** blind is unaffected and is not structural:
+`../docs/scan/<det>_stm_michel_scan_key.tsv` is committed beside the sheet,
 because a key that lives only next to a `work/` arm stops being scorable the day
 that arm is retired. Its header says so — the blind on that file is an honour
 rule, and that goes for an assistant asked to help with a scan too.
@@ -329,8 +357,8 @@ writer's default wire.
 | `smx3d.py` | the 3-D trackball; fork of `sbnd_xin/em_display/em3d.py`, which is untouched |
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
-| `selftest_stm_michel_scan.py` | 6252 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its blind, its tagging and backward compatibility) and the save read-back |
-| `selftest_smx3d_browser.py` | 39 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, no point projects outside its own distance from the camera, the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and segment picker are pressed as real widgets |
+| `selftest_stm_michel_scan.py` | 45623 (PDVD) / 26508 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
+| `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and segment picker are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |
 | `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — committed as the record; its blind is an honour rule, see above |
@@ -351,7 +379,8 @@ writer's default wire.
 ./prep_stm_michel_scan.py --det pdvd \
     --pin-tranche 86d78116:pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv
 ./selftest_stm_michel_scan.py            # both detectors; group [N] checks the draw
-./selftest_smx3d_browser.py --det pdhd
+./selftest_smx3d_browser.py --det pdhd --port 5093
+./selftest_smx3d_browser.py --det pdvd --port 5091
 ./score_stm_michel_scan.py --det pdhd --tag smx1
 ```
 

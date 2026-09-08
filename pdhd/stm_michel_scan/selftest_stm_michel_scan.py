@@ -15,11 +15,18 @@ HOW IT DRIVES THE APP, and why not the obvious way.
   into a scratch dir, so a self-test run can never touch a scan record (M13).
 
 WHAT IT ASSERTS, grouped:
-  A  the payload's shape and the blind: the chain's answer lives under exactly
-     one key, and with REVEAL off it reaches no ColumnDataSource -- proved by
-     POISONING that key with values nothing else could produce and looking for
-     them in every source on screen.
-  B  REVEAL turns the answer on, and the audit field records which way round.
+  A  the payload's shape, and that the chain's answer IS on screen from the
+     first paint -- the blind was removed by the owner on 2026-09-08, so the
+     poison test is INVERTED: the verdict key is poisoned with values nothing
+     else could produce, and they must appear in the sources and in the panels
+     with no toggle pressed.  A1, that the answer still lives under exactly one
+     key, is unchanged and is what would let a future round re-blind it.
+  B  the audit field: `revealed_before_label` is written True on every label,
+     and no REVEAL widget survives anywhere in the app.
+  V  the view (owner 2026-09-08): the 3-D rotation centre is the stopping point,
+     a tap can move it, and NOTHING except a new item or an explicit reset may
+     touch a range -- not a label, not a PF tag, not a pin move, not a bundle
+     switch.  Plus the copy box and the saved-labels table.
   C  every label round-trips, including the FRAG rule that a partial label still
      carries the FULL object's verdict.
   D  the pin: unset by default and equal to the fit's own last point, NOT to the
@@ -209,8 +216,8 @@ def all_source_values(g):
     return out
 
 
-def test_blind(det, tmp):
-    print("[A] the blind, %s" % det)
+def test_answer_on_screen(det, tmp):
+    print("[A] the chain's answer is on screen, %s" % det)
     prep = os.path.join(tmp, "prep-" + det)
     os.makedirs(prep, exist_ok=True)
     src = os.path.join(HERE, "prep-" + det)
@@ -222,7 +229,7 @@ def test_blind(det, tmp):
         if d["verdict"].get("michel_found"):
             pick = (fn, d)
             break
-    ck(pick is not None, "%s: no payload with michel_found=1 to test the blind on" % det)
+    ck(pick is not None, "%s: no payload with michel_found=1 to poison" % det)
     if pick is None:
         return
     fn, d = pick
@@ -240,7 +247,7 @@ def test_blind(det, tmp):
     top = set(d.keys()) - {"verdict"}
     leak = sorted(top & ANSWER)
     ck(not leak, "%s: chain verdict fields at payload top level: %s" % (det, leak))
-    # A2 -- poison the verdict and prove none of it reaches a source with REVEAL off
+    # A2 -- poison the verdict and prove ALL of it reaches the screen unprompted
     v = d["verdict"]
     for nm in ("michel", "dots", "delta"):
         g0 = v.get(nm) or {}
@@ -274,36 +281,218 @@ def test_blind(det, tmp):
 
     g = load_app(det, os.path.join(tmp, "lab_" + det), prep, man)
     vals = all_source_values(g)
-    ck(POISON not in vals,
-       "%s: the poisoned verdict REACHED a data source with REVEAL off" % det)
-    ck(not g["REND2"][("z", "y", "michel")].visible,
-       "%s: the michel renderer is visible with REVEAL off" % det)
-    ck(g["reveal_tog"].active is False, "%s: REVEAL does not start off" % det)
-    ck(str(int(POISON)) not in g["seg_div"].text and "REVEALED" not in g["seg_div"].text,
-       "%s: the PF segment panel shows the chain's pdg with REVEAL off" % det)
-    ck("hidden" in g["reveal_div"].text,
-       "%s: the reveal banner does not say the answer is hidden" % det)
-
-    # B -- REVEAL turns it on, through on_change so a test can drive it
-    print("[B] REVEAL, %s" % det)
-    g["reveal_tog"].active = True
-    vals = all_source_values(g)
-    ck(POISON in vals, "%s: REVEAL did not bring the verdict onto the screen" % det)
+    # INVERTED on 2026-09-08.  The same poison, the same sweep of every source
+    # on the page -- what changed is the sign of the assertion, which is the
+    # honest way to record that the blind is gone rather than deleting the test.
+    ck(POISON in vals,
+       "%s: the verdict did NOT reach a data source on the first paint" % det)
     ck(g["REND2"][("z", "y", "michel")].visible,
-       "%s: the michel renderer stayed hidden after REVEAL" % det)
-    ck("REVEALED" in g["reveal_div"].text, "%s: no REVEALED banner" % det)
+       "%s: the michel renderer is hidden with no toggle to un-hide it" % det)
+    ck(str(int(POISON)) in g["seg_div"].text,
+       "%s: the PF segment panel does not show the chain's pdg" % det)
+    ck("hidden" not in g["reveal_div"].text and "answer" in g["reveal_div"].text,
+       "%s: the verdict banner still says the answer is hidden" % det)
+
+    # B -- the audit field, and that the toggle is really gone
+    print("[B] the audit field, %s" % det)
+    ck(not [k for k in g if "reveal_tog" in k],
+       "%s: a REVEAL toggle survives in the app globals" % det)
+    ck(not any(getattr(w, "label", "").startswith("REVEAL")
+               for w in g["curdoc"]().select({"type": g["Toggle"]})),
+       "%s: a widget labelled REVEAL is still in the document" % det)
     g["michel_kind"].active = g["MICHEL_KINDS"].index("attached")
     g["set_label"]("STM_MICHEL")
     lab = json.load(open(g["LABEL_FILE"]))["labels"]
     k = list(lab)[0]
     ck(lab[k]["revealed_before_label"] is True,
        "%s: revealed_before_label not recorded as True" % det)
-    g["reveal_tog"].active = False
     g["set_label"]("STM_ONLY")
     lab = json.load(open(g["LABEL_FILE"]))["labels"]
-    ck(lab[k]["revealed_before_label"] is False,
-       "%s: revealed_before_label not recorded as False" % det)
+    ck(lab[k]["revealed_before_label"] is True,
+       "%s: revealed_before_label is not True on every label now" % det)
     return g
+
+
+# ---------------------------------------------------------------------------
+# V -- the view: the rotation centre, and what may touch a range
+#      (owner 2026-09-08, doc pdhd/12 sec 13)
+# ---------------------------------------------------------------------------
+def test_view(det, tmp):
+    """Ranges are the one thing this display can throw away in total silence.
+
+    The scanner zooms into the Bragg end, clicks a label, and the object is a
+    dot again with nothing on screen saying why -- which is exactly what the
+    owner reported.  So every assertion here is about a RANGE, and the negative
+    ones (a label, a tag, a bundle switch must NOT reframe) matter more than the
+    positive ones.
+    """
+    print("[V] the 3-D centre and the view that stays put, %s" % det)
+    g = load_app(det, os.path.join(tmp, "view_" + det))
+    f3d, cam, st, D3 = g["f3d"], g["cam_src"], g["state"], g["D3"]
+    pay = g["payload"](g["current"]())
+    ck(pay is not None, "%s: no payload for the view test" % det)
+    if pay is None:
+        return
+
+    # V1 -- the rotation centre IS the stopping point
+    px, py, pz, _rr, psrc = g["pin_point"](pay)
+    ck(psrc == "fit-end", "%s: the pin does not start at the fit's own end" % det)
+    ck(abs(cam.data["cx"][0] - px) < 1e-9 and abs(cam.data["cy"][0] - py) < 1e-9
+       and abs(cam.data["cz"][0] - pz) < 1e-9,
+       "%s: the 3-D rotation centre is not the stopping point" % det)
+
+    # V2 -- and the framing guarantee survives the move to an OFF-CENTRE origin.
+    # smx3d rests on |(u, v)| <= |p - centre| <= R for every camera; a centre at
+    # one end of the track is the case that would break it if the radius were
+    # still the bounding sphere's.
+    X, Y, Z, _q, _r = g["muon_arrays"](pay)
+    R = cam.data["R"][0]
+    worst = 0.0
+    for az, el in [(0.0, 0.0), (1.0, 0.4), (-2.3, -1.1), (3.0, 1.4)]:
+        for u, v, _d in D3.project(list(zip(X, Y, Z)), az, el, (px, py, pz)):
+            worst = max(worst, (u * u + v * v) ** 0.5)
+    ck(worst <= R + 1e-6,
+       "%s: a chain point projects outside the frame radius (%.3f > %.3f)"
+       % (det, worst, R))
+
+    # V3 -- a tap moves the centre to a point that is actually drawn, and does
+    # NOT move the pin
+    CX, CY, CZ = g["centre_candidates"](pay)
+    ck(CX.size > len(X), "%s: the centre candidates are only the chain" % det)
+    j = int(CX.size // 3)
+    g["centre_tog"].active = True
+    g["snap_2d"]("z", "y", float(CZ[j]), float(CY[j]))
+    ck(st["centre"] is not None, "%s: a centre tap set no centre" % det)
+    if st["centre"] is not None:
+        hit = [k for k in range(CX.size)
+               if abs(CX[k] - st["centre"][0]) < 1e-9
+               and abs(CY[k] - st["centre"][1]) < 1e-9
+               and abs(CZ[k] - st["centre"][2]) < 1e-9]
+        ck(bool(hit), "%s: the tapped centre is not one of the drawn points" % det)
+        ck(abs(cam.data["cx"][0] - st["centre"][0]) < 1e-9,
+           "%s: the tapped centre never reached the camera" % det)
+    ck(st["pin_i"] is None, "%s: a centre tap moved the stopping-point pin" % det)
+    g["clear_centre"]()
+    ck(st["centre"] is None and abs(cam.data["cx"][0] - px) < 1e-9,
+       "%s: 'centre on the stop' did not restore the stopping point" % det)
+    g["centre_tog"].active = False
+    g["snap_2d"]("z", "y", float(Z[5]), float(Y[5]))
+    ck(st["pin_i"] is not None,
+       "%s: with the centre toggle off a tap no longer moves the pin" % det)
+    g["clear_pin"]()
+
+    # V4 -- nothing but a new item or an explicit reset may touch a range
+    ZOOM = (-13.0, 13.0)
+    P2 = g["FIG2"][("z", "y")]
+
+    def _set_zoom():
+        f3d.x_range.start, f3d.x_range.end = ZOOM
+        f3d.y_range.start, f3d.y_range.end = ZOOM
+        P2.x_range.start, P2.x_range.end = 11.0, 41.0
+        g["_meas_y"].start, g["_meas_y"].end = 101.0, 201.0
+
+    def _kept(what, three_d=True):
+        ok = ((P2.x_range.start, P2.x_range.end) == (11.0, 41.0)
+              and (g["_meas_y"].start, g["_meas_y"].end) == (101.0, 201.0))
+        if three_d:
+            ok = ok and (f3d.x_range.start, f3d.x_range.end) == ZOOM
+        ck(ok, "%s: %s reframed the view" % (det, what))
+
+    _set_zoom()
+    seq0 = cam.data["seq"][0]
+    g["set_label"]("STM_ONLY")
+    _kept("a label click")
+    # ... and the camera was still PUSHED, which is what re-projects the browser
+    # copy at the angle the scanner dragged to.  Skipping that push is how a
+    # "do not reframe" change turns into a snap-back to the server's stale angle.
+    ck(cam.data["seq"][0] > seq0,
+       "%s: render() did not push the camera, so a drag would snap back" % det)
+
+    idx0 = st["idx"]
+    ck(idx0 == 0, "%s: the view test did not start on item 0" % det)
+    ck(st["idx"] == idx0, "%s: a label click still advanced to the next item" % det)
+
+    _set_zoom()
+    g["bundle_tog"].active = not g["bundle_tog"].active
+    _kept("the bundle toggle")
+    _set_zoom()
+    g["pf_tog"].active = True
+    _kept("the particle-flow toggle")
+    segs = g["pf_segments"](pay)
+    if segs:
+        _set_zoom()
+        st["pf_seg"] = segs[0]["id"]
+        g["set_pf_tag"]("muon")
+        _kept("a PF segment tag")
+    # a PIN move is allowed to re-centre the 3-D view -- the centre IS the pin --
+    # but only by recentring: the zoom LEVEL and the 2-D panels must survive
+    _set_zoom()
+    g["set_pin_index"](int(len(X) // 2))
+    _kept("a pin move", three_d=False)
+    ck(abs((f3d.x_range.end - f3d.x_range.start) - (ZOOM[1] - ZOOM[0])) < 1e-6,
+       "%s: a pin move changed the 3-D zoom level" % det)
+    ck(abs(f3d.x_range.start + f3d.x_range.end) < 1e-6,
+       "%s: a pin move did not put the new centre in the middle of the view" % det)
+
+    # V5 -- and the two things that SHOULD reframe, do
+    _set_zoom()
+    g["render"](reframe=True)
+    ck((f3d.x_range.start, f3d.x_range.end) != ZOOM,
+       "%s: 'reset the view' did not reframe the 3-D panel" % det)
+    _set_zoom()
+    g["zoom_tog"].active = not g["zoom_tog"].active
+    ck((P2.x_range.start, P2.x_range.end) != (11.0, 41.0),
+       "%s: the zoom toggle did not reframe the projections" % det)
+    if len(g["ITEMS"]) > 1:
+        _set_zoom()
+        g["go"](1)
+        ck((f3d.x_range.start, f3d.x_range.end) != ZOOM,
+           "%s: a new item did not reframe the 3-D panel" % det)
+        ck(st["centre"] is None, "%s: a new item kept the previous centre" % det)
+        g["go"](0)
+
+    # V6 -- the copy box: the item key, and paste-to-navigate
+    ck(g["copy_key"].value == g["item_key"](g["current"]()),
+       "%s: the copy box does not carry this item's key" % det)
+    if len(g["ITEMS"]) > 4:
+        k = g["item_key"](g["ITEMS"][4])
+        g["copy_key"].value = k
+        ck(st["idx"] == 4, "%s: pasting an item key did not navigate to it" % det)
+        ck(g["copy_key"].value == k, "%s: the copy box lost the key it landed on" % det)
+        g["go"](0)
+
+    # V7 -- the saved table is the FILE, row for row
+    lab = json.load(open(g["LABEL_FILE"]))["labels"]
+    tab = g["saved_src"].data
+    ck(len(tab["item"]) == len(lab),
+       "%s: the saved table has %d rows for %d on disk"
+       % (det, len(tab["item"]), len(lab)))
+    for i2, k2 in enumerate(tab["item"]):
+        ck(k2 in lab, "%s: the table shows %s, which is not in the file" % (det, k2))
+        if k2 in lab:
+            ck(tab["label"][i2] == (lab[k2].get("choice") or ""),
+               "%s: the table's label for %s is not the file's" % (det, k2))
+    here = g["item_key"](g["current"]())
+    ck(tab["now"].count("\u25b6") == (1 if here in lab else 0),
+       "%s: the current item is not marked exactly once in the table" % det)
+
+    # V8 -- and it says what is NOT saved.  PF tags on an item with no label row
+    # live in memory only, and that is precisely the case the owner could not see.
+    nxt = next((i for i, it in enumerate(g["ITEMS"])
+                if g["item_key"](it) not in lab), None)
+    if nxt is not None:
+        g["go"](nxt)
+        ck("not saved" in g["saved_head"].text,
+           "%s: an unlabelled item is not called out as unsaved" % det)
+        segs = g["pf_segments"](g["payload"](g["current"]()))
+        if segs:
+            st["pf_seg"] = segs[0]["id"]
+            g["set_pf_tag"]("muon")
+            ck("memory only" in g["saved_head"].text,
+               "%s: a PF tag held off disk is not reported as pending" % det)
+            ck(g["item_key"](g["current"]()) not in
+               json.load(open(g["LABEL_FILE"]))["labels"],
+               "%s: a PF tag wrote a label row that does not exist" % det)
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +518,11 @@ def test_labels(det, tmp):
     # render() resets the radio to "not set" on every item, which is correct --
     # it is a per-object question -- so it has to be answered per label here too.
     ATT = g["MICHEL_KINDS"].index("attached")
-    for choice, spec in g["CHOICES"].items():
+    for i, (choice, spec) in enumerate(g["CHOICES"].items()):
+        # A label no longer advances (owner 2026-09-08, item 6), so the walk is
+        # explicit.  It used to be implicit in set_label's own jump, which is
+        # exactly the coupling that made a mis-click a navigation event too.
+        g["go"](i % len(g["ITEMS"]))
         g["michel_kind"].active = ATT
         g["set_label"](choice)
         rec = [r for r in json.load(open(g["LABEL_FILE"]))["labels"].values()
@@ -433,13 +626,11 @@ def test_pin(det, tmp):
     ck(a0.size == a1.size and np.allclose(a1 - a0, shift, atol=1e-6),
        "%s: the dQ/dx panel did not re-anchor by exactly the pin's rr shift" % det)
 
-    # D4 -- with REVEAL on, every Michel/dot point sits on the NEGATIVE side
-    g["reveal_tog"].active = True
+    # D4 -- every Michel/dot point sits on the NEGATIVE side of the panel
     for nm in ("michel", "dots"):
         a = np.asarray(g["SRCQ"][nm].data["a"], float)
         ck(a.size == 0 or (a <= 0).all(),
            "%s: a %s point landed on the positive (muon) side of the panel" % (det, nm))
-    g["reveal_tog"].active = False
 
     # D5 -- the rr slider and the manual pin
     g["rr_slider"].value = float(RR.min() + 5.0)
@@ -808,13 +999,22 @@ def test_meas_app(det, tmp):
         ck(g["FIGM"][(pl, "q")].y_range is g["FIGM"][("w", "d")].y_range,
            "%s %s: the nine panels do not share a time range" % (det, pl))
 
-    # H8 -- REVEAL gates the overlays here too
+    # H8 -- the chain's overlays reach measurement space too, unprompted.
+    # INVERTED with the blind's removal (owner 2026-09-08): what used to prove
+    # the nine panels honoured REVEAL now proves they honour its absence, which
+    # is the assertion that would fail if a renderer were left switched off.
     for nm in ("michel", "delta", "dots"):
-        ck(not g["SRCT"][("w", nm)].data["w"],
-           "%s: the %s overlay is filled in measurement space with REVEAL off"
+        ck(all(r.visible for r in g["MEAS_REND"][nm]),
+           "%s: the %s measurement renderer is hidden with nothing to un-hide it"
            % (det, nm))
-        ck(all(not r.visible for r in g["MEAS_REND"][nm]),
-           "%s: the %s measurement renderer is visible with REVEAL off" % (det, nm))
+    v = (g["payload"](g["current"]()) or {}).get("verdict") or {}
+    drawn = [nm for nm in ("michel", "delta", "dots")
+             if (v.get(nm) or {}).get("x")]
+    for nm in drawn:
+        ck(bool(g["SRCT"][("w", nm)].data["w"]) or
+           not any(t is not None for t in (v[nm].get("pw") or [])),
+           "%s: the %s overlay is empty in measurement space although the chain "
+           "found one" % (det, nm))
     ck(bool(g["SRCT"][("w", "muon")].data["w"]),
        "%s: the muon trajectory is missing from the measurement panel" % det)
 
@@ -844,7 +1044,6 @@ def test_meas_app(det, tmp):
     ck(outlined >= 4, "%s: only %d dQ/dx glyphs carry an outline" % (det, outlined))
 
     # H6/H7 -- the click lands on the SAME point in every view
-    g["reveal_tog"].active = True                    # so michel/dots are pickable
     for nm in ("muon", "michel"):
         src = g["SRCQ"][nm]
         n = len(src.data["a"])
@@ -1444,17 +1643,18 @@ def test_kine_payload(det):
     print("     %d payloads carry the chain's kinematics verbatim" % n)
 
 
-def test_kine_blind(det, tmp):
-    """The mu -> e panel is blinded, and says so rather than showing nothing."""
-    print("[L] the flow panel's blind, %s" % det)
+def test_kine_panel(det, tmp):
+    """The mu -> e panel is filled on load -- there is nothing left to un-hide."""
+    print("[L] the flow panel, %s" % det)
     g = load_app(det, os.path.join(tmp, "kine_" + det))
     ck("flow_div" in g, "%s: no flow_div in the app" % det)
     if "flow_div" not in g:
         return
     t = g["flow_div"].text
-    ck("hidden" in t.lower(), "%s: flow panel is not blinded on load" % det)
-    ck("MeV" not in t, "%s: flow panel leaks an energy before REVEAL" % det)
-    # ... and the muon KE that DOES ride un-blinded is the chain's own number
+    ck("hidden" not in t.lower(), "%s: flow panel still says it is hidden" % det)
+    ck("MeV" in t or "predates doc" in t,
+       "%s: flow panel carries no energy on load" % det)
+    # ... and the muon KE on the status line is still the chain's own number
     it = g["current"]()
     v = (g["payload"](it) or {}).get("verdict") or {}
     ck("MeV" in g["status"].text or v.get("muon_ke_best") is None,
@@ -1462,10 +1662,12 @@ def test_kine_blind(det, tmp):
     if v.get("muon_ke_best") is not None:
         ck(("%.1f" % v["muon_ke_best"]) in g["status"].text,
            "%s: status muon KE is not the chain's muon_ke_best" % det)
-        # the reveal-only Michel energy must NOT be on the un-blinded line
+        # the status line is the MUON's line and stays that way: the Michel
+        # energy has its own panel and putting it here would say twice what the
+        # scanner reads once
         ck(("%.1f MeV" % v.get("michel_ke_best", -1.0)) not in g["status"].text
            or not v.get("michel_ke_best"),
-           "%s: status line leaks the Michel energy" % det)
+           "%s: the status line carries the Michel energy, not just the muon's" % det)
 
 
 # ---------------------------------------------------------------------------
@@ -1810,9 +2012,8 @@ def test_object_panel(det, tmp):
         if seen[conn]:
             continue
         g["go"](i)
-        g["reveal_tog"].active = True
         t = g["flow_div"].text
-        ck("REVEALED" in t, "%s: REVEAL did not fill the flow panel" % det)
+        ck("the chain's answer" in t, "%s: the flow panel is not filled" % det)
         ck("no parentage is persisted" not in t,
            "%s: the panel still claims a bridged Michel has no persisted parentage" % det)
         if conn == 1:
@@ -1837,7 +2038,6 @@ def test_object_panel(det, tmp):
             ck(("%.1f" % v["michel_ke_core"]) in t,
                "%s: the panel does not show the core energy" % det)
             ck("piece" in t, "%s: the panel does not describe the object's pieces" % det)
-        g["reveal_tog"].active = False
         seen[conn] = 1
         # conn 3 exists only where a companion went unfitted (PDHD only on these
         # arms), so do not require it before stopping.
@@ -2023,7 +2223,8 @@ def main():
             print("\n===== %s =====" % det)
             test_geometry(det)
             test_reference(det)
-            test_blind(det, tmp)
+            test_answer_on_screen(det, tmp)
+            test_view(det, tmp)
             test_labels(det, tmp)
             test_pin(det, tmp)
             test_tranche_draw(det)
@@ -2035,7 +2236,7 @@ def main():
             test_save_readback(det, tmp)
             test_bundle_app(det, tmp)
             test_kine_payload(det)
-            test_kine_blind(det, tmp)
+            test_kine_panel(det, tmp)
             test_object_payload(det)
             test_object_panel(det, tmp)
             test_energy_payload(det)

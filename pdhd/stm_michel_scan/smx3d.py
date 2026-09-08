@@ -80,6 +80,33 @@ def project(pts, az, el, centre=(0.0, 0.0, 0.0)):
     return out
 
 
+def sphere_about(pts, centre, pad=1.25, floor=30.0):
+    """Radius framing `pts` about a centre SOMEONE ELSE chose (doc pdhd/12 sec 13).
+
+    `bounding_sphere` picks the centre that minimises the radius; this one takes
+    the centre as given -- the muon's stopping point -- and returns the radius
+    that still frames everything from it.  The framing guarantee is the same and
+    rests on the same fact: right/up/fwd is orthonormal, so
+    |(u, v)| <= |p - centre| <= R for every camera, and nothing can swing out of
+    frame as the object turns.
+
+    THE COST, stated rather than discovered: a stopping point sits at one END of
+    the muon, so R here is the muon's full length where `bounding_sphere` gave
+    half of it.  The default 3-D view is therefore about twice as wide.  That is
+    the price of rotating about the stop instead of about the middle, and it is
+    paid once per item now that the zoom survives a label click.
+    """
+    if not pts:
+        return floor
+    cx, cy, cz = centre
+    r = 0.0
+    for p in pts:
+        d = math.sqrt((p[0] - cx) ** 2 + (p[1] - cy) ** 2 + (p[2] - cz) ** 2)
+        if d > r:
+            r = d
+    return max(floor, r * pad)
+
+
 def bounding_sphere(pts, pad=1.15, floor=30.0):
     """(centre, R) framing a point set.
 
@@ -266,10 +293,16 @@ d.el[0] = el;
 """ + JS_REDRAW
 
 JS_PANEND = r"""
-// One round trip per gesture, not per frame: Python only needs the camera to
-// record it in the label, so it learns it when the drag ends.
+// One round trip per gesture, not per frame.  THE ONE DIVERGENCE from em3d's
+// verbatim JS (2026-09-08): em3d sent .toFixed(4) because nothing read the
+// value back.  The viewer now DOES -- it is the only channel by which the
+// server ever learns the angle the scanner dragged to, and every repaint
+// re-sends the whole of cam_src.data, so a 1e-4 rad rounding here is a 0.02 cm
+// jump in the picture on every label click.  Number.toString gives the shortest
+// representation that parses back to the same double, so the round trip is
+// exact rather than merely close.
 const d = cam.data;
-camtxt.value = (d.az[0]).toFixed(4) + "," + (d.el[0]).toFixed(4);
+camtxt.value = String(d.az[0]) + "," + String(d.el[0]);
 """
 
 # Set the camera from Python (preset buttons, sliders, event load) and redraw.

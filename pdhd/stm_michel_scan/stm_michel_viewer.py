@@ -31,13 +31,21 @@ WHAT YOU ARE JUDGING, and what is on screen while you judge it
       panel   dQ/dx vs residual range, against this detector's own muon and
               electron reference curves
 
-  Behind REVEAL -- this is the chain's ANSWER, and seeing it before you label
-  makes the agreement number circular (feedback_blind_the_scan_sheet):
+  Drawn always since 2026-09-08 -- this is the chain's ANSWER, and it used to
+  sit behind a REVEAL toggle:
       the Michel / delta / dot segments it found, its entry / stop / tagger-stop
       points, is_stm, the reject bits, the Michel energy and kink, and the
       cosmic tagger's own STM fit.
-  Every label records `revealed_before_label`, so a revealed label is still
-  usable -- it is simply scored separately.
+
+  THE BLIND IS GONE, and that is a real cost, stated rather than buried (owner
+  decision 2026-09-08, doc pdhd/12 sec 13).  Seeing the chain's answer before
+  labelling makes the human-vs-chain agreement number circular
+  (feedback_blind_the_scan_sheet).  Every label still records
+  `revealed_before_label` and it is now always True, so the scorer's strata are
+  unchanged and the four labels taken blind before this date stay the only
+  unbiased rows in the file.  What the scan measures from here is the chain's
+  reconstruction reviewed by a physicist, not an independent verdict, and no
+  number derived from it may be quoted as the latter.
 
 THE PIN, and an honest limit about it
   You place the muon's STOPPING POINT yourself.  Tap any panel to snap it to the
@@ -59,6 +67,25 @@ THE PIN, and an honest limit about it
   the cosmic tagger's own stop -- which differs from `stop_*` by a median
   0.64 cm and up to 266 cm on PDHD, 0.45 cm and up to 34 cm on PDVD.
 
+THE 3-D VIEW ROTATES ABOUT THE STOPPING POINT (owner, 2026-09-08)
+  A drag rotates about the CAMERA CENTRE, and that centre is the pin -- the
+  muon's stopping point -- not the middle of the track.  So zooming in on the
+  Bragg end and dragging keeps the Bragg end on screen instead of swinging it
+  out of frame.  Turn on `tap sets the 3-D rotation centre` to put it somewhere
+  else by clicking (the nearest full-density image point, in 3-D or in any
+  projection); `centre on the stop` puts it back.
+
+  The price is stated in smx3d.sphere_about: a centre at one end of the track
+  needs a radius equal to the whole track, so the default view is about twice
+  as wide as it was.  It is paid once per item, because:
+
+THE VIEW NO LONGER RESETS WHEN YOU LABEL (owner, 2026-09-08)
+  render() reframes -- 3-D radius, the three projection panels, the nine
+  measurement panels -- only when the ITEM changes, or when you press
+  `reset the view` / a zoom toggle.  Labelling, tagging a PF segment, moving
+  the pin and switching bundles all repaint without touching your zoom.
+  A label click no longer advances to the next item either: use `next >`.
+
 USAGE
   ./serve_stm_michel_scan.sh 5023 --det pdhd --scan-tag smx1
   then  http://localhost:5023/stm_michel_viewer
@@ -76,8 +103,9 @@ from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (BoxSelectTool, Button, CheckboxGroup, ColorBar,
                           ColumnDataSource, CustomJS, Div, HoverTool,
-                          LinearColorMapper, RadioButtonGroup, Range1d,
-                          ResetTool, SaveTool, Select, Slider, Tabs, TabPanel,
+                          DataTable, LinearColorMapper, RadioButtonGroup,
+                          Range1d, ResetTool, SaveTool, Select, Slider,
+                          TableColumn, Tabs, TabPanel,
                           TapTool, TextInput, Toggle, WheelZoomTool)
 from bokeh.palettes import Turbo256, Viridis256
 from bokeh.plotting import figure
@@ -238,21 +266,31 @@ def save_labels():
     return read_back()
 
 
+_DISK = dict(labels={}, nb=0, mt="never")   # the last SUCCESSFUL parse
+
+
 def read_back():
     """(ok, n_on_disk, bytes, mtime string, error) straight from the file.
+
+    It also stashes the parsed rows in _DISK, and the saved-labels table is
+    built from THAT rather than from a second open() -- two reads of a file
+    being rewritten on every click can disagree, and a banner and a table that
+    disagree are worse than either alone.
 
     A file that does not exist yet is not an error -- it is the truthful state
     "nothing saved yet", and reporting it as a failure would cry wolf on every
     fresh scan tag.  A file that EXISTS but cannot be parsed is an error.
     """
     if not os.path.exists(LABEL_FILE):
+        _DISK.update(labels={}, nb=0, mt="never")
         return (True, 0, 0, "never", None)
     try:
         st = os.stat(LABEL_FILE)
         with open(LABEL_FILE) as fh:
             d = json.load(fh)
-        return (True, len(d.get("labels", {})), st.st_size,
-                time.strftime("%H:%M:%S", time.localtime(st.st_mtime)), None)
+        mt = time.strftime("%H:%M:%S", time.localtime(st.st_mtime))
+        _DISK.update(labels=d.get("labels", {}), nb=st.st_size, mt=mt)
+        return (True, len(d.get("labels", {})), st.st_size, mt, None)
     except Exception as ex:                       # noqa: BLE001 - report anything
         return (False, 0, 0, "", "%s: %s" % (type(ex).__name__, ex))
 
@@ -260,7 +298,10 @@ def read_back():
 # ---------------------------------------------------------------------------
 # layers.  ONE description drives the three 2-D panels and the 3-D panel, so a
 # layer cannot exist in one and be forgotten in the other.
-#   reveal=True  -> the chain's answer; hidden unless REVEAL is on
+#   reveal=True  -> the chain's ANSWER.  It used to be hidden behind a REVEAL
+#                   toggle; since 2026-09-08 (owner) it is always drawn, and
+#                   the column is kept because it still NAMES which layers are
+#                   the reconstruction's verdict rather than the evidence.
 # ---------------------------------------------------------------------------
 LAYERS = [
     # name       size alpha  colour            marker      reveal cue
@@ -301,6 +342,8 @@ PF_TAGS = {"muon": "#2c7fb8", "michel": "#e31a1c",
 # "straddles the stop" is the honest answer rather than a coin flip.
 PF_PALETTE = ["#4c78a8", "#72b7b2", "#54a24b", "#eeca3b", "#b279a2", "#ff9da6",
               "#9d755d", "#bab0ac", "#e45756", "#f58518"]
+# The chain's-answer layers.  Nothing hides them any more; the set is what a
+# future round would flip if the blind ever comes back.
 REVEAL_LAYERS = {n for n, _, _, _, _, rv, _ in LAYERS if rv}
 
 PANELS = [("z", "y", "side view:   Z (beam) vs Y"),
@@ -489,6 +532,10 @@ cam_src = ColumnDataSource(name="cam3", data=dict(az=[math.radians(D3.PRESETS["i
                                 el=[math.radians(D3.PRESETS["iso"][1])],
                                 az0=[0.0], el0=[0.0],
                                 cx=[0.0], cy=[0.0], cz=[0.0], R=[100.0],
+                                # bumped on EVERY server push so the change is
+                                # never swallowed as "same value" -- see
+                                # refit_camera().  The JS never reads it.
+                                seq=[0.0],
                                 xs0=[0.0], xe0=[0.0], ys0=[0.0], ye0=[0.0]))
 camtxt = TextInput(value="", visible=False)
 _JS_ARGS = dict(cam=cam_src, pts=_PT_SRC, ptsize=_PT_SIZE, ptalpha=_PT_ALPHA,
@@ -504,6 +551,34 @@ f3d.js_on_event(PanEnd, js_panend)
 # Any Python push of cam_src.data re-runs the SAME projection in the browser, so
 # the server's fill can never be the version left on screen.
 cam_src.js_on_change("data", js_apply)
+
+
+def on_camtxt(attr, old_, new_):
+    """Learn the angle the scanner actually dragged to.
+
+    THE OTHER HALF OF "the view resets when I label" (owner 2026-09-08), and the
+    half that is invisible from Python.  JS_ROTATE mutates cam.data.az/el IN THE
+    BROWSER and never tells the server; JS_PANEND writes "az,el" into this
+    hidden TextInput at the end of every gesture and, until now, NOTHING READ
+    IT.  So the server's copy of the camera stayed at the iso preset for ever --
+    and because refit_camera pushes the WHOLE of cam_src.data, every repaint
+    shipped that stale angle back and the picture snapped to iso.  Gating the
+    ranges alone would have left that untouched.
+
+    Written in place, deliberately: assigning cam_src.data here would emit a
+    change, re-run JS_REDRAW and send the client back the angle it just sent us.
+    A list element mutation updates the server's own copy and emits nothing.
+    """
+    try:
+        az, el = [float(t) for t in (new_ or "").split(",")]
+    except (TypeError, ValueError):
+        return
+    if math.isfinite(az) and math.isfinite(el):
+        cam_src.data["az"][0] = az
+        cam_src.data["el"][0] = el
+
+
+camtxt.on_change("value", on_camtxt)
 
 
 def fill3(name, X, Y, Z, extra=None):
@@ -813,13 +888,19 @@ def _wt(block, pl):
     return [float(t) for t in W[k]], [float(t) for t in T[k]]
 
 
-def fill_meas(pay, v, rev, pin=None):
-    """The nine panels for one item.  `v` is empty unless REVEAL is on.
+def fill_meas(pay, v, rev, pin=None, reframe=False):
+    """The nine panels for one item.
 
     `pin` is the (x, y, z) origin; when the scanner asks for the stop window,
     the panels centre on THAT point's own wire coordinates -- taken from the
     nearest chain point, so the window is in the same numbers the panel plots
     rather than a geometric guess.
+
+    `reframe` gates the RANGES only (owner 2026-09-08): the cells, the dead
+    bands and the overlays are refilled on every call, but a zoom the scanner
+    set by hand survives a label click.  The dead bands are still clipped to the
+    live window, so they follow that zoom rather than the one this function
+    would have imposed.
     """
     stop_w = {}
     if pin is not None:
@@ -855,15 +936,17 @@ def fill_meas(pay, v, rev, pin=None):
         allt = list(ts) + mt
         xr = FIGM[(pl, "xr")]
         if meas_zoom.active == 1 and pl in stop_w:
-            xr.start, xr.end = stop_w[pl][0] - MEAS_WIN, stop_w[pl][0] + MEAS_WIN
+            wlo, whi = stop_w[pl][0] - MEAS_WIN, stop_w[pl][0] + MEAS_WIN
             tlo.append(stop_w[pl][1] - MEAS_WIN); thi.append(stop_w[pl][1] + MEAS_WIN)
         elif allw:
             lo, hi = min(allw), max(allw)
             pad = max(3.0, 0.04 * (hi - lo))
-            xr.start, xr.end = lo - pad, hi + pad
+            wlo, whi = lo - pad, hi + pad
             tlo.append(min(allt)); thi.append(max(allt))
         else:
-            xr.start, xr.end = smgeom.plane_span(DETNAME, PLANES.index(pl))
+            wlo, whi = smgeom.plane_span(DETNAME, PLANES.index(pl))
+        if reframe:
+            xr.start, xr.end = wlo, whi
         # dead bands, clipped to the drawn box so a whole-readout band does not
         # decide the time range
         d = dead.get(pl) or dict(ch=[], t0=[], t1=[])
@@ -871,11 +954,11 @@ def fill_meas(pay, v, rev, pin=None):
         SRCD[pl].data = dict(
             left=[d["ch"][i] - 0.5 for i in keep], right=[d["ch"][i] + 0.5 for i in keep],
             bottom=[d["t0"][i] for i in keep], top=[d["t1"][i] for i in keep])
-    if tlo:
+    if reframe and tlo:
         lo, hi = min(tlo), max(thi)
         pad = 0.0 if meas_zoom.active == 1 else max(5.0, 0.05 * (hi - lo))
         _meas_y.start, _meas_y.end = lo - pad, hi + pad
-    else:
+    elif reframe:
         _meas_y.start, _meas_y.end = 0, 1
     for nm, _c, _sz, rv in MEAS_TRACKS:
         for r in MEAS_REND.get(nm, []):
@@ -913,8 +996,17 @@ uncl_btn = Button(label="UNCLEAR", button_type="warning", width=120)
 clear_btn = Button(label="clear this label", width=130)
 
 michel_kind = RadioButtonGroup(labels=MICHEL_KINDS, active=0, width=560)
-reveal_tog = Toggle(label="REVEAL the reconstruction", width=230)
+# The REVEAL toggle is GONE (owner 2026-09-08): the reconstruction is always on
+# screen.  See the module docstring for what that costs.
 zoom_tog = Toggle(label="Zoom to object", width=140)
+# Owner 2026-09-08.  A drag rotates about the pin -- the stopping point.  Turn
+# this on and a tap picks a DIFFERENT centre instead of moving the pin; the
+# candidates are the fitted chain plus the full-density image layer, never the
+# thinned grey context, because nobody wants to rotate about background.
+centre_tog = Toggle(label="tap sets the 3-D rotation centre",
+                    button_type="default", width=245)
+centre_btn = Button(label="centre on the stop", width=160)
+view_btn = Button(label="reset the view", button_type="default", width=140)
 # doc pdhd/13 sec 4: the Bee layer draws EVERY cluster at its OWN bundle's
 # t0-corrected position, so an unrelated cosmic thousands of us away in drift
 # time can land centimetres from the muon and read as over-clustering.  ON by
@@ -948,15 +1040,53 @@ pf_oth_btn = Button(label="delta / other", button_type="default", width=125)
 pf_mix_btn = Button(label="straddles the stop", button_type="warning", width=165)
 pf_clr_btn = Button(label="untag", button_type="default", width=90)
 save_info_btn = Button(label="what is saved on disk?", button_type="default", width=200)
+# Owner 2026-09-08, item 4: the event and cluster as SELECTABLE TEXT.  The badge
+# and the status line already say them, but inside HTML that is awkward to grab;
+# a TextInput can be clicked, ctrl-A'd and copied.  Both forms are here because
+# both are used downstream: `<event>/<cluster>` is the labels.json key and the
+# scan-sheet row, `<event> <cluster>` is what the analysis scripts take.
+copy_key = TextInput(title="event / cluster — click and copy", value="", width=430,
+                     name="copy_key")
 
-header = Div(width=1420, text="""
+# Owner 2026-09-08, item 5: what is actually IN the scan, as a table.
+# It is filled from read_back()'s parse of the file on disk -- the SAME parse the
+# green banner reports -- so the banner and the table can never disagree, and
+# "saved" here means "re-read from the file", never "the write returned".
+# The PENDING row is the other half of the ask: PF segment tags held in memory
+# for an item with no label row yet are NOT on disk (set_pf_tag says so), and a
+# table of disk rows alone would leave exactly that case invisible.
+saved_src = ColumnDataSource(dict(n=[], item=[], label=[], michel=[], pin=[],
+                                  pf=[], now=[]), name="saved_src")
+# The column widths sum to 400 inside a 430 px table on purpose: SlickGrid adds
+# a vertical scrollbar as soon as there are more rows than fit, and columns that
+# already fill the width then get a horizontal scrollbar too.
+saved_table = DataTable(
+    source=saved_src, name="saved_table", width=430, height=330,
+    index_position=None, row_height=24, header_row=True, sortable=False,
+    columns=[TableColumn(field="now", title="", width=20),
+             TableColumn(field="n", title="#", width=34),
+             TableColumn(field="item", title="event / cluster", width=118),
+             TableColumn(field="label", title="label", width=110),
+             TableColumn(field="michel", title="michel", width=56),
+             TableColumn(field="pin", title="pin", width=36),
+             TableColumn(field="pf", title="pf", width=26)])
+saved_head = Div(text="", width=430, name="saved_head")
+
+# The prose is folded into a <details> block on purpose.  It grew every round
+# and, next to the saved-labels table added on 2026-09-08, it pushed the 3-D
+# canvas off the bottom of a 1200 px window -- the browser gate caught it,
+# because a drag aimed at a canvas that is not on screen reaches nothing.  The
+# question being asked stays open; the manual folds away.
+header = Div(width=960, text="""
 <b>%s stopping-muon + Michel-electron hand scan</b> &mdash; doc pdhd/12.
 <br><b>Judge the charge.</b> Does the object enter the detector and <b>stop</b> inside,
 and is there a <b>Michel electron</b> at the stop?
 <br><span style="color:#555">Colour = every imaged point within 20&nbsp;cm of the fitted
 muon (and 40&nbsp;cm of its stopping end), at full density. Grey = the rest of the event,
-thinned. Black-outlined line = the fitted muon, coloured by its own dQ/dx. Red dashed =
-the active boundary; purple dotted = the APA&nbsp;/&nbsp;CRP seams.
+thinned. Black-outlined line = the fitted muon, coloured by its own dQ/dx.</span>
+<details><summary style="cursor:pointer;color:#36c">how to read this display</summary>
+<span style="color:#555">
+Red dashed = the active boundary; purple dotted = the APA&nbsp;/&nbsp;CRP seams.
 <br><b>Place the pin</b> where you think the muon stopped &mdash; tap any panel, or drag
 the slider. The dQ/dx panel re-anchors on it, so the muon side and the Michel side
 separate exactly where you say. It starts at the drawn chain's own last point, which is
@@ -965,20 +1095,34 @@ whether you <i>agree</i>, and the label records how far you moved it.
 <br><b>2-D measurement</b> is the third tab: what the wires actually saw, what the fit
 predicts they should have seen, and the difference &mdash; per plane, with the dead
 channels hatched. The fit drawn everywhere is the <b>CheckSTM_Michel PR</b> chain
-(uniform 0.600&nbsp;cm step); the cosmic tagger's own fit is the grey REVEAL layer only.
+(uniform 0.600&nbsp;cm step); the grey layer is the cosmic tagger's own fit.
 <br><b>Click a point in the dQ/dx panel</b> and a cyan cursor marks it in the 3-D view,
 in all three projections and in all nine measurement panels.
 <br><b>show particle flow</b> draws the PR graph &mdash; its segments and junction
 vertices. Pick a segment and tag it muon / Michel / delta / straddles-the-stop; your
 tags are hollow squares, never confusable with the reconstruction's colours.
 <br><b>Every save is read back from the file</b> &mdash; the banner under the buttons
-says what is actually on disk, and <i>what is saved on disk?</i> prints this item's row.
-<br><b>REVEAL</b> shows what the reconstruction decided. Every label records whether you
-had revealed it, so a revealed label is still usable &mdash; it is just scored separately.
+says what is actually on disk, <i>what is saved on disk?</i> prints this item's row, and
+the table top right is that same file, row by row.
+<br><b>The reconstruction is always on screen</b> (2026-09-08). There is no REVEAL
+button any more; every label records <code>revealed_before_label</code> and it is now
+always true, so the four labels taken blind before that date stay the only unbiased ones.
+</span></details>
+<span style="color:#555">
+<b>A drag rotates about the stopping point</b>, so zooming into the Bragg end and
+turning it keeps it on screen. <i>tap sets the 3-D rotation centre</i> puts the centre
+somewhere else by clicking; <i>centre on the stop</i> puts it back.
+<br><b>Your zoom survives a label click</b> &mdash; the views reframe when the ITEM
+changes, or when you press <i>reset the view</i>. A label no longer jumps to the next
+item either: press <i>next &gt;</i> when you are ready.
 </span>""" % DETNAME.upper())
 
+# `centre` is the 3-D rotation origin ONLY when the scanner picked one by
+# tapping; None means "follow the pin", i.e. the stopping point.  `cam_c` is the
+# centre last pushed to the browser, so refit_camera can tell a centre MOVE from
+# an ordinary repaint without resetting anyone's zoom.
 state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None,
-             pf_tag={}, pf_seg=None)
+             pf_tag={}, pf_seg=None, centre=None, cam_c=None)
 
 
 def current():
@@ -1027,9 +1171,50 @@ def set_pin_index(i):
     render()
 
 
+def centre_candidates(pay):
+    """(x, y, z) a tap may choose as the 3-D rotation centre.
+
+    The fitted chain plus the FULL-DENSITY image layer -- so the scanner can put
+    the centre on a Michel blob or a delta the fit never reached, not only on
+    the trajectory.  Deliberately NOT `image_far`: the thinned grey context is
+    not something anyone wants to rotate about, and projecting it in Python on
+    every tap would cost far more than it buys.  The bundle toggle is not
+    consulted either; a point drawn in mauve is still a point you may want in
+    the middle of the view.
+    """
+    X, Y, Z, _q, _rr = muon_arrays(pay)
+    n = (pay or {}).get("image_near") or {}
+    nx = np.asarray(n.get("x") or [], float)
+    ny = np.asarray(n.get("y") or [], float)
+    nz = np.asarray(n.get("z") or [], float)
+    if not (nx.size == ny.size == nz.size):
+        nx = ny = nz = np.zeros(0)
+    return (np.concatenate([X, nx]), np.concatenate([Y, ny]),
+            np.concatenate([Z, nz]))
+
+
+def set_centre(x, y, z):
+    """Put the rotation centre here.  render() keeps the zoom and re-centres."""
+    state["centre"] = (float(x), float(y), float(z))
+    render()
+
+
+def clear_centre():
+    state["centre"] = None
+    render()
+
+
 def snap_2d(ha, va, ax, bx):
     pay = payload(current())
     if pay is None:
+        return
+    if centre_tog.active:
+        CX, CY, CZ = centre_candidates(pay)
+        axes = dict(x=CX, y=CY, z=CZ)
+        d = (axes[ha] - ax) ** 2 + (axes[va] - bx) ** 2
+        if d.size:
+            i = int(np.argmin(d))
+            set_centre(CX[i], CY[i], CZ[i])
         return
     X, Y, Z, Q, RR = muon_arrays(pay)
     axes = dict(x=X, y=Y, z=Z)
@@ -1042,9 +1227,18 @@ def snap_3d(u0, v0):
     pay = payload(current())
     if pay is None:
         return
-    X, Y, Z, Q, RR = muon_arrays(pay)
     az, el = cam_src.data["az"][0], cam_src.data["el"][0]
     c = (cam_src.data["cx"][0], cam_src.data["cy"][0], cam_src.data["cz"][0])
+    if centre_tog.active:
+        CX, CY, CZ = centre_candidates(pay)
+        pr = D3.project(list(zip(CX, CY, CZ)), az, el, c)
+        if not pr:
+            return
+        d = [(u - u0) ** 2 + (v - v0) ** 2 for u, v, _ in pr]
+        i = int(np.argmin(np.asarray(d)))
+        set_centre(CX[i], CY[i], CZ[i])
+        return
+    X, Y, Z, Q, RR = muon_arrays(pay)
     pr = D3.project(list(zip(X, Y, Z)), az, el, c)
     if not pr:
         return
@@ -1104,17 +1298,32 @@ def blank():
     clear_cursor()
 
 
-def render():
+def render(reframe=False):
+    """Repaint.  `reframe` is the ONLY thing that may touch anyone's zoom.
+
+    Owner, 2026-09-08: labelling an item, tagging a PF segment, moving the pin
+    or switching bundles must not throw away a zoom the scanner set by hand.  So
+    the three range groups -- the 3-D radius, the three projection panels and
+    the nine measurement panels -- are reframed only when the ITEM changes or
+    when the scanner asks (`reset the view`, or either zoom toggle).  Every
+    other repaint leaves the ranges exactly where they were.
+
+    The camera PUSH is not gated by this; see refit_camera for why it must not
+    be.
+    """
     it = current()
     pay = payload(it)
-    rev = bool(reveal_tog.active)
-    for name in REVEAL_LAYERS:
-        for ha, va, _t in PANELS:
-            REND2[(ha, va, name)].visible = rev
-        REND3[name].visible = rev
+    # The blind is gone (owner 2026-09-08, doc pdhd/12 sec 13): the chain's
+    # answer is on screen from the first paint.  `rev` stays as a parameter
+    # through the fill_* helpers because it still marks which text and which
+    # layers ARE the answer -- and because a future round that wants the blind
+    # back has one constant to flip rather than a rewrite.
+    rev = True
     if pay is None:
         blank()
         badge.text = ""
+        fill_copy_key(it)
+        fill_saved_table()
         status.text = ("<b style='color:#b00'>missing payload</b> for %s "
                        "&mdash; run prep_stm_michel_scan.py --det %s"
                        % (item_key(it), DETNAME))
@@ -1177,24 +1386,24 @@ def render():
                     d[k] = [0.0] * len(d["a"])
             SRC2[(ha, va, nm)].data = d
         f = FIG2[(ha, va)]
-        if zoom_tog.active and X.size:
+        if reframe and zoom_tog.active and X.size:
             arr = dict(x=X, y=Y, z=Z)
             f.x_range.start = float(arr[ha].min() - PAD)
             f.x_range.end = float(arr[ha].max() + PAD)
             f.y_range.start = float(arr[va].min() - PAD)
             f.y_range.end = float(arr[va].max() + PAD)
-        else:
+        elif reframe:
             f.x_range.start, f.x_range.end = VOL[ha][0] - PAD, VOL[ha][1] + PAD
             f.y_range.start, f.y_range.end = VOL[va][0] - PAD, VOL[va][1] + PAD
 
-    refit_camera(X, Y, Z)
+    refit_camera(X, Y, Z, camera_centre(pay), reframe)
     fill3_box()
     for nm, (lx, ly, lz, ex) in layers.items():
         fill3(nm, lx, ly, lz, ex)
     show_bundle(pay, nb_hidden)
 
     fill_dqdx(pay, v, px, py, pz, prr, psrc, rev)
-    fill_meas(pay, v, rev, (px, py, pz))
+    fill_meas(pay, v, rev, (px, py, pz), reframe)
     fill_pf_meas(pay, rev)
     fill_seg_div(pay, v, rev)
     # a cursor from the previous item would point at a point that is no longer
@@ -1202,6 +1411,8 @@ def render():
     # have just been hidden.
     clear_cursor()
     fill_badge(it, pay, px, py, pz, prr, psrc)
+    fill_copy_key(it)
+    fill_saved_table()
     fill_reveal(v, rev)
     fill_flow(v, rev)
 
@@ -1229,16 +1440,62 @@ def render():
                       len(near["x"]), len(far["x"])))
 
 
-def refit_camera(X, Y, Z):
-    pts = list(zip(X, Y, Z))
-    c, R = D3.bounding_sphere(pts, pad=1.25, floor=30.0) if pts else ((0, 0, 0), 100.0)
+def camera_centre(pay):
+    """The 3-D rotation origin: the muon's STOPPING POINT unless you picked one.
+
+    The default is the PIN, and that is not a shortcut.  The pin is the fit's own
+    last point until the scanner moves it, and doc pdhd/12 sec 6.2 measures that
+    point as the chain's `stop_*` scalar to within 0.01 cm on 97.7 % of items on
+    both detectors -- so "rotate about the identified stopping point" needs no
+    new quantity, and it FOLLOWS the scanner when they correct the stop instead
+    of freezing on the chain's answer.
+    """
+    if state["centre"] is not None:
+        return tuple(float(t) for t in state["centre"])
+    if pay is None:
+        return (0.0, 0.0, 0.0)
+    px, py, pz, _rr, _src = pin_point(pay)
+    return (float(px), float(py), float(pz))
+
+
+def refit_camera(X, Y, Z, centre, reframe):
+    """Push the camera; REFRAME only when asked.
+
+    The push is UNCONDITIONAL, and that is load-bearing rather than defensive.
+    `cam_src.js_on_change("data", js_apply)` is what re-runs JS_REDRAW in the
+    browser, and JS_REDRAW projects with cam.data.az/el -- the LIVE dragged
+    camera.  Python's copy of az/el is stale the moment the scanner drags,
+    because JS_PANEND writes only camtxt and nothing reads it back.  So the
+    Python projection fill3() wrote is, by construction, the wrong angle after
+    any drag, and the browser re-projection is the only thing that makes the
+    screen right.  Skip the push when "nothing changed" and a label click would
+    snap the object back to the last angle the SERVER knew -- which is exactly
+    the reset this round exists to remove.  `seq` is bumped every time because
+    an equality-checked property assignment can swallow a push of identical
+    values; a counter cannot.
+    """
+    c = tuple(float(t) for t in centre)
+    R = D3.sphere_about(list(zip(X, Y, Z)), c, pad=1.25, floor=30.0)
+    moved = (state["cam_c"] is None
+             or max(abs(a - b) for a, b in zip(state["cam_c"], c)) > 1e-9)
+    state["cam_c"] = c
     d = dict(cam_src.data)
     d["cx"], d["cy"], d["cz"], d["R"] = [c[0]], [c[1]], [c[2]], [R]
+    d["seq"] = [float(d.get("seq", [0.0])[0]) + 1.0]
     cam_src.data = d
     # Range1d, never DataRange1d: an auto range would re-fit on every drag frame
     # and the object would breathe as it turned.
-    f3d.x_range.start, f3d.x_range.end = -R, R
-    f3d.y_range.start, f3d.y_range.end = -R, R
+    if reframe:
+        f3d.x_range.start, f3d.x_range.end = -R, R
+        f3d.y_range.start, f3d.y_range.end = -R, R
+    elif moved:
+        # The centre moved but the item did not: keep the scanner's zoom LEVEL
+        # and put the new centre in the middle of it.  Every point projects
+        # relative to the centre, so "the middle" is (0, 0) by construction.
+        hx = 0.5 * abs(float(f3d.x_range.end) - float(f3d.x_range.start)) or R
+        hy = 0.5 * abs(float(f3d.y_range.end) - float(f3d.y_range.start)) or R
+        f3d.x_range.start, f3d.x_range.end = -hx, hx
+        f3d.y_range.start, f3d.y_range.end = -hy, hy
 
 
 def _col(block, key, mask):
@@ -1281,6 +1538,121 @@ def show_save(after_write=True):
         save_div.text = save_div.text.replace(
             "the file on disk holds <b>0</b> labels",
             "<b>nothing saved yet</b> &mdash; the file holds 0 labels")
+    # the table is built from the parse read_back() just did, never a second one
+    fill_saved_table(reread=False)
+
+
+# ---------------------------------------------------------------------------
+# what is IN the scan -- owner 2026-09-08, item 5
+# ---------------------------------------------------------------------------
+_MK_SHORT = {"attached": "att", "detached dots": "dots",
+             "both": "both", MICHEL_UNSET: ""}
+
+
+def fill_copy_key(it):
+    """The event and cluster as SELECTABLE text (owner 2026-09-08, item 4).
+
+    `<event>/<cluster>` and nothing else, because that one token is the
+    labels.json key, the scan-sheet row id and what the analysis scripts split
+    on -- so whatever the scanner is about to paste it into, this is the form
+    that works.  Typing or pasting another item's key here jumps to it.
+    """
+    state["_copy_key"] = item_key(it)
+    copy_key.value = state["_copy_key"]
+
+
+def on_copy_key(attr, old_, new_):
+    """Paste a key, land on that item.  A programmatic set cannot fire this: the
+    value fill_copy_key wrote is exactly the current item's key, so the guard is
+    the value itself rather than a flag that can be left set."""
+    k = (new_ or "").strip()
+    if not k or k == state.get("_copy_key"):
+        return
+    for j, i in enumerate(ITEMS):
+        if item_key(i) == k:
+            go(j)
+            return
+    status.text = ("<b style='color:#b00'>%s is not in this scan sheet</b>" % k)
+
+
+def fill_saved_table(reread=True):
+    """The scan, row by row, straight from the file on disk.
+
+    Two things it must say and the banner alone cannot:
+      * WHICH items are saved -- the select box marks them with a star, but a
+        list you can read down is what "what has been added to the scan" asks
+        for;
+      * what is NOT saved.  PF segment tags on an item with no label row live
+        in memory only until a label button is pressed (set_pf_tag says so in
+        the save banner), and a table of on-disk rows would leave exactly that
+        case invisible.  The pending line below the table is that half.
+    """
+    if reread:
+        ok, _n, _nb, _mt, err = read_back()
+        if not ok:
+            saved_head.text = ("<div style='background:#ffe6e6;padding:4px'>"
+                               "<b style='color:#b00'>cannot read the label file"
+                               "</b> &mdash; %s</div>" % err)
+            return
+    disk = _DISK["labels"]
+    here = item_key(current()) if ITEMS else None
+    rows = dict(n=[], item=[], label=[], michel=[], pin=[], pf=[], now=[])
+    seen = set()
+    for it in ITEMS:
+        k = item_key(it)
+        rec = disk.get(k)
+        if rec is None:
+            continue
+        seen.add(k)
+        p = rec.get("pin") or {}
+        rows["n"].append(str(it["scan_id"]))
+        rows["item"].append(k)
+        rows["label"].append(rec.get("choice") or "")
+        rows["michel"].append(_MK_SHORT.get(rec.get("michel_kind"),
+                                            rec.get("michel_kind") or ""))
+        rows["pin"].append("—" if not p.get("placed") else
+                           ("%.0f" % (p.get("moved_cm") or 0.0)))
+        rows["pf"].append(str(rec.get("pf_tagged") or 0))
+        rows["now"].append("▶" if k == here else "")
+    # a row in the file that this sheet does not carry is not an error -- it is
+    # a different tranche, or a sheet that moved -- but it must not vanish
+    for k, rec in disk.items():
+        if k in seen:
+            continue
+        rows["n"].append("·")
+        rows["item"].append(k)
+        rows["label"].append(rec.get("choice") or "")
+        rows["michel"].append(_MK_SHORT.get(rec.get("michel_kind"),
+                                            rec.get("michel_kind") or ""))
+        rows["pin"].append("")
+        rows["pf"].append(str(rec.get("pf_tagged") or 0))
+        rows["now"].append("")
+    saved_src.data = rows
+    ndisk = len(disk)
+    pend = ""
+    if here is not None:
+        drec = disk.get(here) or {}
+        dtag = dict(drec.get("pf_segments") or {})
+        if here not in disk:
+            pend = ("<span style='color:#b00'>this item is <b>not saved</b></span>"
+                    + ("; %d PF tag%s held in memory only"
+                       % (len(state["pf_tag"]),
+                          "" if len(state["pf_tag"]) == 1 else "s")
+                       if state["pf_tag"] else ""))
+        elif dtag != dict(state["pf_tag"]):
+            pend = ("<span style='color:#b00'>PF tags differ from the file "
+                    "(%d held, %d saved)</span> &mdash; click a label to write them"
+                    % (len(state["pf_tag"]), len(dtag)))
+        else:
+            pend = ("this item is <b>saved</b> as <b>%s</b>"
+                    % (drec.get("choice") or "?"))
+    saved_head.text = (
+        "<div style='font-size:92%%'><b>what is in the scan</b> &mdash; <b>%d</b> "
+        "of %d item%s labelled%s<br><span style='font-size:92%%;color:#555'>read "
+        "back from the file%s &nbsp;|&nbsp; %s</span></div>"
+        % (ndisk, len(ITEMS), "" if len(ITEMS) == 1 else "s",
+           "" if not ndisk else ", newest write %s" % _DISK["mt"],
+           " (%s bytes)" % "{:,}".format(_DISK["nb"]), pend))
 
 
 def save_info():
@@ -1544,8 +1916,8 @@ def fill_seg_div(pay, v, rev):
         pdg = ty.get("pdg")
         name = {13: "muon", 11: "electron/shower", 211: "pion", 2212: "proton",
                 4: "track, no hypothesis", 1: "shower, no hypothesis"}.get(pdg, str(pdg))
-        extra = ("<br><span style='background:#fff6e5'><b>REVEALED</b> &mdash; "
-                 "chain calls it <b>%s</b> (pdg %s), %s (shower fraction %.2f)</span>"
+        extra = ("<br><span style='background:#fff6e5'><b>the chain's answer</b>"
+                 " &mdash; calls it <b>%s</b> (pdg %s), %s (shower fraction %.2f)</span>"
                  % (name, pdg, "SHOWER" if ty.get("shower") else "track",
                     ty.get("frac_shower", 0.0)))
     seg_div.text = (
@@ -1728,12 +2100,17 @@ def fill_flow(v, rev):
               for, so there is no shape and no michel_seg_id, only charge.
     michel_parent_vtx_id names the vertex in all three.
     """
+    # Unreachable since 2026-09-08 -- render() passes rev=True always.  Kept,
+    # with fill_reveal's twin below, because they are the whole of what a round
+    # restoring the blind has to turn back on: one constant in render(), these
+    # two branches, and the two layer sets in REVEAL_LAYERS / MEAS_TRACKS.
     if not rev:
         flow_div.text = ("<span style='color:#777'>the chain's particle flow is "
-                         "<b>hidden</b> until REVEAL</span>")
+                         "<b>hidden</b></span>")
         return
     if v.get("muon_ke_best") is None:
-        flow_div.text = ("<div style='background:#fff6e5;padding:6px'><b>REVEALED</b>"
+        flow_div.text = ("<div style='background:#fff6e5;padding:6px'><b>the "
+                         "chain's answer</b>"
                          " &mdash; <span style='color:#b00'>this arm predates doc "
                          "pdhd/14: T_stm_michel carries no muon energy and no "
                          "michel_seg_id. Re-run the PR arm to populate them."
@@ -1833,21 +2210,20 @@ def fill_flow(v, rev):
                 "where michel_found was set only on the attached path. "
                 "Doc pdhd/13 defect D1.</span>")
     flow_div.text = (
-        "<div style='background:#fff6e5;padding:6px;font-size:96%%'><b>REVEALED "
-        "&mdash; particle flow</b> <span style='color:#777'>(every field is a "
+        "<div style='background:#fff6e5;padding:6px;font-size:96%%'><b>the chain's "
+        "answer &mdash; particle flow</b> <span style='color:#777'>(every field is a "
         "T_stm_michel branch)</span><br>%s<br>&nbsp;&nbsp;%s<br>&nbsp;&nbsp;&nbsp;"
         "&nbsp;&nbsp;%s%s</div>" % (mu, link, dau, warn))
 
 
 def fill_reveal(v, rev):
-    if not rev:
+    if not rev:                                   # unreachable; see fill_flow
         reveal_div.text = ("<span style='color:#777'>the reconstruction's answer is "
-                           "<b>hidden</b>. Label first; REVEAL is recorded either way."
-                           "</span>")
+                           "<b>hidden</b>. Label first.</span>")
         return
     reveal_div.text = (
-        "<div style='background:#fff6e5;padding:6px'><b>REVEALED</b> &mdash; "
-        "is_stm <b>%s</b>, in_fv %s, verdict <b>%s</b><br>"
+        "<div style='background:#fff6e5;padding:6px'><b>the chain's answer</b> "
+        "&mdash; is_stm <b>%s</b>, in_fv %s, verdict <b>%s</b><br>"
         "michel_found <b>%s</b> (conn %s, %s segs, %.1f cm, %.2f mip, kink %.0f deg,"
         " KE %.1f MeV) &nbsp; dots %s (%.1f MeV) &nbsp; delta %s<br>"
         "contrast %.2f vs expected %.2f &nbsp; plateau %.0f &nbsp; tail %.0f e/cm"
@@ -1871,10 +2247,32 @@ def refresh_options():
     item_select.value = opts[state["idx"]]
 
 
+def on_item_select(attr, old_, new_):
+    """Only a MOVE navigates.
+
+    refresh_options() rewrites every option string after a label, because the
+    string carries the label marker -- so `item_select.value` changes for the
+    item the scanner is already on, the on_change fires, and go() runs.  That
+    was invisible while every repaint reframed anyway; with the zoom now meant
+    to survive a label click it is the thing that would throw it away, and it
+    was ALSO silently clearing the pin on every label.  Compare the index, not
+    the string.
+    """
+    if new_ not in item_select.options:
+        return
+    j = item_select.options.index(new_)
+    if j == state["idx"]:
+        return
+    go(j)
+
+
 def go(idx):
     state["idx"] = max(0, min(len(ITEMS) - 1, idx))
     state["pin_i"] = None
     state["pin_manual"] = None
+    # a centre picked on the previous item names a point that is not on screen
+    # any more; the new item starts on its own stopping point
+    state["centre"] = None
     off_fit_chk.active = []
     manual_x.value = manual_y.value = manual_z.value = ""
     pay = payload(current())
@@ -1884,7 +2282,7 @@ def go(idx):
         rr_slider.end = float(max(max(rr), min(rr) + 1.0))
         rr_slider.value = float(min(rr))
     refresh_options()
-    render()
+    render(reframe=True)
 
 
 def set_label(choice):
@@ -1919,7 +2317,11 @@ def set_label(choice):
     LABELS[item_key(it)] = dict(
         label=c["label"], partial=c["partial"], choice=choice,
         michel_kind=MICHEL_KINDS[michel_kind.active],
-        pin=pin, revealed_before_label=bool(reveal_tog.active),
+        # ALWAYS True since 2026-09-08 -- the REVEAL toggle is gone and the
+        # chain's answer is on screen while the scanner labels.  The field is
+        # still written, so score_stm_michel_scan.py keeps stratifying on it and
+        # the rows taken blind before that date stay separable.
+        pin=pin, revealed_before_label=True,
         notes=notes.value, scan_id=it["scan_id"], tranche=it["tranche"],
         event=it["event"], cluster=it["cluster"], npts=it["npts"],
         muon_len_cm=it["muon_len"], det=DETNAME,
@@ -1930,11 +2332,12 @@ def set_label(choice):
     save_labels()                     # every click, not only on Save
     show_save()                       # ... and say what the FILE now holds
     refresh_options()
+    # NO auto-advance (owner 2026-09-08, item 6).  Jumping to the next
+    # unlabelled item on every click threw away the view the scanner had just
+    # set up, and made a mis-click a navigation event as well as a wrong label.
+    # `next >` / `< prev` / `next unlabelled >>` move; a label only labels.
+    # render() without reframe, so the zoom survives the click.
     render()
-    nxt = next((k for k in range(state["idx"] + 1, len(ITEMS))
-                if item_key(ITEMS[k]) not in LABELS), None)
-    if nxt is not None:
-        go(nxt)
 
 
 def clear_label():
@@ -1985,8 +2388,7 @@ def clear_pin():
     render()
 
 
-item_select.on_change("value", lambda a, o, n: go(item_select.options.index(n))
-                      if n in item_select.options else None)
+item_select.on_change("value", on_item_select)
 prev_btn.on_click(lambda: go(state["idx"] - 1))
 next_btn.on_click(lambda: go(state["idx"] + 1))
 next_unl_btn.on_click(next_unlabelled)
@@ -2014,10 +2416,14 @@ rr_slider.on_change("value_throttled", on_rr)
 # on_change fires for a click AND for a programmatic set -- so the self-test can
 # drive it.  A binding only a human can exercise is a binding nothing tests
 # (feedback_bokeh_client_session_false_negative).
-reveal_tog.on_change("active", lambda a, o, n: render())
 cell_scale.on_change("active", lambda a, o, n: apply_cell_scale())
 cell_size.on_change("active", lambda a, o, n: apply_cell_size())
-meas_zoom.on_change("active", lambda a, o, n: render())
+# the two window controls and the explicit button are the ONLY things besides a
+# new item that may reframe
+meas_zoom.on_change("active", lambda a, o, n: render(reframe=True))
+centre_btn.on_click(clear_centre)
+view_btn.on_click(lambda: render(reframe=True))
+copy_key.on_change("value", on_copy_key)
 
 
 def _on_pick(name):
@@ -2034,7 +2440,7 @@ def _on_pick(name):
 
 for _nm in QSCAT:
     SRCQ[_nm].selected.on_change("indices", _on_pick(_nm))
-zoom_tog.on_change("active", lambda a, o, n: render())
+zoom_tog.on_change("active", lambda a, o, n: render(reframe=True))
 bundle_tog.on_change("active", lambda a, o, n: render())
 for _ha, _va, _t in PANELS:
     FIG2[(_ha, _va)].on_event(
@@ -2059,7 +2465,8 @@ right = column(
     rr_slider,
     row(pin_clear_btn, off_fit_chk),
     row(manual_x, manual_y, manual_z, manual_btn),
-    row(reveal_tog, zoom_tog, bundle_tog, pf_tog),
+    row(zoom_tog, bundle_tog, pf_tog),
+    row(centre_tog, centre_btn, view_btn),
     bundle_div,
     Div(text="<b>particle flow</b> &mdash; the PR graph this chain walked. Pick a "
              "segment, then say what it is. Your tags are drawn as hollow squares, "
@@ -2072,8 +2479,8 @@ right = column(
     flow_div,
 )
 curdoc().add_root(column(
-    header,
-    row(item_select, prev_btn, next_btn, next_unl_btn),
+    row(header, column(saved_head, saved_table)),
+    row(item_select, prev_btn, next_btn, next_unl_btn, copy_key),
     badge,
     Div(text="<b>the cluster IS the whole object:</b>", width=1420),
     row(stm_mic_btn, stm_only_btn, thru_btn),

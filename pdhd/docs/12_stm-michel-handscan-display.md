@@ -57,9 +57,10 @@ cd wcp-porting-img/pdhd/stm_michel_scan
 ./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items, 126 MB
 ./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 212 MB
 git -C .. diff --exit-code -- pdhd/docs/scan pdvd/docs/scan   # sheets unchanged
-./selftest_stm_michel_scan.py                   # 6252 headless checks, both detectors
-./selftest_smx3d_browser.py --det pdhd          # 39 checks in headless chromium
-./selftest_smx3d_browser.py --det pdvd
+./selftest_stm_michel_scan.py --det pdvd        # 45623 headless checks
+./selftest_stm_michel_scan.py --det pdhd        # 26508 headless checks
+./selftest_smx3d_browser.py --det pdhd --port 5093   # 77 checks in chromium
+./selftest_smx3d_browser.py --det pdvd --port 5091   # 77 checks in chromium
 ./serve_stm_michel_scan.sh 5023 --det pdhd --scan-tag smx1
 cd ../../pdvd/stm_michel_scan
 ./serve_stm_michel_scan.sh 5024 --scan-tag smx1
@@ -566,6 +567,12 @@ Two published rules pull in opposite directions here and both are right:
   pr/148 measured the cost: re-scanning 36 objects with the charge added
   **changed 6 answers**, one of them the round's conclusion.
 
+> **SUPERSEDED for labels written after 2026-09-08 — see §13.2.** The owner
+> removed the `REVEAL` toggle; the answer is now unconditional too. The field
+> and the scorer's two strata survive, and the four labels written before that
+> date are the only unbiased rows. This section is the record of what the blind
+> was and of the reasoning it rested on, not a description of the running app.
+
 The resolution is the table in §5: the **charge** is unconditional, the **answer**
 is behind `REVEAL`, and every label records `revealed_before_label`.
 `score_stm_michel_scan.py` scores revealed and hidden labels **separately** and
@@ -854,6 +861,13 @@ attached path, so **~30 % of items with a reconstructed detached Michel were
 drawn as "no Michel"** (doc pdhd/13 §5, D1). Recompute the strata on
 `michel_found || n_dots>0` before this scan is used to grade the Michel finder.
 
+**Round 4, 2026-09-08 — the scanner's own six changes.** After the first
+scanning session the owner asked for the rotation centre on the stopping point,
+a view that survives a label click, no REVEAL button, the event/cluster as
+copyable text, a table of what is saved, and no auto-advance. **Section 13** is
+that round. It removes the blind this doc's §6 and §5.7.3 describe, so read
+§13.2 before quoting any agreement number from labels written after that date.
+
 **Energies and the mu -> e link (doc pdhd/14, 2026-09-07).** The display now
 shows the chain's muon energy un-blinded beside `muon_len`, and a `mu -> e`
 particle-flow block under REVEAL. Every field is a `T_stm_michel` branch — the
@@ -863,3 +877,190 @@ by your calculations. Otherwise we cannot improve this module"*). This needed
 four new branches in the chain, so the scan arms moved from `d51*nu` to
 `d14*nu`; the 75 pre-existing branches are bit-unchanged, so the sheet and the
 S1-S4 strata are unaffected by the swap.
+
+## 13. Round 4 — the scanner's own six changes (owner, 2026-09-08)
+
+Owner ask, after the first scanning session on PDVD:
+
+> *"1. for the 3D, the default center to rotate should be the identified point
+> of stopping STM point. It would be nice to have a way for me to choose a
+> different point by clicking 2. When I select a muon or Michel electron, I do
+> not want the view of 3D view or 3D projection view to reset, so that I have to
+> zoom in again. 3. I do not really need the REVEAL the reconstruction button. I
+> want the information to be presented 4. It would be good to have a place where
+> the event number cluster id is shown as text, so that it is easier for me to
+> copy 5. It would be good to have another table (on the top right), so that it
+> is clear to me what people has added to the scan. Right now, it is not clear
+> which part was saved or not. 6. With this I should then click --> or <-- to
+> change event, no need to automatically change the events."*
+
+No chain output moves. `CheckSTM_Michel`, the arms, the payloads, the sheets and
+the four labels already on disk are untouched; this is the display and its two
+gates only.
+
+### 13.1 What each item is
+
+| # | change | where |
+|---|---|---|
+| 1 | the 3-D drag rotates about the **stopping point**, and a tap can move that centre | `camera_centre`, `refit_camera`, `snap_2d`, `snap_3d`; `smx3d.sphere_about` |
+| 2 | a repaint no longer touches any range unless the **item** changed | `render(reframe=…)`, `fill_meas(reframe=…)` |
+| 3 | the REVEAL toggle is gone; the reconstruction is always drawn | `render()` `rev = True`, widget deleted |
+| 4 | the event / cluster key as selectable text, and pasting one navigates | `copy_key`, `fill_copy_key`, `on_copy_key` |
+| 5 | a table, top right, of what is **on disk**, plus what is not | `saved_table`, `fill_saved_table`, `_DISK` |
+| 6 | a label click no longer advances | `set_label` |
+
+**Item 1 needs no new quantity.** The rotation centre is the *pin*, and the pin
+is the fit's own last point until the scanner moves it — which §6.2 measures as
+the chain's `stop_*` scalar to within 0.01 cm on 97.7 % of items on both
+detectors. So "rotate about the identified stopping point" is exactly what the
+default now does, and it follows the scanner when they correct the stop instead
+of freezing on the chain's answer. `tap sets the 3-D rotation centre` switches a
+tap from *move the pin* to *move the centre*, snapping to the nearest such point
+**in projection** — so a click off the track lands back on it, which is the
+behaviour the pin already has — over the fitted chain plus the
+full-density image layer — `image_far`, the thinned grey context, is excluded
+because nobody wants to rotate about background. `centre on the stop` restores
+the default.
+
+**The cost of item 1, stated rather than discovered.** The framing radius is
+`max |p − centre|` and the guarantee behind it is unchanged (`right/up/fwd` is
+orthonormal, so `|(u,v)| ≤ |p − centre| ≤ R` at every camera and nothing can
+swing out of frame). But a stopping point sits at one **end** of the muon, so
+that radius is now the muon's full length where the bounding sphere gave half of
+it: **the default 3-D view is about twice as wide as it was**. It is paid once
+per item, because the zoom now survives everything else. If it turns out to be
+the wrong trade, the tighter option is a stop-centred default radius with the
+far end deliberately off-frame — that is an owner call, not one to take here.
+
+**Item 5 has two halves and the second is the one that was asked for.** A table
+of the rows on disk answers *what has been added*; it does not answer *which
+part was saved*. The case that was invisible is PF segment tags on an item with
+no label row: `set_pf_tag` holds them in memory and writes them only with a
+label. The line under the table says so — `this item is not saved; N PF tags
+held in memory only` — and the table itself is built from the same `read_back()`
+parse the green banner reports, never a second `open()`, so the two can never
+disagree.
+
+### 13.2 The blind is gone, and that is a cost
+
+Item 3 removes the blind that §6 and §5.7.3 exist to describe. Seeing the
+chain's answer before labelling makes the human-vs-chain agreement number
+**circular** — this is the failure `feedback_blind_the_scan_sheet` records, and
+it is not repaired by anything else in this round.
+
+What is kept: every label still writes `revealed_before_label`, and it is now
+always `true`. `score_stm_michel_scan.py` already stratifies on that field, so
+nothing downstream changes shape — the strata simply fill differently. **The
+four labels taken before 2026-09-08 are `false` and are the only unbiased rows
+in the file.** Any purity or efficiency quoted from this scan from here on is
+"the chain's reconstruction, reviewed by a physicist", and must be reported as
+that rather than as an independent verdict.
+
+The machinery to restore it is deliberately left in place and named: one
+constant in `render()` (`rev = True`), the two `if not rev` branches in
+`fill_flow` / `fill_reveal`, and the `reveal` column of `LAYERS` / `MEAS_TRACKS`.
+
+### 13.3 Two defects this round found, both older than it
+
+Neither was in the ask; both are why item 2 needed more than a flag.
+
+**D1 — the server's camera was stale, so every repaint snapped the view to
+`iso`.** `JS_ROTATE` mutates `cam.data.az/el` **in the browser**; `JS_PANEND`
+wrote the result into a hidden `TextInput` and **nothing read it back**. So the
+server's copy of the camera stayed at the load-time preset for ever — and
+because `refit_camera` pushes the *whole* of `cam_src.data`, every repaint
+shipped that stale angle to the client and the picture jumped back to `iso`.
+Gating the ranges alone would have left that untouched: the owner's *"I have to
+zoom in again"* is two mechanisms, not one. Fixed by wiring `camtxt.on_change`
+to update the server's copy in place, and by raising `JS_PANEND`'s precision
+from `toFixed(4)` to `String(…)` — 1e-4 rad is a 0.02 cm jump on a 150 cm muon,
+which the browser gate measured before it was believed. This is the **one**
+divergence from em3d's verbatim JS, and `smx3d.py` says so at the site.
+
+**D2 — `refresh_options()` navigated.** The option strings carry the label
+marker, so rewriting them after a label changed `item_select.value` for the item
+the scanner was already on, fired the `on_change`, and ran `go()`. Invisible
+while every repaint reframed anyway; with item 2 in force it is precisely what
+would throw the zoom away — and it was **also silently clearing the pin on every
+label**. The callback now compares the index, not the string.
+
+**Neither is visible in-process.** With no browser there is no second copy of
+the camera for the server's to disagree with, so D1 is unreachable from
+`selftest_stm_michel_scan.py` by construction. It is gated in
+`selftest_smx3d_browser.py`, which drags, zooms, clicks a real label button and
+asserts the projected columns, the camera azimuth and the ranges are all exactly
+where the drag left them.
+
+The same argument applies to the **centre tap**: in-process `snap_2d` /
+`snap_3d` are called as functions, which proves the logic and not that a tap
+reaches them — the `Tap` handler shares one gesture with `JS_ROTATE`'s
+`PanStart`/`Pan`/`PanEnd`, and the toggle that routes the tap has to cross the
+websocket first. Both hops are gated in the browser: press the toggle, click the
+canvas, and assert `cam3`'s centre moved while `src3_pin`'s x did not — and that
+the pin, which projects to exactly (0, 0) while it *is* the centre, stops doing
+so, which is the same statement made from the other side.
+
+### 13.4 A third thing the browser gate caught: the page got too tall
+
+Adding the table and four lines of header pushed the 3-D canvas centre **below a
+1200 px window**, and a Playwright drag aimed at a point off-screen reaches
+nothing — which reads in the log as *"JS_ROTATE is not bound"*. The header prose
+is now folded into a `<details>` block (the question being scanned stays open;
+the manual folds away), and the browser gate scrolls the canvas in and then
+asserts its centre is inside the viewport, so the page cannot silently grow past
+a usable height again.
+
+### 13.5 Gates
+
+Both suites, both detectors, after the change:
+
+```bash
+cd wcp-porting-img/pdhd/stm_michel_scan
+./selftest_stm_michel_scan.py --det pdvd      # 45623 checks, 0 failed
+./selftest_stm_michel_scan.py --det pdhd      # 26508 checks, 0 failed
+./selftest_smx3d_browser.py --det pdvd --port 5091   # 77 browser checks
+./selftest_smx3d_browser.py --det pdhd --port 5093   # 77 browser checks
+```
+
+New section **[V]** in the headless suite:
+
+* the camera centre **is** the pin, to the last decimal, and the framing bound
+  `|(u,v)| ≤ R` still holds from that off-centre origin at four sample cameras;
+* a centre tap lands on a point that is actually drawn and does **not** move the
+  pin; with the toggle off a tap still moves the pin;
+* a label, a PF tag, the bundle toggle and the particle-flow toggle leave the
+  3-D range, a projection range and the shared measurement time range untouched
+  — and the camera is still **pushed** on that repaint, which is what re-projects
+  the browser copy at the dragged angle;
+* a pin move re-centres the 3-D view but preserves its zoom **level**;
+* `reset the view`, either zoom toggle and a new item **do** reframe;
+* the copy box carries the item key and pasting another navigates;
+* the table equals the file row for row, marks the current item exactly once,
+  and says "not saved" / "memory only" when that is the truth.
+
+Two existing sections are **inverted** rather than deleted, which is the honest
+way to record a removed blind: the poisoned-verdict sweep (A2) now requires the
+poison to reach the sources on the first paint, and the measurement-overlay
+check (H8) now requires those renderers to be visible.
+
+### 13.6 Limits
+
+1. **The agreement number is no longer blind** (§13.2). This is the round's real
+   cost and no gate can buy it back.
+2. **The default 3-D view is ~2× wider** (§13.1). Deliberate; reversible.
+3. **A centre picked by tapping is not saved in the label.** The pin is; the
+   camera is not. Nothing downstream reads a camera, and adding a field to the
+   label schema for one would change §7's shape for no consumer.
+4. **The shared measurement time range does not reframe on a repaint either.**
+   If an item had no charge in any of the three planes, `_meas_y` would keep the
+   previous item's window instead of resetting to `0, 1`. Measured rather than
+   assumed: **0 of 302 PDHD and 0 of 568 PDVD** payloads have an empty `proj`
+   block on all three planes, and none has an empty muon chain, so the case does
+   not arise on either arm. It would still be silent if a future prep produced
+   one.
+5. **The header prose now folds into a `<details>` block.** That was not in the
+   ask — it is the fix for §13.4, chosen over shrinking the table — and it means
+   a scanner sees three lines of guidance by default instead of fifteen.
+6. **`revealed_before_label` is now a constant.** It stays in the schema because
+   the four `false` rows need it to remain meaningful, not because it still
+   discriminates anything written from here on.
