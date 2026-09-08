@@ -1,0 +1,54 @@
+kind	name	work-mcp1k-d102mpr
+step_ms	ClusteringProtectBundle:pr	0.5423
+step_ms	ClusteringSwitchScope:pr	27.7938
+step_ms	ClusteringUnmergeBundle:pr	22.5460
+step_ms	ClusteringUnmergeBundle:prassoc	11.1270
+step_ms	CreateSteinerGraph:pr	71.7875
+step_ms	CreateSteinerGraph:prrefresh	2.3902
+step_ms	MakeFiducialUtils:pr	0.1282
+step_ms	PrDisplayDump:pr	0.0684
+step_ms	SbndPrMagnifyTrackingVisitor:pr	59.7843
+step_ms	TaggerCheckFC:pr	1.0490
+step_ms	TaggerCheckNeutrino:pr	0.5121
+step_ms	TaggerCheckSTM:pr	1.7926
+step_ms	TaggerCheckTGM:pr	6.0122
+step_ms	UbooneNueBDTScorer:pr	0.0356
+step_ms	UbooneNumuBDTScorer:pr	0.0804
+step_ms	UbooneTaggerOutputVisitor:pr	0.2199
+step_ms	done	122.3470
+step_ms	dump dead regions to bee	0.8025
+step_ms	dump live clusters to bee	20.3937
+step_ms	loaded dead	25.6981
+step_ms	loaded live	74.7320
+step_ms	pre clustering	0.0294
+step_ms	start clustering	0.0222
+comp_core_s	clus_pr (MultiAlgBlobClustering)	1.0535
+comp_core_s	clus_pr (TensorFileSink)	0.1950
+comp_core_s	pr_pctree (TensorFileSource)	0.3410
+mem_gib	ClusteringProtectBundle:pr	0.3298
+mem_gib	ClusteringSwitchScope:pr	0.3111
+mem_gib	ClusteringUnmergeBundle:pr	0.3111
+mem_gib	ClusteringUnmergeBundle:prassoc	0.3111
+mem_gib	CreateSteinerGraph:pr	0.3263
+mem_gib	CreateSteinerGraph:prrefresh	0.3303
+mem_gib	MakeFiducialUtils:pr	0.3263
+mem_gib	PrDisplayDump:pr	0.4027
+mem_gib	SbndPrMagnifyTrackingVisitor:pr	0.4027
+mem_gib	TaggerCheckFC:pr	0.3296
+mem_gib	TaggerCheckNeutrino:pr	0.3777
+mem_gib	TaggerCheckSTM:pr	0.3296
+mem_gib	TaggerCheckTGM:pr	0.3273
+mem_gib	UbooneNueBDTScorer:pr	0.3844
+mem_gib	UbooneNumuBDTScorer:pr	0.3798
+mem_gib	UbooneTaggerOutputVisitor:pr	0.4027
+mem_gib	done	0.4317
+mem_gib	dump dead regions to bee	0.3111
+mem_gib	dump live clusters to bee	0.4044
+mem_gib	loaded dead	0.3110
+mem_gib	loaded live	0.3110
+mem_gib	pre clustering	0.3111
+mem_gib	start clustering	0.3111
+mem_gib	starting MultiAlgBlobClustering	0.2775
+event_wall_s	median	8.4985
+event_core_s	median	1.6145
+event_peak_rss_gib	median	0.4317
