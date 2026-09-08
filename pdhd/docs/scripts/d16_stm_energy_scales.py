@@ -200,6 +200,12 @@ def unit_labels(det):
 # ---------------------------------------------------------------------------
 SCALARS = ["cluster_id", "is_stm", "reject_bits", "muon_len", "muon_ke_range",
            "muon_ke_dqdx", "muon_ke_best", "michel_ke_dqdx", "michel_ke_best",
+           # every other persisted energy, so the before/after census in
+           # --compare covers the whole set and no branch is claimed to move
+           # (or not move) from anything smaller than the full sample
+           "michel_ke_range", "michel_ke_core", "michel_ke_charge",
+           "dots_ke_dqdx", "dots_ke_unfit", "dots_charge_unfit",
+           "michel_n_pieces", "n_dots", "n_michel_segs", "michel_conn_type",
            "michel_found", "n_live_pts", "n_dead_pts", "dead_frac_cmp",
            "contrast", "plateau_med", "ks_mu", "entry_x", "entry_y", "entry_z",
            "stop_x", "stop_y", "stop_z", "n_chain_segs",
