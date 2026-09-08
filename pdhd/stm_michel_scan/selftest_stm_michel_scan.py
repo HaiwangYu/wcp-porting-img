@@ -1705,6 +1705,169 @@ def test_object_panel(det, tmp):
           % ", ".join(str(k) for k, v in sorted(seen.items()) if v))
 
 
+def test_tranche_draw(det):
+    """[N] The tranche column -- pinned to a named sheet, or reproducible from the key.
+
+    doc pdhd/15 sec 10.  `stratum()` keys on `michel_found`, so an algorithm
+    change silently RE-DRAWS the hand-scan sample: 41 of 60 pdvd and 32 of 60
+    pdhd tranche-1 items moved between the d14 and d15 sheets, under a scan
+    already in progress, and nothing was watching that column.  This gate
+    watches it in BOTH modes, so it cannot just bless whatever is on disk:
+
+      * a PINNED sheet must reproduce its declared source exactly, and the
+        "N key(s) absent" count in its header must be the true count;
+      * an UNPINNED sheet must reproduce prep's own draw from the key's strata.
+
+    It also re-derives `scan_id`, which is a POSITIONAL index (enumerate over
+    the (event, cluster) sort): one candidate more or fewer shifts every id
+    after it and silently invalidates the scan_id stored in every label record
+    already written.
+    """
+    print("[N] the tranche draw, %s" % det)
+    import csv as _csv, re as _re
+    sd = os.path.join(IMG, det, "docs", "scan")
+    sheetf = os.path.join(sd, "%s_stm_michel_scan_sheet.tsv" % det)
+    keyf = os.path.join(sd, "%s_stm_michel_scan_key.tsv" % det)
+    for f in (sheetf, keyf):
+        ck(os.path.exists(f), "%s: missing %s" % (det, f))
+    if not (os.path.exists(sheetf) and os.path.exists(keyf)):
+        return
+
+    def rows_of(f):
+        txt = open(f).read()
+        body = [l for l in txt.splitlines(True) if not l.startswith("#")]
+        hdr = [l for l in txt.splitlines() if l.startswith("#")]
+        out = {}
+        for r in _csv.DictReader(body, delimiter="\t"):
+            out[(r["event"], int(r["cluster"]))] = r
+        return hdr, out
+
+    shdr, srow = rows_of(sheetf)
+    khdr, krow = rows_of(keyf)
+
+    # N1 -- the two files describe the same sample, item for item
+    ck(set(srow) == set(krow),
+       "%s: sheet and key key-sets differ (%d vs %d)" % (det, len(srow), len(krow)))
+    common = sorted(set(srow) & set(krow))
+    bad = [k for k in common if srow[k]["scan_id"] != krow[k]["scan_id"]]
+    ck(not bad, "%s: scan_id differs between sheet and key on %d item(s)" % (det, len(bad)))
+    bad = [k for k in common if srow[k]["tranche"] != krow[k]["tranche"]]
+    ck(not bad, "%s: tranche differs between sheet and key on %d item(s)" % (det, len(bad)))
+
+    # N2 -- scan_id is the dense rank in (event, cluster) order, 1..N
+    order = sorted(srow, key=lambda k: (k[0], k[1]))
+    bad = [k for n, k in enumerate(order, start=1) if int(srow[k]["scan_id"]) != n]
+    ck(not bad, "%s: scan_id is not the dense (event, cluster) rank on %d item(s): %s"
+       % (det, len(bad), bad[:3]))
+
+    # N3 -- the tranche column itself
+    vals = {srow[k]["tranche"] for k in srow}
+    ck(vals <= {"1", "2"}, "%s: tranche values outside {1,2}: %s" % (det, sorted(vals)))
+    n1 = sum(1 for k in srow if srow[k]["tranche"] == "1")
+    want = min(_prep["TRANCHE1"], len(srow))
+    ck(n1 == want, "%s: tranche 1 holds %d items, expected %d" % (det, n1, want))
+
+    # N4 -- the draw is either inherited from a NAMED source, or reproducible
+    pin_spec = None
+    for h in shdr:
+        m = _re.match(r"#\s*tranche INHERITED from (\S+)", h)
+        if m:
+            pin_spec = m.group(1)
+            break
+    declares_seed = any(h.startswith("# seed=") for h in shdr)
+    ck((pin_spec is None) != (not declares_seed),
+       "%s: sheet header must declare EITHER a pin OR a seed draw, not both/neither"
+       % det)
+
+    if pin_spec:
+        try:
+            pin = _prep["read_pinned_tranche"](pin_spec)
+        except Exception as e:                                   # noqa: BLE001
+            ck(False, "%s: pin source %s is unreadable: %s" % (det, pin_spec, e))
+            return
+        bad = [k for k in srow if k in pin and int(srow[k]["tranche"]) != pin[k]]
+        ck(not bad, "%s: %d item(s) disagree with the pinned source %s: %s"
+           % (det, len(bad), pin_spec, bad[:3]))
+        absent = [k for k in srow if k not in pin]
+        ck(all(srow[k]["tranche"] == "2" for k in absent),
+           "%s: %d key(s) absent from the pin are not tranche 2" % (det, len(absent)))
+        said = None
+        for h in shdr:
+            m = _re.search(r"(\d+) key\(s\) absent from it are tranche 2", h)
+            if m:
+                said = int(m.group(1))
+        ck(said == len(absent),
+           "%s: header claims %s unpinned key(s), the sheet has %d"
+           % (det, said, len(absent)))
+        # the key file must carry the SAME inherited column (it is pinned too)
+        bad = [k for k in krow if k in pin and int(krow[k]["tranche"]) != pin[k]]
+        ck(not bad, "%s: the answer key's tranche is not pinned (%d item(s))"
+           % (det, len(bad)))
+        # and the header must NOT also claim a draw that did not happen
+        ck(not declares_seed,
+           "%s: a pinned sheet still advertises `seed=` -- it describes a draw "
+           "that did not run (feedback_rederive_from_primary_source)" % det)
+    else:
+        kk = []
+        for k in order:
+            r = krow[k]
+            kk.append({"event": r["event"], "cluster": int(r["cluster"]),
+                       "is_stm": int(r["is_stm"]), "michel_found": int(r["michel_found"])})
+        drawn = _prep["tranche"](kk)
+        bad = [k for k in srow
+               if int(srow[k]["tranche"]) != (1 if k in drawn else 2)]
+        ck(not bad, "%s: the sheet's tranche is not prep's own draw on %d item(s): %s"
+           % (det, len(bad), bad[:3]))
+        # the strata the draw used must be the ones the key records
+        bad = [k for k in krow
+               if _prep["stratum"]({"is_stm": int(krow[k]["is_stm"]),
+                                    "michel_found": int(krow[k]["michel_found"])})
+               != krow[k]["stratum"]]
+        ck(not bad, "%s: the key's stratum column is not stratum() on %d item(s)"
+           % (det, len(bad)))
+
+    # N5 -- the labels ALREADY WRITTEN must still sit where the sheet puts them.
+    # This is the check that discriminates a re-draw from a correct fresh draw:
+    # a forgotten --pin-tranche produces a sheet that is internally consistent
+    # and passes every check above, and the only witness that the sample moved
+    # is the scan record itself.  Each label carries the scan_id and tranche it
+    # was placed under.  npts / muon_len_cm are NOT compared: they are recorded
+    # at label time and legitimately move with the fit (doc pdhd/15 sec 10,
+    # 039252_15/77 188 -> 189 points).
+    nlab = 0
+    for lf in sorted(glob.glob(os.path.join(IMG, det, "work", "stm_michel_labels",
+                                            "*", "labels.json"))):
+        tag = os.path.basename(os.path.dirname(lf))
+        try:
+            with open(lf) as fh:
+                d = json.load(fh)
+        except Exception as e:                                   # noqa: BLE001
+            ck(False, "%s: label file %s is unreadable: %s" % (det, lf, e))
+            continue
+        moved, absent = [], []
+        for k, rec in sorted((d.get("labels") or {}).items()):
+            ev, _, cl = k.partition("/")
+            kk = (ev, int(cl))
+            if kk not in srow:
+                absent.append(k)
+                continue
+            nlab += 1
+            if (int(rec.get("scan_id", -1)) != int(srow[kk]["scan_id"]) or
+                    int(rec.get("tranche", -1)) != int(srow[kk]["tranche"])):
+                moved.append("%s t%s->t%s id%s->%s"
+                             % (k, rec.get("tranche"), srow[kk]["tranche"],
+                                rec.get("scan_id"), srow[kk]["scan_id"]))
+        ck(not moved,
+           "%s tag %s: %d label(s) no longer sit where the sheet puts them -- the "
+           "sample was RE-DRAWN under a scan in progress (doc pdhd/15 sec 10; "
+           "re-prep with --pin-tranche): %s" % (det, tag, len(moved), moved[:3]))
+        if absent:
+            print("     note: %s tag %s: %d label(s) are not in the current sheet"
+                  % (det, tag, len(absent)))
+    if nlab:
+        print("     %d existing label(s) still sit where the sheet puts them" % nlab)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -1721,6 +1884,7 @@ def main():
             test_blind(det, tmp)
             test_labels(det, tmp)
             test_pin(det, tmp)
+            test_tranche_draw(det)
             test_scorer(det, tmp)
             test_meas_static(det)
             test_meas_app(det, tmp)

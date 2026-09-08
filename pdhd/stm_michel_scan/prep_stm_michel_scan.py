@@ -48,8 +48,15 @@ dQ/dx REFERENCE
 Repro:
   ./prep_stm_michel_scan.py --det pdhd
   ./prep_stm_michel_scan.py --det pdvd
+
+  While a hand scan is in progress, pin the tranche-1 draw to the sheet that
+  scan started from, so a re-prep on a new arm cannot re-draw the sample under
+  the scanner (doc pdhd/15 sec 10, read_pinned_tranche):
+
+  ./prep_stm_michel_scan.py --det pdvd \
+      --pin-tranche 86d78116:pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv
 """
-import argparse, glob, json, os, random, sys, zipfile
+import argparse, csv, glob, json, os, random, subprocess, sys, zipfile
 
 import numpy as np
 import uproot
@@ -575,6 +582,37 @@ def tranche(keys):
     return {p: 1 for p in picked}
 
 
+def read_pinned_tranche(spec):
+    """Tranche membership inherited from a previous sheet, keyed (event, cluster).
+
+    doc pdhd/15 sec 10.  `tranche()` draws its sample per `stratum()`, which is
+    a function of `is_stm` and `michel_found` -- and doc pdhd/15 REDEFINED
+    michel_found ("a Michel object exists", detached included).  So a re-prep on
+    a new arm silently RE-DRAWS the sample under a scan already in progress: 41
+    of 60 pdvd and 32 of 60 pdhd tranche-1 items changed between the d14 and d15
+    sheets.  A hand-scan sample must not depend on the quantity being measured,
+    so a scan that is under way pins its draw to the sheet it started from.
+
+    `spec` is a path, or `<rev>:<repo-relative-path>` resolved with `git show`
+    so a retired sheet stays usable as a pin.  Keys ABSENT from the pinned sheet
+    get tranche 2: a pinned sample never grows retroactively.
+    """
+    if os.path.exists(spec):
+        text = open(spec).read()
+    elif ":" in spec:
+        text = subprocess.run(["git", "-C", IMG, "show", spec],
+                              capture_output=True, text=True, check=True).stdout
+    else:
+        raise SystemExit("--pin-tranche: no such file %s" % spec)
+    out = {}
+    for r in csv.DictReader([l for l in text.splitlines(True)
+                             if not l.startswith("#")], delimiter="\t"):
+        out[(r["event"], int(r["cluster"]))] = int(r["tranche"])
+    if not out:
+        raise SystemExit("--pin-tranche: no rows in %s" % spec)
+    return out
+
+
 def write_tsv(path, rows, cols, header):
     tmp = path + ".tmp"
     with open(tmp, "w") as fh:
@@ -585,6 +623,24 @@ def write_tsv(path, rows, cols, header):
     os.replace(tmp, path)
 
 
+def tranche_header(a, n_unpinned):
+    """The provenance line for the tranche column -- drawn here, or inherited.
+
+    A pinned sheet must NOT carry "seed=... (S1 cap ...)": that describes a draw
+    which did not happen, and someone re-deriving the sample later would try to
+    reproduce it and fail (feedback_rederive_from_primary_source).
+    """
+    if not a.pin_tranche:
+        return ("# seed=%d tranche1=%d (S1 cap %d, floor %d per other stratum)\n"
+                % (SEED, TRANCHE1, T1_S1_CAP, T1_FLOOR))
+    return ("# tranche INHERITED from %s -- NOT drawn here (--pin-tranche).\n"
+            "# That draw was seed=%d, tranche1=%d, S1 cap %d, floor %d, stratified\n"
+            "# on ITS arm's is_stm/michel_found -- deliberately the PRE-doc-15\n"
+            "# meaning of michel_found, so the sample does not move with the\n"
+            "# quantity it measures.  %d key(s) absent from it are tranche 2.\n"
+            % (a.pin_tranche, SEED, TRANCHE1, T1_S1_CAP, T1_FLOOR, n_unpinned))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", required=True, choices=sorted(DET))
@@ -592,12 +648,39 @@ def main():
     ap.add_argument("--sheetdir", default=None)
     ap.add_argument("--no-tagger-fit", action="store_true")
     ap.add_argument("--limit", type=int, default=0, help="first N events (debug)")
+    ap.add_argument("--redraw", action="store_true",
+                    help="re-draw tranche 1 even though labels already exist "
+                         "for this detector; see the guard in main()")
+    ap.add_argument("--pin-tranche", default=None, metavar="SHEET_OR_REV",
+                    help="inherit tranche membership from a previous sheet "
+                         "(path, or <rev>:<path> read with git show) instead "
+                         "of re-drawing it; see read_pinned_tranche")
     a = ap.parse_args()
     det = a.det
     outdir = a.outdir or os.path.join(HERE, "prep-" + det)
     sheetdir = a.sheetdir or os.path.join(DET[det]["root"], "docs", "scan")
     os.makedirs(outdir, exist_ok=True)
     os.makedirs(sheetdir, exist_ok=True)
+
+    # A hand scan already under way is a reason NOT to re-draw.  `tranche()`
+    # stratifies on `michel_found`, so re-drawing moves the sample every time
+    # the algorithm improves -- 41 of 60 pdvd tranche-1 items moved between the
+    # d14 and d15 arms, under a scan with labels already in it (doc pdhd/15
+    # sec 10).  Refuse rather than warn: this prep prints ~180 progress lines
+    # and a warning inside them is a warning nobody reads.
+    if not a.pin_tranche and not a.redraw:
+        labs = sorted(glob.glob(os.path.join(DET[det]["root"], "work",
+                                             "stm_michel_labels", "*",
+                                             "labels.json")))
+        if labs:
+            raise SystemExit(
+                "REFUSING to re-draw tranche 1: %d label file(s) already exist "
+                "for %s\n  %s\nA scan in progress must keep its sample. Either\n"
+                "  --pin-tranche <sheet|rev:path>   inherit the draw those labels "
+                "were placed under (doc pdhd/15 sec 10), or\n"
+                "  --redraw                          start a genuinely new scan "
+                "-- then serve it under a NEW --scan-tag."
+                % (len(labs), det, "\n  ".join(labs)))
 
     dirs = event_dirs(det)
     if a.limit:
@@ -633,10 +716,20 @@ def main():
 
     order = sorted(range(len(rows)), key=lambda i: (rows[i]["event"], rows[i]["cluster"]))
     rows = [rows[i] for i in order]; keys = [keys[i] for i in order]
+    pinned = read_pinned_tranche(a.pin_tranche) if a.pin_tranche else None
     t1 = tranche(keys)
+    n_unpinned = 0
     for n, (r, k) in enumerate(zip(rows, keys), start=1):
         r["scan_id"] = k["scan_id"] = n
-        r["tranche"] = k["tranche"] = t1.get((r["event"], r["cluster"]), 2)
+        kk = (r["event"], r["cluster"])
+        if pinned is None:
+            tr = t1.get(kk, 2)
+        elif kk in pinned:
+            tr = pinned[kk]
+        else:
+            tr = 2                       # never grow a pinned sample
+            n_unpinned += 1
+        r["tranche"] = k["tranche"] = tr
         k["stratum"] = stratum(k)
     # tranche 1 first, then scan_id -- the viewer serves the list in file order
     rows.sort(key=lambda r: (r["tranche"], r["scan_id"]))
@@ -649,14 +742,13 @@ def main():
                "n_near", "n_far"],
               "# doc pdhd/12 -- STM + Michel hand-scan sheet, det=%s arm=%s\n"
               "# NO verdict, NO stratum, NO chain flag: those are in the KEY.\n"
-              "# seed=%d tranche1=%d (S1 cap %d, floor %d per other stratum)\n"
-              % (det, DET[det]["arm"], SEED, TRANCHE1, T1_S1_CAP, T1_FLOOR))
+              % (det, DET[det]["arm"]) + tranche_header(a, n_unpinned))
     write_tsv(keyf, keys,
               ["scan_id", "tranche", "stratum", "event", "cluster", "npts",
                "muon_len_cm", "is_stm", "michel_found", "michel_conn_type",
                "michel_len", "michel_ke_best", "michel_kink_deg", "n_dots",
                "in_fv", "reject_bits", "reject_names", "n_near", "n_far"],
-              KEY_HEADER % (det, DET[det]["arm"]))
+              KEY_HEADER % (det, DET[det]["arm"]) + tranche_header(a, n_unpinned))
 
     cnt = {}
     for k in keys:

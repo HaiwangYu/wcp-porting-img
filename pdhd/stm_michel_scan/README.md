@@ -340,9 +340,28 @@ writer's default wire.
 ## Rebuild and re-check
 
 ```bash
-./prep_stm_michel_scan.py --det pdhd     # 61 events  -> 302 items
-./prep_stm_michel_scan.py --det pdvd     # 120 events -> 568 items
-./selftest_stm_michel_scan.py            # both detectors
+# --pin-tranche: keep the 60-item tranche 1 of a scan ALREADY UNDER WAY.  The
+# draw is stratified on `michel_found`, so without the pin an algorithm change
+# re-draws the sample under the scanner -- it moved 41 of 60 PDVD and 32 of 60
+# PDHD items between doc 14 and doc 15 (doc pdhd/15 sec 10).  The argument is a
+# sheet path or `<rev>:<path>`, read with `git show`, so a superseded sheet
+# stays usable as a pin.  Omit it only for a genuinely new scan under a new tag.
+./prep_stm_michel_scan.py --det pdhd \
+    --pin-tranche 86d78116:pdhd/docs/scan/pdhd_stm_michel_scan_sheet.tsv
+./prep_stm_michel_scan.py --det pdvd \
+    --pin-tranche 86d78116:pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv
+./selftest_stm_michel_scan.py            # both detectors; group [N] checks the draw
 ./selftest_smx3d_browser.py --det pdhd
 ./score_stm_michel_scan.py --det pdhd --tag smx1
 ```
+
+`prep` **refuses to draw** while any `../work/stm_michel_labels/*/labels.json`
+exists for that detector — pass `--pin-tranche`, or `--redraw` if you really are
+starting a new scan (and then serve it under a new `--scan-tag`).
+
+The item **set** never moves with the arm — 302 PDHD / 568 PDVD keys, and
+`scan_id` is identical across every arm so far — but `scan_id` is a positional
+index over the `(event, cluster)` sort, so one candidate more or fewer would
+shift every id after it. Group `[N]` of the self-test re-derives it, and checks
+that the tranche column is either pinned to the source its header names or
+reproduces `prep`'s own draw.

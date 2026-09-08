@@ -690,6 +690,16 @@ gets a sidecar, so tranche 2 needs no re-prep. The sheet carries no stratum, no
 verdict and no direction; the key carries all three and is read only by the
 scorer.
 
+> **Correction, 2026-09-08 — the draw above is no longer performed on every
+> re-prep; see doc pdhd/15 §10.** S1–S4 key on `michel_found`, so re-drawing
+> moved the sample every time the algorithm changed (41 of 60 PDVD and 32 of 60
+> PDHD tranche-1 items moved between the doc-14 and doc-15 arms, under a scan
+> that already had labels in it). A scan in progress now inherits its draw:
+> `prep_stm_michel_scan.py --pin-tranche <sheet|rev:path>`, and the prep
+> **refuses** to re-draw while labels exist for that detector unless `--redraw`
+> is passed. The committed sheets carry the seed-20260907 draw described here,
+> inherited from `86d78116`; their headers name the source instead of the seed.
+
 Judgeability is the known risk here. Doc pdhd/stm-tagger-chain §13 measured the
 unjudgeable rate as a clean function of object size — 100 % below 50 points,
 95 % at 50–200 — and a bar clause resting on a stratum that came back 98 %

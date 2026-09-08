@@ -48,14 +48,21 @@ michel_shower_min_kink_deg:15,stop_fv_use_config_tolerance:true,dead_volume_chec
 dot_max_len_cm:10,companion_max_len_cm:10}" PDVD_MAX_JOBS=6 \
   ./run_pr_evt.sh -nu -stm-fit -s d15leg 039252 all )
 
-# the display
+# the display.  --pin-tranche keeps the in-progress scan's 60-item tranche 1
+# fixed while the algorithm underneath it changes (sec 10); drop it only when
+# starting a genuinely new scan under a new tag.
 cd pdhd/stm_michel_scan
 rm -rf prep-pdvd prep-pdhd     # the payload name does not carry the arm
-python3 prep_stm_michel_scan.py --det pdvd
-python3 prep_stm_michel_scan.py --det pdhd
+python3 prep_stm_michel_scan.py --det pdvd \
+    --pin-tranche 86d78116:pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv
+python3 prep_stm_michel_scan.py --det pdhd \
+    --pin-tranche 86d78116:pdhd/docs/scan/pdhd_stm_michel_scan_sheet.tsv
 python3 selftest_stm_michel_scan.py            # groups L and M
 python3 selftest_smx3d_browser.py --det pdvd
 python3 selftest_smx3d_browser.py --det pdhd
+
+# serve the scan -- SAME tag as before, on the new output (sec 10)
+./serve_stm_michel_scan.sh 5017 --det pdvd --scan-tag smx1
 ```
 
 ## 1. The question
@@ -517,16 +524,12 @@ stamped back with `set_kine_best`, which is both the fix and the right value.
    `039349_37` cluster 39 flips `is_stm` 0 → 1 (contrast 0.55 → 1.52), and PDHD
    `029107_4` cluster 24's contrast falls 0.76 → 0.21. Both are better-informed
    fits; both are verdict changes.
-4. **The scan labels and the tranche.** The scan **sample is unchanged** — 568
-   PDVD / 302 PDHD items, none added, none dropped — but the **order is not**:
-   doc pdhd/12's S1–S4 strata key on `michel_found`, whose meaning §4 redefines,
-   so the 60-item tranche 1 re-sorts. Of the 4 labels under
-   `pdvd/work/stm_michel_labels/smx1`, only `039252_15/77` falls in the new
-   tranche 1. They were placed on the doc-14 sheet with the doc-14 display, so
-   the new scan runs under a fresh tag `smx2` and `smx1` is left untouched
-   (M13). Whether the 4 are re-scanned or carried over is the owner's call; the
-   stratification itself is doc pdhd/13's still-open question about what
-   `michel_found` should mean to a consumer.
+4. ~~**The scan labels and the tranche.**~~ **Answered by the owner
+   2026-09-08 — see §10.** The scan continues under `smx1` on the d15 output,
+   and the tranche-1 draw is now pinned rather than re-drawn. The
+   stratification's dependence on `michel_found` remains doc pdhd/13's open
+   question about what that flag should mean to a consumer; §10 removes its
+   ability to move a scan in progress, not the ambiguity itself.
 5. **`pdhd/stm/perf/d30_hash_gate.py:43`** hashes `T_stm_michel` and will churn
    again on this round's nine new branches; it needs re-baselining against a
    `d15*` arm.
@@ -540,3 +543,109 @@ stamped back with `set_kine_best`, which is both the fix and the right value.
 8. Still open from doc pdhd/13: defect D3 — on the `is_stm & no Michel` set the
    PR fits segments of the main cluster that the arm classifier then discards
    (74 % PDHD / 67 % PDVD). Untouched by this round.
+
+---
+
+## 10. The tranche pin — a scan sample must not move with the quantity it measures
+
+**Symptom.** The owner reopened the display on 5017 after this round landed and
+did not recognise it: the four labels they had placed were absent, and the list
+was not the list they had been working through.
+
+**Root cause, two independent parts.**
+
+*Part 1 — the tag.* The round restarted the display under a new scan tag
+`smx2`, whose `labels.json` did not exist, so the page opened with zero labels
+and no memory of position. That was M13 caution applied where M13 does not
+reach: the rule protects an existing label record from being overwritten, and
+nothing here was going to overwrite one — the candidate set was the same 568
+PDVD keys before and after. A new algorithm epoch is not a new scan pass. The
+scan belongs under `smx1`; `smx2` was never written to and holds no labels.
+
+*Part 2 — the draw.* `prep_stm_michel_scan.py:tranche()` samples tranche 1 per
+`stratum()`, and `stratum()` is a function of `is_stm` and **`michel_found`** —
+the flag §4 of this doc redefines. So regenerating the sheet on the `d15` arms
+re-drew the sample:
+
+| | tranche-1 items still in tranche 1 | dropped | added |
+|---|---|---|---|
+| pdvd | 19 of 60 | 41 | 41 |
+| pdhd | 28 of 60 | 32 | 32 |
+
+Three of the owner's four labelled items (`039252_0/77`, `039252_15/91`,
+`039252_16/88`) moved to tranche 2. This is the more serious half: a hand-scan
+sample stratified on the quantity being measured re-draws itself every time the
+algorithm improves, so `tranche 1: N / 60` is not comparable across rounds and
+a scan in progress loses its list.
+
+**Why it hid.** The sheet regenerates as a side effect of re-prepping the
+display on a new arm, and the item *set* never changes — 568 PDVD / 302 PDHD,
+no key added, no key dropped, `scan_id` identical on every one of them. Only
+the `tranche` column moves, and nothing was watching that column.
+
+**Fix.** `prep_stm_michel_scan.py` gains `--pin-tranche SHEET_OR_REV`
+(`read_pinned_tranche`): tranche membership is inherited per `(event, cluster)`
+from a previous sheet instead of re-drawn. The argument is a path or a
+`<rev>:<repo-relative-path>` read with `git show`, so a superseded sheet stays
+usable as a pin after it is overwritten. Keys **absent** from the pinned sheet
+get tranche 2 — a pinned sample never grows retroactively. Both the sheet and
+the answer key are pinned (both carry the column), and `tranche_header()`
+replaces the `seed=… (S1 cap …)` provenance line on a pinned sheet, which would
+otherwise describe a draw that did not happen
+(`feedback_rederive_from_primary_source`).
+
+The strata themselves are **not** changed. A genuinely new scan under a new tag
+should draw fresh; the pin exists for a scan already under way.
+
+Two guards, because a knob you must remember to pass is not a fix:
+
+* **Prevention.** `prep` **refuses** to draw at all while any
+  `work/stm_michel_labels/*/labels.json` exists for that detector, unless
+  `--pin-tranche` or an explicit `--redraw` is passed. It refuses rather than
+  warns: the prep prints ~180 progress lines and a warning inside them is a
+  warning nobody reads.
+* **Detection.** Self-test group `[N]` compares the **labels already written**
+  against the sheet — every record carries the `scan_id` and `tranche` it was
+  placed under. This is the only check that separates a re-draw from a correct
+  fresh draw: a forgotten `--pin-tranche` yields a sheet that is internally
+  consistent and passes everything else. `npts` / `muon_len_cm` are deliberately
+  not compared (see the caveat below).
+
+**Verification.** Both detectors re-prepped to a scratch `--outdir`/`--sheetdir`
+first and diffed before the sheets were promoted:
+
+| check | pdhd | pdvd |
+|---|---|---|
+| key set == committed d15 sheet | ✅ 302 | ✅ 568 |
+| `scan_id` changes vs d15 | 0 | 0 |
+| `npts` / `muon_len_cm` / `n_near` / `n_far` changes vs d15 | 0 | 0 |
+| `tranche` changes vs the d14 sheet | 0 | 0 |
+| viewer order `(tranche, scan_id)` identical to d14 | ✅ | ✅ |
+| answer-key non-`tranche` columns == committed d15 key | ✅ | ✅ |
+| prep payloads byte-identical to the committed ones | 303/303 | 569/569 |
+
+So the promoted sheet is exactly the d15 physics in the d14 order. The payloads
+being byte-identical is also the re-run determinism check: the same arm re-read
+end to end reproduces all 872 sidecars bit for bit.
+
+Group `[N]` was built against causal negative controls, not just run once: a
+flipped `tranche`, a shifted `scan_id`, a pinned sheet that still advertises
+`seed=`, an understated unpinned count, and the same flip on an unpinned sheet
+are each caught by the check that targets them, and the clean sheets pass. The
+label check was verified against the **pre-pin d15 sheet**, where it names the
+three that moved — `039252_0/77`, `039252_15/91`, `039252_16/88`, all
+`t1 -> t2` — and passes on the promoted one.
+
+In the browser, on `smx1` at 5017, the progress widget reads
+**`4 / 568 labelled | tranche 1: 4 / 60`** — 4/60 is the discriminating number
+(it was `1 / 60` before the pin; `4 / 568` was already true and proves nothing).
+Read through a Playwright locator: `inner_text("body")` misses Bokeh 3's open
+shadow DOM.
+
+**One measured caveat, already known.** Three of 568 PDVD items differ in
+`npts` / `muon_len_cm` between the d14 and d15 sheets, one of them being
+`039252_15/77` (188 → 189 points, 112.54 → 113.08 cm). That is not the pin: it
+is §7's `preload_clusters` perturbation from admitting cluster 265 as a
+companion — the fit gains one point. The labels record `npts` and `muon_len_cm`
+as written at label time, so those two fields in the four `smx1` records are
+d14-era for that one item; the label itself (a topology verdict) is unaffected.
