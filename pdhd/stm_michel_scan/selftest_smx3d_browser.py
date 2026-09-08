@@ -28,6 +28,8 @@ It then does the same for the two things added in the measurement round:
     cells on PDHD, 20 574 on PDVD, drawn three times over), because that is the
     one that would be unusable if anything is, and the first-paint time is
     printed rather than asserted.
+  * the PARTICLE FLOW toggle and the segment picker -- pressed as real widgets,
+    so the server callback and the round trip back are both under test.
   * the dQ/dx CLICK LINK -- select a point through the live document and assert
     the cursor appears in the 3-D layer AND in all three measurement rows.  The
     selection is set in the BROWSER, so it travels the websocket and fires the
@@ -347,6 +349,39 @@ def main():
                 ck(got["c3"] is not None and len(got["c3"]["x"]) == 0,
                    "deselecting in the browser did not clear the cursor")
             ck(not errs, "javascript errors after the click link: %s" % errs[:3])
+
+            # ---- the particle flow, over the real websocket ------------------
+            def _rows(name):
+                return page.evaluate(
+                    "(n) => { const m = Bokeh.documents[0].get_model_by_name(n);"
+                    " return m ? (m.data.x || m.data.w || []).length : -1; }", name)
+            ck(_rows("src3_pfseg") == 0,
+               "the PF topology is drawn before the toggle is pressed")
+            # press the real widget, not the model: this is the binding under test.
+            # get_by_role("button"), NOT get_by_text: the instructions Div now
+            # contains the phrase "show particle flow" too, and a text locator
+            # matched that paragraph and clicked nothing.
+            page.get_by_role("button", name="show particle flow").first.click()
+            page.wait_for_timeout(1500)
+            npf = _rows("src3_pfseg")
+            ck(npf > 0, "the 'show particle flow' toggle drew nothing (%d rows)" % npf)
+            ck(_rows("src3_pfvtx") > 0, "no PF vertices reached the browser")
+            opts = page.evaluate(
+                "() => { for (const m of Bokeh.documents[0]._all_models.values())"
+                " if (m.type === 'Select' && String(m.title).indexOf('PF segment') === 0)"
+                " return m.options; return null; }")
+            ck(opts is not None and len(opts) > 0, "no PF segment dropdown in the page")
+            if opts and len(opts) > 1:
+                page.evaluate(
+                    "(v) => { for (const m of Bokeh.documents[0]._all_models.values())"
+                    " if (m.type === 'Select' && String(m.title).indexOf('PF segment') === 0)"
+                    " m.value = v; }", opts[1])
+                page.wait_for_timeout(1500)
+                nsel = _rows("src3_pfsel")
+                ck(nsel > 0, "picking a PF segment highlighted nothing")
+                ck(_rows("srct_w_pfsel") >= 0,
+                   "the PF highlight never reached the measurement panels")
+            ck(not errs, "javascript errors after the PF checks: %s" % errs[:3])
             b.close()
     finally:
         proc.terminate()

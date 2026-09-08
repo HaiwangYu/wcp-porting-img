@@ -132,6 +132,49 @@ the **object**, `UNCLEAR` about **your confidence**. Do not spend a fragment on
 Clicking a label **saves immediately** and jumps to the next unlabelled item.
 Type a note *before* clicking. `next unlabelled >>` resumes where you left off.
 
+## The particle flow
+
+`show particle flow` draws the PR graph this chain actually walked — the
+segments, each in its own colour, and the junction vertices — in the 3-D view,
+the projections and the measurement panels. The toggle starts **off**, so the
+view you already know is unchanged until you ask for the graph.
+
+The dropdown lists every segment with its point count, length and median dQ/dx.
+Pick one and it lights up amber everywhere. Then say what it is:
+
+| button | |
+|---|---|
+| `muon` | part of the stopping muon |
+| `Michel` | part of the Michel electron |
+| `delta / other` | a delta ray or anything else hanging off the track |
+| `straddles the stop` | the segment genuinely covers both sides — the honest answer, not a coin flip |
+| `untag` | remove the tag |
+
+Your tags are drawn as **hollow squares**, a marker nothing else on the page
+uses, so they can never be confused with the reconstruction's colours. Only
+3.5 % (PDHD) / 6.6 % (PDVD) of segments really straddle the muon/Michel
+boundary, so the question is well posed nearly always — but not always, which is
+why the fourth button exists.
+
+Under REVEAL the panel also prints what the chain calls the segment: its
+particle type and whether it called it a track or a shower. That is behind
+REVEAL because `CheckSTM_Michel` sets the Michel arm's type to electron, so it
+*is* the answer.
+
+## Am I sure it saved?
+
+Yes, and you can check without leaving the page. Labels are written atomically
+on every click, and every write is **read back from the file**: the green banner
+under the buttons says how many labels the file on disk actually holds, its size
+and when it was written. `what is saved on disk?` re-reads on demand and prints
+this item's own row — label, Michel kind, pin, segment tags.
+
+- a file that does not exist yet says *nothing saved yet* — not an error;
+- a file that will not parse says **NOT SAVED** in red;
+- segment tags placed **before** you click a label are held, not saved, and the
+  banner says so in amber. Tagging an item that already has a label writes
+  through immediately.
+
 ## The pin, and one honest limit
 
 You place the muon's **stopping point**: tap any panel to snap to the nearest
@@ -196,13 +239,13 @@ writer's default wire.
 | `smx3d.py` | the 3-D trackball; fork of `sbnd_xin/em_display/em3d.py`, which is untouched |
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
-| `selftest_stm_michel_scan.py` | 1725 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views |
-| `selftest_smx3d_browser.py` | 32 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, no point projects outside its own distance from the camera, the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), and the click link survives the websocket round trip |
+| `selftest_stm_michel_scan.py` | 6252 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its blind, its tagging and backward compatibility) and the save read-back |
+| `selftest_smx3d_browser.py` | 39 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, no point projects outside its own distance from the camera, the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and segment picker are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |
 | `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — committed as the record; its blind is an honour rule, see above |
 | `../work/stm_michel_labels/<tag>/labels.json` | your labels; a sibling of the per-event dirs, so re-running an arm cannot delete them |
-| `prep-<det>/` | the sidecars, gitignored (320 MB — they now carry the 2-D measurement); rebuild with `prep_stm_michel_scan.py` |
+| `prep-<det>/` | the sidecars, gitignored (338 MB — they carry the 2-D measurement and the particle flow); rebuild with `prep_stm_michel_scan.py` |
 
 ## Rebuild and re-check
 

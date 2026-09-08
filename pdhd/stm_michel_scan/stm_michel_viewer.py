@@ -68,6 +68,7 @@ import json
 import math
 import os
 import sys
+import time
 
 import numpy as np
 from bokeh.events import DocumentReady, Pan, PanEnd, PanStart, Tap
@@ -218,6 +219,14 @@ LABELS = load_labels()          # append-only: an existing file is loaded, never
 
 
 def save_labels():
+    """Write, then READ BACK, and return what the file on disk actually holds.
+
+    The read-back is the point.  "It was saved" is a claim about a write that
+    returned; what the scanner needs to trust is the FILE, so every save
+    re-opens it, re-parses it, and reports its size, mtime and label count from
+    that parse.  A silent truncation, a full disk or a JSON the app can write
+    but cannot read all show up here instead of at the end of the scan.
+    """
     tmp = LABEL_FILE + ".tmp"
     with open(tmp, "w") as fh:
         json.dump({"scan": "stm_michel_topology",
@@ -226,6 +235,26 @@ def save_labels():
                    "sheet": os.path.relpath(SHEET, DETROOT),
                    "labels": LABELS}, fh, indent=1)
     os.replace(tmp, LABEL_FILE)      # atomic: a crash mid-write keeps the old file
+    return read_back()
+
+
+def read_back():
+    """(ok, n_on_disk, bytes, mtime string, error) straight from the file.
+
+    A file that does not exist yet is not an error -- it is the truthful state
+    "nothing saved yet", and reporting it as a failure would cry wolf on every
+    fresh scan tag.  A file that EXISTS but cannot be parsed is an error.
+    """
+    if not os.path.exists(LABEL_FILE):
+        return (True, 0, 0, "never", None)
+    try:
+        st = os.stat(LABEL_FILE)
+        with open(LABEL_FILE) as fh:
+            d = json.load(fh)
+        return (True, len(d.get("labels", {})), st.st_size,
+                time.strftime("%H:%M:%S", time.localtime(st.st_mtime)), None)
+    except Exception as ex:                       # noqa: BLE001 - report anything
+        return (False, 0, 0, "", "%s: %s" % (type(ex).__name__, ex))
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +277,26 @@ LAYERS = [
     ("pin",      22.0, 1.00, "#e377c2",        "star",     False, 0.0),
     # the point you last clicked in the dQ/dx panel, echoed in every other view
     ("cursor",   19.0, 1.00, "#17becf",   "circle_cross",    False, 0.0),
+    # the PR particle flow.  "@col" = a per-point colour COLUMN, so one layer can
+    # carry a categorical palette.  The topology is neutral and always available
+    # (behind its own toggle, not behind REVEAL) -- the pdg and the track/shower
+    # flag are the chain's answer and live in the verdict block.
+    ("pfseg",     4.0, 0.70, "@col",           "circle",   False, 0.0),
+    ("pfvtx",    11.0, 0.90, "#8c564b",        "square",   False, 0.0),
+    ("pfsel",     9.0, 0.95, "#ffb000",        "circle",   False, 0.0),
+    ("pftag",    12.0, 0.95, "@col",           "square",   False, 0.0),
 ]
+# The scanner's own per-segment answer.  Drawn as HOLLOW squares, a different
+# channel from every filled marker on the page, so a tag can never be mistaken
+# for the reconstruction's colours.
+PF_TAGS = {"muon": "#2c7fb8", "michel": "#e31a1c",
+           "delta / other": "#7f7f7f", "straddles the stop": "#6a3d9a"}
+# Measured over 25 events per detector (doc pdhd/12 sec 5.7): only 3.7 % (PDHD)
+# and 6.3 % (PDVD) of PF segments carry points on BOTH sides of the muon/Michel
+# boundary, so a per-segment tag is well posed -- but it is not always, and
+# "straddles the stop" is the honest answer rather than a coin flip.
+PF_PALETTE = ["#4c78a8", "#72b7b2", "#54a24b", "#eeca3b", "#b279a2", "#ff9da6",
+              "#9d755d", "#bab0ac", "#e45756", "#f58518"]
 REVEAL_LAYERS = {n for n, _, _, _, _, rv, _ in LAYERS if rv}
 
 PANELS = [("z", "y", "side view:   Z (beam) vs Y"),
@@ -319,6 +367,8 @@ def _fields(name):
         return ["q"]
     if name in ("muon", "tagfit"):
         return ["c"]
+    if name in ("pfseg", "pftag"):
+        return ["col"]
     return []
 
 
@@ -339,10 +389,18 @@ for ha, va, title in PANELS:
             r = f.scatter("a", "b", source=src, size=sz, alpha=al, marker=marker,
                           line_color=None,
                           color={"field": fld, "transform": cmap})
+        elif col == "@col":
+            hollow = name == "pftag"
+            r = f.scatter("a", "b", source=src, size=sz, marker=marker,
+                          fill_color=None if hollow else "col",
+                          fill_alpha=0.0 if hollow else al,
+                          line_color="col", line_width=2.0 if hollow else 0.0,
+                          line_alpha=1.0 if hollow else 0.0)
         else:
             r = f.scatter("a", "b", source=src, size=sz, alpha=al, marker=marker,
                           color=col,
-                          line_color="#333333" if name in ("pin", "dots", "cursor") else None)
+                          line_color="#333333" if name in ("pin", "dots", "cursor",
+                                                           "pfsel", "pfvtx") else None)
         SRC2[(ha, va, name)] = src
         REND2[(ha, va, name)] = r
     # the active boundary, so "does it reach a face" is answerable by eye, and
@@ -398,10 +456,18 @@ for name, sz, al, col, marker, rv, cue in LAYERS:
         r = f3d.scatter("u", "v", source=src, size="sz", fill_alpha="al",
                         marker=marker, line_color=None,
                         fill_color={"field": fld, "transform": cmap})
+    elif col == "@col":
+        hollow = name == "pftag"
+        r = f3d.scatter("u", "v", source=src, size="sz", marker=marker,
+                        fill_color=None if hollow else "col",
+                        fill_alpha=0.0 if hollow else "al",
+                        line_color="col", line_width=2.0 if hollow else 0.0,
+                        line_alpha=1.0 if hollow else 0.0)
     else:
         r = f3d.scatter("u", "v", source=src, size="sz", fill_alpha="al",
                         marker=marker, fill_color=col,
-                        line_color="#333333" if name in ("pin", "dots", "cursor") else None)
+                        line_color="#333333" if name in ("pin", "dots", "cursor",
+                                                         "pfsel", "pfvtx") else None)
     SRC3[name] = src
     REND3[name] = r
     _PT_SRC.append(src); _PT_SIZE.append(sz); _PT_ALPHA.append(al)
@@ -455,7 +521,7 @@ def fill3(name, X, Y, Z, extra=None):
     for k, val in (extra or {}).items():
         d[k] = list(val)
     for k in _fields(name):
-        d.setdefault(k, [0.0] * n)
+        d.setdefault(k, (["#cccccc"] if k == "col" else [0.0]) * n)
     src.data = d
 
 
@@ -596,6 +662,10 @@ MEAS_TRACKS = [("muon", "#000000", 3.0, False),
                ("delta", "#ff7f0e", 5.0, True),
                ("michel", "#1f77b4", 6.0, True),
                ("dots", "#d62728", 8.0, True),
+               # the particle flow, in the space where the charge lives -- which
+               # is where "is this branch a real deposit" is answerable
+               ("pfvtx", "#8c564b", 9.0, False),
+               ("pfsel", "#ffb000", 7.0, False),
                ("cursor", "#17becf", 15.0, False)]
 MEAS_REND = {}
 
@@ -806,6 +876,8 @@ def fill_meas(pay, v, rev, pin=None):
     for nm, _c, _sz, rv in MEAS_TRACKS:
         for r in MEAS_REND.get(nm, []):
             r.visible = (rev or not rv)
+    # blank_meas() cleared every SRCT above; the PF ones are refilled by
+    # fill_pf_meas(), which render() calls immediately after this.
 
 
 # ---------------------------------------------------------------------------
@@ -853,6 +925,17 @@ badge = Div(text="", width=1420)
 status = Div(text="", width=1420)
 reveal_div = Div(text="", width=620)
 cursor_div = Div(text="", width=620)
+save_div = Div(text="", width=620)
+pf_tog = Toggle(label="show particle flow", button_type="default", width=200)
+seg_select = Select(title="PF segment (pick one to highlight and tag it)",
+                    options=[], value="", width=430)
+seg_div = Div(text="", width=620)
+pf_mu_btn = Button(label="muon", button_type="primary", width=105)
+pf_mic_btn = Button(label="Michel", button_type="danger", width=105)
+pf_oth_btn = Button(label="delta / other", button_type="default", width=125)
+pf_mix_btn = Button(label="straddles the stop", button_type="warning", width=165)
+pf_clr_btn = Button(label="untag", button_type="default", width=90)
+save_info_btn = Button(label="what is saved on disk?", button_type="default", width=200)
 
 header = Div(width=1420, text="""
 <b>%s stopping-muon + Michel-electron hand scan</b> &mdash; doc pdhd/12.
@@ -873,11 +956,17 @@ channels hatched. The fit drawn everywhere is the <b>CheckSTM_Michel PR</b> chai
 (uniform 0.600&nbsp;cm step); the cosmic tagger's own fit is the grey REVEAL layer only.
 <br><b>Click a point in the dQ/dx panel</b> and a cyan cursor marks it in the 3-D view,
 in all three projections and in all nine measurement panels.
+<br><b>show particle flow</b> draws the PR graph &mdash; its segments and junction
+vertices. Pick a segment and tag it muon / Michel / delta / straddles-the-stop; your
+tags are hollow squares, never confusable with the reconstruction's colours.
+<br><b>Every save is read back from the file</b> &mdash; the banner under the buttons
+says what is actually on disk, and <i>what is saved on disk?</i> prints this item's row.
 <br><b>REVEAL</b> shows what the reconstruction decided. Every label records whether you
 had revealed it, so a revealed label is still usable &mdash; it is just scored separately.
 </span>""" % DETNAME.upper())
 
-state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None)
+state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None,
+             pf_tag={}, pf_seg=None)
 
 
 def current():
@@ -1029,6 +1118,14 @@ def render():
     cm_near.low = 0.0
     cm_near.high = float(np.percentile(nq[nq > 0], 98)) if (nq > 0).any() else 4e4
 
+    # the scanner's own per-segment answer, restored from the saved row
+    rec0 = LABELS.get(item_key(it), {})
+    if state.get("_pf_item") != item_key(it):
+        state["pf_tag"] = dict(rec0.get("pf_segments") or {})
+        state["pf_seg"] = None
+        state["_pf_item"] = item_key(it)
+    refresh_segments(pay)
+
     P = pin_point(pay)
     px, py, pz, prr, psrc = P
     layers = {
@@ -1050,6 +1147,7 @@ def render():
         for nm, pre in (("entry", "entry"), ("stop", "stop"), ("tstop", "tagger_stop")):
             if pre + "_x" in v:
                 layers[nm] = ([v[pre + "_x"]], [v[pre + "_y"]], [v[pre + "_z"]], {})
+    layers.update(fill_pf(pay, v, rev))
     for nm, _sz, _al, _c, _mk, rv, _cue in LAYERS:
         if nm not in layers:
             layers[nm] = ([], [], [], {})
@@ -1082,6 +1180,8 @@ def render():
 
     fill_dqdx(pay, v, px, py, pz, prr, psrc, rev)
     fill_meas(pay, v, rev, (px, py, pz))
+    fill_pf_meas(pay, rev)
+    fill_seg_div(pay, v, rev)
     # a cursor from the previous item would point at a point that is no longer
     # on screen; and render() runs on REVEAL too, where the tapped point may
     # have just been hidden.
@@ -1138,6 +1238,68 @@ def _qdata(*cols):
     return {k: [float(t) for t in c] for k, c in zip(QCOLS, cols)}
 
 
+def show_save(after_write=True):
+    """The save banner, filled from the READ-BACK, never from the write."""
+    ok, n, nb, mt, err = read_back()
+    if not ok:
+        save_div.text = ("<div style='background:#ffe6e6;padding:6px'>"
+                         "<b style='color:#b00'>NOT SAVED &mdash; %s</b><br>"
+                         "<span style='font-size:85%%'>%s</span></div>"
+                         % (err, LABEL_FILE))
+        return
+    save_div.text = (
+        "<div style='background:%s;padding:6px;font-size:92%%'><b>%s</b> "
+        "&mdash; the file on disk holds <b>%d</b> label%s, %s bytes, last written "
+        "%s<br><span style='font-size:88%%;color:#555'>%s</span></div>"
+        % ("#e8f6e8" if after_write else "#f2f2f2",
+           "saved and read back" if after_write else "labels on disk",
+           n, "" if n == 1 else "s", "{:,}".format(nb), mt, LABEL_FILE))
+    if n == 0:
+        save_div.text = save_div.text.replace(
+            "the file on disk holds <b>0</b> labels",
+            "<b>nothing saved yet</b> &mdash; the file holds 0 labels")
+
+
+def save_info():
+    """The button: re-read the file and print THIS item's row out of it."""
+    ok, n, nb, mt, err = read_back()
+    show_save(after_write=False)
+    if not ok:
+        status.text = ("<b style='color:#b00'>could not read %s: %s</b>"
+                       % (LABEL_FILE, err))
+        return
+    key = item_key(current())
+    try:
+        with open(LABEL_FILE) as fh:
+            rec = json.load(fh).get("labels", {}).get(key)
+    except Exception as ex:                       # noqa: BLE001
+        rec = None
+        err = str(ex)
+    if rec is None:
+        status.text = ("<b>%d label%s on disk</b> (%s bytes, %s). "
+                       "<b style='color:#b00'>This item (%s) is NOT among them.</b>"
+                       % (n, "" if n == 1 else "s", "{:,}".format(nb), mt, key))
+        return
+    keep = ("label", "choice", "partial", "michel_kind", "revealed_before_label",
+            "notes", "pf_tagged")
+    bits = ["<b>%s</b> = %s" % (k, rec.get(k)) for k in keep if k in rec]
+    pin = rec.get("pin") or {}
+    if pin:
+        bits.append("<b>pin</b> = (%.1f, %.1f, %.1f) rr %s, placed %s, moved %s cm, %s"
+                    % (pin.get("x", 0), pin.get("y", 0), pin.get("z", 0),
+                       pin.get("rr"), pin.get("placed"), pin.get("moved_cm"),
+                       smgeom.unit_label(DETNAME, pin.get("unit"), pin.get("cru"),
+                                         pin.get("face"))))
+    seg = rec.get("pf_segments") or {}
+    if seg:
+        bits.append("<b>pf_segments</b> = %s"
+                    % ", ".join("%s:%s" % (k, v) for k, v in sorted(seg.items())))
+    status.text = ("<div style='background:#eef4ff;padding:6px'><b>%s</b> is on disk "
+                   "(%d label%s in the file, %s bytes, written %s):<br>%s</div>"
+                   % (key, n, "" if n == 1 else "s", "{:,}".format(nb), mt,
+                      " &nbsp;|&nbsp; ".join(bits)))
+
+
 def clear_cursor():
     state["cursor"] = None
     fill3("cursor", [], [], [])
@@ -1177,6 +1339,155 @@ def set_cursor(src, i):
            "—" if not math.isfinite(g("pw")) else "%.1f" % g("pw"),
            "—" if not math.isfinite(t) else "%.1f" % t,
            smgeom.unit_label(DETNAME, u, cr, fa)))
+
+
+# ---------------------------------------------------------------------------
+# the particle flow -- the PR graph CheckSTM_Michel actually walked
+# ---------------------------------------------------------------------------
+def pf_segments(pay):
+    return ((pay or {}).get("pf") or {}).get("seg") or []
+
+
+def seg_label(sg, tag):
+    return "S%d   %d pts   %.1f cm%s%s" % (
+        sg["id"], sg["npts"], sg["len_cm"],
+        "" if sg.get("dqdx_med") is None else "   %.0f e/cm" % sg["dqdx_med"],
+        "" if not tag else "   [%s]" % tag)
+
+
+def refresh_segments(pay, keep=True):
+    """Rebuild the segment dropdown, preserving the current pick if it survives."""
+    segs = pf_segments(pay)
+    opts = [seg_label(sg, state["pf_tag"].get(str(sg["id"]))) for sg in segs]
+    cur = state["pf_seg"]
+    seg_select.options = opts
+    if opts:
+        idx = next((i for i, sg in enumerate(segs) if str(sg["id"]) == str(cur)), None)
+        seg_select.value = opts[idx] if (keep and idx is not None) else opts[0]
+        state["pf_seg"] = segs[seg_select.options.index(seg_select.value)]["id"]
+    else:
+        seg_select.value = ""
+        state["pf_seg"] = None
+
+
+def fill_pf(pay, v, rev):
+    """The PF layers, the highlight and the tag rings.
+
+    The TOPOLOGY -- which segments exist and where the junctions are -- is drawn
+    whenever the toggle is on.  It is not behind REVEAL because it is the PR
+    graph, not the STM/Michel verdict.  What IS behind REVEAL is `pf_type`: the
+    segment's pdg and its track/shower flag, which CheckSTM_Michel sets to 11 /
+    shower on the Michel arm (CheckSTM_Michel.cxx:1184) and which would hand the
+    scanner the answer.
+    """
+    segs = pf_segments(pay)
+    pf = (pay or {}).get("pf") or {}
+    on = bool(pf_tog.active)
+    X = Y = Z = []
+    cols = []
+    if segs:
+        X, Y, Z, cols = [], [], [], []
+        for i, sg in enumerate(segs):
+            c = PF_PALETTE[i % len(PF_PALETTE)]
+            X += sg["x"]; Y += sg["y"]; Z += sg["z"]; cols += [c] * len(sg["x"])
+    out = {"pfseg": (X, Y, Z, {"col": cols}) if on else ([], [], [], {"col": []})}
+    vtx = pf.get("vtx") or dict(x=[], y=[], z=[])
+    out["pfvtx"] = ((vtx["x"], vtx["y"], vtx["z"], {}) if on
+                    else ([], [], [], {}))
+    sel = next((sg for sg in segs if sg["id"] == state["pf_seg"]), None)
+    out["pfsel"] = ((sel["x"], sel["y"], sel["z"], {}) if sel else ([], [], [], {}))
+    tx, ty, tz, tc = [], [], [], []
+    for sg in segs:
+        t = state["pf_tag"].get(str(sg["id"]))
+        if not t:
+            continue
+        c = PF_TAGS.get(t, "#000000")
+        tx += sg["x"]; ty += sg["y"]; tz += sg["z"]; tc += [c] * len(sg["x"])
+    out["pftag"] = (tx, ty, tz, {"col": tc})
+    return out
+
+
+def fill_pf_meas(pay, rev):
+    """The PF into the nine measurement panels: vertices and the picked segment."""
+    pf = (pay or {}).get("pf") or {}
+    on = bool(pf_tog.active)
+    vtx = pf.get("vtx") or {}
+    sel = next((sg for sg in pf_segments(pay) if sg["id"] == state["pf_seg"]), None)
+    for pl in PLANES:
+        w, t = _wt(vtx, pl) if on else ([], [])
+        SRCT[(pl, "pfvtx")].data = dict(w=w, t=t)
+        w, t = _wt(sel, pl) if sel else ([], [])
+        SRCT[(pl, "pfsel")].data = dict(w=w, t=t)
+
+
+def fill_seg_div(pay, v, rev):
+    segs = pf_segments(pay)
+    if not segs:
+        seg_div.text = ("<span style='color:#777'>this cluster has no particle-flow "
+                        "segments in T_rec_charge</span>")
+        return
+    sel = next((sg for sg in segs if sg["id"] == state["pf_seg"]), None)
+    ntag = len(state["pf_tag"])
+    if sel is None:
+        seg_div.text = "<span style='color:#777'>%d PF segments</span>" % len(segs)
+        return
+    tag = state["pf_tag"].get(str(sel["id"]))
+    extra = ""
+    if rev:
+        ty = ((v.get("pf_type") or {}).get(str(sel["id"])) or {})
+        pdg = ty.get("pdg")
+        name = {13: "muon", 11: "electron/shower", 211: "pion", 2212: "proton",
+                4: "track, no hypothesis", 1: "shower, no hypothesis"}.get(pdg, str(pdg))
+        extra = ("<br><span style='background:#fff6e5'><b>REVEALED</b> &mdash; "
+                 "chain calls it <b>%s</b> (pdg %s), %s (shower fraction %.2f)</span>"
+                 % (name, pdg, "SHOWER" if ty.get("shower") else "track",
+                    ty.get("frac_shower", 0.0)))
+    seg_div.text = (
+        "<div style='background:#f7f7f7;padding:6px;font-size:93%%'>"
+        "<b>segment S%d</b> &mdash; %d points, %.1f cm, median dQ/dx %s e/cm"
+        "%s &nbsp;|&nbsp; your tag: <b style='color:%s'>%s</b>"
+        " &nbsp;|&nbsp; %d of %d segments tagged%s</div>"
+        % (sel["id"], sel["npts"], sel["len_cm"],
+           "—" if sel.get("dqdx_med") is None else "%.0f" % sel["dqdx_med"],
+           "" if not sel.get("n_rr_sentinel") else
+           " &nbsp;(%d rr sentinel%s at branch vertices)"
+           % (sel["n_rr_sentinel"], "" if sel["n_rr_sentinel"] == 1 else "s"),
+           PF_TAGS.get(tag, "#777"), tag or "none", ntag, len(segs), extra))
+
+
+def on_seg_pick(attr, old_, new_):
+    segs = pf_segments(payload(current()))
+    if new_ in seg_select.options and segs:
+        state["pf_seg"] = segs[seg_select.options.index(new_)]["id"]
+    render()
+
+
+def set_pf_tag(tag):
+    """Tag the picked segment, and persist it the moment there is a row to hold it."""
+    if state["pf_seg"] is None:
+        status.text = "<b style='color:#b00'>pick a PF segment first</b>"
+        return
+    k = str(state["pf_seg"])
+    if tag is None:
+        state["pf_tag"].pop(k, None)
+    else:
+        state["pf_tag"][k] = tag
+    it = current()
+    rec = LABELS.get(item_key(it))
+    if rec is not None:
+        # there is already a saved row for this item -- write through NOW rather
+        # than waiting for another label click, and say what the file holds
+        rec["pf_segments"] = dict(state["pf_tag"])
+        rec["pf_tagged"] = len(state["pf_tag"])
+        save_labels()
+        show_save()
+    else:
+        save_div.text = ("<div style='background:#fff6e5;padding:6px;font-size:92%%'>"
+                         "<b>%d segment tag%s held, NOT yet on disk</b> &mdash; they "
+                         "are written with the label. Click a label button to save."
+                         "</div>" % (len(state["pf_tag"]),
+                                     "" if len(state["pf_tag"]) == 1 else "s"))
+    render()
 
 
 def fill_dqdx(pay, v, px, py, pz, prr, psrc, rev):
@@ -1324,8 +1635,13 @@ def set_label(choice):
         pin=pin, revealed_before_label=bool(reveal_tog.active),
         notes=notes.value, scan_id=it["scan_id"], tranche=it["tranche"],
         event=it["event"], cluster=it["cluster"], npts=it["npts"],
-        muon_len_cm=it["muon_len"], det=DETNAME)
+        muon_len_cm=it["muon_len"], det=DETNAME,
+        # the per-segment answer.  OPTIONAL and additive: a row written before
+        # this existed loads and scores unchanged.
+        pf_segments=dict(state["pf_tag"]), pf_tagged=len(state["pf_tag"]),
+        n_pf_segments=len(pf_segments(pay)))
     save_labels()                     # every click, not only on Save
+    show_save()                       # ... and say what the FILE now holds
     refresh_options()
     render()
     nxt = next((k for k in range(state["idx"] + 1, len(ITEMS))
@@ -1337,6 +1653,7 @@ def set_label(choice):
 def clear_label():
     LABELS.pop(item_key(current()), None)
     save_labels()
+    show_save()
     refresh_options()
     render()
 
@@ -1395,6 +1712,14 @@ frag_thru_btn.on_click(lambda: set_label("FRAG_THRU"))
 messy_btn.on_click(lambda: set_label("MESSY"))
 uncl_btn.on_click(lambda: set_label("UNCLEAR"))
 clear_btn.on_click(clear_label)
+save_info_btn.on_click(save_info)
+pf_tog.on_change("active", lambda a, o, n: render())
+seg_select.on_change("value", on_seg_pick)
+pf_mu_btn.on_click(lambda: set_pf_tag("muon"))
+pf_mic_btn.on_click(lambda: set_pf_tag("michel"))
+pf_oth_btn.on_click(lambda: set_pf_tag("delta / other"))
+pf_mix_btn.on_click(lambda: set_pf_tag("straddles the stop"))
+pf_clr_btn.on_click(lambda: set_pf_tag(None))
 pin_clear_btn.on_click(clear_pin)
 manual_btn.on_click(on_manual)
 rr_slider.on_change("value_throttled", on_rr)
@@ -1446,7 +1771,14 @@ right = column(
     rr_slider,
     row(pin_clear_btn, off_fit_chk),
     row(manual_x, manual_y, manual_z, manual_btn),
-    row(reveal_tog, zoom_tog),
+    row(reveal_tog, zoom_tog, pf_tog),
+    Div(text="<b>particle flow</b> &mdash; the PR graph this chain walked. Pick a "
+             "segment, then say what it is. Your tags are drawn as hollow squares, "
+             "so they can never be confused with the reconstruction's colours.",
+        width=620),
+    seg_select,
+    row(pf_mu_btn, pf_mic_btn, pf_oth_btn, pf_mix_btn, pf_clr_btn),
+    seg_div,
     reveal_div,
 )
 curdoc().add_root(column(
@@ -1461,7 +1793,8 @@ curdoc().add_root(column(
     row(messy_btn, uncl_btn, clear_btn),
     Div(text="<b>the Michel, if any, is:</b> &mdash; required before a STM&nbsp;+&nbsp;MICHEL label is accepted", width=700),
     michel_kind,
-    row(notes, progress),
+    row(notes, progress, save_info_btn),
+    save_div,
     row(left, right),
     status,
 ))
@@ -1472,3 +1805,4 @@ curdoc().title = "%s STM+Michel hand scan (%s)" % (DETNAME.upper(), SCAN_TAG)
 # build-time (feedback_bokeh3_silent_js_traps trap 3).
 curdoc().js_on_event(DocumentReady, js_apply)
 go(0)
+show_save(after_write=False)

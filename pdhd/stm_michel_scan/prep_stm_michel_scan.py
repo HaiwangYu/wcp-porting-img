@@ -157,6 +157,90 @@ def wire_join(rc_tree, rc, P):
             for a in out]
 
 
+def particle_flow(rc, cid, sc, off):
+    """The PR particle flow of one cluster, from T_rec_charge.
+
+    CheckSTM_Michel runs the full PR chain -- find_proto_vertex ->
+    clustering_points -> separate_track_shower -- and the visitor persists all
+    of it per point (PdvdPrMagnifyTrackingVisitor.cxx:855-915):
+
+        sub_cluster_id  = cluster_id * 1000 + segment graph index   (== real_cluster_id,
+                          the same buffer)                          -- the SEGMENT id
+        flag_vertex     = 1 on a graph vertex row (segment id -1, rr -1)
+        flag_shower     = kShowerTrajectory | kShowerTopology       -- track vs shower
+        particle_id     = the segment's pdg, or 4 for a track and 1 for a shower
+                          with no particle hypothesis, or -1 on a vertex row
+
+    Returns (topology, types).  The topology -- which segments exist, where they
+    run, where the junctions are -- is NEUTRAL and always drawn.  `flag_shower`
+    and `particle_id` are the chain's ANSWER (CheckSTM_Michel.cxx:1184 sets the
+    Michel arm's type to 11) and go into the verdict block behind REVEAL, for
+    the same reason `role` does.
+
+    LIMIT, measured in doc pdhd/12 sec 5.7: this segmentation and the chain's
+    own `seg_id` are NOT the same partition, so nothing here may be joined to
+    T_stm_michel_pts by id.
+    """
+    # THE SELECTOR IS sub_cluster_id // 1000, NOT cluster_id.  T_rec_charge's
+    # `cluster_id` branch is bound to reco_mother_cluster_id
+    # (PdvdPrMagnifyTrackingVisitor.cxx:737, 857) -- the id of the GROUP, chosen
+    # once per fill and shared by every cluster in it.  On PDHD 028084_0 it
+    # selects ZERO rows for two of the five STM candidates (their mothers are 34
+    # and 116, their own ids 35 and 117) and the OTHER clusters' segments for the
+    # rest.  `sub_cluster_id` is cluster_id * 1000 + segment graph index (:905),
+    # so its top part is the segment's OWN cluster.
+    empty = dict(seg=[], vtx=dict(x=[], y=[], z=[], pu=[], pv=[], pw=[], pt=[]))
+    b = (rc["flag_vertex"] == 0) & ((rc["sub_cluster_id"] // 1000) == cid)
+    if not b.sum():
+        return empty, {}
+    # A vertex row carries sub_cluster_id = -1 and only the mother's cluster_id,
+    # so it cannot be selected by id at all.  It sits ON a segment endpoint of
+    # its own graph, so keep the vertex rows that land within 1 cm of one of
+    # THIS cluster's segment points.
+    SEG = np.c_[rc["x"][b], rc["y"][b], rc["z"][b]]
+    vall = rc["flag_vertex"] == 1
+    v = np.zeros(len(rc["x"]), bool)
+    if vall.sum() and SEG.size:
+        d, _ = cKDTree(SEG).query(
+            np.c_[rc["x"][vall], rc["y"][vall], rc["z"][vall]], k=1)
+        v[np.flatnonzero(vall)[d < 1.0]] = True
+    out = dict(seg=[], vtx=dict(
+        x=r2(rc["x"][v]), y=r2(rc["y"][v]), z=r2(rc["z"][v]),
+        pu=r2(rc["pu"][v]), pv=r2(rc["pv"][v]), pw=r2(rc["pw"][v]),
+        pt=r2(rc["pt"][v])))
+    types = {}
+    with np.errstate(divide="ignore", invalid="ignore"):
+        dq = np.where(rc["nq"] > 0, (rc["q"] - off) / sc / rc["nq"], np.nan)
+    for sid in sorted({int(t) for t in rc["sub_cluster_id"][b]}):
+        j = b & (rc["sub_cluster_id"] == sid)
+        n = int(j.sum())
+        if not n:
+            continue
+        X, Y, Z = rc["x"][j], rc["y"][j], rc["z"][j]
+        L = float(np.sum(np.sqrt(np.diff(X) ** 2 + np.diff(Y) ** 2 + np.diff(Z) ** 2)))
+        # rr carries a -1 SENTINEL at any vertex of degree > 1
+        # (PdvdPrMagnifyTrackingVisitor.cxx:947-955), not a residual range.
+        rr = rc["rr"][j]
+        d = dq[j]
+        live = np.isfinite(d) & (d > 0)
+        out["seg"].append(dict(
+            id=sid, npts=n, len_cm=round(L, 2),
+            x=r2(X), y=r2(Y), z=r2(Z),
+            pu=r2(rc["pu"][j]), pv=r2(rc["pv"][j]), pw=r2(rc["pw"][j]),
+            pt=r2(rc["pt"][j]),
+            dqdx=r1(np.nan_to_num(d, nan=-1.0, posinf=-1.0, neginf=-1.0)),
+            rr=r2(rr),
+            dqdx_med=round(float(np.median(d[live])), 1) if live.any() else None,
+            n_rr_sentinel=int((rr < 0).sum())))
+        pid = rc["particle_id"][j]
+        sh = rc["flag_shower"][j]
+        types[str(sid)] = dict(
+            pdg=int(np.bincount(np.abs(pid)).argmax()) if n else 0,
+            shower=int(round(float(sh.mean()))),
+            frac_shower=round(float(sh.mean()), 3))
+    return out, types
+
+
 def proj_cells(pj, cid, det):
     """The cluster's 2-D measurement, split by plane.
 
@@ -264,7 +348,13 @@ def build_event(det, evtdir, with_tagger_fit=True):
     m = f["T_stm_michel"].arrays(library="np")
     p = f["T_stm_michel_pts"].arrays(library="np")
     rc = f["T_rec_charge"].arrays(
-        ["x", "y", "z", "pu", "pv", "pw", "pt", "cluster_id"], library="np")
+        ["x", "y", "z", "q", "nq", "rr", "pu", "pv", "pw", "pt", "cluster_id",
+         "sub_cluster_id", "particle_id", "flag_vertex", "flag_shower"],
+        library="np")
+    # dQ/dx unwind, the SAME one used for the tagger fit below: the tree stores
+    # dQ * scale + offset and dx separately (Trun of this very file).
+    _tr = f["Trun"].arrays(["dQdx_scale", "dQdx_offset"], library="np")
+    pf_sc, pf_off = float(_tr["dQdx_scale"][0]), float(_tr["dQdx_offset"][0])
     # the 2-D measurement, once per event.  T_proj_data is ONE entry holding
     # vector-of-vector branches keyed by cluster_id, so unwrap the entry first.
     pj = None
@@ -350,6 +440,8 @@ def build_event(det, evtdir, with_tagger_fit=True):
             ticks_per_slice=smgeom.TICKS_PER_SLICE[det],
             proj=proj_cells(pj, cid, det), dead=dead_bands(bc, det),
         )
+        pf, pf_types = particle_flow(rc, cid, pf_sc, pf_off)
+        pay["pf"] = pf
         v = {k: (float(m[k][i]) if m[k].dtype.kind == "f" else int(m[k][i]))
              for k in VERDICT_SCALARS if k in m}
         v["reject_names"] = bit_names(m["reject_bits"][i])
@@ -364,6 +456,7 @@ def build_event(det, evtdir, with_tagger_fit=True):
                            q=r1(p["q"][k]), seg=[int(s) for s in p["seg_id"][k]],
                            pu=r_pu, pv=r_pv, pw=r_pw, pt=r_pt)
         v["tagger_fit"] = tagfit.get(cid, [])
+        v["pf_type"] = pf_types          # pdg + track/shower per PF segment
         pay["verdict"] = v
 
         row = dict(event=ev, cluster=cid, npts=pay["npts"],

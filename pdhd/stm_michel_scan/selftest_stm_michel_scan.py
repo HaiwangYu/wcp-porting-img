@@ -244,6 +244,11 @@ def test_blind(det, tmp):
         v[key] = POISON
     v["tagger_fit"] = [dict(pass_=0, x=[POISON], y=[POISON], z=[POISON],
                             rr=[POISON], dqdx=[POISON])]
+    # the PF answer.  pdg and the shower flag never reach a ColumnDataSource --
+    # they are rendered as TEXT -- so this one is checked in the Div as well.
+    v["pf_type"] = {k: dict(pdg=int(POISON), shower=1, frac_shower=POISON)
+                    for k in (v.get("pf_type") or {})} or {"0": dict(
+                        pdg=int(POISON), shower=1, frac_shower=POISON)}
     with open(os.path.join(prep, os.path.basename(fn)), "w") as fh:
         json.dump(d, fh)
     refp = os.path.join(src, "dqdx_ref_%s.json" % det)
@@ -262,6 +267,8 @@ def test_blind(det, tmp):
     ck(not g["REND2"][("z", "y", "michel")].visible,
        "%s: the michel renderer is visible with REVEAL off" % det)
     ck(g["reveal_tog"].active is False, "%s: REVEAL does not start off" % det)
+    ck(str(int(POISON)) not in g["seg_div"].text and "REVEALED" not in g["seg_div"].text,
+       "%s: the PF segment panel shows the chain's pdg with REVEAL off" % det)
     ck("hidden" in g["reveal_div"].text,
        "%s: the reveal banner does not say the answer is hidden" % det)
 
@@ -872,6 +879,218 @@ def test_meas_app(det, tmp):
        "%s: the cursor survived a re-render onto a different state" % det)
 
 
+# ---------------------------------------------------------------------------
+# I -- the particle flow
+# ---------------------------------------------------------------------------
+def test_pf_selector(det):
+    """The row selector, gated against the FILES.
+
+    T_rec_charge's `cluster_id` branch is bound to reco_mother_cluster_id -- a
+    GROUP id -- while `sub_cluster_id` is cluster_id * 1000 + graph index.  Using
+    the former silently returns another cluster's segments, or none at all.  This
+    asserts the trap is real on this arm rather than taking the header's word.
+    """
+    print("[I] the particle flow, %s" % det)
+    try:
+        import uproot
+    except ImportError:
+        print("     (uproot missing -- I1 skipped)")
+        return
+    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    nz = ndiff = ncand = 0
+    for fn in sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
+                                            "tracking-pr.root")))[:8]:
+        f = uproot.open(fn)
+        keys = {k.split(";")[0] for k in f.keys()}
+        if "T_stm_michel" not in keys:
+            continue
+        m = f["T_stm_michel"].arrays(["cluster_id"], library="np")
+        rc = f["T_rec_charge"].arrays(
+            ["sub_cluster_id", "flag_vertex", "cluster_id"], library="np")
+        seg = rc["flag_vertex"] == 0
+        for cid in m["cluster_id"]:
+            cid = int(cid); ncand += 1
+            by_mother = set(np.flatnonzero(seg & (rc["cluster_id"] == cid)).tolist())
+            by_seg = set(np.flatnonzero(seg & ((rc["sub_cluster_id"] // 1000) == cid)).tolist())
+            ck(bool(by_seg), "%s: cluster %d has no PF rows under sub_cluster_id//1000" % (det, cid))
+            if not by_mother:
+                nz += 1
+            if by_mother != by_seg:
+                ndiff += 1
+    ck(nz > 0 or ndiff > 0,
+       "%s: selecting PF rows by cluster_id gave the SAME answer everywhere -- "
+       "the documented trap did not reproduce" % det)
+    print("     %d/%d candidates get a DIFFERENT row set from cluster_id "
+          "(%d of them get none at all)" % (ndiff, ncand, nz))
+
+
+def test_pf_payload(det):
+    files = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    nseg = npt = 0
+    for fn in files[::9]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        pf = d.get("pf") or {}
+        ck("seg" in pf and "vtx" in pf, "%s: payload has no pf block" % det)
+        types = (d.get("verdict") or {}).get("pf_type") or {}
+        for sg in pf.get("seg") or []:
+            nseg += 1
+            n = sg["npts"]
+            ck(all(len(sg[k]) == n for k in ("x", "y", "z", "pu", "pv", "pw",
+                                             "pt", "dqdx", "rr")),
+               "%s: ragged PF segment %s" % (det, sg["id"]))
+            ck(sg["id"] // 1000 == d["cluster_id"],
+               "%s: PF segment %d does not belong to cluster %d"
+               % (det, sg["id"], d["cluster_id"]))
+            ck(str(sg["id"]) in types,
+               "%s: PF segment %d has no pf_type entry" % (det, sg["id"]))
+            for i in range(0, n, max(1, n // 5)):
+                npt += 1
+                ck(smgeom.plane_from_chan(det, int(sg["pu"][i])) == 0
+                   and smgeom.plane_from_chan(det, int(sg["pv"][i])) == 1
+                   and smgeom.plane_from_chan(det, int(sg["pw"][i])) == 2,
+                   "%s: PF point of segment %d is not one wire per plane"
+                   % (det, sg["id"]))
+        # pf_type must live ONLY in the verdict block
+        ck("pf_type" not in d and "shower" not in d,
+           "%s: the PF particle type leaked to the payload top level" % det)
+    print("     %d PF segments checked, %d PF points wire-split" % (nseg, npt))
+
+
+def test_pf_app(det, tmp):
+    g = load_app(det, os.path.join(tmp, "labpf_" + det))
+    # find an item that HAS more than one PF segment
+    for i in range(len(g["ITEMS"])):
+        g["go"](i)
+        if len(g["seg_select"].options) > 1:
+            break
+    segs = g["pf_segments"](g["payload"](g["current"]()))
+    ck(len(segs) > 1, "%s: no item with more than one PF segment" % det)
+    if len(segs) < 2:
+        return
+    # the toggle gates the topology layers and nothing else
+    g["pf_tog"].active = False
+    ck(not g["SRC3"]["pfseg"].data["x"] and not g["SRC3"]["pfvtx"].data["x"],
+       "%s: the PF topology is drawn with the toggle off" % det)
+    g["pf_tog"].active = True
+    ck(bool(g["SRC3"]["pfseg"].data["x"]) and bool(g["SRC3"]["pfvtx"].data["x"]),
+       "%s: the PF toggle did not turn the topology on" % det)
+    ck(len(set(g["SRC3"]["pfseg"].data["col"])) == min(len(segs), len(g["PF_PALETTE"])),
+       "%s: the PF segments are not separately coloured" % det)
+    # the segment the panel REPORTS is the segment that was picked
+    for i, sg in enumerate(segs):
+        g["seg_select"].value = g["seg_select"].options[i]
+        ck(g["state"]["pf_seg"] == sg["id"],
+           "%s: picking option %d selected segment %s, not %s"
+           % (det, i, g["state"]["pf_seg"], sg["id"]))
+        ck(len(g["SRC3"]["pfsel"].data["x"]) == sg["npts"],
+           "%s: the highlight has %d points, the segment has %d"
+           % (det, len(g["SRC3"]["pfsel"].data["x"]), sg["npts"]))
+        ck(("S%d" % sg["id"]) in g["seg_div"].text
+           and ("%d points" % sg["npts"]) in g["seg_div"].text
+           and ("%.1f cm" % sg["len_cm"]) in g["seg_div"].text,
+           "%s: the inspector does not report segment %d's own id/npts/length"
+           % (det, sg["id"]))
+        for pl in "uvw":
+            ck(len(g["SRCT"][(pl, "pfsel")].data["w"]) <= sg["npts"],
+               "%s: the %s measurement highlight has more points than the segment"
+               % (det, pl))
+    # tag, save, reload
+    g["seg_select"].value = g["seg_select"].options[0]
+    g["set_pf_tag"]("michel")
+    ck(len(g["SRC3"]["pftag"].data["x"]) == segs[0]["npts"],
+       "%s: the tag ring does not cover the tagged segment" % det)
+    ck(set(g["SRC3"]["pftag"].data["col"]) == {g["PF_TAGS"]["michel"]},
+       "%s: the tag ring is not in the tag colour" % det)
+    ck("NOT yet on disk" in g["save_div"].text,
+       "%s: a tag with no label claimed to be saved" % det)
+    g["michel_kind"].active = g["MICHEL_KINDS"].index("attached")
+    key = g["item_key"](g["current"]())
+    g["set_label"]("STM_MICHEL")
+    with open(g["LABEL_FILE"]) as fh:
+        rec = json.load(fh)["labels"][key]
+    ck(rec.get("pf_segments") == {str(segs[0]["id"]): "michel"},
+       "%s: pf_segments did not round-trip: %r" % (det, rec.get("pf_segments")))
+    ck(rec.get("pf_tagged") == 1 and rec.get("n_pf_segments") == len(segs),
+       "%s: pf_tagged/n_pf_segments wrong: %r %r"
+       % (det, rec.get("pf_tagged"), rec.get("n_pf_segments")))
+    # write-through on an ALREADY labelled item
+    g["go"](g["ITEMS"].index(next(it for it in g["ITEMS"]
+                                  if g["item_key"](it) == key)))
+    g["seg_select"].value = g["seg_select"].options[1]
+    g["set_pf_tag"]("muon")
+    with open(g["LABEL_FILE"]) as fh:
+        rec = json.load(fh)["labels"][key]
+    ck(rec.get("pf_segments", {}).get(str(segs[1]["id"])) == "muon",
+       "%s: tagging an already-labelled item did not write through" % det)
+    ck("saved and read back" in g["save_div"].text,
+       "%s: the write-through did not report the read-back" % det)
+    # BACKWARD COMPATIBILITY: a row written before pf_segments existed
+    with open(g["LABEL_FILE"]) as fh:
+        blob = json.load(fh)
+    blob["labels"][key].pop("pf_segments", None)
+    blob["labels"][key].pop("pf_tagged", None)
+    blob["labels"][key].pop("n_pf_segments", None)
+    with open(g["LABEL_FILE"], "w") as fh:
+        json.dump(blob, fh)
+    g2 = load_app(det, os.path.dirname(g["LABEL_FILE"]))
+    ck(g2["LABELS"].get(key, {}).get("label") == "STM_MICHEL",
+       "%s: a label with no pf_segments failed to load" % det)
+    g2["go"](g2["ITEMS"].index(next(it for it in g2["ITEMS"]
+                                    if g2["item_key"](it) == key)))
+    ck(g2["state"]["pf_tag"] == {},
+       "%s: a label with no pf_segments produced phantom tags" % det)
+
+
+# ---------------------------------------------------------------------------
+# J -- the save read-back
+# ---------------------------------------------------------------------------
+def test_save_readback(det, tmp):
+    print("[J] the save read-back, %s" % det)
+    lab = os.path.join(tmp, "labsv_" + det)
+    g = load_app(det, lab)
+    ok, n, nb, mt, err = g["read_back"]()
+    ck(ok and n == 0, "%s: a fresh label dir did not read back as empty (%r)"
+       % (det, err))
+    ck("nothing saved yet" in g["save_div"].text,
+       "%s: the opening banner does not say the file is empty: %s"
+       % (det, g["save_div"].text[:140]))
+    key = g["item_key"](g["current"]())
+    g["set_label"]("THRU")            # NOTE: this advances to the next item
+    ok, n, nb, mt, err = g["read_back"]()
+    ck(ok and n == 1 and nb > 0,
+       "%s: after one label the file reads back %r labels" % (det, n))
+    ck("saved and read back" in g["save_div"].text
+       and "holds <b>1</b> label" in g["save_div"].text,
+       "%s: the save banner does not report the read-back: %s"
+       % (det, g["save_div"].text[:160]))
+    # the banner must come from the FILE, not from LABELS in memory
+    g["LABELS"]["fake/999"] = dict(label="THRU")
+    g["show_save"](after_write=False)
+    ck("holds <b>1</b> label" in g["save_div"].text,
+       "%s: the banner counted an in-memory label the file does not hold: %s"
+       % (det, g["save_div"].text[:160]))
+    g["LABELS"].pop("fake/999")
+    # save_info names THIS item and finds it -- go back to the one just labelled
+    g["go"](g["ITEMS"].index(next(it for it in g["ITEMS"]
+                                  if g["item_key"](it) == key)))
+    g["save_info"]()
+    ck(key in g["status"].text and "is on disk" in g["status"].text,
+       "%s: save_info did not report this item's saved row: %s"
+       % (det, g["status"].text[:160]))
+    # an unreadable file is reported as NOT saved, not as saved
+    with open(g["LABEL_FILE"], "w") as fh:
+        fh.write("{ this is not json")
+    ok, n, nb, mt, err = g["read_back"]()
+    ck(not ok, "%s: a corrupt labels.json read back as OK" % det)
+    g["show_save"]()
+    ck("NOT SAVED" in g["save_div"].text,
+       "%s: a corrupt labels.json was still reported as saved" % det)
+    g["save_info"]()
+    ck("could not read" in g["status"].text,
+       "%s: save_info did not report the unreadable file" % det)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -891,8 +1110,12 @@ def main():
             test_scorer(det, tmp)
             test_meas_static(det)
             test_meas_app(det, tmp)
+            test_pf_payload(det)
+            test_pf_app(det, tmp)
+            test_save_readback(det, tmp)
             if not a.quick:
                 test_meas_causal(det)
+                test_pf_selector(det)
                 test_image_split(det)
                 agree[det] = test_unit_agreement(det, os.path.join(HERE, "prep-" + det))
     finally:

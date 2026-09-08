@@ -29,6 +29,16 @@ gates it added are §10 items 11–16 and its limits are §11 items 6–8. The s
 the sheet, the key and the label schema are unchanged — the four committed TSVs
 are byte-identical after the re-prep, gated with `git diff --exit-code`.
 
+**Round 3, same day.** Owner ask: *"probably good to add a save info button, so
+that I know the information is properly saved? also for the CheckSTM_Michel,
+does it have a Particle Flow? It would be nice if that particle flow can be
+added as well, so that we can select? … With particle flow, we also want the
+track vs. shower, etc. If those are not available in the checkSTM_Michel, this
+would be one thing that we should improve upon."* Sections **5.7** (the particle
+flow, what is available and the one thing that is not) and **5.8** (the save
+read-back) are that round, with §7 extended for the new `pf_segments` field.
+**It is available**, and §5.7.4 names precisely the one thing that is not.
+
 A question that came with it: *"for the fit results, are they coming from
 CheckSTM_Michel PR stage or the STM tagger stage? I would like the former since
 the fit is more spaced at 0.6 cm."* **The former, and it always was.** Measured
@@ -44,11 +54,11 @@ measurement panels.
 
 ```bash
 cd wcp-porting-img/pdhd/stm_michel_scan
-./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items, 119 MB
-./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 201 MB
+./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items, 126 MB
+./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 212 MB
 git -C .. diff --exit-code -- pdhd/docs/scan pdvd/docs/scan   # sheets unchanged
-./selftest_stm_michel_scan.py                   # 1725 headless checks, both detectors
-./selftest_smx3d_browser.py --det pdhd          # 32 checks in headless chromium
+./selftest_stm_michel_scan.py                   # 6252 headless checks, both detectors
+./selftest_smx3d_browser.py --det pdhd          # 39 checks in headless chromium
 ./selftest_smx3d_browser.py --det pdvd
 ./serve_stm_michel_scan.sh 5023 --det pdhd --scan-tag smx1
 cd ../../pdvd/stm_michel_scan
@@ -414,6 +424,137 @@ genuinely varies by plane and detector — but gets its own **cool** ramp, becau
 `near` and `muon` were both Viridis in the same panels, so charge-per-point and
 charge-per-cm read as one quantity.
 
+### 5.7 The particle flow
+
+**Yes, CheckSTM_Michel has one, and all of it is persisted.** The chain runs the
+full PR sequence — `find_proto_vertex` → `clustering_points` →
+`separate_track_shower`, rooted at the entry vertex via `set_main_vertex` — and
+`PdvdPrMagnifyTrackingVisitor.cxx:855-915` writes every part of it per point in
+`T_rec_charge`:
+
+| what | branch | how it is written |
+|---|---|---|
+| **segment id** | `sub_cluster_id` (and `real_cluster_id` — the *same buffer*) | `cluster_id × 1000 + segment graph index` (`:905`) |
+| **vertices** | `flag_vertex == 1` | one row per graph vertex, `sub_cluster_id = −1`, `rr = −1` (`:864-889`) |
+| **track vs shower** | `flag_shower` | `kShowerTrajectory ∨ kShowerTopology` (`:909-911`) |
+| **particle type** | `particle_id` | the segment's PDG, or **4** = track with no hypothesis, **1** = shower with no hypothesis, **−1** on a vertex row (`:913-914`) |
+
+Over the 870 scan items: median **5** segments (PDHD) / **4** (PDVD), p90 16/10,
+max 42/31; median 6/5 vertices, max 42/34; median 310/271 PF fit points. **No
+item has zero PF segments.**
+
+#### 5.7.1 What is on screen
+
+A `show particle flow` toggle draws the segments — each in its own colour — and
+the junction vertices, in the 3-D view and the three projections, plus the
+vertices and the picked segment in the nine measurement panels. A dropdown lists
+every segment with its point count, length and median dQ/dx; picking one
+highlights it everywhere in amber and prints its numbers.
+
+The toggle defaults **off**, so the view a scanner already knows is unchanged
+until they ask for the graph.
+
+#### 5.7.2 What you tag, and why per segment is well posed
+
+For the picked segment: **muon**, **Michel**, **delta / other**, **straddles the
+stop**, or untag. The tags are drawn as **hollow squares** — a channel no other
+marker on the page uses — so a scanner's own answer can never be read as the
+reconstruction's colour.
+
+"Straddles the stop" exists because per-segment tagging is *almost* but not
+always well posed. Measured over 25 events per detector, joining each PF point
+to the chain point at the same position and asking which `role`s a PF segment
+carries:
+
+| | one side only | muon ↔ Michel straddle | muon + delta | delta only | Michel only |
+|---|---|---|---|---|---|
+| PDHD (780 segments) | 0.760 | **0.035** | 0.205 | 0.068 | 0.029 |
+| PDVD (472 segments) | 0.790 | **0.066** | 0.144 | 0.040 | 0.072 |
+
+So the boundary the scan is actually about — muon versus Michel — is straddled
+by only 3.5 % / 6.6 % of segments. The common mixing is delta-plus-muon (a delta
+ray on the muon body), which the alphabet already separates. Without the
+straddle button those few per cent would be forced into a coin flip.
+
+#### 5.7.3 The blind, and the selector trap
+
+`CheckSTM_Michel.cxx:1184` sets the Michel arm's type to **11**, so
+`particle_id` and `flag_shower` **are** the chain's Michel verdict — 93 % of
+role-3 points carry pdg 11 and 99.3 % of role-1 points carry pdg 13. They live
+in the verdict block behind REVEAL, exactly like `role`. The *topology* — which
+segments exist, where they run, where the junctions are — is the PR graph rather
+than the STM verdict, and is always available.
+
+**The rows are selected by `sub_cluster_id // 1000`, never by `cluster_id`.**
+`T_rec_charge`'s `cluster_id` branch is bound to `reco_mother_cluster_id`
+(`:737`, `:857`) — the id of the *group*, chosen once per fill and shared by
+every cluster in it. Selecting on it is silently wrong: on PDHD `028084_0` it
+returns **zero** rows for two of the five STM candidates (their own ids are 35
+and 117, their mother's are 34 and 116) and *another cluster's* segments for the
+rest. Over the first 8 events of each arm the two selectors differ on **7 of 32**
+PDHD candidates (6 of them getting nothing) and **12 of 37** PDVD candidates.
+The self-test asserts that this trap still reproduces, so the reason for the
+selector cannot quietly rot away.
+
+#### 5.7.4 The one thing that is NOT available — and it is worth fixing
+
+`T_stm_michel_pts` carries a `seg_id` computed by the **identical formula** as
+`T_rec_charge.sub_cluster_id` — `cluster_id × 1000 + graph index`
+(`CheckSTM_Michel.cxx:668-669` vs `PdvdPrMagnifyTrackingVisitor.cxx:905`) — and
+the two are nevertheless **not the same partition of the same points**. Measured
+over 25 events per detector, with the correct selector and matching points by
+position:
+
+| | `seg_id == sub_cluster_id` | chain segment → exactly one PF segment | PF segment → exactly one chain segment |
+|---|---|---|---|
+| PDHD | 0.3771 | 0.2599 (277 segments) | 0.7977 (692 segments) |
+| PDVD | 0.5499 | 0.3251 (203) | 0.8144 (431) |
+
+Neither is a refinement of the other: they **cross-cut**. This doc does not
+claim to know why — that would need tracing, and a plausible-looking line is not
+a defect site. What is measured is that the two ids are not a shared identity,
+and the consequence is concrete:
+
+- **Nothing here may be joined by id.** The display joins the chain and the PF
+  **by position**, which is exact — every chain point matches a `T_rec_charge`
+  point within 0.05 cm, 1.000 on both detectors and on every role (§5.4).
+  An id join would look entirely plausible and be wrong on more than half the
+  points.
+- **The scorer inherits this.** A `pf_segments` tag is an answer about a **PF**
+  segment while `role` is about a **chain** segment, so scoring the two against
+  each other must go through the positional map, per point. §7 says so, and the
+  scorer is not written to assume otherwise.
+
+**The improvement to make in `CheckSTM_Michel`** — recorded here rather than
+done, because it is a change to a production component and needs its own
+default-OFF round: persist, alongside each chain point, the segment identity the
+*visitor* will write, or have the visitor persist the chain's `seg_id`. Either
+one makes the chain's roles and the PF segments joinable exactly, and would turn
+the positional join above into an index lookup. Two branches' worth of change;
+the rest of this display is already built to survive without it.
+
+### 5.8 Knowing the labels are saved
+
+Labels were already written atomically on every click, but "it was saved" was a
+claim about a write that returned. Now every save **reads the file back** — it
+re-opens `labels.json`, re-parses it, and reports the count, byte size and
+modification time *from that parse*. A green banner under the buttons says what
+the file holds; a `what is saved on disk?` button re-reads on demand and prints
+this item's own saved row, including its pin and its segment tags.
+
+The distinctions the banner makes, all of which have been wrong somewhere:
+
+- **a file that does not exist yet** reads back as *"nothing saved yet"*, not as
+  an error — otherwise a fresh `--scan-tag` cries wolf on every start;
+- **a file that exists but will not parse** reads back as **NOT SAVED**, in red,
+  rather than as saved;
+- **the count comes from the file, never from `LABELS` in memory** — the
+  self-test adds a phantom label to the in-memory dict and asserts the banner
+  does not count it;
+- **segment tags placed before any label** are held, not saved, and the banner
+  says so in amber; tagging an item that *already* has a saved row writes
+  through immediately and re-reports the read-back.
+
 ## 6. The blind, and one honest limit
 
 Two published rules pull in opposite directions here and both are right:
@@ -489,7 +630,15 @@ pin          {x, y, z, rr, placed, source, moved_cm, off_fit,
               unit, cru, face, unit_source}
 revealed_before_label, notes, scan_id, tranche, event, cluster, npts,
 muon_len_cm, det
+pf_segments  {"<PF segment id>": "muon" | "michel" | "delta / other"
+                                 | "straddles the stop"}      (round 3)
+pf_tagged    how many segments carry a tag
+n_pf_segments how many the cluster has, so a partial tagging is visible as one
 ```
+
+`pf_segments` is **optional and additive**: the row written before it existed
+loads, renders and scores unchanged, and the self-test asserts exactly that by
+stripping the field from a saved row and reloading the app.
 
 `FRAG` is three buttons and not one because *"the chain ends but grey charge
 continues"* holds two opposite truths — a fragment of a through-goer (the tag is
@@ -503,13 +652,26 @@ than trusted:
 | goal | the fields that serve it |
 |---|---|
 | 1. select the topology robustly | `label` against the key's `is_stm` / `michel_found` gives purity **and** efficiency; the sole-reject-bit census then names what costs the most. Doc pdvd/48 §11 already measured `shape_flat` as 69 sole rejects, 26 of them Michel-carrying |
-| 2. separate muon from Michel | `pin` is the boundary; `moved_cm` is the residual against the chain's own stop; the role partition scores against the pin |
+| 2. separate muon from Michel | `pin` is the boundary; `moved_cm` is the residual against the chain's own stop; the role partition scores against the pin. **`pf_segments` is the direct answer**: a hand assignment of each PR segment to the muon or the Michel, which is the separation stated as a per-object partition rather than as a single point |
 | 3. the Michel energy spectrum | `michel_ke_best` on the rows the scanner called `STM_MICHEL` — the label **is** the sample definition |
 | 4. angle vs momentum | `michel_kink_deg` (angle), `michel_ke_best`, and `muon_len` → muon momentum by range, on that same subsample |
 
 `michel_kind` is asked of the scanner rather than taken from
 `michel_conn_type`: the chain's 1 = attached / 2 = detached-dot is a decision,
 not an observation, and goal 2 needs the observation.
+
+**One trap `pf_segments` carries, stated here so the scorer cannot fall into
+it.** A tag is an answer about a **PF segment**; `role` is an answer about a
+**chain segment**; and §5.7.4 measured that those are not the same partition —
+a chain segment maps to exactly one PF segment only 0.26 (PDHD) / 0.33 (PDVD) of
+the time, and the reverse only 0.80 / 0.81. So `pf_segments` may **never** be
+scored against `role` by joining segment ids, however identical the two id
+formulas look. The comparison is per POINT, through the positional map: take each
+PF point of a tagged segment, find the chain point at the same position (exact
+to 0.05 cm), and compare the tag to that point's `role`. `straddles the stop`
+rows are excluded from the agreement and counted separately — they are the
+scanner saying the question was not well posed for that segment, which is a
+datum about the segmentation, not a failure to answer.
 
 ## 8. The sample
 
@@ -585,11 +747,18 @@ All run and passing at the time of writing.
 | the dQ/dx scale is the fixed one; the `×0.5…×4` multiplier moves all six cell/residual mappers together | PASS |
 | no colour in the dQ/dx palette exceeds 0.90 relative luminance, and every marker in that panel is outlined | PASS |
 | **the click link**: driving a selection puts the cursor on the *same* point in the 3-D layer, all 3 projections and all 3 measurement rows; its `pu/pv/pw` are one per plane; deselect clears it; a re-render clears it; two series cannot stay selected at once | PASS |
-| **headless total** | **1725 checks, 0 failures** |
+| **the PF row selector**: selecting by `cluster_id` must give a *different* row set from `sub_cluster_id // 1000` on this arm — the trap is asserted to still reproduce (7/32 PDHD candidates, 6 getting none; 12/37 PDVD) | PASS |
+| every PF segment belongs to its item's cluster, its columns are the same length, it has a `pf_type` entry, and its points split one wire per plane | PASS, 173 / 293 segments |
+| the PF blind: the poisoned `pf_type` reaches no source **and** no Div with REVEAL off — pdg is rendered as text, so the source walk alone would miss it | PASS |
+| the toggle gates the topology and nothing else; the segments are separately coloured; the inspector reports the id, point count and length of the segment that was **picked** | PASS |
+| `pf_segments` round-trips, a tag on an already-labelled item writes through immediately, a tag with no label says it is **not** on disk, and a row with the field stripped still loads with no phantom tags | PASS |
+| the save read-back: a missing file reads as *nothing saved yet*, a corrupt one as **NOT SAVED**, the count comes from the file and not from `LABELS` (asserted by adding a phantom in-memory label), and `save_info` names this item's row | PASS |
+| **headless total** | **6252 checks, 0 failures** |
 | a real mouse drag in headless chromium reaches the CustomJS; every layer moves with it; no row count changes; no point projects outside its own distance from the camera centre; no page errors | PASS |
 | the measurement tab paints in a real browser on the **heaviest** item of the arm (22 106 / 20 574 cells, drawn three times), with the causal control that emptying the cell sources moves 748 / 877 painted pixels — the check that caught the sub-pixel `rect` bug, where it moved exactly 0 | PASS, first paint 1.6 s |
 | the click link over the real websocket: set the selection **in the browser**, assert the cursor reaches the 3-D layer and all three measurement panels on the point's own wire and slice | PASS |
-| **browser total** | **32 checks each detector, 0 failures** |
+| the `show particle flow` toggle and the segment dropdown pressed as **real widgets** in the browser, so the server callback and the round trip back are both exercised | PASS |
+| **browser total** | **39 checks each detector, 0 failures** |
 | `serve_*.sh` refuses a busy port (rc=2, names the owning pid) | PASS |
 | labels live in `work/stm_michel_labels/<tag>/`, a sibling of the per-event dirs | by construction |
 
@@ -639,6 +808,15 @@ drifts far enough to invalidate §6.2's prose.
    The statistically correct residual is the pull `(measured − predicted) /
    charge_err`, and `charge_err` is already in the payload — a one-line addition
    if it turns out to be the more readable panel.
+10. **The chain's `seg_id` and the PF's `sub_cluster_id` are not a shared
+    identity** (§5.7.4). Everything here joins by position instead, which is
+    exact; but any *future* analysis that reaches for the id join will be wrong
+    on more than half the points and will not look wrong. This is the one thing
+    §5.7.4 names as worth fixing in `CheckSTM_Michel` itself.
+11. **`pf_segments` is the scanner's segmentation of the PR graph, not of the
+    truth.** Where the PR graph itself is wrong — a Michel merged into the muon
+    body as one segment — the best available tag is `straddles the stop`, and
+    that row measures the segmentation rather than the scanner.
 
 ## 12. Next step
 
