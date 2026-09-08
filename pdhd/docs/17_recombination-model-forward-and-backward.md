@@ -491,7 +491,7 @@ exactly the two-carrier problem doc pdhd/16 avoided, so it is not done.
 | `./build/clus/wcdoctest-clus` | **336 / 336**, 23 199 assertions — includes the new `stm_michel_charge_to_energy_model` case and the two knob defaults |
 | `./build/gen/wcdoctest-gen` | **18 / 18**, 789 assertions |
 | the new doctest pins | four **absolute** MeV/e values (35.489 flat, 33.913 / 33.538 uncalibrated, 42.706 / 41.303 calibrated per 1e6 e) — a ratio-only test would not catch the `units::cm/units::MeV` factor of 10 the practical-unit models carry (doc 88) — plus linearity, `dx` cancellation, the dense-deposit sign, and every guard returning exactly 0 |
-| compiled-config, knob **absent** | PDVD 62 nodes vs 62, PDHD 50 vs 50, same node set, **zero differences** |
+| compiled-config, knob **absent** | PDVD 62 nodes vs 62, PDHD 50 vs 50, same node set, **zero differences**. Measured before the driver edit, i.e. against `git show HEAD:pdvd/wct-pr-perevt.jsonnet` — the drivers now carry the keys, so re-running the Repro today gives the knob-**present** arm on both. To redo the absent arm, compile the pre-`ff7db93f` driver, or drop the two keys from `stm_michel_knobs`. |
 | compiled-config, knob **present** | **exactly one node changes** (`CheckSTM_Michel:pr`), **exactly two keys added** (`michel_unfit_from_model`, `michel_unfit_dedx`); nothing else, either detector |
 | freshness proof (M1) | `libWireCellClus.so` 14:12 against sources 14:09 / 14:10; md5 `ee4a1582d069` unchanged across the smoke run |
 | smoke run, `pdhd/work/028084_0_d17hsmoke` | 24 s, rc 0. Cluster 43, Q = 447 302.014 e: `dots_ke_unfit` **15.874177 → 18.475133 MeV, ×1.1638** — the doctest constant, reproduced by the chain to 4 decimals. `michel_ke_best` follows it. |
