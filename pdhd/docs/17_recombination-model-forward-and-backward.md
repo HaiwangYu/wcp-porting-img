@@ -199,9 +199,13 @@ three models drawn. 46 006 points on 151 PDVD muons. The pooled medians (black) 
 on the green shipped curve; the blue C = 1 curve is where the charge would have
 to be for the pre-doc-16 inverse to have been right, and it is nowhere near the
 data at any dE/dx. **The level is not a test** — it is what `C` was fitted to. What
-*is* a test is that one constant works across the whole 2.1 – 5 MeV/cm span
-rather than only at the median, i.e. that the Modified Box *shape* at
-0.45 kV/cm is right.
+*is* a test is whether one constant survives the whole 2.1 – 5 MeV/cm span
+rather than only working at the median, i.e. whether the Modified Box *shape*
+at 0.45 kV/cm is right. Pooled data/model over six dE/dx bins:
+**0.972, 0.952, 1.042, 1.060, 1.076, 1.024** (PDVD; PDHD 0.986–1.060). A ±6 %
+wobble with 90 % of the points in the two lowest bins — inside the ±10 %
+per-track spread of panel 3, and much smaller than the 0.83 the model was off
+by, but not zero. Panel 4 is the sharper version of this test.
 
 **Panel 2 — the same three models against residual range**, the doc pdvd/50
 §14 view, with the shipped `MuonDeDx` table drawn as a black dotted line. Two
