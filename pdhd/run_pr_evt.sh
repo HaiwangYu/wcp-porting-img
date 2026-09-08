@@ -81,7 +81,9 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1} MKL_NUM_THREADS=${MKL_NUM_THREADS:-
 SEL_TAG=""
 MODE=stm    # cosmic taggers only, up to tagger_check_stm; -nu appends the PR tail
 STM_FIT=0
-UNMERGE=0   # doc pdhd/06: split back what clustering_isolated merged
+UNMERGE=1   # doc pdhd/11 sec 11 (owner flip 2026-09-07): split back what
+            # clustering_isolated merged.  PDVD has run this by default since
+            # 2026-09-04 (doc pdvd/39 r2); -nounmerge restores the old chain.
 PIPE_EXPLICIT=""
 _args=()
 while [ $# -gt 0 ]; do
@@ -118,13 +120,13 @@ RUN=$1; EVT=$2; SUBRUN_ARG=${3:-}
 # PDHD never wrote the assoc_cluster_id/assoc_cluster_main provenance, so there
 # was nothing for the visitor to undo.  That is now a knob:
 # run_clus_evt.sh -save-assoc writes it, this -unmerge consumes it.
-PIPE_STM="switch_scope,flag_mains,steiner,fiducialutils,tagger_check_tgm,tagger_check_stm,tagger_check_fc,protect_bundle,steiner_refresh,pr_display"
+PIPE_STM="switch_scope,flag_mains,unmerge_assoc,steiner,fiducialutils,tagger_check_tgm,tagger_check_stm,tagger_check_fc,protect_bundle,steiner_refresh,pr_display"
 # doc pdhd/03 (owner 2026-09-05): -nu runs the STM + Michel stage
 # (check_stm_michel) in place of the neutrino PR tail; tagger_output is dropped
 # with it (T_tagger/T_kine carried only neutrino BDT features).  pr_display is
 # already in PIPE_STM (inert there; live here).  The legacy neutrino tail is
 # preserved VERBATIM as PIPE_NU_LEGACY behind -nu-legacy for the A/B gates.
-PIPE_NU="switch_scope,flag_mains,steiner,fiducialutils,tagger_check_tgm,tagger_check_stm,tagger_check_fc,protect_bundle,steiner_refresh,check_stm_michel,tracking_visitor,pr_display"
+PIPE_NU="switch_scope,flag_mains,unmerge_assoc,steiner,fiducialutils,tagger_check_tgm,tagger_check_stm,tagger_check_fc,protect_bundle,steiner_refresh,check_stm_michel,tracking_visitor,pr_display"
 PIPE_NU_LEGACY="$PIPE_STM,tagger_check_neutrino,tracking_visitor,tagger_output"
 case "$MODE" in
     nu) PIPE="$PIPE_NU" ;;
@@ -138,12 +140,24 @@ esac
 # the split must precede steiner_pc creation; after flag_mains so the split-off
 # fragments are removed from the main's Steiner build and STM fit WITHOUT being
 # promoted to mains and given cosmic verdicts of their own.
-if [ "$UNMERGE" = 1 ] && [ -n "$PIPE" ]; then
-    case ",$PIPE," in
-        *,unmerge_assoc,*) ;;
-        *,flag_mains,*) PIPE="${PIPE/flag_mains,/flag_mains,unmerge_assoc,}" ;;
-        *) echo "ERROR: -unmerge needs flag_mains in the pipeline (got '$PIPE')" >&2; exit 4 ;;
-    esac
+if [ -n "$PIPE" ]; then
+    if [ "$UNMERGE" = 1 ]; then
+        case ",$PIPE," in
+            *,unmerge_assoc,*) ;;
+            *,flag_mains,*) PIPE="${PIPE/flag_mains,/flag_mains,unmerge_assoc,}" ;;
+            *) echo "ERROR: -unmerge needs flag_mains in the pipeline (got '$PIPE')" >&2; exit 4 ;;
+        esac
+    else
+        # -nounmerge must REMOVE the stage, not merely decline to insert it.
+        # Before the 2026-09-07 owner flip the default pipelines had no
+        # unmerge_assoc and skipping the insertion above was enough; the flip
+        # wrote the stage into PIPE_STM/PIPE_NU themselves, and from then until
+        # doc pdvd/50 round 2 found it, -nounmerge was a SILENT NO-OP -- it
+        # produced the unmerge chain and said nothing.  PDVD never had this bug
+        # (it selects the separate PIPE_{STM,NU}_MERGED strings instead).
+        PIPE="${PIPE//unmerge_assoc,/}"
+        PIPE="${PIPE//,unmerge_assoc/}"
+    fi
 fi
 if [ "$STM_FIT" = 1 ] && [ -n "$PIPE" ]; then PIPE="$PIPE,stm_magnify"; fi
 PIPE_JSON="[$(echo "$PIPE" | sed -e 's/,/","/g' -e 's/^/"/' -e 's/$/"/' -e 's/^""$//')]"

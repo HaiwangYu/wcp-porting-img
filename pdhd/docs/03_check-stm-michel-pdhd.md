@@ -388,6 +388,13 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
    `WCT_..._DUMP`-style probe before it is trusted.
 4. `min_chain_coverage` does not separate (sec 6.5); the persisted `chain_coverage` is the input
    for a better shape test (transverse width of the cluster about the chain?).
+
+   > **2026-09-07** -- sec 10 item 2 of this doc noted that the PDHD operating point was chosen by
+   > reading ~40 panels of 166 candidates, "not by a blind scan".  `doc pdhd/12`
+   > (`pdhd/stm_michel_scan/`) is that scan, built as an interactive display for both detectors:
+   > 3-D + X-Y / Y-Z / Z-X projections over the imaged charge, the fitted chain with its dQ/dx, a
+   > hand-placed stopping point labelled by APA / CRU, and the chain's own answer behind a REVEAL
+   > toggle that every label records.
 5. Wire-parallel tracks (sec 9 item 2) need a direction-to-wire angle guard; the x < 0 / x > 0
    charge asymmetry (sec 9 item 1) is a calibration question for the detector.
 6. The STM tagger itself still bridges its single-track fit 40-60 cm into detached fragments and
@@ -396,3 +403,19 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
 7. `-nu-legacy` on PDHD now runs with `excl_t0_frame` (sec 4); `-S excl_t0_frame=false` restores the
    pre-doc-03 tail byte-for-byte (gate D).
 
+8. **doc pdhd/13** measured three loss modes in the Michel search on the `d51hnu`/`d51vnu` arms:
+   the companion admission gate is `dot_max_len_cm` (`:812`), so a detached Michel longer than
+   10 cm never enters the PR at all; `michel_found` is set only by the attached path (`:1169`), so
+   33 PDHD / 41 PDVD candidates carry a reconstructed Michel that is never reported; and on
+   74 % (PDHD) / 67 % (PDVD) of the `is_stm & no Michel` set the PR fitted segments that the arm
+   classifier then discarded.  Fixes specified there as default-OFF knobs; none applied yet.
+9. **doc pdhd/14** persists the muon energy this module already computed and threw away, plus the
+   daughter segment id that closes the `mu -> e` edge on the attached path.  Four new
+   `T_stm_michel` branches, default on (owner 2026-09-07), 75 pre-existing branches bit-unchanged.
+10. **doc pdhd/15** makes the Michel **one object** — the stop arm (or, when the 3-D clustering
+   detached it, the nearest admitted piece), the shower completion, and every fitted segment of an
+   admitted companion — energised once through `PatternAlgorithms::calculate_shower_kinematics`.
+   Fixes doc pdhd/13's D1 and D2 and an energy-accounting bug that left the pieces out of
+   `michel_ke_best` (PDVD 039252_15 cluster 91: 16.2 MeV reported for a 29.2 MeV Michel; 9 PDHD /
+   17 PDVD candidates, missing fraction median 22.5 % / 12.2 %).  Nine new `T_stm_michel` branches;
+   `dot_max_len_cm`'s default moves 10 -> 25 cm and `companion_max_len_cm` is new at 25.

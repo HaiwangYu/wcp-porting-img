@@ -343,6 +343,15 @@ and the median threshold scales as `48 000 × 54 609.2/54 657.7 = 47 957 → 48 
 These *coincidentally* equal SBND's raw values — the arithmetic is shown so it is
 not read as a copy. (PDVD's plateau is 1.2 % lower and lands on 55 000/47 000.)
 
+> **SUPERSEDED 2026-09-07 by doc pdvd/50 §14 (round 2): the PDHD tables ARE now
+> confirmed on data.** The n = 1 below was not a sample-size problem — it was the
+> pre-doc-11 reconstruction. On the doc-11 chain (unmerge_assoc + the defect-B FV
+> fix) the same 61-event material gives **40 clean stopping muons**, k_pop 1.045
+> with χ² 14.7/11 over 11 residual-range bins, and 80/64/63 points in the three
+> lowest bins where this table had 12/7/11. The `--max-abs-x 305` default that
+> `d42_dqdx_rr.py` applies here is also wrong for PDHD — doc pdvd/50 §6 and
+> §14.3. Do not quote the table below as a statement about PDHD.
+
 **Against data: derived and consistent, NOT confirmed.** `d42_dqdx_rr.py` on the
 30-event arm:
 

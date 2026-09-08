@@ -79,8 +79,12 @@ def main():
         fh.write("# bee_idx -> event.  FULL-LAYER set (doc pdhd/05 sec 9): the tagger layers\n")
         fh.write("# ARE included -- this is a diagnostic, not a blind scan.\n")
         for idx, e, d, layers, npts in index:
-            fh.write("%d\t029107 evt %d\t%s\t%s%s\n"
-                     % (idx, e, d, ",".join(layers),
+            # the run comes from the work dir, not a literal: this script was
+            # written for 029107 and doc pdhd/11 runs it on 028084, where a
+            # hard-coded run number silently mislabels the record.
+            run = os.path.basename(d.rstrip("/")).split("_")[0]
+            fh.write("%d\t%s evt %d\t%s\t%s%s\n"
+                     % (idx, run, e, d, ",".join(layers),
                         ("\thighlighted: " + ", ".join("cl %d (%d pts)" % (c, n)
                                                        for c, n in npts.items())) if npts else ""))
     print("%s  (%d event slots, %.1f MB)" % (outzip, len(dirs), os.path.getsize(outzip) / 1e6))

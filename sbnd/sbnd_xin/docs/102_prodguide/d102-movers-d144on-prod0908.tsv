@@ -1,0 +1,9 @@
+sample	run	subrun	event	classes	enu_a	enu_b	denu	numu_a	numu_b	nue_a	nue_b	vtx_move_cm	label_a	label_b	eval_a	eval_b	rc_a	rc_b	nuefill_a	nuefill_b
+mcp2k	18255	1	494297	label,rc									crashed/no-extract	nu-candidate			139	0		
+mcp2k	18259	1	168448	enu,nue_fill,numu	444.89578	689.7395	244.844	0.38512024	1.326453										filled	unfilled
+mcp2k	18259	1	101828	enu,numu	1571.7078	1190.7494	-380.958	1.1807473	1.2687652											
+mcp2k	18255	1	393505	enu,numu	858.2124	574.77515	-283.437	3.0977685	2.9144797											
+mcp1k	18255	1	395610	enu,numu	1013.5029	760.98694	-252.516	2.738061	2.475853											
+mcp1k	18255	1	350935	enu,numu	1001.3658	752.0106	-249.355	2.0176404	1.9405794											
+mcp2k	18259	1	177536	enu,numu	1339.7506	1231.0479	-108.703	2.2637784	3.9991162											
+mcp2k	18255	1	347890	enu,numu	658.92395	746.9239	88.000	0.59848404	1.8319855											

@@ -1,5 +1,9 @@
 # 48 — `CheckSTM_Michel`: a stopping-muon + Michel reconstruction stage replaces the neutrino PR tail on PDVD
 
+> Later rounds: doc pdhd/14 (muon kinematics), pdhd/15 (the Michel as one
+> object), **pdhd/16** (the MCS momentum, and the dQ/dx -> dE/dx inverse
+> calibrated against the range energy).
+
 **Status (2026-09-05).** Shipped. New clustering visitor `CheckSTM_Michel`
 (toolkit `clus/`), a `T_stm_michel` / `T_stm_michel_pts` pair in
 `tracking-pr.root`, and the PDVD `-nu` chain now runs it in place of
@@ -557,9 +561,37 @@ KE, which is why the window ships ON at 0.6):
 1. **The STM + Michel subsample needs no new code**: `T_stm_michel` already persists
    `michel_found`, `michel_kink_deg`, `michel_ke_best`, `michel_conn_type` per candidate.  The
    development left is purity/efficiency of that flag, not plumbing.
+
+   > **2026-09-07 — the instrument for that measurement exists.**
+   > `doc pdhd/12` (`pdhd/stm_michel_scan/`) is a hand-scan display, both detectors, on the
+   > `d51hnu` / `d51vnu` arms: 302 PDHD + 568 PDVD candidates, four-way stratified on exactly
+   > `is_stm` x `michel_found`, with the chain's answer behind a REVEAL toggle and the scorer
+   > reporting stratum-reweighted purity and efficiency.  Item 2 below is what it is pointed at
+   > first.
 2. **Next round: `shape_flat`** (69 sole rejects, 26 with a Michel) -- the tagger's KS shape test,
    on chains whose Bragg verdict is otherwise clean.
 3. Then the 13 above (`plateau_mip_lo`) and the 11 `profile_sparse`.
 4. Michel KE still needs an MC-truth calibration (sec 8 next steps, unchanged).
 5. A fresh 120-event PDVD arm on the flipped default is NOT taken here: `d48nu7` already is that
    arm's measurement, on the shipped pin.  Take one under a new tag when the next binary lands.
+6. **doc pdhd/13** (2026-09-07) traces a Michel this stage misses: PDVD `039252_15` cluster 77,
+   `is_stm=1 reject_bits=0`, with a 20.1 cm Michel 1.91 cm from the stop **in the same bundle**,
+   dropped by `CheckSTM_Michel.cxx:812`'s 10 cm `dot_max_len_cm` before any PR ran on it.  That doc
+   also shows the Michel is 2-D contiguous with the muon in all three planes (0-cell gap) while the
+   3-D clustering split it — an upstream defect recorded there as an open question — and that
+   `michel_found` never reports a detached Michel (§5 D1).
+7. **doc pdhd/14** (2026-09-07) adds the muon kinematics this stage computed and discarded
+   (`set_pdg` built a 4-momentum per chain segment and nothing read it): `muon_ke_range`,
+   `muon_ke_dqdx`, `muon_ke_best` and `michel_seg_id` are now `T_stm_michel` branches on both
+   ProtoDUNEs, default on by owner decision (no knob).  The 75 pre-existing branches are proven
+   bit-unchanged; the tree is NOT bit-identical.  That doc also states what parentage the stage
+   does and does not write: a shared stop vertex for `michel_conn_type==1`, nothing at all for
+   `==2`.
+8. **doc pdhd/15** (2026-09-07) turns the Michel into a single object and closes the `mu -> e` link
+   for BOTH connection types.  It corrects item 7's closing claim: `mc.json` *is* written on this
+   path (`bee_pf`, `protodunevd/pr.jsonnet:2232`) and a `conn_type==2` Michel *is* linked there
+   through a pseudo-gamma carrier -- what was missing was a link in `T_stm_michel`, now
+   `michel_parent_vtx_id` / `michel_dis_cm` / `michel_start_*`, with `michel_found` redefined to
+   mean "a Michel object exists" (PDVD 115 -> 158).  The energy is now dQ/dx over every fitted
+   member plus a charge conversion for the unfitted ones; `michel_ke_core` preserves the doc-14
+   number.  NOT bit-identical.

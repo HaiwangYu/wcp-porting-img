@@ -1,0 +1,13 @@
+# per readout-unit selection on tier 'all_kept', per arm.  plateau_ratio has NO free
+# scale.  band_* are ABSOLUTE point counts: deletion shrinks every band,
+# recovery collapses band_lt0.2 while band_0.8-1.2 holds.
+sel	arm	ntracks	npoints	plateau_ratio	plateau_npts	plateau_ratio_hi	killed_frac	band_lt0.2	band_0.2-0.5	band_0.5-0.8	band_0.8-1.2	band_gt1.2
+all	old	536	143379	0.9429	13961	0.9755	0.1084	572	972	2328	7569	2520
+all	r3off	537	138215	0.9540	14132	0.9849	0.1083	589	970	2040	8085	2448
+all	new	542	136934	0.9530	13965	0.9833	0.1078	579	955	2012	8080	2339
+bottom_xneg	old	217	56508	1.0404	5543	1.0591	0.0653	108	267	598	3139	1431
+bottom_xneg	r3off	214	54541	1.0475	5561	1.0634	0.0660	131	247	505	3283	1395
+bottom_xneg	new	214	54232	1.0476	5525	1.0631	0.0643	121	245	500	3281	1378
+top_xpos	old	360	86871	0.8852	8418	0.9201	0.1368	464	705	1730	4430	1089
+top_xpos	r3off	356	83674	0.8987	8571	0.9296	0.1357	458	723	1535	4802	1053
+top_xpos	new	361	82702	0.8975	8440	0.9275	0.1364	458	710	1512	4799	961

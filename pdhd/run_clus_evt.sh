@@ -60,7 +60,10 @@ SAVE_PCTREE=${PDHD_SAVE_PCTREE:-0}
 # every physics number are unchanged, but the PCTREE IS NOT BYTE-IDENTICAL --
 # it gains the arrays -- so a -save-assoc pctree and a plain one are different
 # files.  Default 0 => byte-identical compiled config and pctree.
-SAVE_ASSOC=${PDHD_SAVE_ASSOC:-0}
+# doc pdhd/11 sec 11 (owner flip 2026-09-07): default ON, because the PR chain now
+# runs unmerge_assoc and that stage is SILENTLY INERT on a pctree written without
+# the isolated-merge provenance.  PDVD flipped the same default 2026-09-04.
+SAVE_ASSOC=${PDHD_SAVE_ASSOC:-1}
 _args=()
 while [ $# -gt 0 ]; do
     case "$1" in

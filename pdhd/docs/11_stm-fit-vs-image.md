@@ -599,3 +599,376 @@ That splits the ladder into two independent decisions:
   re-anchoring it for a stopping-muon tagger.
 - **R1** (`unmerge_assoc`) remains the only fix that removes the cause of both symptoms, and stays
   queued behind doc pdhd/06 §9 item 1.
+
+---
+
+## 10. The owner's follow-up (2026-09-07): is unmerge enough, and what should be turned on?
+
+Three questions, answered on arms run for them. Everything in §§1-9 above was measured on the
+**`d09` pctree — FV knob OFF, i.e. production clustering**. This section runs a clean 2×2 on the
+**`d11seponA` pctree — FV knob ON**, so unmerge and the knobs are compared within one clustering and
+nothing is confounded by defect B.
+
+```
+# all four arms read the SAME pctree (clustering arm d11seponA, FV fix on)
+./run_pr_evt.sh -stm-fit -s d11fvbase 028084 all                      # A: nothing
+./run_pr_evt.sh -stm-fit -unmerge -s d11umfv 028084 all               # B: + unmerge_assoc
+PDHD_PR_TLA="-S stm_rough_path_require_connected=true \
+  -A trackfitting_config=d11_track_fitting_fillcheck.json" \
+  ./run_pr_evt.sh -stm-fit -s d11fvknob 028084 all                    # C: + R2 + R3
+PDHD_PR_TLA="...same..." ./run_pr_evt.sh -stm-fit -unmerge -s d11umall 028084 all  # D: all three
+
+python3 docs/scripts/d11_fit_image.py --label A_fv work/028084_*_d11fvbase ... --out /tmp/d11_2x2
+python3 docs/scripts/d11_matched_ladder.py /tmp/d11_2x2_blocks.tsv --pctree d11seponA \
+        --order A_fv,B_fv_um,C_fv_R23,D_all
+python3 docs/scripts/d11_track_integrity.py work/028084_9_d11fvbase/mabc-pr.zip \
+        work/028084_9_d11umfv/mabc-pr.zip --min-len 100
+python3 docs/scripts/d11_split_anatomy.py <same two zips> --clusters 90,103
+```
+
+### 10.1 What the PDVD chain actually is
+
+The two default PR pipelines differ in **exactly one stage**:
+
+```
+PDHD  switch_scope, flag_mains,                  steiner, fiducialutils, tagger_check_tgm,
+      tagger_check_stm, tagger_check_fc, protect_bundle, steiner_refresh, pr_display
+PDVD  switch_scope, flag_mains, **unmerge_assoc**, steiner, fiducialutils, tagger_check_tgm,
+      tagger_check_stm, tagger_check_fc, protect_bundle, steiner_refresh, pr_display
+```
+
+(`pdhd/run_pr_evt.sh:121` vs `pdvd/run_pr_evt.sh:135`.) It is a **runner default, not a toolkit
+config**: `wct-pr-perevt.jsonnet` takes the pipeline as a TLA, so whatever driver runs production
+picks it. The producer side matches: `PDVD_SAVE_ASSOC` defaults to **1** (`pdvd/run_clus_evt.sh:87`,
+flipped 2026-09-04, doc pdvd/39 r2) and `PDHD_SAVE_ASSOC` to **0** (`pdhd/run_clus_evt.sh:63`), so a
+PDHD pctree does not even carry the `perblob` provenance `unmerge_assoc` needs. PDVD additionally
+*guards* the combination — it aborts if the pipeline contains `unmerge_assoc` and the pctree lacks
+the provenance (`pdvd/run_pr_evt.sh:289`), because the stage would be silently inert.
+
+Nothing else about the two chains differs at this stage. Neither detector sets R2, R3 or B.
+
+### 10.2 Does unmerge make R2 and R3 unnecessary? — R2 yes, R3 no
+
+**R2: yes, in this sample.** `rough_path_require_connected` fires **0 times in 31 events** when
+unmerge is on (arm D), against 1 time when it is off. That is the mechanism closing exactly as
+predicted: unmerge removes the detached point, the Steiner graph is one component, the query never
+gets a disconnected pair. R2 becomes inert.
+
+**R3: no.** The fill test is not about over-clustering at all — the final `organize_ps_path`
+re-insert is untested for *any* track whose fit `form_map` trimmed, however clean the clustering.
+The numbers, all 31 events, identical pctree:
+
+| arm | blocks | points | blocks with median > 3 cm | accepted (st 0) median | accepted > 3 cm |
+|---|---|---|---|---|---|
+| **A** FV fix only | 690 | 274 529 | **145 (21.0 %)** | 0.84 cm | 43.9 % |
+| **B** + `unmerge_assoc` | 572 | 205 751 | **34 (5.9 %)** | 0.52 cm | 11.3 % |
+| **C** + R2 + R3 | 669 | 244 347 | **45 (6.7 %)** | 0.57 cm | 11.7 % |
+| **D** all three | 566 | 202 108 | **23 (4.1 %)** | 0.52 cm | **7.1 %** |
+
+D beats B on every column, so R3 still earns its place after unmerge.
+
+### 10.3 The same table on a MATCHED population — because unmerge changes the denominator
+
+B's raw 21.0 % → 5.9 % is **not** all repair: splitting a cluster into dots drops it below the
+≥ 20-point cut and the object leaves the census. Restricted to the 537 `(event, cluster)` blocks
+present in **all four** arms (`feedback_matched_population_metric_bias`):
+
+| arm | blocks | points | bad > 3 cm | **bad POINTS** | accepted (st 0) |
+|---|---|---|---|---|---|
+| **A** FV only | 537 | 225 134 | 49 (9.1 %) | 15 624 | n=103, 0.56 cm |
+| **B** + unmerge | 537 | 197 622 | 19 (3.5 %) | 3 350 | n=151, 0.52 cm |
+| **C** + R2 + R3 | 537 | 206 292 | **15 (2.8 %)** | 6 161 | n=124, 0.53 cm |
+| **D** all three | 537 | 195 839 | 16 (3.0 %) | **2 719** | n=150, 0.52 cm |
+
+And the attrition, stated rather than hidden:
+
+| arm | blocks dropped vs A | of which were bad | gained |
+|---|---|---|---|
+| B (unmerge) | **115** | 77 | 19 |
+| C (R2+R3) | **18** | 18 | 0 |
+| D (all) | 119 | 81 | 19 |
+
+**Two-thirds of unmerge's raw improvement is objects leaving the census, not trajectories repaired.**
+On the same objects, R2+R3 alone (C) is level with unmerge alone (B) — better on bad blocks, worse on
+bad points. C achieves that while removing only 18 blocks, and all 18 were already bad. That is the
+central trade: **R3 repairs, unmerge removes.**
+
+### 10.4 "We do not want to break a long track into pieces"
+
+The owner's constraint, tested directly. Both arms carry the *same* point cloud (100 905 points in
+evt 9, matched exactly by coordinate), so only the labelling differs. For every base cluster longer
+than 100 cm: `kept` = the largest share of its points landing in one arm cluster.
+
+Across **31 events, 953 clusters longer than 100 cm**:
+
+| population | n | median kept | kept < 0.90 | kept < 0.70 |
+|---|---|---|---|---|
+| **dense ≥ 3 pts/cm** (real tracks) | 869 | **0.970** | 107 (12.3 %) | **13 (1.5 %)** |
+| **sparse < 3 pts/cm** (dot groups) | 84 | 0.778 | 56 (66.7 %) | 37 (44.0 %) |
+
+Unmerge shatters sparse dot groups at ~30× the rate it disturbs dense tracks — the owner's cluster 36
+goes to `kept = 0.068`, cluster 47 (22 224 points, 623 cm) stays at `kept = 0.983` in one piece.
+
+**But 13 dense long clusters do lose more than 30 %, and that has to be looked at, not averaged
+away.** A 2-piece split is ambiguous: one track cut in half, or two crossing cosmics correctly
+separated. `d11_split_anatomy.py` distinguishes them by the angle between the pieces' principal axes
+and whether their projections onto the base axis overlap:
+
+| evt | cluster | extent | pts/cm | kept | angle | gap | overlap | reading |
+|---|---|---|---|---|---|---|---|---|
+| 15 | 90 | 677 cm | 45.9 | 0.617 | 55.8° | 0.3 cm | 1.00 | two objects |
+| 4 | 103 | 398 cm | 30.9 | 0.502 | 27.1° | 0.3 cm | 1.00 | two objects |
+| 2 | 107 | 418 cm | 14.1 | 0.638 | 9.8° | 1.4 cm | 0.96 | two objects |
+| 6 | 27 | 208 cm | 11.4 | 0.580 | 70.1° | 52.5 cm | 0.00 | two objects |
+| 14 | 92 | 176 cm | 38.6 | 0.580 | 10.2° | 0.3 cm | 1.00 | two objects |
+| 11 | 130 | 129 cm | 6.8 | 0.628 | 28.4° | 57.9 cm | 0.00 | two objects |
+| 25 | 81 | 153 cm | 3.6 | 0.242 | 65.0° | 29.1 cm | 0.00 | two objects |
+| 18 | 126 | 130 cm | 5.3 | 0.445 | 85.0° | 24.8 cm | 0.00 | two objects |
+| **23** | **127** | **370 cm** | **11.7** | **0.504** | **2.5°** | **5.2 cm** | **0.00** | **CUT? end-to-end** |
+| **21** | **35** | **101 cm** | **5.6** | **0.438** | **9.4°** | **15.1 cm** | **0.00** | **CUT? end-to-end** |
+| 0 | 36 / 115, 9 | 27 | — | — | 0.61 / 0.70 / 0.68 | — | — | shed fragments, single piece |
+
+So: **2 candidates in 31 events — 0.23 % of dense long clusters — look like a real track cut
+end-to-end** (collinear pieces, no overlap, a 5.2 cm and a 15.1 cm gap). The other nine are unmerge
+doing its job on two objects clustering had glued together. The two candidates are a **hand-scan
+list, not a verdict**: the geometry is consistent with a cut track *and* with two collinear tracks
+meeting, and only an eye on the display can tell. The owner's concern is real, bounded, and small.
+
+### 10.5 Does PDVD need anything? — R3 helps there too
+
+PDVD run 039252 evts 5+16, arm `d11vfill` (`d11_pdvd_track_fitting_fillcheck.json` = production
+`pdvd_track_fitting.json` + `traj_final_fill_charge_test: 1`):
+
+| | blocks | points | bad > 3 cm | mean frac > 10 cm | mean negative dQ/dx |
+|---|---|---|---|---|---|
+| PDVD, R3 off | 41 | 16 024 | 1 | 0.020 | 0.085 |
+| **PDVD, R3 on** | **41** | 15 476 | **0** | **0.006** | **0.075** |
+
+Small, in the same direction as PDHD, and **it costs no blocks** — 41 both sides. The one bad PDVD
+block of doc pdvd/42 is this defect. R2 would be inert on PDVD (§3.1: 42/42 queries single-component)
+and defect B does not exist there (its FV blocks already agree), so **R3 is the only one of the three
+that has anything to do on PDVD.**
+
+---
+
+## 11. Recommendation
+
+Stated as a ladder, cheapest and safest first. Nothing here is flipped in this commit.
+
+**PDHD:**
+
+1. **Turn on R3 (`traj_final_fill_charge_test`) — recommended now.** It is the fix for the defect this
+   document is about, it repairs trajectories instead of deleting objects, it costs 18 blocks of 690
+   and all 18 were already bad, and on a matched population it is the best single knob (49 → 15 bad
+   blocks). It needs the §9 blind scan of its 34 gained / 4 lost STM tags first — that is one
+   afternoon and it is the only thing standing in the way.
+2. **Turn on R2 (`rough_path_require_connected`) — recommended, low stakes either way.** It fires once
+   in 31 events, moves no tag, and guards a query that must never return a stub. If unmerge is ever
+   turned on it becomes inert (§10.2), which is an argument for it, not against: it is insurance
+   whose premium is zero.
+3. **Defect B (`drift_side_fv_skip_degenerate`) — recommended, but on its own merits.** It repairs a
+   `separate` stage that has been silently inert on PDHD since `ee054213`. Effect is modest
+   (2988 → 3001 clusters) and it is unrelated to the STM fit; it should be graded as a clustering
+   change, not bundled with this doc's PR-stage knobs.
+4. **`unmerge_assoc` — do NOT turn on yet.** It addresses the true root cause and its numbers are
+   good, but it is the one change that *removes* objects: 115 blocks of 690, 25 % of fitted points,
+   and 2 candidate cut long tracks per 31 events (§10.4). Before flipping it needs (a) those two
+   scanned, (b) doc pdhd/06 §9 item 1 (the §8.4 false-STM-tag regression) settled, and (c) the
+   producer side turned on too — `PDHD_SAVE_ASSOC=1` — or the stage is silently inert.
+
+   If it is later turned on, R2 can be dropped and **R3 kept**: D beats B on every column.
+
+**PDVD:**
+
+- **Turn on R3.** Same knob, same direction, no blocks lost, and it removes the last bad block in the
+  039252 control. This is the only PDVD change this document supports.
+- **R2: no.** Inert in the sample (42/42 single-component). Harmless to enable as a guard, but it
+  buys nothing measurable there.
+- **Defect B: nothing to do.** PDVD's face blocks already agree, so `select_scope_fv` already adopts
+  the drift-side window; the knob would be a no-op.
+- **`unmerge_assoc`: already on**, at both ends, since 2026-09-04. No change.
+
+**The honest summary in one line:** turn on R3 on both detectors after the tag scan, take R2 on PDHD
+as free insurance, treat defect B as its own clustering round, and leave `unmerge_assoc` off on PDHD
+until the two cut-track candidates are looked at — it is the right long-term fix and the wrong thing
+to flip blind.
+
+---
+
+## 12. Bee links for the unmerge comparison
+
+Three sets, **same six events, same slot order, and all three read the same pctree** (clustering arm
+`d11seponA`, FV fix on) so the only difference between them is the PR stage. **Slot 3 is event 9.**
+All layers verified from the server's own contents listing.
+
+| | arm | link |
+|---|---|---|
+| **baseline** | `d11fvbase` — nothing on | https://www.phy.bnl.gov/twister/bee/set/70abfd52-f918-45ad-be89-89e6b87a9dd7/event/list/ |
+| **unmerge** | `d11umfv` — `unmerge_assoc` only | https://www.phy.bnl.gov/twister/bee/set/2581a03e-ac1f-43b4-96dd-24f6245c8f69/event/list/ |
+| **everything** | `d11umall` — unmerge + R2 + R3 | https://www.phy.bnl.gov/twister/bee/set/48e8e5af-0a65-4b44-87ce-3eb488d81ed4/event/list/ |
+
+Blocks with median fit→charge > 3 cm, per slot:
+
+| slot | evt | baseline | +unmerge | +R2/R3 (no unmerge) | all three |
+|---|---|---|---|---|---|
+| 0 | 6 | 11 | 1 | 3 | **0** |
+| 1 | 7 | 8 | 1 | 1 | 1 |
+| 2 | 8 | 9 | 4 | 0 | 1 |
+| **3** | **9** | **7** | **2** | **0** | **1** |
+| 4 | 19 | 6 | 2 | 0 | **0** |
+| 5 | 29 | 8 | 0 | 2 | **0** |
+| | **all 31 events** | **145** | **34** | **45** | **23** |
+
+The §8 pair stays valid and answers a different question (production clustering, R2/R3 only).
+Records: `pdhd/bee-pr-run028084-d11um-{fvbase,umfv,umall}.{url,index.txt}`.
+
+---
+
+## 13. Owner decision 2026-09-07: what was turned on, and what it costs
+
+> *"we definitely should turn on unmerge, otherwise it is a bug, we do not need dedicated scan.
+> After that, I assume we should turn on R3 … We should do the same for PDVD for R3, right?"*
+> *"If you think R2 should be on, that is fine. Defect B is a bug fix? so it should be fixed without
+> a knob?"*
+
+Everything below is a **production output change**, made on the owner's explicit instruction. The
+§10 recommendation to hold `unmerge_assoc` for a scan is superseded; the two cut-track candidates of
+§10.4 and the §13.4 residual are recorded as known, not as blockers.
+
+### 13.1 What changed
+
+| | change | where |
+|---|---|---|
+| **unmerge** | `unmerge_assoc` added to `PIPE_STM` and `PIPE_NU`; `UNMERGE=1` | `pdhd/run_pr_evt.sh` |
+| | `PDHD_SAVE_ASSOC` default **0 → 1** — without it the stage is silently inert | `pdhd/run_clus_evt.sh` |
+| | *(scope note: that producer default applies to **every** PDHD clustering run this runner makes, not only the STM chain. It adds the `perblob` isolated-merge provenance to every pctree written from now on — a size increase, and the reason a pctree written before today cannot feed the new PR chain.)* | |
+| **R3** | `"traj_final_fill_charge_test": 1` | `cfg/…/pdhd/pdhd_track_fitting.json`, `cfg/…/protodunevd/pdvd_track_fitting.json` |
+| **R2** | `stm_rough_path_require_connected = true` | `cfg/…/pdhd/pr.jsonnet`, `pdhd/wct-pr-perevt.jsonnet` |
+| **B** | knob **removed**; the degenerate-face skip is now unconditional | `clus/{inc,src}`, `cfg/pgrapher/common/clus.jsonnet`, `cfg/…/pdhd/clus.jsonnet`, `pdhd/wct-clustering.jsonnet` |
+
+PDVD gets **R3 only**. Its R2 was never wired into `protodunevd/pr.jsonnet` and is left that way
+(§3.1: 42/42 queries single-component, and it runs unmerge); defect B is structurally absent there
+(§13.3); `unmerge_assoc` has been PDVD default since 2026-09-04.
+
+### 13.2 R2 is free — measured, not argued
+
+With `unmerge_assoc` on, R2 never fires, so it cannot change output. Proved rather than asserted:
+arm `d11umall` (unmerge + R2 + R3) against `d11noR2` (unmerge + R3), 31 events, same pctree:
+
+| comparison | result |
+|---|---|
+| `mabc-pr.zip` member content hashes (`hash_archive.py`, M2) | **31/31 identical** |
+| `T_rec_charge` + `T_stm_pass` + `T_stm_eval` tree contents | **31/31 identical** |
+
+So R2 costs exactly nothing today and guards a query that must never invent a path. It is on for
+that reason, not for a measured gain. (A raw `md5sum` of the ROOT files differs 31/31 — embedded
+timestamps, the M2 trap. The content hash is the one that counts.)
+
+### 13.3 Defect B without a knob — the blast radius is PDHD, structurally
+
+The owner is right that this is a bug, not a preference: a face block with `FV_xmin == FV_xmax`
+encloses zero volume, can never contain a point, and so cannot speak for a drift volume. Letting it
+into the `common_face_x` vote can only ever veto the test. The knob is removed and the skip is
+unconditional.
+
+The fix can only change behaviour where such a block exists. Scanning every detector that binds
+`clustering_separate`:
+
+| detector | degenerate `FV_x` blocks |
+|---|---|
+| **pdhd** | **2** (`clus.jsonnet:89-94`, ±3579.85 mm) |
+| protodunevd | 0 |
+| sbnd | 0 |
+| dune-vd | 0 |
+
+So this is a **structural** no-op outside PDHD — not a gate that happened to pass, a branch that
+cannot be reached. On PDHD it restores `separate(drift_side_fv_x=true)`, inert there since
+`ee054213`.
+
+Measured on top of unmerge + R2 + R3 it changes **nothing about fit quality** — 23 bad blocks of
+~560 either way, mean frac > 10 cm 0.020 both. Its value is in the clustering stage
+(2988 → 3001 clusters over 31 events), not here. It is landed as a bug fix on its own merits.
+*(A tag census across the B-on/B-off boundary is meaningless — different clustering means different
+cluster ids, and the apparent 323/326 TGM churn is renumbering, not physics.)*
+
+### 13.4 What unmerge actually costs — the honest ledger
+
+It is much the larger change of the four, and the owner should have the size in view:
+
+| | A → B (unmerge, 31 events) |
+|---|---|
+| STM tags | 166 → 166, but **84 gained, 84 lost, only 82 unchanged** — half the set changes identity |
+| TGM tags | 884 → 933 (**+59 gained, 10 lost**), flips in 29/31 events |
+| FC tags | 1068 → 1105 (+64, −27), flips in 30/31 events |
+| fitted blocks | 690 → 572 (−17 %); fitted points −25 % — see the note below |
+
+**That block drop is not lost reconstruction.** The point cloud is byte-for-byte the same in both
+arms — 100 905 points in evt 9, matched exactly by coordinate (§10.4) — so no charge goes away.
+Unmerge relabels it: fragments split off a cluster fall below the fit's own ≥ 20-point population
+cut and the object stops being *censused*, which is the same bias §10.3 measures and corrects for.
+Read −17 % as "fewer objects clear the fit's size cut", not "a quarter of the fit is thrown away".
+
+By contrast R3 on top of unmerge moves **1 STM tag in, 1 out** and no TGM or FC at all. Once unmerge
+is on, R3's remaining value is trajectory quality (bad blocks 34 → 23, bad points 3350 → 2719 on the
+matched population), not verdicts.
+
+**The §8.4 defect reproduces, and R3 does not fix it.** `flag_mains` runs *before* `unmerge_assoc`,
+so a main that is hollowed out keeps its main flag; TGM can then no longer walk it, and STM fits the
+fabricated remnant. Measured on the shipping arm, 31 events:
+
+- unmerge acted on 1297 mains; **148 (11.4 %) keep < 50 %** of their blobs, **50 (3.9 %) keep < 25 %**;
+- **10 clusters lose their TGM tag**, all 10 of them unmerged, 4 in the doc 06 §8.4 shape (kept ≤ 21 %,
+  two at 8 %);
+- of those, **3 then receive STM = 1** — false stopping-muon tags — with unmerge alone **and** with
+  unmerge + R2 + R3. R3 does not touch them, because the defect is the stale main flag, not the fill.
+
+Three false STM tags per 31 events against 84 STM gains. Small, real, and **the one thing this round
+leaves broken**. The cheap candidate fix is to re-evaluate the main flag after `unmerge_assoc` —
+either by running `flag_mains` after it, or by dropping the flag when a main keeps below some
+fraction of its blobs. That belongs to doc pdhd/06's queue, not here.
+
+### 13.5 Gates
+
+| gate | result |
+|---|---|
+| `wcbuild`, freshness proof | `local/lib/libWireCellClus.so` 2026-09-07 14:28, newer than every edited source |
+| `./build/clus/wcdoctest-clus` | **23144 assertions, 0 failed** |
+| defect B blast radius | degenerate `FV_x` blocks: pdhd 2, protodunevd 0, sbnd 0, dune-vd 0 — branch unreachable elsewhere |
+| clustering config compiles; stale knob gone | rc=0, `drift_side_fv_skip_degenerate` occurrences **0**, `drift_side_fv_x` still true on both `ClusteringSeparate` nodes |
+| PR config compiles, R2 present | rc=0, `TaggerCheckSTM.rough_path_require_connected = true` |
+| R3 reachable (M6) | compiled graph names `pgrapher/experiment/pdhd/pdhd_track_fitting.json`; the key is in that file at line 57 |
+| R2 output-neutral with unmerge | 31/31 identical, archive members **and** STM tree contents (§13.2) |
+| end-to-end, new defaults only, no TLAs | arm `d11prod` — clustering + PR, 31/31 events, rc=0 |
+| `-nu` chain with the new stage inserted | evt 9, rc=0; pipeline `…,flag_mains,unmerge_assoc,steiner,…,check_stm_michel,tracking_visitor,pr_display,stm_magnify`; `mabc-pr.zip`, `tracking-pr.root`, `tracking-stm.root` all written. `PIPE_NU` gets `unmerge_assoc` too and every measurement arm above was `-stm`, so this is a crash gate only, not a graded one |
+| PDVD production default == the measured R3 arm | evts 5 + 16, `mabc-pr` member hashes identical; 1 bad block → 0 reproduced with no TLA |
+
+**Two caveats on the gates, stated rather than buried.** (a) The `d11prod` *clustering* stage ran
+across a rebuild: the binary was reinstalled mid-arm when an orphaned comment left by the knob
+removal was deleted. The edit was comment-only, so behaviour is identical, but the arm is not pinned
+to a single binary in the sense `feedback_shared_tree_binary_pin` asks for. (b) `d11prod` re-ran
+clustering with the *unconditional* fix while `d11umall` read a pctree made with the *knob-based*
+one; §13.6 records whether those two clusterings agree, and the §13.4 ledger is quoted from the
+`d11fvbase`/`d11umfv` pair, which share one pctree.
+
+**These changes are NOT bit-identical and are not meant to be.** The knob-off byte-identity gates of
+§6 describe the previous state and remain the record of it.
+
+### 13.6 The end-to-end gate: production defaults reproduce the measured arm
+
+The numbers in §10 and §13.4 come from arms driven by explicit TLAs on a pctree built with the
+**knob-based** defect-B fix. Production now has no TLAs and an **unconditional** fix, so the two
+have to be shown to be the same thing. Arm `d11prod` = `run_clus_evt.sh -q -save-pctree` +
+`run_pr_evt.sh -stm-fit` with nothing but the new defaults, 31 events, both stages rc=0:
+
+| | `d11prod` (production defaults) | `d11umall` (reference arm) |
+|---|---|---|
+| blocks / points | 566 / 202 108 | 566 / 202 108 |
+| blocks with median > 3 cm | 23 (4.1 %) | 23 (4.1 %) |
+| mean frac > 10 cm | 0.020 | 0.020 |
+| accepted (status 0) | n=155, med 0.52 cm, 7.1 % | n=155, med 0.52 cm, 7.1 % |
+| **`mabc-pr.zip` member content hashes** | **identical 31/31** | |
+
+So the unconditional defect-B fix reproduces the knob-based one, the freshly-built pctrees reproduce
+`d11seponA`'s, and the shipped defaults reproduce the configuration every number in this document
+was measured on. That is what makes §10's tables quotable for production and not only for the arms
+they were taken on — and it supersedes caveat (b) of §13.5, which was written before this ran.

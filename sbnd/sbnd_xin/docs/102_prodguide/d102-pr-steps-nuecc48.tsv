@@ -1,0 +1,54 @@
+kind	name	work-nuecc48-d102mpr
+step_ms	ClusteringProtectBundle:pr	103.5660
+step_ms	ClusteringSwitchScope:pr	27.6585
+step_ms	ClusteringUnmergeBundle:pr	24.9934
+step_ms	ClusteringUnmergeBundle:prassoc	13.9510
+step_ms	CreateSteinerGraph:pr	542.7399
+step_ms	CreateSteinerGraph:prrefresh	357.9619
+step_ms	MakeFiducialUtils:pr	0.1599
+step_ms	PrDisplayDump:pr	67.3210
+step_ms	SbndPrMagnifyTrackingVisitor:pr	61.9029
+step_ms	TaggerCheckFC:pr	7.2334
+step_ms	TaggerCheckNeutrino:pr	9690.6628
+step_ms	TaggerCheckSTM:pr	11.0657
+step_ms	TaggerCheckTGM:pr	79.8359
+step_ms	UbooneNueBDTScorer:pr	1862.3118
+step_ms	UbooneNumuBDTScorer:pr	261.0674
+step_ms	UbooneTaggerOutputVisitor:pr	28.2430
+step_ms	done	139.1765
+step_ms	dump dead regions to bee	0.5075
+step_ms	dump live clusters to bee	22.6972
+step_ms	loaded dead	26.8816
+step_ms	loaded live	78.9987
+step_ms	pre clustering	0.0233
+step_ms	start clustering	0.0181
+comp_core_s	clus_pr (MultiAlgBlobClustering)	14.5615
+comp_core_s	clus_pr (TensorFileSink)	0.1620
+comp_core_s	pr_pctree (TensorFileSource)	0.2840
+mem_gib	ClusteringProtectBundle:pr	0.3827
+mem_gib	ClusteringSwitchScope:pr	0.3264
+mem_gib	ClusteringUnmergeBundle:pr	0.3264
+mem_gib	ClusteringUnmergeBundle:prassoc	0.3264
+mem_gib	CreateSteinerGraph:pr	0.3826
+mem_gib	CreateSteinerGraph:prrefresh	0.3920
+mem_gib	MakeFiducialUtils:pr	0.3826
+mem_gib	PrDisplayDump:pr	1.0268
+mem_gib	SbndPrMagnifyTrackingVisitor:pr	1.0040
+mem_gib	TaggerCheckFC:pr	0.3826
+mem_gib	TaggerCheckNeutrino:pr	0.8278
+mem_gib	TaggerCheckSTM:pr	0.3826
+mem_gib	TaggerCheckTGM:pr	0.3826
+mem_gib	UbooneNueBDTScorer:pr	0.9887
+mem_gib	UbooneNumuBDTScorer:pr	0.8520
+mem_gib	UbooneTaggerOutputVisitor:pr	1.0198
+mem_gib	done	1.0365
+mem_gib	dump dead regions to bee	0.3264
+mem_gib	dump live clusters to bee	1.0268
+mem_gib	loaded dead	0.3264
+mem_gib	loaded live	0.3264
+mem_gib	pre clustering	0.3264
+mem_gib	start clustering	0.3264
+mem_gib	starting MultiAlgBlobClustering	0.2809
+event_wall_s	median	14.5840
+event_core_s	median	15.0265
+event_peak_rss_gib	median	1.0365

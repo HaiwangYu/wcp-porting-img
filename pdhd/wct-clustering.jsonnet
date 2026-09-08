@@ -93,16 +93,6 @@ function(
     // compiled config.  Runner flag: run_clus_evt.sh -save-assoc.
     clus_save_assoc_id = false,
 
-    // doc pdhd/11: arm ClusteringSeparate's drift_side_fv_skip_degenerate on the
-    // per-drift-group stage.  PDHD's DetectorVolumes metadata gives every anode a
-    // second, INSENSITIVE face whose FV_x block is degenerate (FV_xmin == FV_xmax),
-    // and select_scope_fv() requires unanimity across the group's faces before it
-    // will adopt the drift-side x-range.  So drift_side_fv_x=true -- which PDHD
-    // and PDVD both set -- is live on PDVD and INERT on PDHD, and the pass runs
-    // against the cryostat-wide +/-357.985 cm instead of [-357.985, -2.54] cm.
-    // false (default) => key omitted => byte-identical compiled config and
-    // byte-identical output.  This is a GRADED knob, not a production flip.
-    clus_drift_side_fv_skip_degenerate = false,
 )
 
 local anodes = [tools_all.anodes[i] for i in anode_indices];
@@ -141,8 +131,7 @@ local group_pipe(gd) =
     local maskeds = [cluster_source("%s/clusters-apa-apa%d-ms-masked.tar.gz"%[input, a.data.ident]) for a in gd.anodes];
     local apa_pipes = [clus_maker.per_apa(gd.anodes[i], dump=false, wrapped_channel_charge=wrapped_channel_charge) for i in std.range(0, n - 1)];
     local pg = clus_maker.per_group(gd.anodes, gd.name, gd.face, dump=false,
-                                    save_assoc_id=clus_save_assoc_id,
-                                    drift_side_fv_skip_degenerate=clus_drift_side_fv_skip_degenerate);
+                                    save_assoc_id=clus_save_assoc_id);
     g.intern(
         innodes = actives + maskeds,
         centernodes = apa_pipes,
