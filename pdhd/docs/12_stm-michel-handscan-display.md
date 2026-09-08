@@ -833,3 +833,13 @@ Offered, not done: a Bee set of whatever tranche 1 confirms, so the same objects
 can be turned in Bee alongside this display; and the two `Branch` lines of §4.3
 that would put `apa`/`face` in `T_rec_charge` and retire the sentinel-wire
 caveat entirely.
+
+**Addendum (doc pdhd/13).** Two things this display got wrong, both now fixed or
+recorded. First, the image-charge layers drew **every** cluster at its own Q-L
+bundle's t0-corrected position, so an unrelated cosmic could sit centimetres
+from the muon and read as over-clustering — `039252_15 / 77` is the case. The
+viewer now has a `bundle only` control, ON by default (doc pdhd/13 §4, §10).
+Second, the S1–S4 strata key on `michel_found`, which is set only by the
+attached path, so **~30 % of items with a reconstructed detached Michel were
+drawn as "no Michel"** (doc pdhd/13 §5, D1). Recompute the strata on
+`michel_found || n_dots>0` before this scan is used to grade the Michel finder.

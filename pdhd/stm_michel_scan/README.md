@@ -132,6 +132,30 @@ the **object**, `UNCLEAR` about **your confidence**. Do not spend a fragment on
 Clicking a label **saves immediately** and jumps to the next unlabelled item.
 Type a note *before* clicking. `next unlabelled >>` resumes where you left off.
 
+## Only the muon's own bundle
+
+**`bundle only` is ON by default.** It restricts the image-charge layers, the
+three 2-D projections and the measurement overlay to the clusters that share the
+muon's matched Q-L bundle — same `flash_id` *and* same `cluster_t0_us`.
+
+You want this on, because the Bee layer the display reads places **every**
+cluster at its **own** bundle's t0-corrected position. Two cosmics thousands of
+microseconds apart in drift time can therefore land centimetres apart on screen.
+On `039252_15 / 77` that drew a 434 cm through-going muon (cluster 103, t0
+2542 µs) 5.6 cm from a 107 cm stopping muon (cluster 77, t0 6200 µs) — 541 cm
+apart in drift, and it reads as an over-clustered track. It is not; they are
+different objects at different times. See doc pdhd/13 §4.
+
+Turn it **off** and nothing is lost: the out-of-bundle charge reappears in
+<span style="color:#b07aa1">mauve</span>, a colour no other layer uses, so you
+can see what is nearby without ever mistaking it for the muon's own. The line
+under the toggles always says how many points are being hidden.
+
+One thing this does *not* do: it says nothing about whether the bundle is
+**right**. If the Q-L matching put the wrong cluster in, `bundle only` will
+faithfully draw the wrong cluster. It removes a known confusion; it is not a
+truth filter.
+
 ## The particle flow
 
 `show particle flow` draws the PR graph this chain actually walked — the

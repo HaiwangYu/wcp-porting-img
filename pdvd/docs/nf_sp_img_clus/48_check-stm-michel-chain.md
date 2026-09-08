@@ -570,3 +570,9 @@ KE, which is why the window ships ON at 0.6):
 4. Michel KE still needs an MC-truth calibration (sec 8 next steps, unchanged).
 5. A fresh 120-event PDVD arm on the flipped default is NOT taken here: `d48nu7` already is that
    arm's measurement, on the shipped pin.  Take one under a new tag when the next binary lands.
+6. **doc pdhd/13** (2026-09-07) traces a Michel this stage misses: PDVD `039252_15` cluster 77,
+   `is_stm=1 reject_bits=0`, with a 20.1 cm Michel 1.91 cm from the stop **in the same bundle**,
+   dropped by `CheckSTM_Michel.cxx:812`'s 10 cm `dot_max_len_cm` before any PR ran on it.  That doc
+   also shows the Michel is 2-D contiguous with the muon in all three planes (0-cell gap) while the
+   3-D clustering split it — an upstream defect recorded there as an open question — and that
+   `michel_found` never reports a detached Michel (§5 D1).

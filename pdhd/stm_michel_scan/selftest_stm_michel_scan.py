@@ -38,6 +38,7 @@ WHAT IT ASSERTS, grouped:
 import argparse, bz2, glob, json, os, runpy, shutil, sys, tempfile
 
 import numpy as np
+import uproot
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1091,6 +1092,148 @@ def test_save_readback(det, tmp):
        "%s: save_info did not report the unreadable file" % det)
 
 
+
+# ---------------------------------------------------------------------------
+# K -- the matched Q-L bundle (doc pdhd/13 sec 4).  The Bee layer draws every
+# cluster at its OWN bundle's t0-corrected position, so an unrelated cosmic can
+# land centimetres from the muon and read as over-clustering.  These gates prove
+# the payload's bundle is the one T_cluster says, and that the control actually
+# removes charge rather than merely claiming to.
+# ---------------------------------------------------------------------------
+def test_bundle_payload(det):
+    print("[K] the Q-L bundle in the payload, %s" % det)
+    import zipfile
+    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    fns = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    ck(bool(fns), "%s: no payloads for the bundle test" % det)
+    if not fns:
+        return
+    nchecked = 0
+    for fn in fns[:: max(1, len(fns) // 20)]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        evd = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm))
+        rf = os.path.join(evd, "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        tc = uproot.open(rf)["T_cluster"].arrays(
+            ["cluster_id", "flash_id", "cluster_t0_us"], library="np")
+        cid = int(d["cluster_id"])
+        w = np.where(tc["cluster_id"] == cid)[0]
+        if not len(w):
+            continue
+        i = int(w[0])
+        # independent re-derivation: BOTH fields, exactly, as the doc requires
+        want = sorted(int(c) for c, fl, t0 in
+                      zip(tc["cluster_id"], tc["flash_id"], tc["cluster_t0_us"])
+                      if fl == tc["flash_id"][i]
+                      and abs(t0 - tc["cluster_t0_us"][i]) <= 1e-6)
+        ck(d.get("bundle") == want,
+           "%s: %s c%d bundle %s != T_cluster's %s"
+           % (det, d["event"], cid, d.get("bundle"), want))
+        ck(cid in (d.get("bundle") or []),
+           "%s: %s c%d is not in its own bundle" % (det, d["event"], cid))
+        for lyr in ("image_near", "image_far"):
+            g = d.get(lyr) or {}
+            ck(len(g.get("b") or []) == len(g.get("x") or []),
+               "%s: %s c%d %s has %d flags for %d points"
+               % (det, d["event"], cid, lyr,
+                  len(g.get("b") or []), len(g.get("x") or [])))
+        nchecked += 1
+    ck(nchecked > 0, "%s: no payload could be checked against T_cluster" % det)
+
+    # one payload re-derived point by point, against the Bee cluster_id itself
+    with open(fns[0]) as fh:
+        d = json.load(fh)
+    zp = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm), "mabc-pr.zip")
+    if not (os.path.exists(zp) and d.get("bundle") is not None):
+        return
+    with zipfile.ZipFile(zp) as z:
+        nm = [n for n in z.namelist() if n.endswith("clustering-global.json")][0]
+        g = json.loads(z.read(nm))
+    bset = set(d["bundle"])
+    inb, outb = set(), set()
+    for x, y, zz, c in zip(g["x"], g["y"], g["z"], g["cluster_id"]):
+        key = (round(float(x), 1), round(float(y), 1), round(float(zz), 1))
+        (inb if int(c) in bset else outb).add(key)
+    bad = 0
+    lay = d["image_near"]
+    for x, y, zz, b in zip(lay["x"], lay["y"], lay["z"], lay["b"]):
+        key = (round(float(x), 1), round(float(y), 1), round(float(zz), 1))
+        # a position claimed in-bundle must exist among bundle clusters, and
+        # vice versa; a position in BOTH is a rounding collision, allowed
+        if b and key not in inb:
+            bad += 1
+        if (not b) and key not in outb:
+            bad += 1
+    ck(bad == 0,
+       "%s: %d near points carry a bundle flag the Bee cluster_id contradicts"
+       % (det, bad))
+    print("     %s %s c%d: bundle %s, %d/%d near points in it"
+          % (det, d["event"], d["cluster_id"], d["bundle"],
+             sum(lay["b"]), len(lay["b"])))
+
+
+def test_bundle_app(det, tmp):
+    g = load_app(det, os.path.join(tmp, "labbn_" + det))
+    # the item with the most out-of-bundle charge -- where the control matters
+    best_i, best_out, best_in = 0, -1, 0
+    for i, it in enumerate(g["ITEMS"]):
+        p = g["payload"](it)
+        if not p or p.get("bundle") is None:
+            continue
+        tot = 0
+        inb = 0
+        for lyr in ("image_near", "image_far"):
+            b = (p.get(lyr) or {}).get("b") or []
+            tot += len(b) - sum(b)
+            inb += sum(b)
+        if tot > best_out:
+            best_out, best_in, best_i = tot, inb, i
+    ck(best_out > 0,
+       "%s: no item has out-of-bundle image charge to test the control on" % det)
+    if best_out <= 0:
+        return
+    g["go"](best_i)
+
+    def drawn():
+        n = len(g["SRC3"]["near"].data["x"]) + len(g["SRC3"]["far"].data["x"])
+        return n, len(g["SRC3"]["outb"].data["x"])
+
+    g["bundle_tog"].active = True
+    on_n, on_out = drawn()
+    ck(on_out == 0, "%s: out-of-bundle charge drawn with `bundle only` ON" % det)
+    ck(on_n == best_in,
+       "%s: `bundle only` ON drew %d points, the payload says %d are in the bundle"
+       % (det, on_n, best_in))
+
+    g["bundle_tog"].active = False
+    off_n, off_out = drawn()
+    # CAUSAL CONTROL: turning it off restores every point, in its own layer
+    ck(off_out == best_out,
+       "%s: `bundle only` OFF drew %d out-of-bundle points, expected %d"
+       % (det, off_out, best_out))
+    ck(off_n == on_n,
+       "%s: the in-bundle layers changed when the control was toggled" % det)
+    ck(on_n + off_out == best_in + best_out,
+       "%s: the control loses charge -- %d + %d != %d"
+       % (det, on_n, off_out, best_in + best_out))
+    # the 2-D panels carry the same split, so a layer cannot exist in one view
+    # and be forgotten in the other
+    for ha, va, _t in g["PANELS"]:
+        ck(len(g["SRC2"][(ha, va, "outb")].data["a"]) == off_out,
+           "%s: the %s-%s panel drew %d out-of-bundle points, the 3-D drew %d"
+           % (det, ha, va, len(g["SRC2"][(ha, va, "outb")].data["a"]), off_out))
+    g["bundle_tog"].active = True
+    for ha, va, _t in g["PANELS"]:
+        ck(not g["SRC2"][(ha, va, "outb")].data["a"],
+           "%s: the %s-%s panel still draws out-of-bundle charge" % (det, ha, va))
+    ck("hidden" in g["bundle_div"].text,
+       "%s: the bundle banner does not say what was hidden" % det)
+    print("     %s: control removes %d of %d image points on the worst item"
+          % (det, best_out, best_in + best_out))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -1113,7 +1256,9 @@ def main():
             test_pf_payload(det)
             test_pf_app(det, tmp)
             test_save_readback(det, tmp)
+            test_bundle_app(det, tmp)
             if not a.quick:
+                test_bundle_payload(det)
                 test_meas_causal(det)
                 test_pf_selector(det)
                 test_image_split(det)

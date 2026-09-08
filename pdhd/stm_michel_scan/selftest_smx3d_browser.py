@@ -382,6 +382,27 @@ def main():
                 ck(_rows("srct_w_pfsel") >= 0,
                    "the PF highlight never reached the measurement panels")
             ck(not errs, "javascript errors after the PF checks: %s" % errs[:3])
+
+            # ---- the matched Q-L bundle (doc pdhd/13 sec 4) -----------------
+            # ON by default, so out-of-bundle charge must start hidden; pressing
+            # the real widget must PAINT it.  A data-only check cannot see a
+            # layer that was never given a renderer.
+            ck(_rows("src3_outb") == 0,
+               "out-of-bundle charge is drawn while `bundle only` is ON")
+            n_in_before = _rows("src3_near") + _rows("src3_far")
+            page.get_by_role("button", name="bundle only").first.click()
+            page.wait_for_timeout(1500)
+            n_out = _rows("src3_outb")
+            ck(n_out > 0,
+               "turning `bundle only` off drew no out-of-bundle charge (%d rows)" % n_out)
+            ck(_rows("src3_near") + _rows("src3_far") == n_in_before,
+               "the in-bundle layers changed when `bundle only` was toggled")
+            page.get_by_role("button", name="bundle only").first.click()
+            page.wait_for_timeout(1500)
+            ck(_rows("src3_outb") == 0,
+               "`bundle only` did not hide the other bundles again")
+            ck(not errs, "javascript errors after the bundle checks: %s" % errs[:3])
+            print("     bundle control: %d out-of-bundle points paint and unpaint" % n_out)
             b.close()
     finally:
         proc.terminate()

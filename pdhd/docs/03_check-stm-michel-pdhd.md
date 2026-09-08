@@ -403,3 +403,9 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
 7. `-nu-legacy` on PDHD now runs with `excl_t0_frame` (sec 4); `-S excl_t0_frame=false` restores the
    pre-doc-03 tail byte-for-byte (gate D).
 
+8. **doc pdhd/13** measured three loss modes in the Michel search on the `d51hnu`/`d51vnu` arms:
+   the companion admission gate is `dot_max_len_cm` (`:812`), so a detached Michel longer than
+   10 cm never enters the PR at all; `michel_found` is set only by the attached path (`:1169`), so
+   33 PDHD / 41 PDVD candidates carry a reconstructed Michel that is never reported; and on
+   74 % (PDHD) / 67 % (PDVD) of the `is_stm & no Michel` set the PR fitted segments that the arm
+   classifier then discarded.  Fixes specified there as default-OFF knobs; none applied yet.

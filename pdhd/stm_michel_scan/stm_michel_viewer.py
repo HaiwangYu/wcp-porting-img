@@ -265,6 +265,10 @@ def read_back():
 LAYERS = [
     # name       size alpha  colour            marker      reveal cue
     ("far",       1.5, 0.35, "#c9c9c9",        "circle",   False, 1.0),
+    # charge that belongs to a DIFFERENT matched Q-L bundle (doc pdhd/13 sec 4).
+    # Drawn only when "bundle only" is off, in a colour no other layer uses, so
+    # a neighbouring cosmic can never be read as over-clustering.
+    ("outb",      2.5, 0.55, "#b07aa1",        "circle",   False, 1.0),
     ("near",      3.0, 0.80, ("q", 0.0, 4e4),  "circle",   False, 1.0),
     ("muon",      6.0, 0.95, ("c", 0.0, 1e5),  "circle",   False, 0.0),
     ("tagfit",    3.0, 0.60, "#7f7f7f",        "circle",   True,  0.0),
@@ -911,6 +915,13 @@ clear_btn = Button(label="clear this label", width=130)
 michel_kind = RadioButtonGroup(labels=MICHEL_KINDS, active=0, width=560)
 reveal_tog = Toggle(label="REVEAL the reconstruction", width=230)
 zoom_tog = Toggle(label="Zoom to object", width=140)
+# doc pdhd/13 sec 4: the Bee layer draws EVERY cluster at its OWN bundle's
+# t0-corrected position, so an unrelated cosmic thousands of us away in drift
+# time can land centimetres from the muon and read as over-clustering.  ON by
+# default; turning it off restores the old picture exactly, with the
+# out-of-bundle charge recoloured rather than hidden.
+bundle_tog = Toggle(label="bundle only", button_type="default", width=130, active=True)
+bundle_div = Div(text="", width=620)
 rr_slider = Slider(start=0.0, end=100.0, value=0.0, step=0.1, width=430,
                    title="pin the stopping point at residual range [cm]")
 pin_clear_btn = Button(label="unset pin", width=110)
@@ -1114,7 +1125,7 @@ def render():
 
     # cm_muon is FIXED at 0..DQDX_HIGH for every item on both detectors -- see
     # the palette block.  Only the context layer still adapts.
-    nq = np.asarray(near.get("q") or [], float)
+    nq = np.asarray(_bundle_near(pay, near).get("q") or [], float)
     cm_near.low = 0.0
     cm_near.high = float(np.percentile(nq[nq > 0], 98)) if (nq > 0).any() else 4e4
 
@@ -1128,8 +1139,10 @@ def render():
 
     P = pin_point(pay)
     px, py, pz, prr, psrc = P
+    (near, far, outb, nb_hidden) = split_bundle(pay, near, far)
     layers = {
         "far": (far["x"], far["y"], far["z"], {}),
+        "outb": (outb["x"], outb["y"], outb["z"], {}),
         "near": (near["x"], near["y"], near["z"], {"q": near.get("q") or []}),
         "muon": (list(X), list(Y), list(Z), {"c": list(Q)}),
         "pin": ([px], [py], [pz], {}),
@@ -1177,6 +1190,7 @@ def render():
     fill3_box()
     for nm, (lx, ly, lz, ex) in layers.items():
         fill3(nm, lx, ly, lz, ex)
+    show_bundle(pay, nb_hidden)
 
     fill_dqdx(pay, v, px, py, pz, prr, psrc, rev)
     fill_meas(pay, v, rev, (px, py, pz))
@@ -1368,6 +1382,89 @@ def refresh_segments(pay, keep=True):
     else:
         seg_select.value = ""
         state["pf_seg"] = None
+
+
+def _bundle_mask(g, n):
+    """per-point in-bundle flags, defaulting to all-in when the prep had none"""
+    b = g.get("b")
+    if not b or len(b) != n:
+        return None
+    return [bool(t) for t in b]
+
+
+def _bundle_near(pay, near):
+    """the near layer as it will actually be drawn, for the colour scale"""
+    if not bundle_tog.active or pay.get("bundle") is None:
+        return near
+    m = _bundle_mask(near, len(near.get("x") or []))
+    if m is None:
+        return near
+    return {k: [w for w, keep in zip(near.get(k) or [], m) if keep]
+            for k in ("x", "y", "z", "q")}
+
+
+def split_bundle(pay, near, far):
+    """(near, far, out_of_bundle, n_hidden), honouring the `bundle only` control.
+
+    doc pdhd/13 sec 4.  With the control ON, only charge sharing the muon's
+    (flash_id, cluster_t0_us) is drawn.  With it OFF nothing is lost: the
+    out-of-bundle points move to their own layer and are recoloured, so the
+    union is exactly the old picture.  A payload with no `bundle` (T_cluster
+    absent) cannot restrict and is drawn whole.
+    """
+    empty = dict(x=[], y=[], z=[], q=[])
+    bundle = pay.get("bundle")
+    if bundle is None:
+        return near, far, empty, -1
+    mn = _bundle_mask(near, len(near.get("x") or []))
+    mf = _bundle_mask(far, len(far.get("x") or []))
+    if mn is None and mf is None:
+        return near, far, empty, -1
+
+    def take(g, m, keys, keep):
+        if m is None:
+            return {k: list(g.get(k) or []) for k in keys} if keep else \
+                   {k: [] for k in keys}
+        return {k: [w for w, t in zip(g.get(k) or [], m) if t == keep]
+                for k in keys}
+
+    nk, fk = ("x", "y", "z", "q"), ("x", "y", "z")
+    n_in = take(near, mn, nk, True)
+    f_in = take(far, mf, fk, True)
+    n_out = take(near, mn, nk, False)
+    f_out = take(far, mf, fk, False)
+    hidden = len(n_out["x"]) + len(f_out["x"])
+    if bundle_tog.active:
+        return n_in, f_in, empty, hidden
+    out = dict(x=n_out["x"] + f_out["x"], y=n_out["y"] + f_out["y"],
+               z=n_out["z"] + f_out["z"], q=[])
+    return n_in, f_in, out, 0
+
+
+def show_bundle(pay, hidden):
+    """say what the bundle control is doing, in points, never silently"""
+    bundle = pay.get("bundle")
+    if bundle is None:
+        bundle_div.text = ("<span style='color:#b00'>no T_cluster in this arm "
+                           "&mdash; the bundle cannot be resolved, every cluster "
+                           "is drawn</span>")
+        return
+    n = len(bundle)
+    if hidden < 0:
+        bundle_div.text = ("<span style='color:#b00'>this payload predates the "
+                           "bundle field &mdash; re-run prep_stm_michel_scan.py"
+                           "</span>")
+    elif bundle_tog.active:
+        bundle_div.text = (
+            "<span style='font-size:90%%'>bundle of <b>%d</b> cluster%s; "
+            "<b>%d</b> image point%s from other bundles hidden</span>"
+            % (n, "" if n == 1 else "s", hidden, "" if hidden == 1 else "s"))
+    else:
+        bundle_div.text = (
+            "<span style='font-size:90%%'>bundle of <b>%d</b> cluster%s; other "
+            "bundles shown in <b style='color:#b07aa1'>mauve</b> &mdash; that "
+            "charge is a different t0 and is NOT over-clustered with this "
+            "muon</span>" % (n, "" if n == 1 else "s"))
 
 
 def fill_pf(pay, v, rev):
@@ -1748,6 +1845,7 @@ def _on_pick(name):
 for _nm in QSCAT:
     SRCQ[_nm].selected.on_change("indices", _on_pick(_nm))
 zoom_tog.on_change("active", lambda a, o, n: render())
+bundle_tog.on_change("active", lambda a, o, n: render())
 for _ha, _va, _t in PANELS:
     FIG2[(_ha, _va)].on_event(
         Tap, (lambda h, v: (lambda e: snap_2d(h, v, e.x, e.y)))(_ha, _va))
@@ -1771,7 +1869,8 @@ right = column(
     rr_slider,
     row(pin_clear_btn, off_fit_chk),
     row(manual_x, manual_y, manual_z, manual_btn),
-    row(reveal_tog, zoom_tog, pf_tog),
+    row(reveal_tog, zoom_tog, bundle_tog, pf_tog),
+    bundle_div,
     Div(text="<b>particle flow</b> &mdash; the PR graph this chain walked. Pick a "
              "segment, then say what it is. Your tags are drawn as hollow squares, "
              "so they can never be confused with the reconstruction's colours.",

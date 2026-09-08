@@ -306,12 +306,46 @@ def event_dirs(det):
     return out
 
 
-def load_image(evtdir, muon_xyz, stop_xyz=None):
-    """(near, far, members_read).  Geometric split only, over ALL the charge."""
+def bundle_ids(f, cid):
+    """Cluster ids sharing this cluster's matched Q-L bundle, the muon included.
+
+    doc pdhd/13 sec 4.  The Bee `clustering-global` layer places EVERY cluster
+    at its OWN bundle's t0-corrected position, so two cosmics separated by
+    thousands of us of drift time can land centimetres apart on screen -- on
+    039252_15 that drew a 434 cm through-goer (cluster 103, flash 134, t0
+    2542.4 us) 5.6 cm from a 107 cm stopping muon (cluster 77, flash 298, t0
+    6199.7 us), 541 cm apart in drift.  It reads as over-clustering and is not.
+
+    The bundle key is (flash_id, cluster_t0_us) and BOTH are required: a flash
+    alone is not a unique bundle key.  Returns None when T_cluster is absent or
+    the cluster is not in it, which the viewer treats as "cannot restrict".
+    """
+    try:
+        tc = f["T_cluster"].arrays(
+            ["cluster_id", "flash_id", "cluster_t0_us"], library="np")
+    except Exception:
+        return None
+    w = np.where(tc["cluster_id"] == cid)[0]
+    if not len(w):
+        return None
+    i = int(w[0])
+    same = ((tc["flash_id"] == tc["flash_id"][i])
+            & (np.abs(tc["cluster_t0_us"] - tc["cluster_t0_us"][i]) <= 1e-6))
+    return sorted(int(c) for c in tc["cluster_id"][same])
+
+
+def load_image(evtdir, muon_xyz, stop_xyz=None, bundle=None):
+    """(near, far, members_read).  Geometric split only, over ALL the charge.
+
+    When `bundle` is a set of cluster ids, each returned point also carries `b`
+    = 1 when its cluster is in the muon's Q-L bundle.  The split stays purely
+    geometric -- `b` only lets the viewer HIDE what is not in the bundle, so
+    turning the filter off restores exactly the old picture.
+    """
     zp = os.path.join(evtdir, "mabc-pr.zip")
-    empty = dict(x=[], y=[], z=[], q=[])
+    empty = dict(x=[], y=[], z=[], q=[], b=[])
     if not os.path.exists(zp) or not len(muon_xyz):
-        return empty, dict(x=[], y=[], z=[]), []
+        return empty, dict(x=[], y=[], z=[], b=[]), []
     with zipfile.ZipFile(zp) as z:
         names = [n for n in z.namelist() if n.endswith(IMAGE_MEMBER + ".json")]
         if not names:
@@ -320,7 +354,7 @@ def load_image(evtdir, muon_xyz, stop_xyz=None):
         g = json.loads(z.read(names[0]))
     X = np.asarray(g.get("x") or [], float)
     if X.size == 0:
-        return empty, dict(x=[], y=[], z=[]), read
+        return empty, dict(x=[], y=[], z=[], b=[]), read
     Y = np.asarray(g["y"], float); Z = np.asarray(g["z"], float)
     Q = np.asarray(g.get("q") or [0.0] * X.size, float)
     # nearest muon-chain point for every image point, once.  cKDTree is an
@@ -332,10 +366,20 @@ def load_image(evtdir, muon_xyz, stop_xyz=None):
     if stop_xyz is not None:
         s2 = ((P - np.asarray(stop_xyz, float)) ** 2).sum(axis=1)
         m |= s2 < IMAGE_STOP_R ** 2
-    near = dict(x=r1(X[m]), y=r1(Y[m]), z=r1(Z[m]), q=r1(Q[m]))
-    fx, fy, fz = X[~m], Y[~m], Z[~m]
+    # in-bundle flag, per point.  Absent cluster_id or absent bundle => every
+    # point counts as in-bundle, so the filter can only ever remove charge it
+    # can positively attribute elsewhere.
+    CIDS = np.asarray(g.get("cluster_id") or [], float)
+    if bundle is None or CIDS.size != X.size:
+        B = np.ones(X.size, bool)
+    else:
+        B = np.isin(CIDS.astype(np.int64), np.asarray(sorted(bundle), np.int64))
+    near = dict(x=r1(X[m]), y=r1(Y[m]), z=r1(Z[m]), q=r1(Q[m]),
+                b=[int(v) for v in B[m]])
+    fx, fy, fz, fb = X[~m], Y[~m], Z[~m], B[~m]
     st = max(1, -(-fx.size // IMAGE_FAR_MAX))
-    far = dict(x=r1(fx[::st]), y=r1(fy[::st]), z=r1(fz[::st]))
+    far = dict(x=r1(fx[::st]), y=r1(fy[::st]), z=r1(fz[::st]),
+               b=[int(v) for v in fb[::st]])
     return near, far, read
 
 
@@ -417,7 +461,8 @@ def build_event(det, evtdir, with_tagger_fit=True):
         pw = np.asarray([np.nan if t is None else t for t in m_pw], float)
         rr_mu = p["rr"][mu]
         stop_pt = MX[int(np.argmin(rr_mu))] if rr_mu.size else None
-        near, far, src = load_image(evtdir, MX, stop_pt)
+        bundle = bundle_ids(f, cid)
+        near, far, src = load_image(evtdir, MX, stop_pt, bundle)
 
         # the readout unit of every chain point, from the wire coordinate
         units = [smgeom.unit_from_wire(det, None if not np.isfinite(w) else w)[0]
@@ -435,6 +480,9 @@ def build_event(det, evtdir, with_tagger_fit=True):
                       pw=m_pw, pu=m_pu, pv=m_pv, pt=m_pt,
                       unit=units, cru=crus),
             image_near=near, image_far=far,
+            # the muon's matched Q-L bundle (doc pdhd/13 sec 4); None when
+            # T_cluster cannot supply it, which disables the viewer's filter
+            bundle=bundle,
             # the 2-D measurement space, per plane: what the wires SAW, what the
             # fit PREDICTS they should have seen, and which channels were dead
             ticks_per_slice=smgeom.TICKS_PER_SLICE[det],
@@ -461,7 +509,9 @@ def build_event(det, evtdir, with_tagger_fit=True):
 
         row = dict(event=ev, cluster=cid, npts=pay["npts"],
                    muon_len_cm=pay["muon_len_cm"],
-                   n_near=len(near["x"]), n_far=len(far["x"]))
+                   n_near=len(near["x"]), n_far=len(far["x"]),
+                   n_near_bundle=int(sum(near.get("b") or [])),
+                   n_bundle_clusters=(0 if bundle is None else len(bundle)))
         key = dict(row, is_stm=int(m["is_stm"][i]),
                    michel_found=int(m["michel_found"][i]),
                    michel_conn_type=int(m["michel_conn_type"][i]),
