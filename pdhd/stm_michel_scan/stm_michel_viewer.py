@@ -2479,7 +2479,13 @@ right = column(
     flow_div,
 )
 curdoc().add_root(column(
-    row(header, column(saved_head, saved_table)),
+    # The table RESERVES its 330 px whether or not there are rows to fill them,
+    # and an unbordered white body reads as a blank band rather than as an empty
+    # table -- which is the opposite of the point.  The border is what says "this
+    # is the scan, and it is nearly empty".
+    row(header, column(saved_head, saved_table,
+                       styles={"border": "1px solid #d9d9d9",
+                               "border-radius": "3px", "padding": "3px"})),
     row(item_select, prev_btn, next_btn, next_unl_btn, copy_key),
     badge,
     Div(text="<b>the cluster IS the whole object:</b>", width=1420),
