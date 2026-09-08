@@ -213,6 +213,23 @@ SCALARS = ["cluster_id", "is_stm", "reject_bits", "muon_len", "muon_ke_range",
 MCS = ["muon_ke_mcs", "muon_mcs_amb", "muon_mcs_tracklen", "muon_mcs_nsegs",
        "muon_mcs_range_ke", "muon_mcs_bad_path"]
 
+# The rest of persist()'s scalar branches (CheckSTM_Michel.cxx:816-...).  Nothing
+# downstream needs them, but --compare reads them so the before/after census is
+# over the WHOLE scalar tree rather than a list I chose: "these branches moved"
+# is only a claim about the tree if every branch was asked.  Keep in sync with
+# persist(); a name that disappears is simply skipped (the `in rows[0]` guard).
+CENSUS_ONLY = ["gid", "t0_us", "has_pass", "pass", "kink_num", "entry_vtx_id",
+               "stop_vtx_id", "n_profile_pts", "n_cmp_live", "n_delta",
+               "n_body_other", "n_body_hadron", "delta_len", "ks_flat",
+               "ratio_mu", "ratio_flat", "tail_med", "contrast_expected",
+               "n_tail", "n_plateau", "short_track", "bragg_valid",
+               "n_stop_arms", "michel_len", "michel_mip", "michel_kink_deg",
+               "michel_far_len", "cont_len", "cont_angle_deg", "cont_mip",
+               "n_ext", "ext_len", "dead_ahead", "n_cluster_pts",
+               "chain_coverage", "n_dot_clusters_unfit", "in_fv",
+               "michel_seg_id", "michel_parent_vtx_id", "michel_dis_cm",
+               "michel_start_x", "michel_start_y", "michel_start_z"]
+
 
 def load(arm_glob):
     """One row per candidate; role-1 point arrays carried alongside."""
@@ -231,7 +248,7 @@ def load(arm_glob):
         run = f["Trun"].arrays(["runNo", "eventNo"], library="np")
         rn, en = int(run["runNo"][0]), int(run["eventNo"][0])
         avail = set(f["T_stm_michel"].keys())
-        cols = [c for c in SCALARS + MCS if c in avail]
+        cols = [c for c in SCALARS + MCS + CENSUS_ONLY if c in avail]
         m = f["T_stm_michel"].arrays(cols, library="np")
         p = f["T_stm_michel_pts"].arrays(library="np")
         for i in range(len(m["cluster_id"])):
@@ -500,7 +517,8 @@ def main():
               % (a.compare, a.arm, len(rows_b), len(rows), len(common)))
         fh.write("cmp_before\t%s\ncmp_n_before\t%d\ncmp_n_after\t%d\ncmp_n_common\t%d\n"
                  % (a.compare, len(rows_b), len(rows), len(common)))
-        shared = [c for c in SCALARS if c in rows_b[0] and c in rows[0]]
+        shared = [c for c in SCALARS + CENSUS_ONLY
+                  if c in rows_b[0] and c in rows[0]]
         ident, moved = [], []
         for c in shared:
             x = np.array([float(Bm[k][c]) for k in common])

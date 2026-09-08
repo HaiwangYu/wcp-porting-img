@@ -5,8 +5,9 @@
 ones move — `muon_ke_dqdx`, `michel_ke_dqdx`, `michel_ke_core`,
 `dots_ke_dqdx`, `michel_ke_best`, and `muon_ke_best` below 4 cm — because
 `check_stm_michel`'s dQ/dx → dE/dx inverse now carries the normalization its
-own PID tables were built with. They are the *only* six: the before/after
-census in §6.2 covers all 37 persisted scalars on all 579 / 325 candidates. **No
+own PID tables were built with. They are the *only* six: §6.2's before/after
+census asks **all 80** pre-existing scalar branches on all 579 / 325
+candidates, and 74 come back bit-identical. **No
 verdict moves**: `is_stm`, `reject_bits`, `contrast`, `plateau_med`, `ks_mu`,
 `muon_len` are bit-identical candidate by candidate (§6), and the STM and
 neutrino taggers keep the uncalibrated recombination instance untouched.
@@ -326,33 +327,42 @@ The branches a **re-run** could move are the ones fed by `preload_clusters` →
 `prepare_data()` (doc pdhd/15 §7's companion perturbation). Those are checked
 explicitly:
 
-The census covers **every** persisted scalar that could carry an energy or a
-verdict — 37 branches, including all six other `*_ke_*` columns — so the two
-lists below are exhaustive over the compared set, not a sample. Both are read
-off all 579 (PDVD) / 325 (PDHD) common candidates, and the two detectors give
-the *same* partition.
+The census is over the **whole scalar tree**, not a list I chose: all **80**
+scalar branches `persist()` wrote before this round (the 89 it writes now, minus
+the 9 that are new and so have no counterpart in the `d15` arm), on all 579
+(PDVD) / 325 (PDHD) common candidates. Both detectors give the *same*
+partition. So "these branches moved" is a statement about the tree rather than
+about my recall of it.
 
-**Bit-identical, candidate by candidate, on all 579 / 325 rows (31):**
-`cluster_id`, `is_stm`, `reject_bits`, `muon_len`, `muon_ke_range`,
-`michel_ke_range`, `michel_ke_charge`, `dots_ke_unfit`, `dots_charge_unfit`,
-`michel_n_pieces`, `n_dots`, `n_michel_segs`, `michel_conn_type`,
-`michel_found`, `n_live_pts`, `n_dead_pts`, `dead_frac_cmp`, `contrast`,
-`plateau_med`, `ks_mu`, `n_chain_segs`, `stop_dis`, and the ten geometry
-columns (`entry_{x,y,z}`, `stop_{x,y,z}`, `tagger_stop_{x,y,z}`).
+**Bit-identical, candidate by candidate, on all 579 / 325 rows: 74 of 80** —
+every branch except the six below. That includes every verdict input
+(`is_stm`, `reject_bits`, `contrast`, `contrast_expected`, `plateau_med`,
+`ks_mu`, `ks_flat`, `ratio_mu`, `ratio_flat`, `tail_med`, `n_tail`,
+`n_plateau`, `bragg_valid`, `short_track`, `in_fv`), every geometry and
+topology column (`entry_*`, `stop_*`, `tagger_stop_*`, `michel_start_*`,
+`michel_seg_id`, `michel_parent_vtx_id`, `michel_conn_type`, `n_chain_segs`,
+`n_dots`, `michel_n_pieces`), every length and point count (`muon_len`,
+`michel_len`, `cont_len`, `ext_len`, `delta_len`, `n_live_pts`, `n_dead_pts`,
+`n_cluster_pts`, `chain_coverage`), and the MIP-scale columns `michel_mip` and
+`cont_mip`.
 
-`michel_ke_range` sitting in this list is the check that the *range* arm of the
-comparator is genuinely independent of the recombination model — it is a CSDA
-table lookup on a length, and the length itself (`muon_len`) is bit-identical
-too.
+Two entries in that list carry more weight than the rest:
+
+- **`michel_ke_range`** — the *range* arm of the comparator is demonstrably
+  independent of the recombination model, not merely argued to be: it is a CSDA
+  table lookup on a length, and the length (`muon_len`) is itself bit-identical.
+- **`michel_ke_charge`, `dots_ke_unfit`, `dots_charge_unfit`** — the positive
+  evidence that only *one* of the three carriers of the gain × lifetime ×
+  recombination degeneracy moved. These ride the flat `kine_*` /
+  `stm_michel_charge_to_energy` factors, which this round deliberately leaves
+  alone, and they did not budge.
 
 **Moved (6):** `muon_ke_dqdx` (×1.3114 PDVD / ×1.2587 PDHD, median),
 `michel_ke_dqdx` (×1.2994 / ×1.2273), `michel_ke_core`, `dots_ke_dqdx`,
 `michel_ke_best`, and `muon_ke_best` — the last only on muons shorter than
 4 cm, where `best` is the dQ/dx number by the `PRSegmentFunctions.cxx:2900`
-rule. Every mover is a dQ/dx-derived energy; nothing else in the tree moves.
-`michel_ke_charge`, `dots_ke_unfit` and `dots_charge_unfit` do **not** move:
-they ride the flat `kine_*` / `stm_michel_charge_to_energy` factors, the
-carrier this round deliberately leaves alone.
+rule. Every mover is a dQ/dx-derived energy, and — having asked all 80 —
+nothing else in the tree moves.
 
 **A second, smaller behaviour change, measured rather than assumed.** The
 PowerBox inverse returns 0 for dQ/dx ≤ 0 where the Box's returns a spurious
@@ -427,7 +437,7 @@ to MC truth. Nothing in this round tunes it.
 | compiled-config, knob **off** vs pre-doc-16 HEAD | 60 nodes vs 60, **one** difference: the three `mcs_*` keys added to `CheckSTM_Michel` |
 | compiled-config, knob **on** vs off | adds exactly one node (`PowerBoxRecombination:pdvd_stm_recomb`) and changes exactly one (`CheckSTM_Michel`); `TaggerCheckSTM` keeps `pdvd_box_recomb` |
 | python re-implementation vs the chain (G1) | 1.0017 PDVD / 1.0024 PDHD at the shipped `C` |
-| before/after census coverage | **37 scalars** — every persisted energy, verdict and geometry column — on 579 / 325 common candidates; 31 bit-identical, 6 moved, the same partition on both detectors (§6.2) |
+| before/after census coverage | **all 80 pre-existing scalar branches** (of the 89 `persist()` now writes) on 579 / 325 common candidates; **74 bit-identical, 6 moved**, the same partition on both detectors (§6.2) |
 | both clamps (`43e3×1000`, 50 MeV/cm) | 0 and **1** firing of 46 592 / 20 021 points |
 | PowerBox saturation reachable? | no — the 50 MeV/cm ceiling binds at 285 ke/cm against the branch end at 326 (PDVD), 311 vs 357 (PDHD) |
 | `selftest_stm_michel_scan.py` | **72 069 checks, 0 failed**, both detectors, incl. new group `[O]` |
