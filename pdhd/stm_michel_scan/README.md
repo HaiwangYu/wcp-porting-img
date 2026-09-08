@@ -355,6 +355,31 @@ writer's default wire.
 ./score_stm_michel_scan.py --det pdhd --tag smx1
 ```
 
+### The three muon energy scales (doc pdhd/16)
+
+Since the `d16*nu` arms `T_stm_michel` carries **three** energies for the same
+stopping muon, and the flow panel shows all three side by side rather than
+combining them:
+
+| branch | what it reads | note |
+|---|---|---|
+| `muon_ke_range` | the track's length through the CSDA table | the **baseline**; charge-blind except through where the track ends. `muon_ke_best` is still this above 4 cm |
+| `muon_ke_dqdx` | the fitted charge, through the recombination model's inverse | the only one carrying the gain x lifetime x recombination normalization |
+| `muon_ke_mcs` | multiple Coulomb scattering off the trajectory | reads **no charge at all**; `-1` = the engine refused the path |
+
+`muon_p_range` / `_dqdx` / `_mcs` are the same three as momenta,
+`sqrt((KE+m)^2 - m^2)`.  **`muon_ke_mcs = -1` means "not computed"** (trim
+failed, fewer than 20 trimmed points, the trimmed end nearer than 28 cm to the
+stop, or fewer than two fitted 14 cm segments) and must never be read as
+0 MeV; `muon_mcs_amb` is the fit's ambiguity, 1 = maximally ambiguous, and
+doc 84 R3.5 only trusts the scale below 0.2.
+
+On these arms `check_stm_michel` alone gets a recombination model that carries
+the measured normalization `C` -- 0.7941 on PDVD, 0.8120 on PDHD -- so
+`muon_ke_dqdx` now sits **on** `muon_ke_range` instead of 24 % below it.  The
+STM and neutrino taggers keep the uncalibrated instance, and no verdict moves.
+Group `[O]` of the self-test closes that loop on the chain's own output.
+
 `prep` **refuses to draw** while any `../work/stm_michel_labels/*/labels.json`
 exists for that detector — pass `--pin-tranche`, or `--redraw` if you really are
 starting a new scan (and then serve it under a new `--scan-tag`).

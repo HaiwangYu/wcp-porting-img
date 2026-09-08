@@ -8,6 +8,15 @@
 > — see the markers on §4.2 and §5. Round 2 changed no code in the toolkit; it
 > did fix one bug in `pdhd/run_pr_evt.sh` (§15).
 
+> **Followed up by doc pdhd/16 (2026-09-08).** §8's "this remains a decode and
+> shape check, **not** a calibration" now has the calibration it points at.
+> Requiring the dQ/dx energy of a stopping muon to equal its CSDA range energy
+> gives one normalization per detector — PDVD 0.7941 ± 0.0093, PDHD
+> 0.8120 ± 0.0138 — and it agrees with `0.85 × k_pop` from §14 to ~1 %, from a
+> different sample through different code. It confirms this doc's reading that
+> the Modified-Box *shape* at each detector's field is right and only the scale
+> was uncalibrated.
+
 **Scope.** No code is changed. This is an analysis of reconstruction products
 already on disk, against the Modified-Box expectation tables the production
 taggers already carry. Owner question (2026-09-07): *"For PDHD, I forgot if we

@@ -245,6 +245,15 @@ function(
         dead_volume_check: true,       // stop that walks into a dead region (sec 6.4; fired 0/165 on 029107, kept for the record)
         // min_chain_coverage is NOT set: measured 0.30-0.99 on clean stopping muons vs 0.46 on the
         // one EM blob (sec 6.5), so the guard does not separate; chain_coverage is persisted for scans.
+        // doc pdhd/16: MCS momentum for the STM muon -- the third energy scale,
+        // and the only one that reads no charge at all.  C++ default is OFF.
+        // mcs_cathode_xcut 5 cm: PDHD is cathode-centred at x = 0 and the
+        // seam loses charge, so the 14 cm segments crossing it are dropped
+        // from the likelihood (mcs/inc/WireCellMcs/MuonMCS.h:68-79), the same
+        // value SBND production runs.  mcs_min_len_cm rides the C++ 40.
+        mcs_enable: true,
+        mcs_cathode_x: 0.0,
+        mcs_cathode_xcut: 5.0,
     },
     // TrackFitting parameter JSON, required whenever tagger_check_stm is in the
     // pipeline: the C++ preset defaults are uBooNE-hard-coded, never right for
@@ -1065,6 +1074,13 @@ function(
     // the pre-pr/10 values -- upstream e6fb7ef3 changed how
     // Gen::BoxRecombination interprets them.
     use_power_recomb         = false,   // PDVD: no fitted power box yet (doc 25 M7); SBND true
+    // doc pdhd/16: check_stm_michel ALONE gets a Modified-Box inverse that
+    // carries the 0.85 its own *DeDx tables were built with, times the charge
+    // deficit measured against the CSDA range energy of the same stopping
+    // muons.  The STM and neutrino taggers keep the uncalibrated instance, so
+    // no verdict and no tagger energy moves; what moves is muon_ke_dqdx and
+    // the Michel energies in T_stm_michel.  false = the pre-doc-16 job.
+    stm_recomb_calibrated    = true,
     // Single-photon stem dE/dx: DEFAULT ON (owner 2026-07-30) -- route
     // shw_sp_vec_{median,mean}_dedx through the configured recombination
     // model above, with sp_mean_dedx_cut = 2.23 MeV/cm, the physical-scale
@@ -4034,6 +4050,7 @@ function(
                              mcs_enable=mcs_enable,
                              pseudo_shower_track_paint=pseudo_shower_track_paint,
                              use_power_recomb=use_power_recomb,
+                             stm_recomb_calibrated=stm_recomb_calibrated,   // doc pdhd/16
                              fast_xgb_forest=fast_xgb_forest,
                              tcn_knobs=tcn_knobs);
 

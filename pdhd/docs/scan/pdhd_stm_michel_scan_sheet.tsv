@@ -1,6 +1,6 @@
-# doc pdhd/12 -- STM + Michel hand-scan sheet, det=pdhd arm=d15hnu
+# doc pdhd/12 -- STM + Michel hand-scan sheet, det=pdhd arm=d16hnu
 # NO verdict, NO stratum, NO chain flag: those are in the KEY.
-# tranche INHERITED from 86d78116:pdhd/docs/scan/pdhd_stm_michel_scan_sheet.tsv -- NOT drawn here (--pin-tranche).
+# tranche INHERITED from HEAD:pdhd/docs/scan/pdhd_stm_michel_scan_sheet.tsv -- NOT drawn here (--pin-tranche).
 # That draw was seed=20260907, tranche1=60, S1 cap 24, floor 8, stratified
 # on ITS arm's is_stm/michel_found -- deliberately the PRE-doc-15
 # meaning of michel_found, so the sample does not move with the

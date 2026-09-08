@@ -1,5 +1,9 @@
 # 48 — `CheckSTM_Michel`: a stopping-muon + Michel reconstruction stage replaces the neutrino PR tail on PDVD
 
+> Later rounds: doc pdhd/14 (muon kinematics), pdhd/15 (the Michel as one
+> object), **pdhd/16** (the MCS momentum, and the dQ/dx -> dE/dx inverse
+> calibrated against the range energy).
+
 **Status (2026-09-05).** Shipped. New clustering visitor `CheckSTM_Michel`
 (toolkit `clus/`), a `T_stm_michel` / `T_stm_michel_pts` pair in
 `tracking-pr.root`, and the PDVD `-nu` chain now runs it in place of

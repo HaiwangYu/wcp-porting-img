@@ -9,6 +9,14 @@ only on the six candidates whose companion set changed, and that is measured,
 not asserted (§7). Owner ruling 2026-09-07, carried over from doc pdhd/14:
 *"this can be new feature default on"*.
 
+> **Superseded in one respect — doc pdhd/16 (2026-09-08).** The Michel and muon
+> dQ/dx energies quoted here were computed with `PracticalBoxRecombination` as
+> configured, i.e. *without* the ×0.85 the PID tables carry. On the `d16*nu`
+> arms `check_stm_michel` runs a calibrated inverse and every dQ/dx energy is
+> ×1.23–1.31 larger (`michel_ke_dqdx` p90 29.3 → 38.8 MeV on PDVD). The item
+> set, the tranche, `michel_found`, `n_pieces` and every verdict here are
+> unchanged and were checked bit-for-bit. See `16_stm-muon-energy-scales.md`.
+
 ## Repro
 
 ```bash

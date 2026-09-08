@@ -1619,6 +1619,148 @@ def test_object_spectrum(det):
        % (det, over, k.size, 100.0 * over / k.size, MICHEL_ENDPOINT_MEV))
 
 
+# ---------------------------------------------------------------------------
+# doc pdhd/16 -- the muon's three energy scales
+# ---------------------------------------------------------------------------
+MMU_MEV = 105.658          # mcs/src/MuonMCS.cxx:37, and CheckSTM_Michel's mom_from_ke
+
+
+def test_energy_scales(det):
+    """The three muon energies and their momenta, as the chain emits them.
+
+    O1  the nine doc-16 branches exist on this arm;
+    O2  p = sqrt((KE+m)^2 - m^2) for each of range / dQ/dx / MCS, and a KE that
+        was never computed carries p = -1 rather than 0 -- a zero momentum
+        would pass every `>= 0` gate as if it had been measured;
+    O3  muon_ke_mcs > 0 IFF the engine accepted the path: not bad_path and
+        nsegs >= 2 (mcs/src/MuonMCS.cxx:1147-1169).  A positive energy with
+        fewer than two fitted 14 cm segments would mean the abort branch is not
+        firing;
+    O4  muon_ke_best is STILL the range energy above 4 cm.  MCS is a
+        cross-check, never the answer: this pins that nothing silently promoted
+        it;
+    O5  the CALIBRATION closes -- median(muon_ke_dqdx / muon_ke_range) on the
+        is_stm sample is 1 within 5 %.  This is the whole point of the round and
+        it is checked against the chain's own output, not against the fit that
+        produced C.
+    """
+    print("[O] the muon's three energy scales, %s" % det)
+    arm = ARM[det]
+    cols = ["is_stm", "muon_len", "muon_ke_range", "muon_ke_dqdx", "muon_ke_best",
+            "muon_ke_mcs", "muon_mcs_amb", "muon_mcs_nsegs", "muon_mcs_bad_path",
+            "muon_mcs_tracklen", "muon_mcs_range_ke",
+            "muon_p_range", "muon_p_dqdx", "muon_p_mcs"]
+    acc = {c: [] for c in cols}
+    nfile = 0
+    for d in sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm))):
+        rf = os.path.join(d, "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        f = uproot.open(rf)
+        if "T_stm_michel" not in [k.split(";")[0] for k in f.keys()]:
+            continue
+        t = f["T_stm_michel"]
+        miss = [c for c in cols if c not in t.keys()]
+        ck(not miss, "%s %s: T_stm_michel is missing %s -- pre-doc-16 arm"
+           % (det, os.path.basename(d), miss))
+        if miss:
+            return
+        a = t.arrays(cols, library="np")
+        for c in cols:
+            acc[c].append(a[c])
+        nfile += 1
+    ck(nfile > 0, "%s: no %s event dirs with T_stm_michel" % (det, arm))
+    if not nfile:
+        return
+    v = {c: np.concatenate(acc[c]) for c in cols}
+    n = v["is_stm"].size
+
+    # O2 -- the momentum identity, on every row
+    def pmom(ke):
+        return np.where(ke > 0, np.sqrt(np.maximum((ke + MMU_MEV) ** 2 - MMU_MEV ** 2, 0.0)), -1.0)
+    for ke_k, p_k in (("muon_ke_range", "muon_p_range"),
+                      ("muon_ke_dqdx", "muon_p_dqdx"),
+                      ("muon_ke_mcs", "muon_p_mcs")):
+        want = pmom(v[ke_k])
+        bad = int((np.abs(want - v[p_k]) > 1e-3).sum())
+        ck(bad == 0, "%s: %d of %d rows have %s != sqrt((%s+m)^2-m^2)"
+           % (det, bad, n, p_k, ke_k))
+        nz = int(((v[ke_k] <= 0) & (v[p_k] == 0)).sum())
+        ck(nz == 0, "%s: %d rows carry %s = 0 for an uncomputed %s -- the -1 "
+                    "sentinel was lost and a zero momentum reads as measured"
+           % (det, nz, p_k, ke_k))
+
+    # O3 -- the engine's own accept condition
+    accepted = (v["muon_mcs_bad_path"] == 0) & (v["muon_mcs_nsegs"] >= 2)
+    bad = int(((v["muon_ke_mcs"] > 0) & ~accepted).sum())
+    ck(bad == 0, "%s: %d rows report an MCS energy the engine should have "
+                 "refused (bad_path or < 2 fitted segments)" % (det, bad))
+
+    # O4 -- range is still `best`
+    lon = v["muon_len"] >= 4.0
+    bad = int((np.abs(v["muon_ke_best"][lon] - v["muon_ke_range"][lon]) > 1e-6).sum())
+    ck(bad == 0, "%s: %d of %d muons longer than 4 cm no longer take their "
+                 "`best` energy from range" % (det, bad, int(lon.sum())))
+
+    # O5 -- the calibration closes on the chain's own numbers
+    sel = (v["is_stm"] == 1) & (v["muon_ke_range"] > 0) & (v["muon_ke_dqdx"] > 0)
+    ck(int(sel.sum()) >= 20, "%s: only %d is_stm muons to close the calibration on"
+       % (det, int(sel.sum())))
+    if sel.sum() >= 20:
+        r = v["muon_ke_dqdx"][sel] / v["muon_ke_range"][sel]
+        med = float(np.median(r))
+        mk = v["muon_ke_mcs"][sel] > 0
+        amb = v["muon_mcs_amb"][sel]
+        print("     n=%d  dQ/dx-over-range median %.4f (IQR %.3f-%.3f) | MCS on %d "
+              "(%.0f %%), amb<0.2 on %d"
+              % (int(sel.sum()), med, *np.percentile(r, [25, 75]),
+                 int(mk.sum()), 100.0 * mk.sum() / sel.sum(),
+                 int((mk & (amb < 0.2)).sum())))
+        if mk.sum() >= 5:
+            rm = v["muon_ke_mcs"][sel][mk] / v["muon_ke_range"][sel][mk]
+            print("     MCS-over-range median %.4f (IQR %.3f-%.3f) on %d"
+                  % (float(np.median(rm)), *np.percentile(rm, [25, 75]), int(mk.sum())))
+        ck(abs(med - 1.0) <= 0.05,
+           "%s: the calibrated dQ/dx energy sits at %.4f of range, not 1.00 -- "
+           "the C in %s_stm_recomb no longer matches this arm" % (det, med, det))
+
+
+def test_energy_payload(det):
+    """The doc-16 branches reach the scan payload unmodified."""
+    print("[O] the energy scales in the payload, %s" % det)
+    fns = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    ck(bool(fns), "%s: no payloads for the energy-scale test" % det)
+    KEYS = ("muon_ke_mcs", "muon_mcs_amb", "muon_mcs_nsegs", "muon_mcs_bad_path",
+            "muon_mcs_tracklen", "muon_mcs_range_ke",
+            "muon_p_range", "muon_p_dqdx", "muon_p_mcs")
+    arm = ARM[det]
+    n = 0
+    for fn in fns[:: max(1, len(fns) // 25)]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        v = d.get("verdict") or {}
+        for k in KEYS:
+            ck(k in v, "%s %s/%s: verdict has no %s"
+               % (det, d["event"], d["cluster_id"], k))
+        rf = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm),
+                          "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        a = uproot.open(rf)["T_stm_michel"].arrays(library="np")
+        w = np.where(a["cluster_id"] == int(d["cluster_id"]))[0]
+        if not len(w):
+            continue
+        i = int(w[0])
+        for k in KEYS:
+            if k not in a:
+                continue
+            ck(abs(float(v[k]) - float(a[k][i])) < 1e-9,
+               "%s %s/%s: %s payload %s != tree %s"
+               % (det, d["event"], d["cluster_id"], k, v[k], a[k][i]))
+        n += 1
+    print("     %d payload(s) cross-checked against the tree" % n)
+
+
 def test_object_payload(det):
     """The doc-15 branches reach the payload unmodified."""
     print("[M] the object in the payload, %s" % det)
@@ -1896,10 +2038,12 @@ def main():
             test_kine_blind(det, tmp)
             test_object_payload(det)
             test_object_panel(det, tmp)
+            test_energy_payload(det)
             if not a.quick:
                 test_kine_gate(det)
                 test_object_tree(det)
                 test_object_spectrum(det)
+                test_energy_scales(det)
                 test_bundle_payload(det)
                 test_meas_causal(det)
                 test_pf_selector(det)

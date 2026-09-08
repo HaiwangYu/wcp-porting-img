@@ -75,8 +75,14 @@ DET = {
     # pctree input re-run through the same -nu chain with the feature in; every
     # pre-existing T_stm_michel branch is bit-unchanged (doc pdhd/14 sec 3), so
     # the sheet and the stratification are unaffected.
-    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d15hnu"),
-    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d15vnu"),
+    # doc pdhd/16: d16*nu is the same pctree input again, with the MCS momentum
+    # added and check_stm_michel's dQ/dx -> dE/dx inverse carrying the measured
+    # normalization.  The verdict branches do not move (the recombination model
+    # is not on any verdict path) -- measured 83/88 branches bit-identical, the
+    # five movers being the dQ/dx energies -- so the sheet, the stratification
+    # and the tranche are unaffected.  Re-prep with --pin-tranche all the same.
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d16hnu"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d16vnu"),
 }
 IMAGE_MEMBER = "clustering-global"
 IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
@@ -133,6 +139,14 @@ VERDICT_SCALARS = [
     "michel_start_x", "michel_start_y", "michel_start_z",
     "n_dots", "dots_ke_dqdx", "n_dot_clusters_unfit", "dots_charge_unfit",
     "dots_ke_unfit",
+    # doc pdhd/16 -- the muon's third energy scale and the three momenta.  MCS
+    # reads no charge at all, so it is the one estimator blind to gain,
+    # lifetime and recombination.  -1 means "not computed" (bad_path, < 20
+    # trimmed points, trimmed end < 28 cm from the stop, or < 2 fitted 14 cm
+    # segments) and the viewer must render that as a gap, never as 0 MeV.
+    "muon_ke_mcs", "muon_mcs_amb", "muon_mcs_tracklen", "muon_mcs_range_ke",
+    "muon_mcs_nsegs", "muon_mcs_bad_path",
+    "muon_p_range", "muon_p_dqdx", "muon_p_mcs",
     "n_delta", "delta_len", "n_body_hadron", "n_stop_arms",
     "cont_len", "cont_angle_deg", "cont_mip", "n_ext", "ext_len", "dead_ahead",
     "contrast", "contrast_expected", "plateau_med", "tail_med",

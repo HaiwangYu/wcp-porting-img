@@ -47,6 +47,20 @@ RECOMB = {
     "pdvd": dict(A=0.93, B=0.212, E=0.45,   rho=1.38, Wi=23.6e-6),
 }
 
+# doc pdhd/16: check_stm_michel ALONE now runs a CALIBRATED inverse.  Same
+# Modified Box, same field -- PowerBoxRecombination at p = 1 and
+# k = beta'*pivot is the Box at that field (gen/test/
+# doctest_powerbox_recombination.cxx pins the identity) -- plus the
+# normalization C the model had no slot for.  C is measured by requiring the
+# median dQ/dx energy of a stopping muon to equal its CSDA range energy:
+#   pdvd 0.7941 +- 0.0093 (151 is_stm muons, arm d15vnu)
+#   pdhd 0.8120 +- 0.0138 (54, arm d15hnu, APA0 excluded)
+# Config: cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet
+# {pdvd,pdhd}_stm_recomb, selected by stm_recomb_calibrated (both drivers true).
+# Set STM_RECOMB_C = 1.0 to reproduce a pre-doc-16 arm.
+STM_RECOMB_C = {"pdhd": 0.8120, "pdvd": 0.7941}
+DEDX_MAX = 77.0     # MeV/cm, PowerBoxRecombination's monotone-branch end
+
 # The MIP operating point used only to label a raw-charge sum in MeV.  2.1
 # MeV/cm is the same pivot the PowerBoxRecombination fit uses
 # (RecombinationModels.h:104, `pivot`).
@@ -64,24 +78,51 @@ def _coeff(p):
     return p["B"] / (p["E"] * p["rho"])
 
 
-def dedx_from_dqdx(dqdx_e_per_cm, det):
-    """MeV/cm from e/cm -- Gen::PracticalBoxRecombination::dE / dX.
+def dedx_from_dqdx(dqdx_e_per_cm, det, C=None):
+    """MeV/cm from e/cm -- the inverse check_stm_michel actually runs.
 
-    dE(dQ,dX) = (exp(dQ/dX * coeff * Wi) - A) * dX / coeff   (MeV),
+    With C = 1 this is Gen::PracticalBoxRecombination::dE / dX,
+        dE(dQ,dX) = (exp(dQ/dX * coeff * Wi) - A) * dX / coeff   (MeV),
     so dE/dx depends on dQ/dx alone.  The model is non-linear, which is why
     segment_cal_kine_dQdx is careful to evaluate it at the TRUE fitted dx even
     when it accumulates over a shortened one.
+
+    With C != 1 it is Gen::PowerBoxRecombination at p = 1, k = beta'*pivot --
+    the same Box with the measured normalization -- and its two extra rules,
+    which are NOT cosmetic:
+      * dQ/dx <= 0 gives 0, where the Box's inverse returns a spurious
+        (1-A)/beta' ~ 0.2 MeV/cm because R = ln(A+u)/u sends dQ/dx to -infinity
+        as dE/dx -> 0 and inverting there is meaningless.  Measured on the d16
+        arms: 0 of 166137 (pdvd) / 97872 (pdhd) MUON chain points fall in that
+        window, so muon_ke_dqdx is unaffected; the Michel arms carry 2 %, worth
+        at most 0.03 MeV per object.
+      * dQ/dx above the forward value at dedx_max saturates at dedx_max, which
+        segment_cal_kine_dQdx's own [0, 50 MeV/cm] clamp already covers.
     """
     p = RECOMB[det]
     c = _coeff(p)
-    return (np.exp(np.asarray(dqdx_e_per_cm, float) * c * p["Wi"]) - p["A"]) / c
+    if C is None:
+        C = STM_RECOMB_C[det]
+    q = np.asarray(dqdx_e_per_cm, float)
+    with np.errstate(over="ignore"):
+        out = (np.exp((q / C) * c * p["Wi"]) - p["A"]) / c
+    if C != 1.0:
+        out = np.where(q > 0, out, 0.0)
+        out = np.minimum(out, DEDX_MAX)
+    return out
 
 
-def dqdx_at_mip(det):
-    """e/cm that the Box model maps to MIP_DEDX_MEV_PER_CM -- the model inverted."""
+def dqdx_at_mip(det, C=None):
+    """e/cm that the model maps to MIP_DEDX_MEV_PER_CM -- the model inverted.
+
+    doc pdhd/16: this follows the CALIBRATED model, so the MIP-equivalent
+    conversion below and the chain's own dQ/dx -> dE/dx agree by construction.
+    """
     p = RECOMB[det]
     c = _coeff(p)
-    return np.log(p["A"] + MIP_DEDX_MEV_PER_CM * c) / (c * p["Wi"])
+    if C is None:
+        C = STM_RECOMB_C[det]
+    return C * np.log(p["A"] + MIP_DEDX_MEV_PER_CM * c) / (c * p["Wi"])
 
 
 def mev_per_electron_mip(det):

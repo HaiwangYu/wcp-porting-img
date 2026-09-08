@@ -1667,15 +1667,44 @@ def fill_badge(it, pay, px, py, pz, prr, psrc):
 # in the chain's output has to read as a gap.  Recomputing it in the viewer
 # would hide exactly the deficiency this display exists to find.
 # ---------------------------------------------------------------------------
+def _mcs_text(v, long_form=False):
+    """doc pdhd/16: the MCS leg of the muon energy, or why there isn't one.
+
+    -1 is the chain's "not computed" sentinel and MUST read as a gap: the
+    engine refuses a path it could not trim, one with fewer than 20 trimmed
+    points, one whose trimmed end is nearer than 28 cm to the stop, or one that
+    yields fewer than two 14 cm segments.  Rendering that as "0.0 MeV" would
+    invent a measurement.  muon_mcs_amb is the ratio of the better side minimum
+    to the global one, so 1 = maximally ambiguous and small = a clean fit; doc
+    84 R3.5 measured the SBND scale only for amb < 0.2.
+    """
+    ke = v.get("muon_ke_mcs")
+    if ke is None:
+        return " <span style='color:#777'>(no MCS in this arm &mdash; pre-doc-16)</span>"
+    if ke is not None and float(ke) < 0:
+        why = "trim failed" if int(v.get("muon_mcs_bad_path") or 0) else (
+            "%d segment%s" % (int(v.get("muon_mcs_nsegs") or 0),
+                              "" if int(v.get("muon_mcs_nsegs") or 0) == 1 else "s"))
+        return " <span style='color:#777'>MCS &mdash; not computed (%s)</span>" % why
+    amb = float(v.get("muon_mcs_amb") or -1)
+    col = "#0a0" if 0 <= amb < 0.2 else "#a60"
+    tail = ""
+    if long_form:
+        tail = (" over %.0f cm / %d seg" % (float(v.get("muon_mcs_tracklen") or 0),
+                                            int(v.get("muon_mcs_nsegs") or 0)))
+    return (" MCS <b>%.1f MeV</b> <span style='color:%s'>(amb %.2f)</span>"
+            "<span style='color:#777'>%s</span>" % (float(ke), col, amb, tail))
+
+
 def _muon_ke_text(v):
     """The chain's muon energy for the un-blinded status line."""
     if v.get("muon_ke_best") is None:
         return (" &nbsp;<span style='color:#b00'>(no muon energy in this arm "
                 "&mdash; pre-doc-14 CheckSTM_Michel)</span>")
     return (" &nbsp;&mdash;&nbsp; chain muon KE <b>%.1f MeV</b>"
-            " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>"
+            " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>%s"
             % (v.get("muon_ke_best", 0.0), v.get("muon_ke_range", 0.0),
-               v.get("muon_ke_dqdx", 0.0)))
+               v.get("muon_ke_dqdx", 0.0), _mcs_text(v)))
 
 
 def fill_flow(v, rev):
@@ -1712,12 +1741,26 @@ def fill_flow(v, rev):
         return
     one_object = v.get("michel_ke_core") is not None
 
+    # doc pdhd/16: three scales for one muon, side by side.  RANGE is the
+    # baseline and is what muon_ke_best carries above 4 cm -- it reads no charge
+    # except through where the track ends.  dQ/dx is calorimetric and therefore
+    # the only one carrying the gain x lifetime x recombination normalization
+    # (this arm's check_stm_michel inverts the Modified Box with the measured C;
+    # doc pdhd/16 sec 5).  MCS reads no charge at all.  They are shown, never
+    # combined: a disagreement here is the finding, not something to average.
     mu = ("<b>&mu;</b> &nbsp; pdg 13 &nbsp; %.1f cm &nbsp; <b>%.1f MeV</b>"
-          " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>"
+          " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>%s"
           " &nbsp; %d chain seg%s"
           % (v.get("muon_len", 0.0), v.get("muon_ke_best", 0.0),
              v.get("muon_ke_range", 0.0), v.get("muon_ke_dqdx", 0.0),
+             _mcs_text(v, long_form=True),
              v.get("n_chain_segs", 0), "" if v.get("n_chain_segs") == 1 else "s"))
+    if v.get("muon_p_range") is not None and float(v.get("muon_p_range") or -1) > 0:
+        mu += ("<br><span style='color:#777'>&nbsp;&nbsp;&nbsp;p = "
+               "%.1f (range) / %.1f (dQ/dx)%s MeV/c</span>"
+               % (float(v.get("muon_p_range") or 0), float(v.get("muon_p_dqdx") or 0),
+                  ("" if float(v.get("muon_p_mcs") or -1) < 0
+                   else " / %.1f (MCS)" % float(v.get("muon_p_mcs")))))
 
     conn = int(v.get("michel_conn_type") or 0)
     seg = v.get("michel_seg_id")
