@@ -1,9 +1,13 @@
 # The recombination model in CheckSTM_Michel, forward and backward — doc pdhd/17
 
-**Status: no code and no config changes.** This is a re-analysis of arms already
-on disk plus an inversion of the shipped PID table. It answers four questions
-about the model doc pdhd/16 calibrated, and it corrects one claim in doc
-pdhd/16 §6.2 that turned out to be vacuous on PDVD (§7).
+**Status: §1–§9 are a re-analysis — no code, no config, no new arm.** They
+answer four questions about the model doc pdhd/16 calibrated and correct one
+claim in doc pdhd/16 §6.2 that turned out to be vacuous on PDVD (§7).
+**§9 is a change**, added the same day on the owner's ask: the unfitted-charge
+conversion now reads its survival out of the recombination model instead of a
+hard-coded pair. Default OFF in C++, **on in both ProtoDUNE drivers**; it moves
+`dots_ke_unfit` (and `michel_ke_best` where that fires) on **17 of 124 PDHD**
+Michel objects and on **nothing at all on PDVD**.
 
 Owner ask, 2026-09-08: *"1. are we having a consistent recombination model
 forward and backward? 2. How does the latest recombination model compare to
@@ -330,11 +334,11 @@ PDHD it fires on 17 of 124 objects, and where it fires it is the **whole**
 energy — `dots_ke_unfit / michel_ke_best` is 1.000 for all 17, up to 36 MeV.
 Those 17 objects are ~16 % low relative to every other Michel in the same tree.
 
-**Not fixed here.** Re-tuning `michel_unfit_recom` / `michel_unfit_fudge` moves
-a persisted physics number and belongs in its own round with its own gate; and
-the right fix is probably not a re-tune at all but to derive the flat factor
-*from* the model at the assumed MIP dE/dx, so the two cannot drift apart again.
-Recorded as open item 2 in §8.
+**Fixed in §9** — by the second route, not the first. Re-tuning
+`michel_unfit_recom` / `michel_unfit_fudge` would absorb the charge-estimator
+difference into the constant and recreate exactly the two-carrier problem doc
+pdhd/16 avoided. Deriving the factor *from* the model at the assumed MIP dE/dx
+is the fix that cannot drift apart again, and it is what ships.
 
 `michel_ke_charge` deserves no conclusion: 6 objects on PDVD, ratios to the
 fitted energy of 0.077, 0.088, 0.236, 0.382, 1.253, 4.136. It is a diagnostic
@@ -371,10 +375,10 @@ what moved.
    same charge. This is doc pdhd/16 §7 item 4; flipping it is a production
    output change needing an A/B campaign on both ProtoDUNEs and SBND, which
    binds the same components.
-2. **The flat unfitted-charge conversion is 16–20 % off the fitted one** (§6),
-   and `michel_ke_best` adds the two. Zero impact on PDVD today, 17 of 124
-   Michel objects on PDHD. The durable fix is to derive `michel_unfit_recom`
-   from the model at the assumed MIP dE/dx rather than hard-coding it.
+2. ~~**The flat unfitted-charge conversion is 16–20 % off the fitted one**~~ —
+   **closed by §9** (owner ask, same day). What remains open is the *other*
+   half of §9's caveat: model-consistency is not object-agreement, because the
+   two paths also read different charge (blob sum vs fitted `dQ`).
 3. **`C` is ~1 % low** relative to a stop-excluded fit (§5) — the same size as
    its bootstrap error, and inside the ±10 % per-track spread. Not moved.
 4. **The mean-vs-most-probable gap** (§5, panel 2). The CSDA dE/dx is a mean;
@@ -392,14 +396,130 @@ what moved.
    and is not changed by anything here. A simulation that bound one would be a
    fourth carrier of the same degeneracy.
 
-## 9. Files
+## 9. The change — the unfitted-charge conversion now reads the model
+
+**Status: NOT bit-identical when the knob is on, and it is on in both ProtoDUNE
+drivers.** One branch moves, `dots_ke_unfit`, and `michel_ke_best` with it where
+that fires. **PDVD: nothing** — `dots_charge_unfit` is 0 on all 160
+`michel_found` candidates of `d16vnu`. **PDHD: 17 of 124 Michel objects, ×1.1638**,
+and on all 17 `dots_ke_unfit` *is* `michel_ke_best` (they carry no fitted piece).
+
+Owner ask, 2026-09-08: *"Can you update the charge → energy conversion to make
+them consistent with dQ/dx → dE/dx conversion? I assume we are assuming
+everything is MIP like, right?"* — yes, and unavoidably: an unfitted cluster has
+no dx, so there is no dQ/dx to invert and a dE/dx **must** be assumed.
+
+### 9.1 What it does
+
+`stm_michel_charge_to_energy_model` (`StmMichelFunctions.cxx:200`) asks the
+component's **own** recombination model how many electrons one MeV/cm makes:
+
+```
+E = dQ_electrons * (dedx * dx) / model(dedx * dx, dx)      [dx cancels; 1 cm used]
+```
+
+At `dedx` = 2.1 MeV/cm this is `Wi / (C · R(2.1))`, and it replaces the
+hard-coded `0.7 × 0.95 = 0.665` survival. It goes through the
+`IRecombinationModel` interface, not a formula, so it follows whatever model is
+bound — `PracticalBox` or the calibrated `PowerBox` — and cannot drift apart
+from the dQ/dx inverse again. That is the whole point: the two are carriers of
+one physical quantity and doc pdhd/16 moved only one of them.
+
+| MeV per collected electron | flat 0.7 × 0.95 | model, C = 1 | model, calibrated |
+|---|---|---|---|
+| PDVD | 3.5489e-05 | 3.3913e-05 (0.956) | **4.2706e-05 (1.2034)** |
+| PDHD | 3.5489e-05 | 3.3538e-05 (0.945) | **4.1303e-05 (1.1638)** |
+
+Two knobs, both C++ default off/legacy so an absent key is byte-identical:
+`michel_unfit_from_model` (false) and `michel_unfit_dedx` (2.1 MeV/cm, the same
+pivot the PowerBox fit uses). Both ProtoDUNE drivers set them in
+`stm_michel_knobs`, which merges straight into the component `data` — **no
+`pr.jsonnet` change was needed.** `michel_unfit_recom` / `_fudge` / `_w_ev` stay
+exactly where doc pdhd/15 put them and are what the knob-off path uses.
+
+### 9.2 The MIP assumption, and the sign of its bias
+
+The bias does **not** go the way the intuition "MIP over-estimates" suggests.
+Quenching rises with dE/dx, so a denser deposit yields fewer electrons per MeV
+and needs **more** MeV per electron than the MIP assumption gives:
+
+| assumed dE/dx (MeV/cm) | 1.0 | 2.1 | 3.0 | 5.0 | 10.0 |
+|---|---|---|---|---|---|
+| PDHD MeV/e (×1e-5) | 4.189 | **4.130** | 4.355 | 4.959 | 6.462 |
+| relative to MIP | 1.014 | 1.000 | 1.054 | 1.201 | 1.565 |
+
+So assuming MIP **under**-estimates a dense deposit — by ~20 % at 5 MeV/cm. A
+Michel electron is not far from MIP on average, but a compact shower core is
+not, and everything through this path stays labelled MIP-equivalent.
+`smkine.py`'s `mev_per_electron_mip` carried the opposite claim in a comment;
+it is corrected in the same commit, and that function is now the *same
+expression on the same model* as the chain's, so the display's MIP-equivalent
+labels and `dots_ke_unfit` agree rather than coincide. Measured on the smoke
+arm's one object: `smkine` gives 18.475132879 MeV against the chain's
+18.475133, a relative difference of **6.5e-09**.
+
+### 9.3 What this does NOT fix
+
+**Model-consistency is not object-agreement.** Doc pdhd/15 §6 measured the flat
+pair against the chain's own `segment_cal_kine_dQdx` on single-piece Michels
+(46 PDVD / 24 PDHD) at **1.19 / 1.01** — object-level ratios that conflate two
+different things: the conversion constant *and* the charge estimator (an
+unfitted cluster's charge is a sum of `blob->charge()`, a fitted piece's is
+`fit.dQ`, and they are not the same number). This round moves only the first.
+
+There is no sample on which to re-measure it: **no candidate on either arm
+carries both `dots_charge_unfit > 0` and `michel_ke_dqdx > 0`** (checked, 579
+PDVD / 325 PDHD), so the two paths never meet on one object. Scaling doc
+pdhd/15 §6's published ratios by doc pdhd/16's measured movers (×1.2994 /
+×1.2273) and by this round's factor gives, **as a derivation and not a
+measurement**:
+
+| | doc 15 (pre-doc-16) | after doc 16 | after this round |
+|---|---|---|---|
+| PDVD | 1.19 | 0.92 | **1.10** |
+| PDHD | 1.01 | 0.82 | **0.96** |
+
+Better on both, and much better on PDHD — but not 1.00, and the residual is the
+charge estimator, not the recombination model. Re-tuning the pair to force 1.00
+would absorb the charge difference into the recombination constant and recreate
+exactly the two-carrier problem doc pdhd/16 avoided, so it is not done.
+
+### 9.4 Verification
+
+| gate | result |
+|---|---|
+| `./build/clus/wcdoctest-clus` | **336 / 336**, 23 199 assertions — includes the new `stm_michel_charge_to_energy_model` case and the two knob defaults |
+| `./build/gen/wcdoctest-gen` | **18 / 18**, 789 assertions |
+| the new doctest pins | four **absolute** MeV/e values (35.489 flat, 33.913 / 33.538 uncalibrated, 42.706 / 41.303 calibrated per 1e6 e) — a ratio-only test would not catch the `units::cm/units::MeV` factor of 10 the practical-unit models carry (doc 88) — plus linearity, `dx` cancellation, the dense-deposit sign, and every guard returning exactly 0 |
+| compiled-config, knob **absent** | PDVD 62 nodes vs 62, PDHD 50 vs 50, same node set, **zero differences** |
+| compiled-config, knob **present** | **exactly one node changes** (`CheckSTM_Michel:pr`), **exactly two keys added** (`michel_unfit_from_model`, `michel_unfit_dedx`); nothing else, either detector |
+| freshness proof (M1) | `libWireCellClus.so` 14:12 against sources 14:09 / 14:10; md5 `ee4a1582d069` unchanged across the smoke run |
+| smoke run, `pdhd/work/028084_0_d17hsmoke` | 24 s, rc 0. Cluster 43, Q = 447 302.014 e: `dots_ke_unfit` **15.874177 → 18.475133 MeV, ×1.1638** — the doctest constant, reproduced by the chain to 4 decimals. `michel_ke_best` follows it. |
+| the smoke run's branch census | **all 97 branches** of `T_stm_michel` asked against the `d16hnu` arm on the same event; **exactly 2 moved** (`dots_ke_unfit`, `michel_ke_best`), `cluster_id` identical |
+| `selftest_stm_michel_scan.py` | **72 133 checks, 0 failed**, both detectors. The conversion gate now accepts **either** published conversion and reports which the arm carries instead of pinning the flat one; its model branch is `smkine.mev_per_electron_mip(det)`, so it also asserts the display and the chain agree. Its new output line makes §7's vacuity visible in the gate itself: PDHD `flat x17`, PDVD `never fires`. |
+| `selftest_smx3d_browser.py` | **77 / 77** each detector (the viewer change is prose only) |
+| display vs chain | `smkine.mev_per_electron_mip('pdhd') × 447 302.014 e` = 18.475132879 MeV against the chain's 18.475133 — **6.5e-09** relative |
+
+**No arm was re-run and no scan re-prepped.** `pdvd/work/stm_michel_labels/smx1`
+was not touched. Consequence to note: on a future PDHD arm the scan sheet's
+`michel_ke_best` answer key is stale for those 17 objects — whether that is
+worth a re-prep is the owner's call, and nothing else in the sheet moves.
+
+---
+
+## 10. Files
 
 | | |
 |---|---|
-| `pdhd/docs/scripts/d17_recomb_model.py` | every number above; imports `d16_stm_energy_scales` so the accumulation and clamps are the gated ones |
+| `pdhd/docs/scripts/d17_recomb_model.py` | every number in §3–§6; imports `d16_stm_energy_scales` so the accumulation and clamps are the gated ones |
+| `clus/src/StmMichelFunctions.cxx`, `clus/inc/WireCellClus/StmMichelFunctions.h` | §9: `stm_michel_charge_to_energy_model` |
+| `clus/src/CheckSTM_Michel.cxx` | §9: `michel_unfit_from_model`, `michel_unfit_dedx`, the call site |
+| `clus/test/doctest_stm_michel.cxx`, `clus/test/doctest_check_stm_michel_defaults.cxx` | §9's gates |
+| `pdvd/wct-pr-perevt.jsonnet`, `pdhd/wct-pr-perevt.jsonnet` | §9: both knobs on, in `stm_michel_knobs` |
+| `pdhd/stm_michel_scan/{smkine,stm_michel_viewer,selftest_stm_michel_scan}.py` | §9.2's corrected sign, the prose, the either-conversion gate |
 | `pdhd/docs/figs/d17_recomb_model_{pdvd,pdhd}.png` | the figure |
 | `pdhd/docs/16_stm-muon-energy-scales.md` | the parent round — the calibration itself; §6.2 amended by §7 above |
 | `pdvd/docs/nf_sp_img_clus/50_stopping-muon-dqdx-pdhd-pdvd.md` §14 | the independent *differential* measurement of the same charge scale |
 | `pdvd/docs/nf_sp_img_clus/48_check-stm-michel-chain.md` | the chain this component sits in |
 
-**Nothing under `cfg/`, `clus/` or `gen/` is touched by this document.**
+**§1–§8 touch nothing under `cfg/`, `clus/` or `gen/`.** §9 does, and says so.

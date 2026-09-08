@@ -117,6 +117,10 @@ def dqdx_at_mip(det, C=None):
 
     doc pdhd/16: this follows the CALIBRATED model, so the MIP-equivalent
     conversion below and the chain's own dQ/dx -> dE/dx agree by construction.
+    doc pdhd/17: and since 2026-09-08 the CHAIN's own unfitted-charge conversion
+    (michel_unfit_from_model, both ProtoDUNE drivers) is the same expression on
+    the same model at the same 2.1 MeV/cm, so dots_ke_unfit and the
+    MIP-equivalent numbers this module labels agree exactly rather than by luck.
     """
     p = RECOMB[det]
     c = _coeff(p)
@@ -131,10 +135,17 @@ def mev_per_electron_mip(det):
     The ONLY honest way to put a MeV number on a cluster that was never fitted:
     with no dx there is no dQ/dx, so there is no recombination correction to
     make and the conversion has to assume one.  Everything quoted through this
-    function must be labelled MIP-equivalent.  It is an over-estimate for
-    denser deposits (more quenching than assumed) -- the SBND EM campaign
-    measured an 0.84-0.86 charge-scale fudge on showers (doc pr/126), which is
-    the size of the systematic being waved at here.
+    function must be labelled MIP-equivalent.
+
+    CORRECTED 2026-09-08 (doc pdhd/17 sec 9): the direction of that bias is
+    the OPPOSITE of what this comment used to claim ("an over-estimate for
+    denser deposits").  Quenching rises with dE/dx, so a denser deposit yields
+    FEWER electrons per MeV and needs MORE MeV per electron than the MIP
+    assumption gives -- 4.13e-5 MeV/e at 2.1 MeV/cm against 4.96e-5 at 5.0 on
+    the calibrated PDHD model.  Assuming MIP therefore UNDER-estimates a dense
+    deposit, by up to ~20 % over 2.1-5 MeV/cm.  (The SBND EM 0.84-0.86
+    charge-scale fudge, doc pr/126, is about a shower's CHARGE being
+    over-counted -- a different quantity, and it does not set the sign here.)
     """
     return MIP_DEDX_MEV_PER_CM / dqdx_at_mip(det)
 

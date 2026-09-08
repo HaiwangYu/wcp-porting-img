@@ -2090,7 +2090,11 @@ def fill_flow(v, rev):
     near the stop.  michel_ke_dqdx is that whole object, michel_ke_core is
     the core alone (what michel_ke_dqdx meant through doc pdhd/14), and
     dots_ke_unfit converts the charge of a companion the fitter never
-    reached, which has no dx and so no dQ/dx to invert.
+    reached, which has no dx and so no dQ/dx to invert.  Since doc pdhd/17
+    (2026-09-08) that conversion reads its survival OUT of the same
+    recombination model the dQ/dx energies use, at an assumed 2.1 MeV/cm, so
+    the two sit on one scale; it is MIP-EQUIVALENT and under-reads a deposit
+    denser than MIP.
 
     The parentage is the muon's stop vertex in every case:
       conn 1  the arm leaves stop_vtx_id itself -- a shared graph vertex;

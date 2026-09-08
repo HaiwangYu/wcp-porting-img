@@ -1693,6 +1693,7 @@ def test_object_tree(det):
     n = n_obj = n_attached = n_bridged = n_charge = n_piece = 0
     worst = 0.0
     worst_gap = [0.0]
+    unfit_mode = {}   # doc pdhd/17: which charge->energy conversion the arm carries
     for d in dirs:
         rf = os.path.join(d, "tracking-pr.root")
         if not os.path.exists(rf):
@@ -1774,16 +1775,37 @@ def test_object_tree(det):
                    "%s: conn-%d gap %.2f cm beyond the %.0f cm structural bound"
                    % (tag, conn, gap, bound))
                 worst_gap[0] = max(worst_gap[0], gap)
-            # the unfitted-charge term is the published conversion, or 0
+            # The unfitted-charge term is ONE of the two published conversions
+            # and the arm must be on exactly one of them, not somewhere between:
+            #   doc pdhd/15   the flat pair, Q / 0.7 / 0.95 * 23.6 eV
+            #   doc pdhd/17   the model at MIP, Q * Wi / (C * R(2.1)), which is
+            #                 smkine.mev_per_electron_mip(det) BY CONSTRUCTION
+            #                 (both invert the same calibrated model at the same
+            #                 2.1 MeV/cm), so the display's MIP-equivalent scale
+            #                 and the chain's now agree and this asserts it.
+            # Both ProtoDUNE drivers set michel_unfit_from_model since
+            # 2026-09-08; a pre-d17 arm is still on the flat pair, so accept
+            # either and report which, rather than pinning the arm's epoch.
             q = float(a["dots_charge_unfit"][i])
             e = float(a["dots_ke_unfit"][i])
-            want = q / 0.7 / 0.95 * 23.6 / 1e6 if q > 0 else 0.0
-            ck(abs(e - want) < 1e-6,
-               "%s: dots_ke_unfit %.6f is not the 0.7/0.95/23.6 conversion of %.4g e (%.6f)"
-               % (tag, e, q, want))
+            if q <= 0:
+                ck(e == 0.0, "%s: dots_ke_unfit %.6f on zero unfitted charge" % (tag, e))
+            else:
+                flat = q / 0.7 / 0.95 * 23.6 / 1e6
+                model = q * smkine.mev_per_electron_mip(det)
+                which = ("model" if abs(e - model) < 1e-6 * max(1.0, model)
+                         else "flat" if abs(e - flat) < 1e-6 * max(1.0, flat) else None)
+                ck(which is not None,
+                   "%s: dots_ke_unfit %.6f on %.4g e is neither the doc-15 flat "
+                   "conversion (%.6f) nor the doc-17 model one (%.6f)"
+                   % (tag, e, q, flat, model))
+                if which:
+                    unfit_mode[which] = unfit_mode.get(which, 0) + 1
     print("     %d candidates, %d Michel objects (%d attached, %d bridged, %d charge-only), "
-          "%d pieces; worst |best - (dqdx+unfit)| = %.2e MeV, widest bridge %.2f cm"
-          % (n, n_obj, n_attached, n_bridged, n_charge, n_piece, worst, worst_gap[0]))
+          "%d pieces; worst |best - (dqdx+unfit)| = %.2e MeV, widest bridge %.2f cm; "
+          "unfitted-charge conversion %s"
+          % (n, n_obj, n_attached, n_bridged, n_charge, n_piece, worst, worst_gap[0],
+             (", ".join("%s x%d" % kv for kv in sorted(unfit_mode.items())) or "never fires")))
 
 
 def test_object_spectrum(det):

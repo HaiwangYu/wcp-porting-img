@@ -332,6 +332,23 @@ The track pair puts an unfitted piece on the same scale as the fitted ones; the
 shower pair would inflate it by two thirds. Both are exposed
 (`michel_unfit_recom`, `michel_unfit_fudge`, `michel_unfit_w_ev`).
 
+> **SUPERSEDED 2026-09-08 for both ProtoDUNEs — doc pdhd/17 §9.** The pair
+> above is no longer what production runs. Doc pdhd/16 recalibrated the dQ/dx →
+> dE/dx inverse and *not* this pair, which left the two conversions — carriers
+> of one physical quantity — 20 % (PDVD) / 16 % (PDHD) apart at MIP where the
+> table above had them within 5 %. The knob `michel_unfit_from_model` (C++
+> default **false**, so this section still describes the knob-off path) reads
+> the survival out of the bound recombination model at `michel_unfit_dedx`
+> = 2.1 MeV/cm instead, and both ProtoDUNE drivers set it. `dots_ke_unfit` and
+> `michel_ke_best` move on **17 of 124 PDHD** Michel objects (×1.1638) and on
+> **nothing on PDVD** (`dots_charge_unfit` is 0 there on all 160).
+>
+> The 1.19 / 1.01 above stay the right *object-level* numbers and are the
+> reason this is not a re-tune: they conflate the conversion constant with the
+> charge estimator (blob-charge sum vs `fit.dQ`), and forcing them to 1.00
+> would put the charge difference inside the recombination constant. Doc
+> pdhd/17 §9.3 carries the derivation of where they land now (1.10 / 0.96).
+
 **`michel_ke_charge` is 0 on this path, by construction.** The chain's own
 charge estimator projects each 2-D charge cell with
 `Grouping::convert_time_wire_2Dpoint(time_slice, ...)`, which carries **no t0**,

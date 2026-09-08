@@ -242,6 +242,28 @@ function(
         mcs_enable: true,
         mcs_cathode_x: 0.0,
         mcs_cathode_xcut: 5.0,
+        // doc pdhd/17: read the unfitted-charge survival OUT of the
+        // recombination model this component is already holding, instead of
+        // the hard-coded michel_unfit_recom x michel_unfit_fudge = 0.7 x 0.95.
+        // Those two numbers and the dQ/dx -> dE/dx inverse are two carriers of
+        // ONE quantity and doc pdhd/16 moved only the second, leaving them
+        // 20 % (PDVD) / 16 % (PDHD) apart at MIP where they had been within
+        // 5 %.  Deriving one from the other cannot drift again.
+        //
+        // MIP-EQUIVALENT and unavoidably so: an unfitted cluster has no dx, so
+        // there is no dQ/dx to invert and a dE/dx must be assumed.  2.1 MeV/cm
+        // is the same pivot the PowerBox fit uses.  Because quenching rises
+        // with dE/dx, a deposit DENSER than MIP needs MORE MeV per electron
+        // than this gives, so the assumption UNDER-estimates a dense deposit
+        // (4.13e-5 MeV/e at 2.1 against 4.96e-5 at 5 MeV/cm on PDHD).
+        //
+        // What it moves: dots_ke_unfit, and michel_ke_best where that fires.
+        // PDVD: NOTHING -- dots_charge_unfit is 0 on all 160 michel_found
+        // candidates of the d16vnu arm.  PDHD: 17 of 124, x 1.1638, and on all
+        // 17 dots_ke_unfit IS michel_ke_best (they carry no fitted piece).
+        // C++ default false, so omitting the key is byte-identical.
+        michel_unfit_from_model: true,
+        michel_unfit_dedx: 2.1,
     },
     // TrackFitting parameter JSON, required whenever tagger_check_stm is in the
     // pipeline: the C++ preset defaults are uBooNE-hard-coded, never right for
