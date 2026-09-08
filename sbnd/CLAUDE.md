@@ -56,6 +56,11 @@ in-gpvm-sl7.sh bash -c '
   `/exp/sbnd/app/users/yuhw/opt` (SL7 recipe, hand-copy step, landmines). Read before building either.
 - `docs/1-run-tests-sl7-local-builds-sbnd.md` — HOW TO RUN `wcls-img-clus-matching-xin.fcl` (MC + data) with
   the local builds: env, commands, toggles, log greps, validation, BEE upload, wcsonnet check.
+- `docs/8-build-and-run-both-chains.md` — the spdlog/fmt build resolution (external-fmt spdlog v1_14_1 +
+  fmt v11_0_2, `lib64`, `-DSPDLOG_FMT_EXTERNAL` via CXXFLAGS, no `--with-fmt`), the post-build gate that
+  catches a green-but-useless build, the larwirecell `make install` prefix trap, HOW TO RUN **Xin's 2-step**
+  chain here (incl. the three SL7 bash-4.2/python-3.9 portability fixes his driver needs), and the tooling +
+  legitimate exclusions for comparing the two chains. Read with doc 0 before building or comparing.
 - `cm-2606/STATUS-xin-chain.md` — full status: chains, toggle, all local WCT edits, known issues, BEE uploads.
 - Quick CPU/mem profiling: `/exp/sbnd/app/users/yuhw/activity_logger/top.sh <pattern>` (run concurrently); plot example in `cm-2606/activity/`.
 - w-gap study (SP rebaseline, DNNROI truncation, charge bias): `standalone-sample/w-gap/W-GAP-STUDY.md`.
