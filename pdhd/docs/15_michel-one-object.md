@@ -517,9 +517,16 @@ stamped back with `set_kine_best`, which is both the fix and the right value.
    `039349_37` cluster 39 flips `is_stm` 0 → 1 (contrast 0.55 → 1.52), and PDHD
    `029107_4` cluster 24's contrast falls 0.76 → 0.21. Both are better-informed
    fits; both are verdict changes.
-4. **The scan labels.** The 4 labels under `pdvd/work/stm_michel_labels/smx1`
-   were placed on the doc-14 sheet; this round changes what the sheet shows, so
-   the new scan runs under a fresh tag `smx2` and `smx1` is untouched (M13).
+4. **The scan labels and the tranche.** The scan **sample is unchanged** — 568
+   PDVD / 302 PDHD items, none added, none dropped — but the **order is not**:
+   doc pdhd/12's S1–S4 strata key on `michel_found`, whose meaning §4 redefines,
+   so the 60-item tranche 1 re-sorts. Of the 4 labels under
+   `pdvd/work/stm_michel_labels/smx1`, only `039252_15/77` falls in the new
+   tranche 1. They were placed on the doc-14 sheet with the doc-14 display, so
+   the new scan runs under a fresh tag `smx2` and `smx1` is left untouched
+   (M13). Whether the 4 are re-scanned or carried over is the owner's call; the
+   stratification itself is doc pdhd/13's still-open question about what
+   `michel_found` should mean to a consumer.
 5. **`pdhd/stm/perf/d30_hash_gate.py:43`** hashes `T_stm_michel` and will churn
    again on this round's nine new branches; it needs re-baselining against a
    `d15*` arm.
