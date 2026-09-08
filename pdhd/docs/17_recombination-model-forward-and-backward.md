@@ -75,11 +75,24 @@ three objects below is `C`.
 | `pdvd_stm_recomb` | **0.7941** | *backward*, calibrated (doc pdhd/16) | `pr.jsonnet:1289` |
 
 **There is no simulation arm in this comparison, and that is a real scope
-limit.** `Recombination` appears in exactly two files under `cfg/` — the two
-`pr.jsonnet` — and `pdvd_sim/`'s generators (`sim.tracks`) set electrons per
-step directly. So in *this* tree "forward" means **the table generator**, not a
-simulated charge. If a PDVD simulation ever binds an `IRecombinationModel`, it
-becomes a fourth carrier and this document's §3 must be re-asked.
+limit.** Checked rather than assumed: `grep -rl Recombination cfg/` returns
+nine files — the three `particle_dataset.jsonnet` (comments recording how the
+tables were generated), `pgrapher/common/clus.jsonnet` and
+`protodunevd/qlmatching.jsonnet` (the `recombination_model` parameter name and
+one comment), and the three PR entry points `protodunevd/pr.jsonnet`,
+`pdhd/pr.jsonnet`, `sbnd/wct-pr-perevt.jsonnet`. **No `type: '*Recombination'`
+instance is bound in any simulation config** — not PDVD's `sim.jsonnet`,
+`wcls-sim-drift-*.jsonnet` or `wct-sim-*.jsonnet`, and not `pdvd_sim/`'s
+track-injection jsonnets, whose `sim.tracks` sets electrons per step directly.
+
+That is a statement about this tree's configs, not about the toolkit. Exactly
+one simulation-side component *can* take one — `Gen::TrackSegmentSampler`, via
+its `recombination` parameter and only when `ionization == "recombination"`
+(`TrackSegmentSampler.cxx:61-65`) — and it is configured nowhere under `cfg/`,
+`pdvd_sim/` or `pdhd_sim/`. `Gen::Drifter` names the interface only in a
+comment saying recombination is *not* applied there. So in *this* tree
+"forward" means **the table generator**. If a PDVD simulation ever binds one,
+it becomes a fourth carrier and §3 must be re-asked.
 
 ---
 
@@ -202,7 +215,8 @@ data at any dE/dx. **The level is not a test** — it is what `C` was fitted to.
 *is* a test is whether one constant survives the whole 2.1 – 5 MeV/cm span
 rather than only working at the median, i.e. whether the Modified Box *shape*
 at 0.45 kV/cm is right. Pooled data/model over six dE/dx bins:
-**0.972, 0.952, 1.042, 1.060, 1.076, 1.024** (PDVD; PDHD 0.986–1.060). A ±6 %
+**0.972, 0.952, 1.042, 1.060, 1.076, 1.024** (PDVD; PDHD
+0.986, 0.944, 1.060, 1.029, 1.028, 1.032). A ±6 %
 wobble with 90 % of the points in the two lowest bins — inside the ±10 %
 per-track spread of panel 3, and much smaller than the 0.83 the model was off
 by, but not zero. Panel 4 is the sharper version of this test.
@@ -371,10 +385,12 @@ what moved.
    charge scale needs MC truth.
 5. **`tagger_check_stm`'s `recombination_model` binding is inert** (§2) — the
    C++ never reads it. Harmless; not fixed in this round.
-6. **No simulation arm** (§1). There is no `IRecombinationModel` on any
-   simulation path in this tree, so the forward direction is only checkable
-   against the table generator, which lives in the separate `energy_loss`
-   repository and is not changed by anything here.
+6. **No simulation arm** (§1). No simulation config in this tree binds an
+   `IRecombinationModel` — the one component that could, `TrackSegmentSampler`,
+   is configured nowhere — so the forward direction is only checkable against
+   the table generator, which lives in the separate `energy_loss` repository
+   and is not changed by anything here. A simulation that bound one would be a
+   fourth carrier of the same degeneracy.
 
 ## 9. Files
 
