@@ -17,14 +17,38 @@ for each: (1) robustly select this topology, (2) cleanly separate the muon part
 from the Michel part, (3) the Michel energy spectrum, (4) angle vs momentum.
 **None of the four is built here.** This round builds the instrument.
 
+**Round 2, 2026-09-07, after the display was first served.** Owner ask: *"add
+the 2D measurement and the difference between the predicted measurement vs.
+actual measurement like what would show in Magnify Tracking display. For 2D
+measurement, it would be useful to add the dead channels etc. In addition, it
+would be nice if we can click the dQ/dx vs. rr plot and then show in the 3D
+display, 2D projections and the 2D measurement space. Also the yellow color in
+the dQ/dx vs. rr is a bit hard to see."* Sections **5.4** (the measurement
+panels), **5.5** (the click link) and **5.6** (the colour) are that round; the
+gates it added are §10 items 11–16 and its limits are §11 items 6–8. The sample,
+the sheet, the key and the label schema are unchanged — the four committed TSVs
+are byte-identical after the re-prep, gated with `git diff --exit-code`.
+
+A question that came with it: *"for the fit results, are they coming from
+CheckSTM_Michel PR stage or the STM tagger stage? I would like the former since
+the fit is more spaced at 0.6 cm."* **The former, and it always was.** Measured
+over 15 events per detector: the `T_stm_michel_pts` chain (CheckSTM_Michel, PR
+stage) steps a uniform **0.600 cm** (p10 = p50 = p90 = 0.600); the cosmic
+tagger's `tracking-stm.root` fit steps a median 0.610 cm over a p10–p90 range of
+0.51–0.82 cm. The muon layer, the dQ/dx panel, the new measurement overlays and
+every wire coordinate come from the PR chain. The tagger fit appears only as the
+grey `tagfit` layer behind REVEAL, and is deliberately **absent** from the
+measurement panels.
+
 ## Repro
 
 ```bash
 cd wcp-porting-img/pdhd/stm_michel_scan
-./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items,  76 MB
-./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 129 MB
-./selftest_stm_michel_scan.py                   # 145 headless checks, both detectors
-./selftest_smx3d_browser.py --det pdhd          # 19 checks in headless chromium
+./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items, 119 MB
+./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 201 MB
+git -C .. diff --exit-code -- pdhd/docs/scan pdvd/docs/scan   # sheets unchanged
+./selftest_stm_michel_scan.py                   # 1725 headless checks, both detectors
+./selftest_smx3d_browser.py --det pdhd          # 32 checks in headless chromium
 ./selftest_smx3d_browser.py --det pdvd
 ./serve_stm_michel_scan.sh 5023 --det pdhd --scan-tag smx1
 cd ../../pdvd/stm_michel_scan
@@ -233,6 +257,163 @@ Nothing is normalised to a MIP. In particular `meta.mip_dqdx_median` in that
 dump is the C++ default **43 000**, not the 48 000 / 47 000 the taggers actually
 run with, so normalising by it would inflate every ratio by 1.12.
 
+### 5.4 The 2-D measurement — what the wires actually saw
+
+Every other panel is reconstruction space: 3-D points and a trajectory. A track
+that looks clean in 3-D can be a fit riding on charge that is not there, and the
+only place that shows is the residual. For this scan specifically, *"did the
+muon stop, or did it leave through a dead region"* and *"is that Michel a real
+deposit or a prediction artefact"* are **measurement-space** questions.
+
+A third tab, **2-D measurement**, holds nine panels: three rows (U, V, W) by
+three columns — the **measured** charge in each (channel, time slice) cell, the
+charge the fitted track **predicts** there, and their **difference**. That is
+the content of a Magnify tracking display, read from the tree Magnify reads:
+`T_proj_data` in the same `tracking-pr.root`, one row per fitted cluster, with
+`channel`, `time_slice`, `charge`, `charge_err` and `charge_pred`, written by
+`PdvdPrMagnifyTrackingVisitor::write_proj_data`.
+
+Drawn on top: the **dead channels** from `T_bad_ch`, and the fitted muon chain
+in its own wire coordinates. The chain's Michel / delta / dot points appear here
+too, behind REVEAL, which is what makes "separate the muon part from the Michel
+part" (downstream goal 2) answerable in the space where the charge lives. The
+cosmic tagger's fit is not drawn here.
+
+**How a fit point gets a wire coordinate.** `T_rec_charge` carries `pu/pv/pw`
+(the fractional wire in each plane) and `pt` (the time slice), and every
+CheckSTM_Michel chain point *is* a `T_rec_charge` point of the same file —
+measured 8962/8962 role-1, 142/142 role-2, 73/73 role-3, 2/2 role-4 on PDHD and
+7736/7736, 82/82, 42/42, 22/22 on PDVD, all within 0.05 cm. So the join is an
+index lookup dressed as a nearest-neighbour query. A point that misses the
+0.05 cm tripwire is simply not drawn in measurement space.
+
+**Three things that would make this panel lie, and what is done about each.**
+
+1. **The plane split.** `channel`, `chid` and `pu/pv/pw` are all a per-plane
+   *rank*, not a LArSoft channel id, and a wrong-but-self-consistent split
+   produces no error, no empty bin and no NaN — it silently answers a different
+   question (`feedback_magnify_channel_is_a_plane_rank`, which is this exact
+   trap on these exact files). `smgeom.BASE` carries the full scheme
+   (`(0, 3200, 6400)` PDHD, `(0, 3808, 7616)` PDVD) and it is gated **causally**,
+   by two independently written code paths having to agree: the fitter writes
+   `pu/pv/pw` with `ChanScheme::globalf`, the projection writer writes `channel`
+   with `ChanScheme::global`, so a fit point's own wire has to land on a cell of
+   the same channel. Over the clusters this display draws, ±2 slices:
+
+   | | U | V | W |
+   |---|---|---|---|
+   | PDHD | 0.9646 | 0.9636 | 0.9149 |
+   | PDVD | 0.8692 | 0.9102 | 0.9165 |
+
+   and every plane's fit-wire range lies strictly inside its own base block. The
+   shortfall from 1.0 is fit points where the projection has no cell within two
+   slices — not a mapping error, which would read ≈ 0. Restricting to the shown
+   clusters matters: over *every* row of `T_proj_data`, including satellite and
+   fallback blob-ownership rows whose cells are not the fit's own, the same
+   numbers are 0.70–0.74. The panel shows one cluster; so does the gate.
+
+2. **Ticks versus slices.** `T_bad_ch.start_time`/`end_time` are in **ticks**
+   while `T_proj_data.time_slice` and `T_rec_charge`'s `pt` are in **slices**.
+   The asymmetry is real, not a bug to fix: `write_bad_channels` clamps against
+   `m_nticks` while `write_proj_data` divides by `nticks_per_slice`. The
+   production configs set `nticks_live_slice: 4` — but a config is not a
+   measurement (`feedback_dump_meta_is_not_the_config`), so the constant is
+   gated on the **files**: `max(T_bad_ch.end_time) / (max(time_slice) + 1)` is
+   **4.000** on PDHD (6000/1500) and **4.027** on PDVD. At ÷1 every dead band
+   would sit at a quarter of its true time and visibly miss every gap.
+
+3. **The residual is meaningless inside a dead region.** `Cell::charge()` falls
+   back to `prepare_data`'s **filler** when a slice has no live entry, and the
+   tree does not carry the per-cell live/dead flag — so `measured − predicted`
+   there is model minus model. This is why the dead-channel overlay is not
+   decoration: it is the only thing that says which residual cells mean
+   anything. Dead bands are drawn twice, as a solid grey fill **under** the
+   cells (so a gap with no cells at all still reads as *dead*, not as *nothing
+   was there*) and hatched **over** them.
+
+**Scales are fixed, not per-item.** A per-item colour scale makes two items
+incomparable, which is fatal for a hand scan. The charge scale is each plane's
+p90 cell charge over ~30 events of the production arm, and the residual scale
+its p99 |measured − predicted|, both fixed and stated in the panel:
+
+| | charge 0 – … (e) | residual ± … (e) |
+|---|---|---|
+| PDHD U / V / W | 56 000 / 57 000 / 31 000 | 80 000 / 100 000 / 48 000 |
+| PDVD U / V / W | 31 000 / 27 000 / 18 000 | 45 000 / 36 000 / 21 000 |
+
+p90 rather than p99 because the p99 tail runs to 1.2 × 10⁶ and would push the
+bulk (p50 ≈ 3–12 ke) into the bottom tenth of the map. A `×0.5 / ×1 / ×2 / ×4`
+multiplier moves **all six** mappers together, so contrast is adjustable without
+ever making two items incomparable. The residual map is diverging and
+**white-centred on purpose**: a cell where the fit agrees vanishes into the page,
+so only disagreement draws the eye.
+
+**A cell is a screen-pixel square, not a data-unit rectangle**, and that is a
+correction rather than a preference. The first version drew a `rect` one channel
+by one slice. On the heaviest item — 22 106 cells spanning 2 322 channels and
+1 095 slices in a 430 × 300 panel — a data-unit cell is 0.16 × 0.27 px and
+antialiases to nothing: the tab rendered as nine empty axes with a track drawn
+on them. The browser gate caught it because emptying the cell sources changed
+the painted pixels by **exactly zero**. Two things were wrong and both are fixed:
+the cells are square markers sized in screen pixels (2 / 3 / 5 / 8, default 3),
+and the trajectory overlay — which had a 3 px white halo, a 1.2 px black line
+and a marker per fit point — is now a thin translucent line, because the
+cluster's cells *are* the track's own cells and at full-cluster zoom the
+annotation was painting out the evidence.
+
+The default window is the whole cluster, which is what Magnify shows. A
+**± 150 channels / ± 150 slices around the stop** window is one click away,
+because a 677 cm muon spans 2 300 channels and the Michel lives in the last 30.
+
+### 5.5 Click a dQ/dx point, find it everywhere
+
+Tapping a point in the dQ/dx panel drops a cyan cursor on the **same point** in
+the 3-D view, all three projections and all nine measurement panels, and prints
+its arc length, dQ/dx, x/y/z, U/V/W wire, time slice and readout unit. So *"what
+is that outlier at rr = 12 cm"* is answered by pointing at it.
+
+Every scatter source in that panel therefore carries the point's own
+`x, y, z, pu, pv, pw, pt` alongside the plotted pair, and the callback reads the
+tapped **row** — no index arithmetic between the panel's live-only rows and the
+chain arrays, which is exactly where an off-by-a-few cursor would come from. All
+columns are masked identically. Deselecting clears the cursor; so does moving to
+another item or toggling REVEAL, since a cursor from the previous state would
+point at something no longer on screen.
+
+The link is deliberately **one-directional**. Taps on the 3-D view and on the
+projections already place the pin, and making them do two things would make the
+pin unpredictable.
+
+### 5.6 The colour, and why it is not Viridis any more
+
+The dQ/dx panel used Viridis with the object's own p98 as the top of the scale.
+Both halves of that were wrong, and both hid the one feature this scan exists to
+judge:
+
+- **Viridis ends at `#FDE725`** — bright yellow on a white page. The Bragg peak,
+  the highest-dQ/dx points, rendered as the least visible colour on the plot.
+  Turbo ends at a dark red (`#7A0403`) and starts at a dark blue, so nothing on
+  the scale is near the page colour.
+- **A per-item p98 made the colour mean something different on every item**, so
+  two objects a factor of three apart in dQ/dx looked identical. The scale is
+  now fixed at **0 – 1.5 × 10⁵ e/cm** on both detectors, from a measurement
+  rather than a guess: over every role-1 point of both arms (97 721 PDHD +
+  166 037 PDVD) the median is 49.5 / 50.2 ke/cm, p99 is 112 / 118 ke/cm and
+  p99.9 is 162 / 166 ke/cm. So the MIP plateau sits at a third of the range
+  (cyan-green) and the Bragg rise in the orange-to-dark-red top, with under
+  0.3 % saturating.
+
+Independently of the palette, **every marker in the dQ/dx panel now carries a
+thin dark outline**, so "invisible fill" cannot come back if the scale is ever
+retuned — the palette stops being load-bearing. The self-test asserts both: no
+colour in the palette exceeds 0.90 relative luminance, and the glyphs are
+outlined.
+
+The image-charge layer keeps an adaptive scale — it is context, and its range
+genuinely varies by plane and detector — but gets its own **cool** ramp, because
+`near` and `muon` were both Viridis in the same panels, so charge-per-point and
+charge-per-cm read as one quantity.
+
 ## 6. The blind, and one honest limit
 
 Two published rules pull in opposite directions here and both are right:
@@ -394,8 +575,21 @@ All run and passing at the time of writing.
 | `unit_from_wire` vs the production wire file, 3 probes per (anode, face) block, plus out-of-range rejection, plus all 16 PDVD CRUs reachable | PASS |
 | the prep's near/far split reproduced by brute force with no KD-tree | PASS |
 | `dqdx_ref` grid, units, and the muon plateau against doc pdvd/50's published numbers | PASS |
-| **headless total** | **171 checks, 0 failures** (157 with `--quick`, which skips the two brute-force passes) |
-| a real mouse drag in headless chromium reaches the CustomJS; every layer moves with it; no row count changes; no point projects outside its own distance from the camera centre; no page errors | **19 checks each detector, 0 failures** |
+| **the plane split, causally**: the fitter's own `pu/pv/pw` (written by `globalf`) must land on a `T_proj_data` cell of the same channel (written by `global`) within ±2 slices — two independently written code paths agreeing | PASS, published per plane (§5.4) |
+| every projection cell and every `T_bad_ch` row falls inside its own plane's base block, and `smgeom.plane_from_chan` agrees with the vectorised split prep used, on all 155 735 / 326 301 cells | PASS |
+| **ticks → slices, from the files not the config**: `max(end_time)/(max(time_slice)+1)` = 4.000 PDHD / 4.027 PDVD, and no drawn dead band ends past slice 4000 | PASS |
+| the difference panel is `measured − predicted`, recomputed independently from the payload, cell by cell; the measured panel carries `T_proj_data.charge` verbatim | PASS |
+| the three columns of a row share **both** ranges and all nine share the time range; dead bands are inside the drawn window | PASS |
+| REVEAL gates the Michel/delta/dot overlays in measurement space too — sources empty **and** renderers invisible when off | PASS |
+| the poison test walks the measurement sources as well, and the poisoned verdict now carries `pu/pv/pw/pt` — a poison that omitted them would leave the new panel untested | PASS |
+| the dQ/dx scale is the fixed one; the `×0.5…×4` multiplier moves all six cell/residual mappers together | PASS |
+| no colour in the dQ/dx palette exceeds 0.90 relative luminance, and every marker in that panel is outlined | PASS |
+| **the click link**: driving a selection puts the cursor on the *same* point in the 3-D layer, all 3 projections and all 3 measurement rows; its `pu/pv/pw` are one per plane; deselect clears it; a re-render clears it; two series cannot stay selected at once | PASS |
+| **headless total** | **1725 checks, 0 failures** |
+| a real mouse drag in headless chromium reaches the CustomJS; every layer moves with it; no row count changes; no point projects outside its own distance from the camera centre; no page errors | PASS |
+| the measurement tab paints in a real browser on the **heaviest** item of the arm (22 106 / 20 574 cells, drawn three times), with the causal control that emptying the cell sources moves 748 / 877 painted pixels — the check that caught the sub-pixel `rect` bug, where it moved exactly 0 | PASS, first paint 1.6 s |
+| the click link over the real websocket: set the selection **in the browser**, assert the cursor reaches the 3-D layer and all three measurement panels on the point's own wire and slice | PASS |
+| **browser total** | **32 checks each detector, 0 failures** |
 | `serve_*.sh` refuses a busy port (rc=2, names the owning pid) | PASS |
 | labels live in `work/stm_michel_labels/<tag>/`, a sibling of the per-event dirs | by construction |
 
@@ -433,6 +627,18 @@ drifts far enough to invalidate §6.2's prose.
 6. There is **no `stm_michel` Bee layer** — doc pdvd/48 §5 and §9 item 2
    deferred it, and the roles live only in `T_stm_michel_pts`. This display is
    the substitute, not a replacement for that decision.
+7. **Inside a dead region the residual panel compares a model with a model**
+   (§5.4 item 3). `T_proj_data` collapses the live/dead flag, so `charge` there
+   is `prepare_data`'s filler. The hatched overlay marks exactly where this
+   applies; nothing in the panel can distinguish a filler from a reading.
+8. **`nticks_per_slice` is one number per detector here**, while the C++ reads
+   it per `(apa, face)`. Both production configs set it globally, so the two
+   agree today; a config that varied it per face would silently shift the dead
+   bands on the faces that differ.
+9. **The residual drawn is the raw difference**, matching Magnify and the ask.
+   The statistically correct residual is the pull `(measured − predicted) /
+   charge_err`, and `charge_err` is already in the payload — a one-line addition
+   if it turns out to be the more readable panel.
 
 ## 12. Next step
 

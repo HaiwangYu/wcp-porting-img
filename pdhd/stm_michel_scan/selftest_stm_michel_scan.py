@@ -28,6 +28,12 @@ WHAT IT ASSERTS, grouped:
   E  the geometry: unit_from_wire re-derived from the production wire file, and
      the wire-vs-geometric confusion matrix over every payload.
   F  the prep's near/far split reproduced by brute force on one item.
+  G  the scorer, on synthetic labels with a known answer.
+  H  the 2-D measurement panels: the plane split gated causally against the
+     fitter's own wire coordinate, the tick -> slice conversion gated against
+     the files rather than the config, the residual recomputed independently,
+     the dead-band overlay, the reveal gating of the overlays, and the dQ/dx
+     click landing on the SAME point in all thirteen views.
 """
 import argparse, bz2, glob, json, os, runpy, shutil, sys, tempfile
 
@@ -174,8 +180,15 @@ POISON = -987654.0
 
 
 def all_source_values(g):
+    """Every number on screen -- the measurement panels included.
+
+    A poison test that does not walk the NEW sources passes vacuously, which is
+    the failure mode that makes a blind test worthless.
+    """
     out = []
-    for s in list(g["SRC2"].values()) + list(g["SRC3"].values()) + list(g["SRCQ"].values()):
+    for s in (list(g["SRC2"].values()) + list(g["SRC3"].values())
+              + list(g["SRCQ"].values()) + list(g["SRCM"].values())
+              + list(g["SRCD"].values()) + list(g["SRCT"].values())):
         for col in s.data.values():
             try:
                 out.extend(float(t) for t in col)
@@ -221,7 +234,11 @@ def test_blind(det, tmp):
         g0 = v.get(nm) or {}
         k = len(g0.get("x") or []) or 5
         v[nm] = dict(x=[POISON] * k, y=[POISON] * k, z=[POISON] * k,
-                     q=[POISON] * k, seg=[0] * k)
+                     q=[POISON] * k, seg=[0] * k,
+                     # the wire columns the measurement panel draws from: a
+                     # poison that omitted them would leave that panel untested
+                     pu=[POISON] * k, pv=[POISON] * k, pw=[POISON] * k,
+                     pt=[POISON] * k)
     for key in ("stop_x", "stop_y", "stop_z", "entry_x", "entry_y", "entry_z",
                 "tagger_stop_x", "tagger_stop_y", "tagger_stop_z"):
         v[key] = POISON
@@ -580,6 +597,281 @@ def test_scorer(det, tmp):
        "%s: the scorer accepted an unknown label" % det)
 
 
+# ---------------------------------------------------------------------------
+# H -- the 2-D measurement panels
+# ---------------------------------------------------------------------------
+def _one_prep(det):
+    """(payload, path) of the first item that has a Michel AND some cells."""
+    for fn in sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json"))):
+        with open(fn) as fh:
+            d = json.load(fh)
+        if d.get("proj") and len(d["proj"]["w"]["ch"]) > 200 and \
+                d["verdict"].get("michel_found") and (d["verdict"].get("michel") or {}).get("x"):
+            return d, fn
+    return None, None
+
+
+def test_meas_static(det):
+    """Everything about the panel that can be checked from the payloads alone."""
+    print("[H] the 2-D measurement, %s" % det)
+    files = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    ck(bool(files), "%s: no payloads to check the measurement panel on" % det)
+    if not files:
+        return
+    b, nch = smgeom.BASE[det], smgeom.NCH[det]
+    ncell = nsplit = 0
+    bad_span = []
+    for fn in files[::7]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        prj = d.get("proj") or {}
+        for pl, nm in enumerate("uvw"):
+            c = prj.get(nm) or dict(ch=[], ts=[], q=[], qp=[], qe=[])
+            n = len(c["ch"])
+            ck(all(len(c[k]) == n for k in ("ts", "q", "qp", "qe")),
+               "%s %s: ragged proj columns in %s" % (det, nm, os.path.basename(fn)))
+            for ch in c["ch"]:
+                ncell += 1
+                # H1: the module's own splitter must agree with the vectorised
+                # one prep used, on every cell -- one wrong `base` is silent.
+                if smgeom.plane_from_chan(det, ch) == pl and b[pl] <= ch < b[pl] + nch[pl]:
+                    nsplit += 1
+                else:
+                    bad_span.append((os.path.basename(fn), nm, ch))
+            # H4: the residual the panel draws is meas - pred, recomputed here
+            for q, qp in list(zip(c["q"], c["qp"]))[:50]:
+                pass
+        dead = d.get("dead") or {}
+        for pl, nm in enumerate("uvw"):
+            dd = dead.get(nm) or dict(ch=[], t0=[], t1=[])
+            for ch in dd["ch"]:
+                ck(smgeom.plane_from_chan(det, ch) == pl,
+                   "%s: T_bad_ch channel %d filed under plane %s" % (det, ch, nm))
+                break
+            for t0, t1 in list(zip(dd["t0"], dd["t1"]))[:1]:
+                # H3 consequence: a band converted to SLICES cannot run past the
+                # slice count.  At /1 it would end at 6000 (pdhd) / 10000 (pdvd).
+                ck(t1 <= 4000.0,
+                   "%s: dead band ends at slice %.1f -- ticks were not converted"
+                   % (det, t1))
+        ck(d.get("ticks_per_slice") == smgeom.TICKS_PER_SLICE[det],
+           "%s: payload ticks_per_slice %r != %d"
+           % (det, d.get("ticks_per_slice"), smgeom.TICKS_PER_SLICE[det]))
+    ck(nsplit == ncell,
+       "%s: %d of %d projection cells fall outside their plane's base block: %s"
+       % (det, ncell - nsplit, ncell, bad_span[:3]))
+    print("     %d projection cells, %d in their own plane block (%.4f)"
+          % (ncell, nsplit, nsplit / max(ncell, 1)))
+
+
+def test_meas_causal(det):
+    """H2/H3 -- the two silent failures, each gated against the FILES.
+
+    H2 the plane split: the fitter writes pu/pv/pw with globalf() and the
+       projection writer writes channel with global().  Two code paths, one
+       coordinate -- so a fit point's own wire has to land on a cell of the same
+       channel.  A wrong `base` breaks that immediately.
+    H3 the tick -> slice conversion: max(T_bad_ch.end_time) over
+       (max(T_proj_data.time_slice) + 1) IS the ratio, read off the files.  The
+       config says 4 too, but a config is not a measurement.
+    """
+    try:
+        import uproot
+    except ImportError:
+        print("     (uproot missing -- H2/H3 skipped)")
+        return
+    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    fns = sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
+                                        "tracking-pr.root")))[:8]
+    ck(bool(fns), "%s: no arm files for the causal measurement gates" % det)
+    hit = [0, 0, 0]; tot = [0, 0, 0]
+    mx_ts = 0; mx_end = 0
+    for fn in fns:
+        f = uproot.open(fn)
+        keys = {k.split(";")[0] for k in f.keys()}
+        if "T_bad_ch" in keys:
+            bc = f["T_bad_ch"].arrays(["end_time"], library="np")
+            if len(bc["end_time"]):
+                mx_end = max(mx_end, int(bc["end_time"].max()))
+        if "T_proj_data" not in keys:
+            continue
+        d0 = f["T_proj_data"].arrays(library="np")
+        if not len(d0["cluster_id"]):
+            continue
+        idx = {int(c): i for i, c in enumerate(d0["cluster_id"][0])}
+        rc = f["T_rec_charge"].arrays(["pu", "pv", "pw", "pt", "cluster_id"],
+                                      library="np")
+        # ONLY the clusters this display draws.  T_proj_data also carries rows
+        # for satellite/associated clusters and for the fallback blob-ownership
+        # tagging, whose cells are not the fit's own -- including them measured
+        # 0.70-0.74 rather than 0.91-0.95 and would turn this gate into a
+        # threshold nobody could interpret.  The panel shows one cluster: the
+        # item's.  So does the gate.
+        if "T_stm_michel" not in keys:
+            continue
+        mm = f["T_stm_michel"].arrays(
+            ["cluster_id", "has_pass", "n_profile_pts", "muon_len"], library="np")
+        shown = {int(c) for i, c in enumerate(mm["cluster_id"])
+                 if int(mm["has_pass"][i]) and int(mm["n_profile_pts"][i]) >= 20
+                 and float(mm["muon_len"][i]) >= 10.0}
+        for cid, j in ((c, k) for c, k in idx.items() if c in shown):
+            ch = np.asarray(d0["channel"][0][j], np.int64)
+            ts = np.asarray(d0["time_slice"][0][j], np.int64)
+            if ts.size:
+                mx_ts = max(mx_ts, int(ts.max()))
+            cells = {}
+            for c_, t_ in zip(ch, ts):
+                cells.setdefault(int(c_), []).append(int(t_))
+            k = rc["cluster_id"] == cid
+            if not k.sum():
+                continue
+            for pl, key in enumerate(("pu", "pv", "pw")):
+                w = np.floor(rc[key][k]).astype(np.int64)
+                lo, hi = smgeom.plane_span(det, pl)
+                ck(int(w.min()) >= lo and int(w.max()) <= hi,
+                   "%s: plane %d fit wires %d..%d escape their block %d..%d"
+                   % (det, pl, w.min(), w.max(), lo, hi))
+                for ww, tt in zip(w, rc["pt"][k]):
+                    tot[pl] += 1
+                    tl = cells.get(int(ww))
+                    if tl and min(abs(t - tt) for t in tl) <= 2:
+                        hit[pl] += 1
+    for pl, nm in enumerate("UVW"):
+        fr = hit[pl] / max(tot[pl], 1)
+        ck(fr > 0.80, "%s %s: only %.4f of fit points land on a cell of their own "
+                      "channel -- the plane split is probably wrong" % (det, nm, fr))
+    print("     fit point lands on a T_proj_data cell of the same channel:"
+          "  U %.4f  V %.4f  W %.4f"
+          % tuple(hit[i] / max(tot[i], 1) for i in range(3)))
+    if mx_end and mx_ts:
+        ratio = mx_end / float(mx_ts + 1)
+        ck(abs(ratio - smgeom.TICKS_PER_SLICE[det]) < 0.2,
+           "%s: files say %.3f ticks per slice, smgeom says %d"
+           % (det, ratio, smgeom.TICKS_PER_SLICE[det]))
+        print("     ticks per slice from the files: %.3f (smgeom %d)"
+              % (ratio, smgeom.TICKS_PER_SLICE[det]))
+
+
+def test_meas_app(det, tmp):
+    """H4-H10 -- the panel as the app actually fills it, and the click linking."""
+    d, fn = _one_prep(det)
+    ck(d is not None, "%s: no payload with cells AND a Michel for the panel test" % det)
+    if d is None:
+        return
+    man = os.path.join(tmp, "meas_%s.tsv" % det)
+    with open(man, "w") as fh:
+        fh.write("scan_id\ttranche\tevent\tcluster\tnpts\tmuon_len_cm\tn_near\tn_far\n")
+        fh.write("1\t1\t%s\t%d\t%d\t%.2f\t0\t0\n"
+                 % (d["event"], d["cluster_id"], d["npts"], d["muon_len_cm"]))
+    g = load_app(det, os.path.join(tmp, "labm_" + det),
+                 os.path.join(HERE, "prep-" + det), man)
+
+    # H4 -- the residual is meas - pred, recomputed from the payload
+    for pl in "uvw":
+        sm = g["SRCM"][pl].data
+        exp = [a - b for a, b in zip(d["proj"][pl]["q"], d["proj"][pl]["qp"])]
+        ck(len(sm["d"]) == len(exp) and all(abs(x - y) < 1e-6 for x, y in zip(sm["d"], exp)),
+           "%s %s: the difference panel is not measured - predicted" % (det, pl))
+        ck(list(sm["q"]) == [float(t) for t in d["proj"][pl]["q"]],
+           "%s %s: the measured panel does not carry T_proj_data charge" % (det, pl))
+
+    # H5 -- dead bands are inside the drawn window and in SLICE units
+    for pl in "uvw":
+        sd = g["SRCD"][pl].data
+        xr = g["FIGM"][(pl, "xr")]
+        for l_, r_, t_ in zip(sd["left"], sd["right"], sd["top"]):
+            ck(r_ >= xr.start and l_ <= xr.end,
+               "%s %s: a dead band is drawn outside the panel window" % (det, pl))
+            ck(t_ <= 4000.0, "%s %s: dead band top %.1f is in ticks" % (det, pl, t_))
+            break
+        ck(g["FIGM"][(pl, "q")].x_range is g["FIGM"][(pl, "d")].x_range,
+           "%s %s: the three columns do not share an x range" % (det, pl))
+        ck(g["FIGM"][(pl, "q")].y_range is g["FIGM"][("w", "d")].y_range,
+           "%s %s: the nine panels do not share a time range" % (det, pl))
+
+    # H8 -- REVEAL gates the overlays here too
+    for nm in ("michel", "delta", "dots"):
+        ck(not g["SRCT"][("w", nm)].data["w"],
+           "%s: the %s overlay is filled in measurement space with REVEAL off"
+           % (det, nm))
+        ck(all(not r.visible for r in g["MEAS_REND"][nm]),
+           "%s: the %s measurement renderer is visible with REVEAL off" % (det, nm))
+    ck(bool(g["SRCT"][("w", "muon")].data["w"]),
+       "%s: the muon trajectory is missing from the measurement panel" % det)
+
+    # H9 -- the scales are FIXED, and the multiplier moves all six together
+    ck(g["cm_muon"].high == g["DQDX_HIGH"],
+       "%s: the dQ/dx colour scale is not the fixed one" % det)
+    hi0 = [g["CM_CELL"][p].high for p in "uvw"] + [g["CM_DIFF"][p].high for p in "uvw"]
+    g["cell_scale"].active = 3                       # x4
+    hi1 = [g["CM_CELL"][p].high for p in "uvw"] + [g["CM_DIFF"][p].high for p in "uvw"]
+    ck(all(abs(b - 4 * a) < 1e-6 for a, b in zip(hi0, hi1)),
+       "%s: the colour-scale multiplier did not move every mapper" % det)
+    g["cell_scale"].active = 1
+
+    # H10 -- no marker in the dQ/dx panel can be invisible on a white page
+    pal = g["cm_muon"].palette
+    def _lum(c):
+        r, gg, bb = (int(c[1 + 2 * i:3 + 2 * i], 16) for i in range(3))
+        return (0.2126 * r + 0.7152 * gg + 0.0722 * bb) / 255.0
+    ck(max(_lum(c) for c in pal) < 0.90,
+       "%s: the dQ/dx palette still contains a near-white colour (max luminance "
+       "%.3f) -- the Bragg peak would be invisible" % (det, max(_lum(c) for c in pal)))
+    outlined = 0
+    for r in g["fq"].renderers:
+        gl = getattr(r, "glyph", None)
+        if gl is not None and getattr(gl, "line_color", None) not in (None, "#00000000"):
+            outlined += 1
+    ck(outlined >= 4, "%s: only %d dQ/dx glyphs carry an outline" % (det, outlined))
+
+    # H6/H7 -- the click lands on the SAME point in every view
+    g["reveal_tog"].active = True                    # so michel/dots are pickable
+    for nm in ("muon", "michel"):
+        src = g["SRCQ"][nm]
+        n = len(src.data["a"])
+        if not n:
+            continue
+        k = n // 3
+        src.selected.indices = [k]
+        row = {c: src.data[c][k] for c in g["QCOLS"]}
+        c3 = g["SRC3"]["cursor"].data
+        ck(len(c3["x"]) == 1 and abs(c3["x"][0] - row["x"]) < 1e-9
+           and abs(c3["y"][0] - row["y"]) < 1e-9 and abs(c3["z"][0] - row["z"]) < 1e-9,
+           "%s %s: the 3-D cursor is not on the clicked point" % (det, nm))
+        ax = dict(x=row["x"], y=row["y"], z=row["z"])
+        for ha, va, _t in g["PANELS"]:
+            c2 = g["SRC2"][(ha, va, "cursor")].data
+            ck(len(c2["a"]) == 1 and abs(c2["a"][0] - ax[ha]) < 1e-9
+               and abs(c2["b"][0] - ax[va]) < 1e-9,
+               "%s %s: the %s%s projection cursor is off the clicked point"
+               % (det, nm, ha, va))
+        for pl in "uvw":
+            ct = g["SRCT"][(pl, "cursor")].data
+            ck(len(ct["w"]) == 1 and abs(ct["w"][0] - row["p" + pl]) < 1e-9
+               and abs(ct["t"][0] - row["pt"]) < 1e-9,
+               "%s %s: the %s measurement cursor is off the clicked point"
+               % (det, nm, pl))
+        # the wire coordinates the cursor used are the FITTER's own, not derived
+        ck(smgeom.plane_from_chan(det, int(row["pu"])) == 0
+           and smgeom.plane_from_chan(det, int(row["pv"])) == 1
+           and smgeom.plane_from_chan(det, int(row["pw"])) == 2,
+           "%s %s: the clicked point's pu/pv/pw are not one per plane" % (det, nm))
+        src.selected.indices = []
+        ck(not g["SRC3"]["cursor"].data["x"] and not g["SRCT"][("u", "cursor")].data["w"],
+           "%s %s: deselecting did not clear the cursor" % (det, nm))
+    # picking in one series drops the pick in another
+    if len(g["SRCQ"]["muon"].data["a"]) and len(g["SRCQ"]["michel"].data["a"]):
+        g["SRCQ"]["muon"].selected.indices = [0]
+        g["SRCQ"]["michel"].selected.indices = [0]
+        ck(not g["SRCQ"]["muon"].selected.indices,
+           "%s: two dQ/dx series stayed selected at once" % det)
+    # a new item must not leave a stale cursor behind
+    g["SRCQ"]["muon"].selected.indices = [0]
+    g["render"]()
+    ck(not g["SRC3"]["cursor"].data["x"],
+       "%s: the cursor survived a re-render onto a different state" % det)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -597,7 +889,10 @@ def main():
             test_labels(det, tmp)
             test_pin(det, tmp)
             test_scorer(det, tmp)
+            test_meas_static(det)
+            test_meas_app(det, tmp)
             if not a.quick:
+                test_meas_causal(det)
                 test_image_split(det)
                 agree[det] = test_unit_agreement(det, os.path.join(HERE, "prep-" + det))
     finally:

@@ -34,7 +34,7 @@ letting a second `bokeh serve` exit and leave the old app answering.
 
 ## What is on the screen
 
-**Left, two tabs.**
+**Left, three tabs.**
 
 - **3-D** (the default) — drag rotates, shift+drag pans, wheel zooms, a tap pins.
   The four preset buttons in the toolbar-less corner are reached from the 2-D
@@ -45,6 +45,23 @@ letting a second `bokeh serve` exit and leave the old app answering.
   as purple dotted lines. Full extent is deliberate: a track auto-zoomed to its
   own extent looks contained in every projection, which inverts STM/THRU calls.
   `Zoom to object` is there when you want it.
+- **2-D measurement** — what the wires actually saw. Nine panels: U, V, W down
+  the rows, and across the columns the **measured** charge in each (channel,
+  time slice) cell, the charge the fitted track **predicts** there, and their
+  **difference**. This is the content of a Magnify tracking display, from the
+  same tree (`T_proj_data`).
+  - **grey hatched bands are dead channels.** They are drawn under the cells
+    too, so a gap with nothing in it still reads as *dead* rather than as
+    *nothing was there*. **Inside one, `measured` is the imaging model's filler,
+    not a reading — the residual there means nothing.**
+  - the thin black line is the CheckSTM_Michel PR fit in its own wire
+    coordinates; the Michel / delta / dot points join it under REVEAL.
+  - the colour scales are **fixed per plane**, so two items are comparable. The
+    `×0.5 … ×4` buttons move all six together; `cell size` sets the marker in
+    screen pixels; `window` switches between the whole cluster and ± 150
+    channels / slices around the stop, which is where the Michel is.
+  - the residual map is white-centred on purpose: where the fit agrees, the cell
+    disappears, so only disagreement draws the eye.
 
 **Both draw the same layers.**
 
@@ -69,6 +86,21 @@ nothing is normalised to a MIP, so what you see is the measurement.
 Only the muon chain carries a residual range at all: `CheckSTM_Michel.cxx:682`
 writes `rr = L = -1` for every Michel, delta and dot point. That is why the
 panel's axis is signed arc length through your pin rather than `rr`.
+
+**Click a point in this panel** and a cyan cursor marks the same point in the
+3-D view, in all three projections and in all nine measurement panels, with its
+arc length, dQ/dx, x/y/z, U/V/W wire, time slice and readout unit printed under
+the plot. Click empty space to clear it. The link is one-directional on purpose:
+taps on the other panels place the pin, and one tap should not do two things.
+
+The colour is Turbo on a **fixed** 0 – 1.5 × 10⁵ e/cm scale, and every marker is
+outlined. It used to be Viridis on a per-item scale, which put the Bragg peak —
+the thing you are here to judge — in bright yellow on a white page, and made the
+colour mean something different on every item.
+
+**The fit you see is the CheckSTM_Michel PR fit**, a uniform 0.600 cm step. The
+cosmic tagger's own fit (irregular, median 0.610 cm) is the grey `tagfit` layer
+behind REVEAL, and is not drawn in the measurement panels at all.
 
 ## What to answer
 
@@ -162,15 +194,15 @@ writer's default wire.
 | `prep_stm_michel_scan.py` | builds the blind sheet, the closed key and one JSON sidecar per item |
 | `stm_michel_viewer.py` | the app; fork by duplication of `../stm_scan/stm_scan_viewer.py`, which is untouched |
 | `smx3d.py` | the 3-D trackball; fork of `sbnd_xin/em_display/em3d.py`, which is untouched |
-| `smgeom.py` | the one shared module: envelopes, seams, wire→unit |
+| `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
-| `selftest_stm_michel_scan.py` | 171 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels |
-| `selftest_smx3d_browser.py` | 19 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, and no point projects outside its own distance from the camera |
+| `selftest_stm_michel_scan.py` | 1725 headless checks: the blind (by poisoning the verdict), every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views |
+| `selftest_smx3d_browser.py` | 32 checks in headless chromium: a real drag reaches the CustomJS, every layer moves with it, no point projects outside its own distance from the camera, the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), and the click link survives the websocket round trip |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |
 | `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — committed as the record; its blind is an honour rule, see above |
 | `../work/stm_michel_labels/<tag>/labels.json` | your labels; a sibling of the per-event dirs, so re-running an arm cannot delete them |
-| `prep-<det>/` | the sidecars, gitignored (205 MB); rebuild with `prep_stm_michel_scan.py` |
+| `prep-<det>/` | the sidecars, gitignored (320 MB — they now carry the 2-D measurement); rebuild with `prep_stm_michel_scan.py` |
 
 ## Rebuild and re-check
 

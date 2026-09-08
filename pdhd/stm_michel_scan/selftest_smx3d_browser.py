@@ -21,6 +21,19 @@ mouse drag over the 3-D canvas, and asserts that
     from the camera centre.  That last one is what would catch a sign error in
     the JS that a "did the pixels change" test would sail past.
 
+It then does the same for the two things added in the measurement round:
+
+  * the 2-D MEASUREMENT tab -- switch to it and assert nine canvases actually
+    put ink on the page.  It is run on the HEAVIEST item of the arm (22 106
+    cells on PDHD, 20 574 on PDVD, drawn three times over), because that is the
+    one that would be unusable if anything is, and the first-paint time is
+    printed rather than asserted.
+  * the dQ/dx CLICK LINK -- select a point through the live document and assert
+    the cursor appears in the 3-D layer AND in all three measurement rows.  The
+    selection is set in the BROWSER, so it travels the websocket and fires the
+    real server callback; the in-process gate in selftest_stm_michel_scan.py
+    cannot test that hop.
+
 Four Bokeh 3 traps make a broken binding look like a working page with no
 console error, so a failure here is read as "the handler never bound", not as
 "the formula is wrong": see feedback_bokeh3_silent_js_traps.
@@ -69,6 +82,68 @@ READ = """() => {
 }"""
 
 
+INK = """() => {
+  // Bokeh 3 renders every view inside an OPEN shadow root, so a flat
+  // querySelectorAll finds nothing (feedback_bokeh3_silent_js_traps trap 1).
+  const out = [];
+  const walk = (root) => {
+    for (const el of root.querySelectorAll('*')) {
+      if (el.tagName === 'CANVAS') out.push(el);
+      if (el.shadowRoot) walk(el.shadowRoot);
+    }
+  };
+  walk(document);
+  return out.map(c => {
+    const r = c.getBoundingClientRect();
+    let ink = -1;
+    try {
+      const ctx = c.getContext('2d');          // null on the webgl 3-D canvas
+      if (ctx && c.width > 0) {
+        const d = ctx.getImageData(0, 0, c.width, c.height).data;
+        ink = 0;
+        for (let i = 0; i < d.length; i += 4 * 7) {
+          // ALPHA FIRST.  Bokeh gives every figure two canvases and the second
+          // is fully transparent; getImageData returns 0,0,0,0 there, so an
+          // rgb-only test counts every one of its pixels as ink and the whole
+          // probe reports a constant.
+          if (d[i + 3] > 10 && (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245)) ink++;
+        }
+      }
+    } catch (e) { ink = -2; }
+    return {w: Math.round(r.width), h: Math.round(r.height), ink: ink};
+  });
+}"""
+
+CURSOR = """() => {
+  const d = Bokeh.documents[0];
+  const g = (n) => { const m = d.get_model_by_name(n);
+                     return m ? Object.fromEntries(Object.entries(m.data).map(
+                       ([k, v]) => [k, Array.from(v)])) : null; };
+  return {c3: g('src3_cursor'), u: g('srct_u_cursor'), v: g('srct_v_cursor'),
+          w: g('srct_w_cursor'), q: g('srcq_muon')};
+}"""
+
+
+def heaviest_manifest(det, path):
+    """A one-line sheet holding the arm's biggest item, for the paint check."""
+    import glob as _g
+    best = None
+    for fn in _g.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")):
+        with open(fn) as fh:
+            d = json.load(fh)
+        n = sum(len((d.get("proj") or {}).get(p, {}).get("ch", [])) for p in "uvw")
+        if best is None or n > best[0]:
+            best = (n, d)
+    if best is None:
+        return None, 0
+    d = best[1]
+    with open(path, "w") as fh:
+        fh.write("scan_id\ttranche\tevent\tcluster\tnpts\tmuon_len_cm\tn_near\tn_far\n")
+        fh.write("1\t1\t%s\t%d\t%d\t%.2f\t0\t0\n"
+                 % (d["event"], d["cluster_id"], d["npts"], d["muon_len_cm"]))
+    return path, best[0]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default="pdhd", choices=["pdhd", "pdvd"])
@@ -83,12 +158,15 @@ def main():
 
     port = free_port(a.port)
     lab = os.path.join("/home/xqian/tmp", "smx3d_selftest_labels_%d" % os.getpid())
+    # The heaviest item of the arm, so the paint measurement is the worst case.
+    man, ncell = heaviest_manifest(a.det, lab + "_man.tsv")
     log = open("/home/xqian/tmp/smx3d_selftest_%d.log" % port, "w")
     proc = subprocess.Popen(
         [BOKEH, "serve", "--port", str(port),
          "--allow-websocket-origin=localhost:%d" % port,
          os.path.join(HERE, "stm_michel_viewer.py"),
-         "--args", "--det", a.det, "--tag", "selftest3d", "--labeldir", lab],
+         "--args", "--det", a.det, "--tag", "selftest3d", "--labeldir", lab]
+        + (["--manifest", man] if man else []),
         stdout=log, stderr=subprocess.STDOUT)
     url = "http://localhost:%d/stm_michel_viewer" % port
     try:
@@ -168,6 +246,107 @@ def main():
                 ck(bad == 0, "layer %r: %d sampled points project OUTSIDE their own "
                              "distance from the camera centre -- the JS basis is not "
                              "orthonormal" % (n, bad))
+            # ---- the 2-D measurement tab --------------------------------
+            tab = page.get_by_text("2-D measurement", exact=True).first
+            ck(tab.count() > 0, "no '2-D measurement' tab in the page")
+            # Identify the measurement canvases by SIZE: those figures are the
+            # only ones 250 px tall (projections and dQ/dx are 330, the 3-D view
+            # 760).  A plain "nine inked canvases exist" would pass with the tab
+            # blank, because Bokeh paints a hidden tab's children anyway.
+            def _meas():
+                cs = [c for c in page.evaluate(INK)
+                      if 285 <= c["h"] <= 315 and c["w"] > 200 and c["ink"] > 50]
+                return len(cs), sum(c["ink"] for c in cs)
+
+            def _meas_inked():
+                return _meas()[0]
+            t0 = time.time()
+            tab.click()
+            page.wait_for_timeout(1500)
+            paint = time.time() - t0
+            n_after, ink_after = _meas()
+            ck(n_after >= 9,
+               "only %d measurement-sized canvases carry ink -- the nine panels "
+               "did not draw" % n_after)
+            # ... and the causal control: empty the cell sources and the same
+            # canvases must go quiet.  Without this, "there is ink" could be the
+            # axes and the title (feedback_guard_needs_causal_negative_control).
+            page.evaluate(
+                "() => { for (const p of ['u','v','w']) {"
+                " const m = Bokeh.documents[0].get_model_by_name('srcm_' + p);"
+                " const d = {}; for (const k in m.data) d[k] = [];"
+                " m.data = d; } }")
+            page.wait_for_timeout(1200)
+            n_empty, ink_empty = _meas()
+            # the AMOUNT of ink, not the number of canvases: axes, titles, the
+            # dead bands and the trajectory all survive an empty cell source, so
+            # every panel stays non-blank and only the total can move.
+            #
+            # The bar is a FIXED number of pixels, not a fraction, and it is set
+            # by what actually discriminates.  At whole-cluster zoom a 677 cm
+            # muon's cells are a one-pixel-wide diagonal in a 430 x 300 panel, so
+            # they are only a few per cent of the inked pixels -- but when they
+            # are genuinely not drawn the drop is EXACTLY ZERO, which is how the
+            # sub-pixel `rect` bug was caught (30146 -> 30146).  Measured with
+            # the fix: 700-800 pixels on both detectors.
+            ck(ink_after - ink_empty >= 150,
+               "emptying the cell sources moved only %d pixels on the measurement "
+               "panels (%d -> %d) -- the cells are not being drawn"
+               % (ink_after - ink_empty, ink_after, ink_empty))
+            print("     measurement tab: %d cells over 3 planes, drawn 3x, "
+                  "first paint %.2f s, %d panels, %d cell pixels "
+                  "(ink %d -> %d when emptied)"
+                  % (ncell, paint, n_after, ink_after - ink_empty,
+                     ink_after, ink_empty))
+            page.reload(wait_until="networkidle", timeout=90000)
+            page.wait_for_function("() => window.Bokeh && Bokeh.documents.length > 0",
+                                   timeout=60000)
+            page.wait_for_function(
+                "() => { const m = Bokeh.documents[0]"
+                ".get_model_by_name('srcq_muon'); return m && m.data.a"
+                " && m.data.a.length > 0; }", timeout=60000)
+            ck(not errs, "javascript errors after switching tab: %s" % errs[:3])
+
+            # ---- the dQ/dx click link, over the real websocket --------------
+            got = page.evaluate(CURSOR)
+            ck(got["q"] is not None and len(got["q"]["a"]) > 0,
+               "the dQ/dx muon source never reached the browser")
+            if got["q"]:
+                k = len(got["q"]["a"]) // 2
+                page.evaluate(
+                    "(k) => { const m = Bokeh.documents[0]"
+                    ".get_model_by_name('srcq_muon');"
+                    " m.selected.indices = [k]; }", k)
+                page.wait_for_timeout(1200)
+                got = page.evaluate(CURSOR)
+                ck(got["c3"] is not None and len(got["c3"]["x"]) == 1,
+                   "clicking a dQ/dx point did not put a cursor in the 3-D layer")
+                for pl in ("u", "v", "w"):
+                    ck(got[pl] is not None and len(got[pl]["w"]) == 1,
+                       "clicking a dQ/dx point did not put a cursor in the %s "
+                       "measurement panel" % pl.upper())
+                if got["c3"] and len(got["c3"]["x"]) == 1:
+                    src = page.evaluate(
+                        "(k) => { const m = Bokeh.documents[0]"
+                        ".get_model_by_name('srcq_muon');"
+                        " return {x: m.data.x[k], y: m.data.y[k], z: m.data.z[k],"
+                        "         pu: m.data.pu[k], pt: m.data.pt[k]}; }", k)
+                    ck(abs(src["x"] - got["c3"]["x"][0]) < 1e-6
+                       and abs(src["z"] - got["c3"]["z"][0]) < 1e-6,
+                       "the 3-D cursor is not on the point that was selected")
+                    ck(got["u"] and abs(src["pu"] - got["u"]["w"][0]) < 1e-6
+                       and abs(src["pt"] - got["u"]["t"][0]) < 1e-6,
+                       "the U measurement cursor is not on the selected point's "
+                       "own wire and slice")
+                page.evaluate(
+                    "() => { const m = Bokeh.documents[0]"
+                    ".get_model_by_name('srcq_muon');"
+                    " m.selected.indices = []; }")
+                page.wait_for_timeout(800)
+                got = page.evaluate(CURSOR)
+                ck(got["c3"] is not None and len(got["c3"]["x"]) == 0,
+                   "deselecting in the browser did not clear the cursor")
+            ck(not errs, "javascript errors after the click link: %s" % errs[:3])
             b.close()
     finally:
         proc.terminate()
@@ -179,6 +358,9 @@ def main():
         if not a.keep:
             import shutil
             shutil.rmtree(lab, ignore_errors=True)
+            for x in (lab + "_man.tsv",):
+                if os.path.exists(x):
+                    os.remove(x)
     print("\n%d browser checks passed, %d failed" % (NPASS[0], len(FAILS)))
     for f in FAILS:
         print("  FAIL  %s" % f)

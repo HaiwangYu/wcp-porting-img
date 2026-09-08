@@ -66,6 +66,41 @@ CHAN = {
     "pdvd": dict(base_w=7616, per_unit=584, per_face=292, nunit=8),
 }
 
+# The FULL per-plane channel scheme, needed by the 2-D measurement panel (doc
+# pdhd/12 sec 5.4).  T_proj_data.channel and T_bad_ch.chid are written with
+# ChanScheme::global(), pu/pv/pw with ChanScheme::globalf() -- the SAME
+# coordinate, so `base` splits all three into planes.
+#
+# THIS SPLIT IS THE ONE THING HERE THAT FAILS SILENTLY.  A channel-to-plane map
+# that is wrong but self-consistent yields no error, no empty bin and no NaN; it
+# answers a different question (feedback_magnify_channel_is_a_plane_rank, which
+# is exactly this trap on exactly these files).  So it is gated CAUSALLY, by two
+# code paths that were written independently having to agree: the fitter's own
+# wire coordinate must land on a cell the projection writer emitted.  Measured
+# over every chain point of both arms (doc pdhd/12 sec 5.4a):
+#     pdhd  U 0.9485  V 0.9439  W 0.9101   of fit points land on a T_proj_data
+#     pdvd  U 0.9222  V 0.9243  W 0.9492   cell of the same channel, +-2 slices
+# and every plane's fit-wire range lies strictly inside its own base block.
+# A wrong `base` would put a whole plane's fit wires in a neighbour's block.
+BASE = {"pdhd": (0, 3200, 6400), "pdvd": (0, 3808, 7616)}
+NCH = {"pdhd": (3200, 3200, 3840), "pdvd": (3808, 3808, 4672)}
+PLANE_NAMES = ("U", "V", "W")
+
+# T_bad_ch carries start_time/end_time in TICKS while T_proj_data.time_slice and
+# T_rec_charge's pt are in SLICES -- the asymmetry is real, not a bug to fix:
+# write_bad_channels clamps against m_nticks (PdvdPrMagnifyTrackingVisitor.cxx
+# :274-277) while write_proj_data divides by nticks_per_slice (:559).
+# nticks_live_slice is 4 in both production configs (pdhd/clus.jsonnet:82,
+# protodunevd/clus.jsonnet:123) -- but a config is not a measurement
+# (feedback_dump_meta_is_not_the_config), so the self-test gates it on the FILES:
+# max(T_bad_ch.end_time) / (max(T_proj_data.time_slice) + 1) = 6000/1500 = 4.000
+# on PDHD and 10000/2507 = 3.989 on PDVD.  At /1 the dead bands would sit at a
+# quarter of their true time and visibly miss every gap.
+# LIMIT: the C++ reads nticks_per_slice per (apa, face); this is one number for
+# the whole detector.  Both production configs set it globally, so the two agree
+# today -- a config that varied it per face would break this.
+TICKS_PER_SLICE = {"pdhd": 4, "pdvd": 4}
+
 # Seams a stopping point can sit on.  x is the drift axis on both detectors.
 SEAMS = {
     "pdhd": dict(y=[], z=[231.0], x=[0.0]),
@@ -84,6 +119,32 @@ _PDVD_LOW_FACE = {0: 1, 1: 1, 2: 0, 3: 0, 4: 1, 5: 1, 6: 0, 7: 0}
 # 3 of 97 721 points on PDHD and 6 of 166 037 on PDVD (doc pdhd/12 sec 4.3).
 # Every other point agrees, which is what earns the wire route on BOTH detectors.
 SENTINEL_PW = {"pdhd": 6880, "pdvd": 7908}
+
+
+def plane_from_chan(det, ch):
+    """0 (U) / 1 (V) / 2 (W) for a global channel rank, or None if out of range.
+
+    Applies to T_proj_data.channel, T_bad_ch.chid and the floor of pu/pv/pw
+    alike -- one coordinate, one split.  See BASE above for how it is gated.
+    """
+    if ch is None:
+        return None
+    b, n = BASE[det], NCH[det]
+    c = int(ch)
+    if c < 0 or c >= b[2] + n[2]:
+        return None
+    return 0 if c < b[1] else (1 if c < b[2] else 2)
+
+
+def plane_span(det, plane):
+    """(first, last) global channel rank of a plane, inclusive."""
+    b, n = BASE[det], NCH[det]
+    return b[plane], b[plane] + n[plane] - 1
+
+
+def ticks_to_slice(det, t):
+    """T_bad_ch tick -> T_proj_data time slice.  See TICKS_PER_SLICE."""
+    return t / float(TICKS_PER_SLICE[det])
 
 
 def unit_from_wire(det, pw):

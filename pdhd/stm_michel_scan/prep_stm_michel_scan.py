@@ -132,6 +132,87 @@ def r2(v):
     return [round(float(t), 2) for t in v]
 
 
+def ri(v):
+    return [int(t) for t in v]
+
+
+def wire_join(rc_tree, rc, P):
+    """(pu, pv, pw, pt) of the T_rec_charge point at each row of P.
+
+    Every CheckSTM_Michel chain point IS a T_rec_charge point of the same file:
+    measured 8962/8962 role-1, 142/142 role-2, 73/73 role-3 and 2/2 role-4
+    matches within 0.05 cm on PDHD, and 7736/7736, 82/82, 42/42, 22/22 on PDVD
+    (doc pdhd/12 sec 5.4b).  So this is an index lookup dressed as a query, and
+    the 0.05 cm cut is a tripwire rather than a tolerance -- a point that misses
+    gets None and is simply not drawn in the measurement panel.
+    """
+    n = 0 if P is None else P.shape[0]
+    out = [np.full(n, np.nan) for _ in range(4)]
+    if n and rc_tree is not None:
+        d, j = rc_tree.query(P, k=1)
+        g = d < 0.05
+        for a, key in zip(out, ("pu", "pv", "pw", "pt")):
+            a[g] = rc[key][j[g]]
+    return [[None if not np.isfinite(t) else round(float(t), 2) for t in a]
+            for a in out]
+
+
+def proj_cells(pj, cid, det):
+    """The cluster's 2-D measurement, split by plane.
+
+    This is exactly what a Magnify tracking display shows: for every (channel,
+    time slice) cell the fitter touched, the MEASURED charge, its error, and the
+    charge the fitted track PREDICTS there.  Written by
+    PdvdPrMagnifyTrackingVisitor::write_proj_data as one row per fitted cluster.
+
+    LIMIT, and it is why the dead-channel overlay is not decoration: inside a
+    dead region `charge` is not a measurement at all -- Cell::charge() returns
+    prepare_data's FILLER when the slice has no live entry
+    (PdvdPrMagnifyTrackingVisitor.cxx:526-531), and the tree does not carry the
+    per-cell live/dead flag.  So meas - pred there is model minus model.
+    """
+    out = {k: dict(ch=[], ts=[], q=[], qp=[], qe=[]) for k in "uvw"}
+    if pj is None:
+        return out
+    j = pj["idx"].get(int(cid))
+    if j is None:
+        return out
+    ch = np.asarray(pj["channel"][j], np.int64)
+    ts = np.asarray(pj["time_slice"][j], np.int64)
+    q = np.asarray(pj["charge"][j], np.int64)
+    qe = np.asarray(pj["charge_err"][j], np.int64)
+    qp = np.asarray(pj["charge_pred"][j], np.int64)
+    # vectorised form of smgeom.plane_from_chan; the self-test asserts the two
+    # give the same answer on every cell of a sample of items.
+    b, nch = smgeom.BASE[det], smgeom.NCH[det]
+    pln = np.where(ch < b[1], 0, np.where(ch < b[2], 1, 2))
+    pln[(ch < 0) | (ch >= b[2] + nch[2])] = -1
+    for pl, nm in enumerate("uvw"):
+        k = pln == pl
+        out[nm] = dict(ch=ri(ch[k]), ts=ri(ts[k]), q=ri(q[k]),
+                       qp=ri(qp[k]), qe=ri(qe[k]))
+    return out
+
+
+def dead_bands(bc, det):
+    """T_bad_ch as [channel, first slice, last slice] per plane.
+
+    The tick -> slice conversion and the causal gate on it: smgeom.TICKS_PER_SLICE.
+    Kept whole rather than clipped to the cluster's window, so a gap that runs
+    off the edge of the drawn box is still explained.
+    """
+    out = {k: dict(ch=[], t0=[], t1=[]) for k in "uvw"}
+    if bc is None or not len(bc["chid"]):
+        return out
+    for pl, nm in enumerate("uvw"):
+        k = bc["plane"] == pl
+        out[nm] = dict(
+            ch=ri(bc["chid"][k]),
+            t0=[round(smgeom.ticks_to_slice(det, int(t)), 2) for t in bc["start_time"][k]],
+            t1=[round(smgeom.ticks_to_slice(det, int(t)), 2) for t in bc["end_time"][k]])
+    return out
+
+
 def event_dirs(det):
     d = DET[det]
     out = []
@@ -182,7 +263,17 @@ def build_event(det, evtdir, with_tagger_fit=True):
         return []
     m = f["T_stm_michel"].arrays(library="np")
     p = f["T_stm_michel_pts"].arrays(library="np")
-    rc = f["T_rec_charge"].arrays(["x", "y", "z", "pw", "cluster_id"], library="np")
+    rc = f["T_rec_charge"].arrays(
+        ["x", "y", "z", "pu", "pv", "pw", "pt", "cluster_id"], library="np")
+    # the 2-D measurement, once per event.  T_proj_data is ONE entry holding
+    # vector-of-vector branches keyed by cluster_id, so unwrap the entry first.
+    pj = None
+    if "T_proj_data" in keys:
+        d0 = f["T_proj_data"].arrays(library="np")
+        if len(d0["cluster_id"]):
+            pj = {k: d0[k][0] for k in d0}
+            pj["idx"] = {int(c): i for i, c in enumerate(pj["cluster_id"])}
+    bc = f["T_bad_ch"].arrays(library="np") if "T_bad_ch" in keys else None
     run = f["Trun"].arrays(["runNo", "eventNo"], library="np")
     runno, evtno = int(run["runNo"][0]), int(run["eventNo"][0])
     ev = os.path.basename(evtdir).rsplit("_", 1)[0]          # <run6>_<evt>
@@ -232,11 +323,8 @@ def build_event(det, evtdir, with_tagger_fit=True):
         if not mu.sum():
             continue
         MX = np.c_[p["x"][mu], p["y"][mu], p["z"][mu]]
-        pw = np.full(MX.shape[0], np.nan)
-        if rc_tree is not None:
-            d, j = rc_tree.query(MX, k=1)
-            good = d < 0.05
-            pw[good] = rc["pw"][j[good]]
+        m_pu, m_pv, m_pw, m_pt = wire_join(rc_tree, rc, MX)
+        pw = np.asarray([np.nan if t is None else t for t in m_pw], float)
         rr_mu = p["rr"][mu]
         stop_pt = MX[int(np.argmin(rr_mu))] if rr_mu.size else None
         near, far, src = load_image(evtdir, MX, stop_pt)
@@ -254,9 +342,13 @@ def build_event(det, evtdir, with_tagger_fit=True):
             image_src=src, image_near_r=IMAGE_NEAR_R, image_stop_r=IMAGE_STOP_R,
             muon=dict(x=r2(p["x"][mu]), y=r2(p["y"][mu]), z=r2(p["z"][mu]),
                       q=r1(p["q"][mu]), L=r2(p["L"][mu]), rr=r2(p["rr"][mu]),
-                      pw=[None if not np.isfinite(w) else round(float(w), 2) for w in pw],
+                      pw=m_pw, pu=m_pu, pv=m_pv, pt=m_pt,
                       unit=units, cru=crus),
             image_near=near, image_far=far,
+            # the 2-D measurement space, per plane: what the wires SAW, what the
+            # fit PREDICTS they should have seen, and which channels were dead
+            ticks_per_slice=smgeom.TICKS_PER_SLICE[det],
+            proj=proj_cells(pj, cid, det), dead=dead_bands(bc, det),
         )
         v = {k: (float(m[k][i]) if m[k].dtype.kind == "f" else int(m[k][i]))
              for k in VERDICT_SCALARS if k in m}
@@ -266,8 +358,11 @@ def build_event(det, evtdir, with_tagger_fit=True):
                 v[k] = round(float(m[k][i]), 2)
         for role, name in ((2, "delta"), (3, "michel"), (4, "dots")):
             k = sel & (p["role"] == role)
+            RX = np.c_[p["x"][k], p["y"][k], p["z"][k]] if k.sum() else None
+            r_pu, r_pv, r_pw, r_pt = wire_join(rc_tree, rc, RX)
             v[name] = dict(x=r2(p["x"][k]), y=r2(p["y"][k]), z=r2(p["z"][k]),
-                           q=r1(p["q"][k]), seg=[int(s) for s in p["seg_id"][k]])
+                           q=r1(p["q"][k]), seg=[int(s) for s in p["seg_id"][k]],
+                           pu=r_pu, pv=r_pv, pw=r_pw, pt=r_pt)
         v["tagger_fit"] = tagfit.get(cid, [])
         pay["verdict"] = v
 

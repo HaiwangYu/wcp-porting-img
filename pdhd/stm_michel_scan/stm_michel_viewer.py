@@ -73,11 +73,12 @@ import numpy as np
 from bokeh.events import DocumentReady, Pan, PanEnd, PanStart, Tap
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import (BoxSelectTool, Button, CheckboxGroup, ColumnDataSource,
-                          CustomJS, Div, LinearColorMapper, RadioButtonGroup,
-                          Range1d, ResetTool, SaveTool, Select, Slider, Tabs,
-                          TabPanel, TapTool, TextInput, Toggle, WheelZoomTool)
-from bokeh.palettes import Viridis256
+from bokeh.models import (BoxSelectTool, Button, CheckboxGroup, ColorBar,
+                          ColumnDataSource, CustomJS, Div, HoverTool,
+                          LinearColorMapper, RadioButtonGroup, Range1d,
+                          ResetTool, SaveTool, Select, Slider, Tabs, TabPanel,
+                          TapTool, TextInput, Toggle, WheelZoomTool)
+from bokeh.palettes import Turbo256, Viridis256
 from bokeh.plotting import figure
 from bokeh.transform import linear_cmap
 
@@ -245,6 +246,8 @@ LAYERS = [
     ("stop",     16.0, 0.95, "#2ca02c",        "inverted_triangle", True, 0.0),
     ("tstop",    16.0, 0.95, "#2ca02c",        "x",        True,  0.0),
     ("pin",      22.0, 1.00, "#e377c2",        "star",     False, 0.0),
+    # the point you last clicked in the dQ/dx panel, echoed in every other view
+    ("cursor",   19.0, 1.00, "#17becf",   "circle_cross",    False, 0.0),
 ]
 REVEAL_LAYERS = {n for n, _, _, _, _, rv, _ in LAYERS if rv}
 
@@ -255,8 +258,59 @@ PANELS = [("z", "y", "side view:   Z (beam) vs Y"),
 SRC2 = {}          # (ha, va, layer) -> ColumnDataSource with a, b [, q|c]
 FIG2 = {}
 REND2 = {}
-cm_near = LinearColorMapper(palette=Viridis256, low=0.0, high=4e4)
-cm_muon = LinearColorMapper(palette=Viridis256, low=0.0, high=1e5)
+
+
+# ---------------------------------------------------------------------------
+# colour, and why it is not Viridis any more (doc pdhd/12 sec 5.6)
+#
+# The dQ/dx panel used Viridis with the muon's own p98 as the top of the scale.
+# Two things were wrong with that and BOTH hid the one feature this scan exists
+# to judge:
+#   * Viridis ends at #FDE725 -- bright yellow on a white page.  So the BRAGG
+#     PEAK, the highest-dQ/dx points, rendered as the least visible colour on
+#     the plot.  Turbo ends at a dark red (#7A0403) and starts at a dark blue,
+#     so nothing on the scale is near the page colour.
+#   * a per-ITEM p98 made the colour mean something different on every item, so
+#     two objects with a factor-3 difference in dQ/dx looked identical.  The
+#     scale is FIXED now, from a measurement rather than a guess: over every
+#     role-1 point of both production arms (97 721 PDHD + 166 037 PDVD),
+#     p50 = 49.5/50.2 ke/cm, p99 = 112/118 ke/cm, p99.9 = 162/166 ke/cm.
+#     1.5e5 puts the MIP plateau at a third of the range (cyan-green) and the
+#     Bragg rise in the orange-to-dark-red top, with < 0.3 % saturating.
+# Independently of the palette, every marker in the dQ/dx panel now carries a
+# thin dark outline, so "invisible fill" cannot come back if the scale is ever
+# retuned.
+DQDX_HIGH = 1.5e5
+
+# The image-charge layer keeps an adaptive scale (it is context, and its range
+# genuinely varies by plane and detector) but gets its OWN cool ramp, because
+# `near` and `muon` were both Viridis in the same panels -- charge-per-point and
+# charge-per-cm reading as one quantity.
+def _ramp(stops, n=256):
+    """A 256-step palette from (position, #rrggbb) stops."""
+    out = []
+    for i in range(n):
+        t = i / (n - 1.0)
+        for k in range(len(stops) - 1):
+            (p0, c0), (p1, c1) = stops[k], stops[k + 1]
+            if t <= p1 or k == len(stops) - 2:
+                f = 0.0 if p1 == p0 else (t - p0) / (p1 - p0)
+                f = min(1.0, max(0.0, f))
+                rgb = [int(round(int(c0[1 + 2 * j:3 + 2 * j], 16) * (1 - f)
+                                 + int(c1[1 + 2 * j:3 + 2 * j], 16) * f))
+                       for j in range(3)]
+                out.append("#%02x%02x%02x" % tuple(rgb))
+                break
+    return out
+
+
+PAL_NEAR = _ramp([(0.0, "#d5dde5"), (0.45, "#5a8fc0"), (1.0, "#10233f")])
+# Diverging and WHITE-CENTRED on purpose: a cell where the fit agrees with the
+# wires should vanish into the page, so only disagreement draws the eye.
+PAL_DIFF = _ramp([(0.0, "#2166ac"), (0.5, "#ffffff"), (1.0, "#b2182b")])
+
+cm_near = LinearColorMapper(palette=PAL_NEAR, low=0.0, high=4e4)
+cm_muon = LinearColorMapper(palette=Turbo256, low=0.0, high=DQDX_HIGH)
 
 
 def _fields(name):
@@ -288,7 +342,7 @@ for ha, va, title in PANELS:
         else:
             r = f.scatter("a", "b", source=src, size=sz, alpha=al, marker=marker,
                           color=col,
-                          line_color="#333333" if name in ("pin", "dots") else None)
+                          line_color="#333333" if name in ("pin", "dots", "cursor") else None)
         SRC2[(ha, va, name)] = src
         REND2[(ha, va, name)] = r
     # the active boundary, so "does it reach a face" is answerable by eye, and
@@ -347,7 +401,7 @@ for name, sz, al, col, marker, rv, cue in LAYERS:
     else:
         r = f3d.scatter("u", "v", source=src, size="sz", fill_alpha="al",
                         marker=marker, fill_color=col,
-                        line_color="#333333" if name in ("pin", "dots") else None)
+                        line_color="#333333" if name in ("pin", "dots", "cursor") else None)
     SRC3[name] = src
     REND3[name] = r
     _PT_SRC.append(src); _PT_SIZE.append(sz); _PT_ALPHA.append(al)
@@ -432,32 +486,326 @@ def fill3_box():
 # then.  So the panel separates muon from Michel exactly where YOU say the muon
 # stopped, which is the quantity the downstream separation needs.
 # ---------------------------------------------------------------------------
+# CLICK a point here and it is echoed by a cyan cursor in the 3-D view, all
+# three projections and all nine measurement panels -- so "what is that outlier
+# at rr = 12 cm" is answered by pointing at it rather than by hunting.  Every
+# scatter source therefore carries the point's own 3-D position AND its wire
+# coordinates, and the callback just reads the tapped row: no index arithmetic
+# between the panel's live-only rows and the chain arrays, which is where an
+# off-by-a-few cursor would come from.
+_tapq = TapTool()
 fq = figure(title="dQ/dx vs signed arc length  (+ muon side, − Michel side)",
-            height=330, width=620, tools="pan,wheel_zoom,box_zoom,reset,save",
+            height=330, width=620,
+            tools=["pan", "wheel_zoom", "box_zoom", "reset", "save", _tapq],
             active_scroll="wheel_zoom",
             x_axis_label="signed arc length through the origin [cm]",
-            y_axis_label="dQ/dx [e/cm]")
+            y_axis_label="dQ/dx [e/cm]  —  click a point to locate it")
+fq.toolbar.active_tap = _tapq
+# a, b are the plotted pair; c the colour field; the rest ride along for the
+# cursor.  ONE column list, so a fill that forgets one fails loudly.
+QCOLS = ["a", "b", "c", "x", "y", "z", "pu", "pv", "pw", "pt"]
+QSCAT = ("muon", "delta", "michel", "dots")
 SRCQ = {}
 for name, col, sz in (("ref_muon", "#333333", 0), ("ref_electron", "#8c564b", 0),
-                      ("muon", "#000000", 5), ("delta", "#ff7f0e", 7),
-                      ("michel", "#1f77b4", 8), ("dots", "#d62728", 10)):
-    s = ColumnDataSource(dict(a=[], b=[]))
-    SRCQ[name] = s
+                      ("muon", "#000000", 6), ("delta", "#ff7f0e", 8),
+                      ("michel", "#1f77b4", 9), ("dots", "#d62728", 11)):
+    src = ColumnDataSource(dict(a=[], b=[]) if sz == 0
+                           else {k: [] for k in QCOLS}, name="srcq_" + name)
+    SRCQ[name] = src
     if sz == 0:
-        fq.line("a", "b", source=s, color=col, line_width=2,
+        fq.line("a", "b", source=src, color=col, line_width=2,
                 line_dash="solid" if name == "ref_muon" else "dashed", alpha=0.8)
-    elif name == "muon":
-        fq.scatter("a", "b", source=s, size=sz, line_color=None,
-                   color={"field": "c", "transform": cm_muon}, alpha=0.9)
-        s.data = dict(a=[], b=[], c=[])
+        continue
+    # A thin dark outline on EVERY marker.  This is what makes the panel
+    # readable independently of the palette: whatever the fill, the point has an
+    # edge (doc pdhd/12 sec 5.6).
+    common = dict(size=sz, alpha=0.92, line_color="#2b2b2b", line_width=0.6,
+                  line_alpha=0.65, nonselection_alpha=0.92,
+                  nonselection_line_alpha=0.65)
+    if name == "muon":
+        fq.scatter("a", "b", source=src,
+                   fill_color={"field": "c", "transform": cm_muon}, **common)
     else:
-        fq.scatter("a", "b", source=s, size=sz, color=col, alpha=0.9,
-                   marker="diamond" if name == "dots" else "circle",
-                   line_color="#333333" if name == "dots" else None)
+        fq.scatter("a", "b", source=src, fill_color=col,
+                   marker="diamond" if name == "dots" else "circle", **common)
 fq.line("a", "b", source=ColumnDataSource(dict(a=[], b=[])), color="#e377c2")
 SRCQ["origin"] = ColumnDataSource(dict(a=[], b=[]))
 fq.line("a", "b", source=SRCQ["origin"], color="#e377c2", line_width=2,
         line_dash="dashed")
+
+
+# ---------------------------------------------------------------------------
+# the 2-D MEASUREMENT panels -- what the wires actually saw (doc pdhd/12 sec 5.4)
+#
+# Three rows (U, V, W) x three columns: the MEASURED charge in each (channel,
+# time slice) cell, the charge the fitted track PREDICTS there, and their
+# difference.  This is the content of a Magnify tracking display, from the same
+# tree Magnify reads -- T_proj_data, one row per fitted cluster, written by
+# PdvdPrMagnifyTrackingVisitor::write_proj_data.
+#
+# WHY IT IS HERE AT ALL.  Every other panel is reconstruction-space: 3-D points
+# and a trajectory.  A track that looks clean in 3-D can be a fit riding on
+# charge that is not there, and the only place that shows is the residual.  For
+# this scan specifically, "did the muon stop or did it leave through a dead
+# region" and "is the Michel a real deposit or a prediction artefact" are
+# measurement-space questions.
+#
+# THREE THINGS THAT WOULD MAKE IT LIE, and what is done about each:
+#  1. THE PLANE SPLIT.  channel is a per-plane RANK, not a LArSoft channel id;
+#     a wrong split is silent (feedback_magnify_channel_is_a_plane_rank).
+#     smgeom.BASE, gated causally -- see that module.
+#  2. DEAD REGIONS.  Inside one, `charge` is not a measurement: Cell::charge()
+#     falls back to prepare_data's FILLER when a slice has no live entry, and
+#     the tree does not carry the flag.  So meas - pred there is model minus
+#     model.  The dead bands are drawn OVER the cells for exactly that reason --
+#     they are the only thing that says which residual cells mean anything.
+#  3. THE SCALE.  A per-item colour scale makes items incomparable, which is
+#     fatal for a hand scan.  Both scales are FIXED per (detector, plane), from
+#     the measured distribution over both production arms, and the one control
+#     the scanner has is a global multiplier that moves every item together.
+# ---------------------------------------------------------------------------
+PLANES = ("u", "v", "w")
+
+# Top of the measured/predicted scale: the plane's p90 cell charge over ~30
+# events of the production arm.  p90 rather than p99 because the p99 tail runs
+# to 1.2e6 and would push the bulk (p50 ~ 3-12 ke) into the bottom tenth of the
+# map.  Cells above the top saturate, which reads correctly as "a lot".
+CELL_HIGH = {"pdhd": dict(u=5.6e4, v=5.7e4, w=3.1e4),
+             "pdvd": dict(u=3.1e4, v=2.7e4, w=1.8e4)}
+# Half-span of the symmetric residual scale: the plane's p99 |meas - pred|.
+DIFF_SPAN = {"pdhd": dict(u=8.0e4, v=1.0e5, w=4.8e4),
+             "pdvd": dict(u=4.5e4, v=3.6e4, w=2.1e4)}
+CELL_MULT = [0.5, 1.0, 2.0, 4.0]
+# Cell marker size in SCREEN pixels, not data units.  A rect one channel wide
+# was the obvious choice and it drew NOTHING: the biggest item spans 2 322
+# channels and 1 095 slices in a 430 x 300 px panel, so a data-unit cell is
+# 0.16 x 0.27 px and antialiases to invisible.  Caught by the browser gate --
+# emptying the cell sources changed the painted pixels by zero.  A screen-unit
+# square is always visible, and zooming in separates the cells the normal way.
+CELL_PX = [2, 3, 5, 8]
+
+MEAS_COLS = [("q", "measured"), ("qp", "predicted"), ("d", "measured − predicted")]
+SRCM, SRCD, SRCT, FIGM = {}, {}, {}, {}
+CELL_REND = []
+CM_CELL, CM_DIFF = {}, {}
+_meas_y = Range1d(0, 1)                     # ONE time range for all nine panels
+# The trajectory layers echoed into measurement space.  tagfit is deliberately
+# absent: it is the cosmic tagger's fit, not this chain's, and nine more
+# renderers of a secondary overlay buys nothing here.
+MEAS_TRACKS = [("muon", "#000000", 3.0, False),
+               ("delta", "#ff7f0e", 5.0, True),
+               ("michel", "#1f77b4", 6.0, True),
+               ("dots", "#d62728", 8.0, True),
+               ("cursor", "#17becf", 15.0, False)]
+MEAS_REND = {}
+
+for pl in PLANES:
+    CM_CELL[pl] = LinearColorMapper(palette=Turbo256, low=0.0,
+                                    high=CELL_HIGH[DETNAME][pl])
+    CM_DIFF[pl] = LinearColorMapper(palette=PAL_DIFF,
+                                    low=-DIFF_SPAN[DETNAME][pl],
+                                    high=DIFF_SPAN[DETNAME][pl])
+    SRCM[pl] = ColumnDataSource(dict(ch=[], ts=[], q=[], qp=[], qe=[], d=[]),
+                                name="srcm_" + pl)
+    SRCD[pl] = ColumnDataSource(dict(left=[], right=[], bottom=[], top=[]),
+                                name="srcd_" + pl)
+    for nm, _c, _sz, _rv in MEAS_TRACKS:
+        SRCT[(pl, nm)] = ColumnDataSource(dict(w=[], t=[]),
+                                          name="srct_%s_%s" % (pl, nm))
+    # ONE x range per row: the three columns MUST show the same window or the
+    # eye compares three different pictures and the difference panel answers
+    # nothing.  y (time) is shared across all nine.
+    xr = Range1d(0, 1)
+    for fld, cname in MEAS_COLS:
+        f = figure(height=300, width=430, x_range=xr, y_range=_meas_y,
+                   tools="pan,wheel_zoom,box_zoom,reset,save",
+                   active_scroll="wheel_zoom",
+                   x_axis_label="%s channel (global rank)" % pl.upper(),
+                   y_axis_label="time slice")
+        f.title.text = "%s — %s" % (pl.upper(), cname)
+        f.title.text_font_size = "10pt"
+        # dead channels UNDER, as a solid band: a dead region with no cells at
+        # all has to read as "dead", not as "nothing was there".
+        f.quad(left="left", right="right", bottom="bottom", top="top",
+               source=SRCD[pl], fill_color="#b9b9b9", fill_alpha=0.5,
+               line_color=None, level="underlay")
+        r = f.scatter(x="ch", y="ts", marker="square", size=CELL_PX[1],
+                      source=SRCM[pl], line_color=None,
+                      fill_color={"field": fld,
+                                  "transform": CM_DIFF[pl] if fld == "d" else CM_CELL[pl]})
+        CELL_REND.append(r)
+        # ... and again OVER, hatched, so a residual sitting inside a dead
+        # region cannot be read as a measurement.
+        f.quad(left="left", right="right", bottom="bottom", top="top",
+               source=SRCD[pl], fill_color="#000000", fill_alpha=0.10,
+               hatch_pattern="/", hatch_alpha=0.30, hatch_color="#000000",
+               line_color="#666666", line_alpha=0.45, line_width=0.5)
+        for nm, col, sz, _rv in MEAS_TRACKS:
+            src = SRCT[(pl, nm)]
+            if nm == "muon":
+                # A THIN, SEMI-TRANSPARENT line and no markers.  The first
+                # version drew a 3 px white halo, a 1.2 px black line and a
+                # marker per fit point on top -- and since the cluster's cells
+                # ARE the track's own cells, at full-cluster zoom (2 300
+                # channels in 430 px) they land on the same pixels and the
+                # overlay painted the entire measurement out.  The picture
+                # looked like an empty panel with a track drawn on it.  The
+                # cells are the evidence; the trajectory is the annotation, and
+                # it has to read as one.
+                f.line("w", "t", source=src, color="#ffffff", line_width=2.2,
+                       alpha=0.40)
+                f.line("w", "t", source=src, color="#000000", line_width=0.9,
+                       alpha=0.55)
+                MEAS_REND.setdefault(nm, []).append(
+                    f.scatter("w", "t", source=src, size=1.4, color="#000000",
+                              line_color=None, alpha=0.45))
+                continue
+            rr = f.scatter("w", "t", source=src, size=sz, color=col,
+                           marker="circle_cross" if nm == "cursor" else "circle",
+                           line_color="#333333" if nm in ("dots", "cursor") else None,
+                           fill_alpha=0.85, line_alpha=0.9)
+            MEAS_REND.setdefault(nm, []).append(rr)
+        f.add_tools(HoverTool(renderers=[r], tooltips=[
+            ("channel", "@ch{0}"), ("slice", "@ts{0}"),
+            ("measured", "@q{0} e"), ("predicted", "@qp{0} e"),
+            ("meas−pred", "@d{0} e"), ("err", "@qe{0} e")]))
+        FIGM[(pl, fld)] = f
+    FIGM[(pl, "xr")] = xr
+    FIGM[(pl, "cb")] = ColorBar(color_mapper=CM_CELL[pl], width=8,
+                                label_standoff=4, padding=2)
+    FIGM[(pl, "q")].add_layout(FIGM[(pl, "cb")], "right")
+    FIGM[(pl, "d")].add_layout(ColorBar(color_mapper=CM_DIFF[pl], width=8,
+                                        label_standoff=4, padding=2), "right")
+
+cell_scale = RadioButtonGroup(labels=["×0.5", "×1", "×2", "×4"], active=1, width=210)
+cell_size = RadioButtonGroup(labels=["2 px", "3 px", "5 px", "8 px"], active=1, width=210)
+# The whole cluster is what Magnify shows and it is the right default -- but a
+# 677 cm muon spans 2 300 channels, and the Michel lives in the last 30 of them.
+MEAS_WIN = 150
+meas_zoom = RadioButtonGroup(labels=["whole cluster", "± %d around the stop" % MEAS_WIN],
+                             active=0, width=280)
+meas_note = Div(width=1320, text="")
+
+
+def apply_cell_size():
+    for r in CELL_REND:
+        r.glyph.size = CELL_PX[cell_size.active]
+
+
+def _fmt_e(v):
+    return "%.0fk" % (v / 1e3)
+
+
+def apply_cell_scale():
+    m = CELL_MULT[cell_scale.active]
+    for pl in PLANES:
+        CM_CELL[pl].high = CELL_HIGH[DETNAME][pl] * m
+        CM_DIFF[pl].low = -DIFF_SPAN[DETNAME][pl] * m
+        CM_DIFF[pl].high = DIFF_SPAN[DETNAME][pl] * m
+    meas_note.text = (
+        "<span style='font-size:90%%'><b>2-D measurement</b> — every (channel, time slice) "
+        "cell of this cluster, from T_proj_data. Colour scales are <b>FIXED per plane</b> "
+        "(× %g): charge 0–%s / 0–%s / 0–%s e for U/V/W, residual ±%s / ±%s / ±%s e, so two "
+        "items are comparable. Grey hatched = dead channel — <b>inside one, `measured` is "
+        "the imaging model's filler, not a reading, so the residual there means nothing.</b> "
+        "Black line = the CheckSTM_Michel PR fit (0.600 cm steps); click a point in the "
+        "dQ/dx panel to drop the cyan cursor here.</span>"
+        % (m, _fmt_e(CELL_HIGH[DETNAME]["u"] * m), _fmt_e(CELL_HIGH[DETNAME]["v"] * m),
+           _fmt_e(CELL_HIGH[DETNAME]["w"] * m), _fmt_e(DIFF_SPAN[DETNAME]["u"] * m),
+           _fmt_e(DIFF_SPAN[DETNAME]["v"] * m), _fmt_e(DIFF_SPAN[DETNAME]["w"] * m)))
+
+
+apply_cell_scale()
+apply_cell_size()
+
+
+def blank_meas():
+    for pl in PLANES:
+        SRCM[pl].data = dict(ch=[], ts=[], q=[], qp=[], qe=[], d=[])
+        SRCD[pl].data = dict(left=[], right=[], bottom=[], top=[])
+        for nm, _c, _sz, _rv in MEAS_TRACKS:
+            SRCT[(pl, nm)].data = dict(w=[], t=[])
+
+
+def _wt(block, pl):
+    """(wire, time) of a chain block in one plane, dropping unjoined points."""
+    if not block:
+        return [], []
+    W = np.asarray([np.nan if t is None else t for t in (block.get("p" + pl) or [])], float)
+    T = np.asarray([np.nan if t is None else t for t in (block.get("pt") or [])], float)
+    if W.size != T.size or not W.size:
+        return [], []
+    k = np.isfinite(W) & np.isfinite(T)
+    return [float(t) for t in W[k]], [float(t) for t in T[k]]
+
+
+def fill_meas(pay, v, rev, pin=None):
+    """The nine panels for one item.  `v` is empty unless REVEAL is on.
+
+    `pin` is the (x, y, z) origin; when the scanner asks for the stop window,
+    the panels centre on THAT point's own wire coordinates -- taken from the
+    nearest chain point, so the window is in the same numbers the panel plots
+    rather than a geometric guess.
+    """
+    stop_w = {}
+    if pin is not None:
+        m = pay.get("muon") or {}
+        MX = np.c_[np.asarray(m.get("x") or [], float),
+                   np.asarray(m.get("y") or [], float),
+                   np.asarray(m.get("z") or [], float)]
+        if MX.size:
+            i = int(np.argmin(((MX - np.asarray(pin, float)) ** 2).sum(axis=1)))
+            for pl in PLANES:
+                w = (m.get("p" + pl) or [None] * len(MX))[i]
+                t = (m.get("pt") or [None] * len(MX))[i]
+                if w is not None and t is not None:
+                    stop_w[pl] = (float(w), float(t))
+    blank_meas()
+    prj = pay.get("proj") or {}
+    dead = pay.get("dead") or {}
+    tlo, thi = [], []
+    for pl in PLANES:
+        c = prj.get(pl) or dict(ch=[], ts=[], q=[], qp=[], qe=[])
+        ch = np.asarray(c["ch"], float); ts = np.asarray(c["ts"], float)
+        q = np.asarray(c["q"], float); qp = np.asarray(c["qp"], float)
+        qe = np.asarray(c["qe"], float)
+        SRCM[pl].data = dict(ch=list(ch), ts=list(ts), q=list(q), qp=list(qp),
+                             qe=list(qe), d=list(q - qp))
+        mw, mt = _wt(pay.get("muon"), pl)
+        SRCT[(pl, "muon")].data = dict(w=mw, t=mt)
+        if rev:
+            for nm in ("delta", "michel", "dots"):
+                w_, t_ = _wt(v.get(nm), pl)
+                SRCT[(pl, nm)].data = dict(w=w_, t=t_)
+        allw = list(ch) + mw
+        allt = list(ts) + mt
+        xr = FIGM[(pl, "xr")]
+        if meas_zoom.active == 1 and pl in stop_w:
+            xr.start, xr.end = stop_w[pl][0] - MEAS_WIN, stop_w[pl][0] + MEAS_WIN
+            tlo.append(stop_w[pl][1] - MEAS_WIN); thi.append(stop_w[pl][1] + MEAS_WIN)
+        elif allw:
+            lo, hi = min(allw), max(allw)
+            pad = max(3.0, 0.04 * (hi - lo))
+            xr.start, xr.end = lo - pad, hi + pad
+            tlo.append(min(allt)); thi.append(max(allt))
+        else:
+            xr.start, xr.end = smgeom.plane_span(DETNAME, PLANES.index(pl))
+        # dead bands, clipped to the drawn box so a whole-readout band does not
+        # decide the time range
+        d = dead.get(pl) or dict(ch=[], t0=[], t1=[])
+        keep = [i for i, cc in enumerate(d["ch"]) if xr.start <= cc <= xr.end]
+        SRCD[pl].data = dict(
+            left=[d["ch"][i] - 0.5 for i in keep], right=[d["ch"][i] + 0.5 for i in keep],
+            bottom=[d["t0"][i] for i in keep], top=[d["t1"][i] for i in keep])
+    if tlo:
+        lo, hi = min(tlo), max(thi)
+        pad = 0.0 if meas_zoom.active == 1 else max(5.0, 0.05 * (hi - lo))
+        _meas_y.start, _meas_y.end = lo - pad, hi + pad
+    else:
+        _meas_y.start, _meas_y.end = 0, 1
+    for nm, _c, _sz, rv in MEAS_TRACKS:
+        for r in MEAS_REND.get(nm, []):
+            r.visible = (rev or not rv)
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +852,7 @@ progress = Div(text="", width=620)
 badge = Div(text="", width=1420)
 status = Div(text="", width=1420)
 reveal_div = Div(text="", width=620)
+cursor_div = Div(text="", width=620)
 
 header = Div(width=1420, text="""
 <b>%s stopping-muon + Michel-electron hand scan</b> &mdash; doc pdhd/12.
@@ -518,11 +867,17 @@ the slider. The dQ/dx panel re-anchors on it, so the muon side and the Michel si
 separate exactly where you say. It starts at the drawn chain's own last point, which is
 the reconstruction's stopping point on 98&nbsp;%% of objects &mdash; so this is asking
 whether you <i>agree</i>, and the label records how far you moved it.
+<br><b>2-D measurement</b> is the third tab: what the wires actually saw, what the fit
+predicts they should have seen, and the difference &mdash; per plane, with the dead
+channels hatched. The fit drawn everywhere is the <b>CheckSTM_Michel PR</b> chain
+(uniform 0.600&nbsp;cm step); the cosmic tagger's own fit is the grey REVEAL layer only.
+<br><b>Click a point in the dQ/dx panel</b> and a cyan cursor marks it in the 3-D view,
+in all three projections and in all nine measurement panels.
 <br><b>REVEAL</b> shows what the reconstruction decided. Every label records whether you
 had revealed it, so a revealed label is still usable &mdash; it is just scored separately.
 </span>""" % DETNAME.upper())
 
-state = dict(idx=0, pin=None, pin_i=None, pin_manual=None)
+state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None)
 
 
 def current():
@@ -643,7 +998,9 @@ def blank():
     for n in SRC3:
         fill3(n, [], [], [])
     for n in SRCQ:
-        SRCQ[n].data = (dict(a=[], b=[], c=[]) if n == "muon" else dict(a=[], b=[]))
+        SRCQ[n].data = ({k: [] for k in QCOLS} if n in QSCAT else dict(a=[], b=[]))
+    blank_meas()
+    clear_cursor()
 
 
 def render():
@@ -666,9 +1023,8 @@ def render():
     near, far = pay["image_near"], pay["image_far"]
     v = pay.get("verdict", {}) if rev else {}
 
-    # colour scales from THIS object, so a low-dQ/dx track is not a black smear
-    cm_muon.low = 0.0
-    cm_muon.high = float(np.percentile(Q[Q > 0], 98)) if (Q > 0).any() else 1e5
+    # cm_muon is FIXED at 0..DQDX_HIGH for every item on both detectors -- see
+    # the palette block.  Only the context layer still adapts.
     nq = np.asarray(near.get("q") or [], float)
     cm_near.low = 0.0
     cm_near.high = float(np.percentile(nq[nq > 0], 98)) if (nq > 0).any() else 4e4
@@ -725,6 +1081,11 @@ def render():
         fill3(nm, lx, ly, lz, ex)
 
     fill_dqdx(pay, v, px, py, pz, prr, psrc, rev)
+    fill_meas(pay, v, rev, (px, py, pz))
+    # a cursor from the previous item would point at a point that is no longer
+    # on screen; and render() runs on REVEAL too, where the tapped point may
+    # have just been hidden.
+    clear_cursor()
     fill_badge(it, pay, px, py, pz, prr, psrc)
     fill_reveal(v, rev)
 
@@ -757,6 +1118,67 @@ def refit_camera(X, Y, Z):
     f3d.y_range.start, f3d.y_range.end = -R, R
 
 
+def _col(block, key, mask):
+    """block[key] as a float array under `mask`, None -> NaN, absent -> all NaN.
+
+    A payload written before the wire columns existed still renders; the point
+    is simply not locatable in measurement space, which is honest.
+    """
+    n = int(np.count_nonzero(mask)) if mask is not None else 0
+    raw = (block or {}).get(key)
+    if raw is None:
+        return np.full(n, np.nan)
+    a = np.asarray([np.nan if t is None else t for t in raw], float)
+    if a.size != np.asarray(mask).size:
+        return np.full(n, np.nan)
+    return a[mask]
+
+
+def _qdata(*cols):
+    return {k: [float(t) for t in c] for k, c in zip(QCOLS, cols)}
+
+
+def clear_cursor():
+    state["cursor"] = None
+    fill3("cursor", [], [], [])
+    for ha, va, _t in PANELS:
+        SRC2[(ha, va, "cursor")].data = dict(a=[], b=[])
+    for pl in PLANES:
+        SRCT[(pl, "cursor")].data = dict(w=[], t=[])
+    cursor_div.text = ("<span style='color:#777'>click a point in the dQ/dx panel "
+                       "to locate it in every other view</span>")
+
+
+def set_cursor(src, i):
+    """Echo one dQ/dx point into the 3-D view, the projections and the wires."""
+    d = src.data
+    if i is None or i < 0 or i >= len(d.get("a", [])):
+        return clear_cursor()
+    g = lambda k: (float(d[k][i]) if k in d and i < len(d[k]) else float("nan"))
+    x, y, z = g("x"), g("y"), g("z")
+    state["cursor"] = (x, y, z)
+    fill3("cursor", [x], [y], [z])
+    axes = dict(x=x, y=y, z=z)
+    for ha, va, _t in PANELS:
+        SRC2[(ha, va, "cursor")].data = dict(a=[axes[ha]], b=[axes[va]])
+    t = g("pt")
+    for pl in PLANES:
+        w = g("p" + pl)
+        ok = math.isfinite(w) and math.isfinite(t)
+        SRCT[(pl, "cursor")].data = dict(w=[w] if ok else [], t=[t] if ok else [])
+    u, cr, fa = smgeom.unit_from_wire(DETNAME, None if not math.isfinite(g("pw")) else g("pw"))
+    cursor_div.text = (
+        "<div style='background:#e6f7f9;padding:5px;font-size:95%%'><b>cursor</b> "
+        "&nbsp; arc %.2f cm &nbsp; dQ/dx %.0f e/cm &nbsp;|&nbsp; x %.1f y %.1f z %.1f cm"
+        " &nbsp;|&nbsp; U %s &nbsp; V %s &nbsp; W %s &nbsp; slice %s &nbsp;|&nbsp; %s</div>"
+        % (g("a"), g("b"), x, y, z,
+           "—" if not math.isfinite(g("pu")) else "%.1f" % g("pu"),
+           "—" if not math.isfinite(g("pv")) else "%.1f" % g("pv"),
+           "—" if not math.isfinite(g("pw")) else "%.1f" % g("pw"),
+           "—" if not math.isfinite(t) else "%.1f" % t,
+           smgeom.unit_label(DETNAME, u, cr, fa)))
+
+
 def fill_dqdx(pay, v, px, py, pz, prr, psrc, rev):
     X, Y, Z, Q, RR = muon_arrays(pay)
     live = Q > 0                      # roles 2/3/4 carry negative dQ/dx where the
@@ -769,17 +1191,21 @@ def fill_dqdx(pay, v, px, py, pz, prr, psrc, rev):
                         RR - (RR[int(np.argmin(d))] if RR.size else 0.0))
     else:
         s_mu = RR - prr
-    SRCQ["muon"].data = dict(a=[float(t) for t in s_mu[live]],
-                             b=[float(t) for t in Q[live]],
-                             c=[float(t) for t in Q[live]])
+    m = pay["muon"]
+    SRCQ["muon"].data = _qdata(s_mu[live], Q[live], Q[live], X[live], Y[live], Z[live],
+                               _col(m, "pu", live), _col(m, "pv", live),
+                               _col(m, "pw", live), _col(m, "pt", live))
     for nm in ("delta", "michel", "dots"):
         g = (v.get(nm) if rev else None) or dict(x=[], y=[], z=[], q=[])
         gx = np.asarray(g["x"], float); gy = np.asarray(g["y"], float)
         gz = np.asarray(g["z"], float); gq = np.asarray(g["q"], float)
         k = gq > 0
         d = np.sqrt((gx - px) ** 2 + (gy - py) ** 2 + (gz - pz) ** 2) if gx.size else gx
-        SRCQ[nm].data = dict(a=[-float(t) for t in d[k]],
-                             b=[float(t) for t in gq[k]])
+        # the SAME mask on every column: a different one would offset the cursor
+        # from the point that was clicked by however many dead points precede it
+        SRCQ[nm].data = _qdata(-d[k], gq[k], gq[k], gx[k], gy[k], gz[k],
+                               _col(g, "pu", k), _col(g, "pv", k),
+                               _col(g, "pw", k), _col(g, "pt", k))
     grid = (_REF or {}).get("grid") or dict(start=0.0, step=0.25, n=0)
     xs = [grid["start"] + grid["step"] * i for i in range(int(grid["n"]))]
     for nm, key in (("ref_muon", "muon"), ("ref_electron", "electron")):
@@ -977,19 +1403,46 @@ rr_slider.on_change("value_throttled", on_rr)
 # drive it.  A binding only a human can exercise is a binding nothing tests
 # (feedback_bokeh_client_session_false_negative).
 reveal_tog.on_change("active", lambda a, o, n: render())
+cell_scale.on_change("active", lambda a, o, n: apply_cell_scale())
+cell_size.on_change("active", lambda a, o, n: apply_cell_size())
+meas_zoom.on_change("active", lambda a, o, n: render())
+
+
+def _on_pick(name):
+    def cb(attr, old_, new_):
+        # [] on deselect; overlapping hits give several -- take the first.
+        if not new_:
+            return clear_cursor()
+        for other in QSCAT:
+            if other != name and SRCQ[other].selected.indices:
+                SRCQ[other].selected.indices = []
+        set_cursor(SRCQ[name], int(new_[0]))
+    return cb
+
+
+for _nm in QSCAT:
+    SRCQ[_nm].selected.on_change("indices", _on_pick(_nm))
 zoom_tog.on_change("active", lambda a, o, n: render())
 for _ha, _va, _t in PANELS:
     FIG2[(_ha, _va)].on_event(
         Tap, (lambda h, v: (lambda e: snap_2d(h, v, e.x, e.y)))(_ha, _va))
 f3d.on_event(Tap, lambda e: snap_3d(e.x, e.y))
 
+meas_grid = column(
+    row(Div(text="<b>colour scale</b>", width=95), cell_scale,
+        Div(text="<b>cell size</b>", width=75), cell_size,
+        Div(text="<b>window</b>", width=60), meas_zoom),
+    meas_note,
+    *[row(*[FIGM[(pl, fld)] for fld, _t in MEAS_COLS]) for pl in PLANES])
 left = Tabs(tabs=[
     TabPanel(child=column(f3d), title="3-D"),
     TabPanel(child=column(row(*[FIG2[(h, v)] for h, v, _ in PANELS])),
              title="2-D projections"),
+    TabPanel(child=meas_grid, title="2-D measurement"),
 ])
 right = column(
     fq,
+    cursor_div,
     rr_slider,
     row(pin_clear_btn, off_fit_chk),
     row(manual_x, manual_y, manual_z, manual_btn),
