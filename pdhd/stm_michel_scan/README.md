@@ -134,9 +134,11 @@ Type a note *before* clicking. `next unlabelled >>` resumes where you left off.
 
 ## Only the muon's own bundle
 
-**`bundle only` is ON by default.** It restricts the image-charge layers, the
-three 2-D projections and the measurement overlay to the clusters that share the
-muon's matched Q-L bundle — same `flash_id` *and* same `cluster_t0_us`.
+**`bundle only` is ON by default.** It restricts the image-charge layers and the
+three 2-D projections to the clusters that share the muon's matched Q-L bundle —
+same `flash_id` *and* same `cluster_t0_us`. The **2-D measurement panels are not
+filtered and should not be**: they show what the wires measured against what the
+fit predicts, and that is exactly where an unreconstructed Michel shows up.
 
 You want this on, because the Bee layer the display reads places **every**
 cluster at its **own** bundle's t0-corrected position. Two cosmics thousands of

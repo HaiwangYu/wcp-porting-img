@@ -15,10 +15,14 @@ What it measures, per STM candidate of an arm:
       line (:1169), inside the attached-arm block, so a Michel reconstructed
       only as detached dots is never reported as found.
   D3  T_rec_charge points (all fitted segments of the main cluster, keyed by
-      sub_cluster_id//1000) against T_stm_michel_pts points (roles 1-4 only).
-      An excess means the PR DID fit segments that the arm classifier then
-      discarded -- a classification failure, not a segmentation failure.
-      n_stop_arms==0 separates "nothing attached at the stop at all".
+      sub_cluster_id//1000) against T_stm_michel_pts points of ROLES 1-3.
+      Role 4 is excluded on purpose: a dot's points come from a COMPANION
+      cluster, so they sit in T_rec_charge under the companion's own id, not
+      the candidate's.  Counting them would credit the candidate with points
+      its own cluster never had and deflate the excess by exactly n_dots.
+      An excess means the PR DID fit segments OF THE MAIN CLUSTER that the arm
+      classifier then discarded -- a classification failure, not a segmentation
+      failure.  n_stop_arms==0 separates "nothing attached at the stop at all".
   --  the delay-signed drift offset of each neighbour, WITH the entry-point
       null control.  A Michel is emitted after the muon decays and can only
       ever appear later in time, i.e. displaced along drift away from the
@@ -189,7 +193,8 @@ def main():
             sm = f["T_stm_michel"].arrays(library="np")
             tc = f["T_cluster"].arrays(library="np")
             rc = f["T_rec_charge"].arrays(["x", "y", "z", "pt", "sub_cluster_id"], library="np")
-            pp = f["T_stm_michel_pts"].arrays(["cluster_id", "x", "y", "z"], library="np")
+            pp = f["T_stm_michel_pts"].arrays(
+                ["cluster_id", "role", "x", "y", "z"], library="np")
             d = json.load(zipfile.ZipFile(zf).open("data/0/0-clustering-global.json"))
         except Exception as e:
             print("# skip %s: %s" % (ev, e), file=sys.stderr)
@@ -215,6 +220,8 @@ def main():
 
             pk = pp["cluster_id"] == mc
             n_role = int(pk.sum())
+            # roles 1-3 only for the D3 comparison -- see the module docstring
+            n_role_own = int((pk & (pp["role"] != 4)).sum())
             R = np.stack([pp["x"][pk], pp["y"][pk], pp["z"][pk]], 1)
 
             # is the main cluster itself over-clustered?  max distance from its
@@ -264,7 +271,8 @@ def main():
                 n_ext=int(sm["n_ext"][i]),
                 muon_len=float(sm["muon_len"][i]),
                 n_rec_charge_pts=n_rc, n_role_pts=n_role,
-                n_discarded_pts=n_rc - n_role,
+                n_role_pts_own=n_role_own,
+                n_discarded_pts=n_rc - n_role_own,
                 cloud_fit_resid_cm=resid, n_orphan_near_stop=n_orphan,
                 nbr_short=nb_short, nbr_long=nb_long, drift_sign=sgn))
 

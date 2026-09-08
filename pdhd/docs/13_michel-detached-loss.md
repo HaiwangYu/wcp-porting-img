@@ -38,6 +38,16 @@ The answer is that no step is missing from the chain (§7). The Michel was
 dropped by a single length cut before any pattern recognition ran on it (§3),
 and the "over-clustered track" belongs to a different Q-L bundle (§4).
 
+**A note on the word "detached".** In this case the Michel is *attached* in the
+raw charge — contiguous with the muon in all three 2-D views, and the owner's
+hand label says `michel_kind: attached`. "Detached" throughout this doc means
+detached **in the reconstruction**, i.e. the 3-D clustering put it in a separate
+cluster. That split is itself the upstream defect of §9, and the two senses of
+the word must not be conflated when this scan is scored. (`michel_conn_type`
+carries the reconstruction's sense; the scanner's `michel_kind` carries the
+image's. `score_stm_michel_scan.py` reads neither, so nothing is mis-scored
+today — but a future scorer must not simply map one onto the other.)
+
 ## 2. What is actually there
 
 `T_stm_michel` for cluster 77: `is_stm=1`, `reject_bits=0` — a clean STM
@@ -220,8 +230,15 @@ that the arm classifier then discarded — arms classified `kOther` or
 
 | | n | fitted-but-unroled > 0 | p50 | p90 | max |
 |---|---|---|---|---|---|
-| PDHD | 42 | **31 (0.738)** | 13 | 80 | 479 |
-| PDVD | 94 | **63 (0.670)** | 1 | 28 | 376 |
+| PDHD | 42 | **32 (0.762)** | 13 | 80 | 479 |
+| PDVD | 94 | **68 (0.723)** | 1 | 28 | 376 |
+
+Role 4 is excluded from the `T_stm_michel_pts` side on purpose: a dot's points
+come from a **companion** cluster, so they sit in `T_rec_charge` under the
+companion's own id, not the candidate's. Counting them would credit the
+candidate with points its own cluster never had and deflate the excess by
+exactly `n_dots` — which, since 33/41 of the candidates in this very population
+have `n_dots>0` (D1), is not a small effect.
 
 Restricted further to `n_dots==0` — the genuinely empty set:
 
@@ -351,8 +368,15 @@ connectivity in the stop region, because a fix there would make the Michel
 `pdhd/stm_michel_scan/` gains a **`bundle only`** control (default **on**): the
 prep records, per item, the set of cluster ids sharing the muon's
 `(flash_id, cluster_t0_us)`, and the viewer restricts the near/far image-charge
-layers, the three 2-D projections and the measurement overlay to those ids,
-colouring out-of-bundle charge distinctly when the control is off. This is the
+layers and the three 2-D projections to those ids, colouring out-of-bundle
+charge distinctly when the control is off.
+
+**The 2-D measurement panels are deliberately NOT filtered.** `T_proj_data`
+cells carry no cluster attribution (§11 limit 5), and more importantly they
+must not be: those panels show every electron the wires measured against what
+the fit predicts, and that is precisely where an unreconstructed Michel appears
+— it is how this one was found (§2.4). Filtering them would hide the evidence
+the panel exists to show. This is the
 scan instrument, not production, so it carries no knob gate; the self-test's
 causal control is that cluster 103's 429 points within 20 cm of the
 `039252_15/77` stop disappear when the control is on, while cluster 265's remain.
