@@ -166,6 +166,12 @@ local rse_all_apa = g.pnode({
 // by all_apa's own examine_bundles, so it needs no per-APA flag).
 local clus_pipes = [
     clus_maker.per_apa(tools.anodes[n], dump=false, bee_sink=bee_shared, save_assoc_id=true,
+                       // Clustering-stage performance variants, part of the SBND
+                       // production operating point but configured on the
+                       // clustering entry points rather than through pr(), so the
+                       // generated PR operating point cannot carry them -- the
+                       // issue-17 gate is what finds them missing.
+                       eb_fast=true, po_fast=true, dg_fast=true,
                        // spliced between PointTreeBuilding and the per-APA MABC
                        pre_mabc=rse_attach[n])
     for n in std.range(0, nanode - 1)
@@ -215,7 +221,7 @@ local pr_operating_point =
     local v = std.extVar('pr_operating_point');
     if v == 'preflip' then 'preflip' else if v == 'bare' then 'bare' else 'sync';
 
-local clus_all_apa = clus_maker.all_apa(tools.anodes, dump=false,
+local clus_all_apa = clus_maker.all_apa(tools.anodes, dump=false, eb_fast=true,
                                         bee_sink=bee_shared, premerged=true,
                                         save_real_cluster_id=true,
                                         save_assoc_cluster_id=true,
