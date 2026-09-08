@@ -63,8 +63,13 @@ PDHD = os.path.dirname(HERE)
 IMG = os.path.dirname(PDHD)
 
 DET = {
-    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d51hnu"),
-    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d51vnu"),
+    # doc pdhd/14: the d51*nu arms predate CheckSTM_Michel's muon-kinematics
+    # branches, so the display had no muon energy to show.  d14*nu is the SAME
+    # pctree input re-run through the same -nu chain with the feature in; every
+    # pre-existing T_stm_michel branch is bit-unchanged (doc pdhd/14 sec 3), so
+    # the sheet and the stratification are unaffected.
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d14hnu"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d14vnu"),
 }
 IMAGE_MEMBER = "clustering-global"
 IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
@@ -108,6 +113,11 @@ VERDICT_SCALARS = [
     "michel_found", "michel_conn_type", "n_michel_segs", "michel_len",
     "michel_mip", "michel_kink_deg", "michel_far_len",
     "michel_ke_dqdx", "michel_ke_range", "michel_ke_best",
+    # doc pdhd/14 -- written by CheckSTM_Michel, not recomputed here.  Absent
+    # on any arm older than doc 14; the dict comprehension below skips missing
+    # keys, and the viewer renders the gap rather than inventing a number.
+    "muon_ke_range", "muon_ke_dqdx", "muon_ke_best", "michel_seg_id",
+    "stop_vtx_id", "n_chain_segs",
     "n_dots", "dots_ke_dqdx", "n_dot_clusters_unfit", "dots_charge_unfit",
     "n_delta", "delta_len", "n_body_hadron", "n_stop_arms",
     "cont_len", "cont_angle_deg", "cont_mip", "n_ext", "ext_len", "dead_ahead",

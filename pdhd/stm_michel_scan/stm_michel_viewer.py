@@ -933,8 +933,9 @@ manual_btn = Button(label="pin at x,y,z", width=110)
 notes = TextInput(title="notes (optional) — type BEFORE clicking a label", width=430)
 progress = Div(text="", width=620)
 badge = Div(text="", width=1420)
-status = Div(text="", width=1420)
+status = Div(text="", width=1420, name="status_div")
 reveal_div = Div(text="", width=620)
+flow_div = Div(text="", width=1420, name="flow_div")
 cursor_div = Div(text="", width=620)
 save_div = Div(text="", width=620)
 pf_tog = Toggle(label="show particle flow", button_type="default", width=200)
@@ -1202,6 +1203,7 @@ def render():
     clear_cursor()
     fill_badge(it, pay, px, py, pz, prr, psrc)
     fill_reveal(v, rev)
+    fill_flow(v, rev)
 
     rec = LABELS.get(item_key(it), {})
     notes.value = rec.get("notes", "")
@@ -1214,9 +1216,16 @@ def render():
     progress.text = ("<b>%d / %d</b> labelled &nbsp;|&nbsp; tranche 1: <b>%d / %d</b>"
                      " &nbsp;|&nbsp; this item: <b>%s</b>"
                      % (done, len(ITEMS), d1, len(t1), rec.get("choice", "&mdash;")))
-    status.text = ("event %s cluster %d &mdash; %d chain points over %.1f cm, "
+    # The muon's KE rides on the un-blinded line beside muon_len, which the
+    # sheet already shows: muon_ke_best is cal_kine_range(muon_len, 13) for
+    # every chain over 4 cm, so it is that same number in MeV and leaks nothing
+    # about the Michel.  Both routes are named because they DISAGREE (222 vs
+    # 278 MeV on 039252_15/77) and the scanner should see that, not one number
+    # picked silently.  Absent on a pre-doc-14 arm -> say so, invent nothing.
+    ke = _muon_ke_text(pay.get("verdict") or {})
+    status.text = ("event %s cluster %d &mdash; %d chain points over %.1f cm%s, "
                    "%d image points at full density, %d thinned context points"
-                   % (it["event"], it["cluster"], X.size, it["muon_len"],
+                   % (it["event"], it["cluster"], X.size, it["muon_len"], ke,
                       len(near["x"]), len(far["x"])))
 
 
@@ -1649,6 +1658,98 @@ def fill_badge(it, pay, px, py, pz, prr, psrc):
            min(sd["wall_x"], sd["wall_y"], sd["wall_z"])))
 
 
+# ---------------------------------------------------------------------------
+# the mu -> e particle flow, doc pdhd/14
+#
+# EVERY number in these two functions is a T_stm_michel branch.  Nothing is
+# recomputed here, and nothing is estimated when a branch is missing -- the
+# point of the panel is to show what CheckSTM_Michel actually emits, so a gap
+# in the chain's output has to read as a gap.  Recomputing it in the viewer
+# would hide exactly the deficiency this display exists to find.
+# ---------------------------------------------------------------------------
+def _muon_ke_text(v):
+    """The chain's muon energy for the un-blinded status line."""
+    if v.get("muon_ke_best") is None:
+        return (" &nbsp;<span style='color:#b00'>(no muon energy in this arm "
+                "&mdash; pre-doc-14 CheckSTM_Michel)</span>")
+    return (" &nbsp;&mdash;&nbsp; chain muon KE <b>%.1f MeV</b>"
+            " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>"
+            % (v.get("muon_ke_best", 0.0), v.get("muon_ke_range", 0.0),
+               v.get("muon_ke_dqdx", 0.0)))
+
+
+def fill_flow(v, rev):
+    """mu -> e as CheckSTM_Michel recorded it: two particles and the link.
+
+    The chain stamps a pdg on every segment (set_pdg, CheckSTM_Michel.cxx:661)
+    and T_rec_charge.particle_id persists it per point, but the only PARENTAGE
+    it writes is a shared vertex: stop_vtx_id is where the muon chain ends, and
+    with michel_seg_id (doc pdhd/14) that names both ends of the mu -> e edge.
+    conn_type 2 has no shared vertex to name -- the dots were admitted on
+    proximity to the stop, so the panel says the link is proximity and not
+    topology rather than drawing an edge the chain never established.
+    """
+    if not rev:
+        flow_div.text = ("<span style='color:#777'>the chain's particle flow is "
+                         "<b>hidden</b> until REVEAL</span>")
+        return
+    if v.get("muon_ke_best") is None:
+        flow_div.text = ("<div style='background:#fff6e5;padding:6px'><b>REVEALED</b>"
+                         " &mdash; <span style='color:#b00'>this arm predates doc "
+                         "pdhd/14: T_stm_michel carries no muon energy and no "
+                         "michel_seg_id. Re-run the PR arm to populate them."
+                         "</span></div>")
+        return
+
+    mu = ("<b>&mu;</b> &nbsp; pdg 13 &nbsp; %.1f cm &nbsp; <b>%.1f MeV</b>"
+          " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>"
+          " &nbsp; %d chain seg%s"
+          % (v.get("muon_len", 0.0), v.get("muon_ke_best", 0.0),
+             v.get("muon_ke_range", 0.0), v.get("muon_ke_dqdx", 0.0),
+             v.get("n_chain_segs", 0), "" if v.get("n_chain_segs") == 1 else "s"))
+
+    conn = int(v.get("michel_conn_type") or 0)
+    seg = v.get("michel_seg_id")
+    seg = None if seg is None or int(seg) < 0 else int(seg)
+    if conn == 1:
+        link = ("&#9492;&#9472; <b>attached</b> at the shared stop vertex "
+                "<code>%s</code> &mdash; this is the only mu &rarr; e parentage "
+                "CheckSTM_Michel writes" % v.get("stop_vtx_id"))
+        dau = ("<b>e</b> &nbsp; pdg 11 &nbsp; seg <code>%s</code> &nbsp; %.1f cm"
+               " &nbsp; <b>%.1f MeV</b> <span style='color:#777'>(dQ&thinsp;/&thinsp;dx"
+               " %.1f / range %.1f)</span> &nbsp; %d shower seg%s, kink %.0f deg"
+               % (seg, v.get("michel_len", 0.0), v.get("michel_ke_best", 0.0),
+                  v.get("michel_ke_dqdx", 0.0), v.get("michel_ke_range", 0.0),
+                  v.get("n_michel_segs", 0),
+                  "" if v.get("n_michel_segs") == 1 else "s",
+                  v.get("michel_kink_deg", -1.0)))
+    elif conn == 2:
+        link = ("&#9492;&#9472; <b>detached</b> &mdash; <span style='color:#b00'>no "
+                "shared vertex, so no parentage is persisted</span>; the dots were "
+                "admitted on distance to the stop alone")
+        dau = ("<b>e</b> &nbsp; pdg 11 &nbsp; seed seg <code>%s</code> &nbsp; %d dot%s"
+               " &nbsp; <b>%.1f MeV</b> <span style='color:#777'>(dots %.1f MeV)</span>"
+               % (seg, v.get("n_dots", 0), "" if v.get("n_dots") == 1 else "s",
+                  v.get("michel_ke_best", 0.0), v.get("dots_ke_dqdx", 0.0)))
+    else:
+        link = "&#9492;&#9472; <span style='color:#b00'><b>no daughter</b></span>"
+        dau = ("nothing at the stop: n_stop_arms %s, n_dots %s, unfitted dot "
+               "clusters %s carrying %.3g e"
+               % (v.get("n_stop_arms"), v.get("n_dots"),
+                  v.get("n_dot_clusters_unfit"), v.get("dots_charge_unfit", 0.0)))
+
+    warn = ""
+    if conn == 2 and not int(v.get("michel_found") or 0):
+        warn = ("<br><span style='color:#b00'>michel_found is 0 even though a "
+                "Michel WAS reconstructed &mdash; it is set only on the attached "
+                "path (CheckSTM_Michel.cxx:1197). Doc pdhd/13 defect D1.</span>")
+    flow_div.text = (
+        "<div style='background:#fff6e5;padding:6px;font-size:96%%'><b>REVEALED "
+        "&mdash; particle flow</b> <span style='color:#777'>(every field is a "
+        "T_stm_michel branch)</span><br>%s<br>&nbsp;&nbsp;%s<br>&nbsp;&nbsp;&nbsp;"
+        "&nbsp;&nbsp;%s%s</div>" % (mu, link, dau, warn))
+
+
 def fill_reveal(v, rev):
     if not rev:
         reveal_div.text = ("<span style='color:#777'>the reconstruction's answer is "
@@ -1879,6 +1980,7 @@ right = column(
     row(pf_mu_btn, pf_mic_btn, pf_oth_btn, pf_mix_btn, pf_clr_btn),
     seg_div,
     reveal_div,
+    flow_div,
 )
 curdoc().add_root(column(
     header,

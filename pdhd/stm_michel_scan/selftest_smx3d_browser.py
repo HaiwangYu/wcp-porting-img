@@ -403,6 +403,53 @@ def main():
                "`bundle only` did not hide the other bundles again")
             ck(not errs, "javascript errors after the bundle checks: %s" % errs[:3])
             print("     bundle control: %d out-of-bundle points paint and unpaint" % n_out)
+
+            # ---- the mu -> e flow panel (doc pdhd/14) ------------------------
+            # Blinded on load and painted by the REAL toggle.  Checked in the
+            # browser and not only in the payload because a Div whose text is
+            # set before its model reaches the page renders EMPTY with no error
+            # (feedback_bokeh3_silent_js_traps).
+            # The MODEL text proves the update crossed the websocket; the DOM
+            # text proves it painted.  Both, because a Div whose text is set
+            # before its model reaches the page renders empty with no error.
+            def _model_text(name):
+                return page.evaluate(
+                    "(n) => { const m = Bokeh.documents[0].get_model_by_name(n);"
+                    " return m ? m.text : null; }", name)
+
+            # page.inner_text("body") does NOT see a Bokeh 3 widget: they render
+            # inside open shadow roots, which inner_text skips and Playwright
+            # LOCATORS pierce.  Reading the body gave "did not paint" on text
+            # that was plainly on screen.
+            def _painted(txt):
+                return page.get_by_text(txt, exact=False).count()
+
+            before_m = _model_text("flow_div")
+            ck(before_m is not None, "flow_div never reached the browser")
+            ck(before_m and "hidden" in before_m.lower(),
+               "the flow panel does not say it is hidden before REVEAL")
+            ck("MeV" not in (before_m or ""),
+               "the flow panel leaks an energy before REVEAL")
+            FLOWMARK = "every field is a T_stm_michel branch"
+            ck(_painted(FLOWMARK) == 0,
+               "the flow panel is revealed before the toggle was pressed")
+            st = _model_text("status_div") or ""
+            ck("chain muon KE" in st or "no muon energy in this arm" in st,
+               "the un-blinded status line carries no muon KE statement")
+            ck(_painted("chain points over") > 0, "the status line did not paint")
+
+            page.get_by_role("button", name="REVEAL the reconstruction").first.click()
+            page.wait_for_timeout(1500)
+            after_m = _model_text("flow_div") or ""
+            ck("REVEALED" in after_m, "REVEAL did not fill the flow panel")
+            n_rev = _painted(FLOWMARK)
+            ck(n_rev > 0, "the revealed flow panel did not paint")
+            ck("MeV" in after_m, "no energy reached the flow panel after REVEAL")
+            ck(_painted("MeV") > 0, "no energy painted after REVEAL")
+            ck("pdg 13" in after_m, "the flow panel names no mother particle")
+            ck(not errs, "javascript errors after the flow checks: %s" % errs[:3])
+            print("     mu -> e flow panel: blinded on load, painted after REVEAL "
+                  "(%d MeV figures on the page)" % _painted("MeV"))
             b.close()
     finally:
         proc.terminate()

@@ -843,3 +843,13 @@ Second, the S1–S4 strata key on `michel_found`, which is set only by the
 attached path, so **~30 % of items with a reconstructed detached Michel were
 drawn as "no Michel"** (doc pdhd/13 §5, D1). Recompute the strata on
 `michel_found || n_dots>0` before this scan is used to grade the Michel finder.
+
+**Energies and the mu -> e link (doc pdhd/14, 2026-09-07).** The display now
+shows the chain's muon energy un-blinded beside `muon_len`, and a `mu -> e`
+particle-flow block under REVEAL. Every field is a `T_stm_michel` branch — the
+viewer computes nothing, so a gap in `CheckSTM_Michel`'s output reads as a gap
+(owner: *"all the information should be taken from the output of the chain, not
+by your calculations. Otherwise we cannot improve this module"*). This needed
+four new branches in the chain, so the scan arms moved from `d51*nu` to
+`d14*nu`; the 75 pre-existing branches are bit-unchanged, so the sheet and the
+S1-S4 strata are unaffected by the swap.

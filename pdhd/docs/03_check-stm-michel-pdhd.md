@@ -409,3 +409,6 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
    33 PDHD / 41 PDVD candidates carry a reconstructed Michel that is never reported; and on
    74 % (PDHD) / 67 % (PDVD) of the `is_stm & no Michel` set the PR fitted segments that the arm
    classifier then discarded.  Fixes specified there as default-OFF knobs; none applied yet.
+9. **doc pdhd/14** persists the muon energy this module already computed and threw away, plus the
+   daughter segment id that closes the `mu -> e` edge on the attached path.  Four new
+   `T_stm_michel` branches, default on (owner 2026-09-07), 75 pre-existing branches bit-unchanged.

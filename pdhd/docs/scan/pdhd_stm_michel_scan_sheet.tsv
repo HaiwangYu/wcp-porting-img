@@ -1,4 +1,4 @@
-# doc pdhd/12 -- STM + Michel hand-scan sheet, det=pdhd arm=d51hnu
+# doc pdhd/12 -- STM + Michel hand-scan sheet, det=pdhd arm=d14hnu
 # NO verdict, NO stratum, NO chain flag: those are in the KEY.
 # seed=20260907 tranche1=60 (S1 cap 24, floor 8 per other stratum)
 scan_id	tranche	event	cluster	npts	muon_len_cm	n_near	n_far

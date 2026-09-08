@@ -576,3 +576,10 @@ KE, which is why the window ships ON at 0.6):
    also shows the Michel is 2-D contiguous with the muon in all three planes (0-cell gap) while the
    3-D clustering split it — an upstream defect recorded there as an open question — and that
    `michel_found` never reports a detached Michel (§5 D1).
+7. **doc pdhd/14** (2026-09-07) adds the muon kinematics this stage computed and discarded
+   (`set_pdg` built a 4-momentum per chain segment and nothing read it): `muon_ke_range`,
+   `muon_ke_dqdx`, `muon_ke_best` and `michel_seg_id` are now `T_stm_michel` branches on both
+   ProtoDUNEs, default on by owner decision (no knob).  The 75 pre-existing branches are proven
+   bit-unchanged; the tree is NOT bit-identical.  That doc also states what parentage the stage
+   does and does not write: a shared stop vertex for `michel_conn_type==1`, nothing at all for
+   `==2`.

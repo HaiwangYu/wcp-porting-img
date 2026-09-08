@@ -409,3 +409,12 @@ scan sheet, then scan the `is_stm==1 & no Michel` set — 42 PDHD and 94 PDVD
 items — with the bundle-restricted display. That measures the one number none of
 this census can: how many of them really have a Michel. It is also the sample
 that sets every knob value in §8.
+
+**Follow-up, doc pdhd/14 (2026-09-07).** `CheckSTM_Michel` now persists the muon
+kinematics it previously computed and dropped (`muon_ke_range/_dqdx/_best`) and
+the daughter's id (`michel_seg_id`), so the loss described above is now visible
+in one field: on `039252_15 / 77` the chain reports a 278.0 MeV muon and
+`michel_seg_id = -1`. That doc also settles the particle-flow question — the
+only `mu -> e` parentage the chain writes is the vertex shared by the muon's end
+and an *attached* arm, so the detached population of D1 has no persisted link at
+all.

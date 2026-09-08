@@ -187,6 +187,39 @@ particle type and whether it called it a track or a shower. That is behind
 REVEAL because `CheckSTM_Michel` sets the Michel arm's type to electron, so it
 *is* the answer.
 
+## Energies, and the mu -> e link (doc pdhd/14)
+
+**Everything here is a `T_stm_michel` branch.** The display computes no energy
+of its own, on purpose: a viewer that fills the chain's gaps with its own
+arithmetic looks complete and measures nothing, and the point of this scan is to
+find what `CheckSTM_Michel` is missing. Where the chain writes nothing, the
+panel says so in red.
+
+The **muon's energy rides un-blinded** on the status line beside the track
+length the sheet already shows:
+
+    ... 188 chain points over 112.5 cm — chain muon KE 278.0 MeV (range 278.0 / dQ/dx 222.1) ...
+
+Both routes are named because they disagree — by 20 % on `039252_15 / 77` — and
+you should see that rather than one number chosen for you. `muon_ke_best` is the
+range estimate for every chain over 4 cm, which is the toolkit's own rule.
+
+Under **REVEAL** a `particle flow` block prints the chain's `mu -> e` relation:
+
+    mu   pdg 13   112.5 cm   278.0 MeV (range 278.0 / dQ/dx 222.1)   1 chain seg
+      └─ attached at the shared stop vertex 77003
+           e   pdg 11   seg 77009   8.4 cm   31.2 MeV   2 shower segs, kink 47 deg
+
+That shared vertex is the **only** parentage the chain ever writes. On a
+`detached` item there is no shared vertex and no link at all — the dots were
+admitted on distance to the stop alone — and the panel says so instead of
+drawing an edge that does not exist. On such an item it also warns that
+`michel_found` is 0 even though a Michel *was* reconstructed: doc pdhd/13's
+defect D1.
+
+If the panel tells you the arm predates doc pdhd/14, the PR arm needs re-running
+— there is no muon energy in that output to show.
+
 ## Am I sure it saved?
 
 Yes, and you can check without leaving the page. Labels are written atomically

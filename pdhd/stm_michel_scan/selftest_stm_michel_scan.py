@@ -43,6 +43,12 @@ import uproot
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import smgeom                                                     # noqa: E402
+import smkine                                                     # noqa: E402
+# doc pdhd/14: the arm name lives in ONE place, prep_stm_michel_scan.DET, so a
+# re-run cannot leave the self-test silently checking the previous arm's files.
+_prep = runpy.run_path(os.path.join(HERE, "prep_stm_michel_scan.py"),
+                       run_name="_selftest_import")
+ARM = {d: _prep["DET"][d]["arm"] for d in ("pdhd", "pdvd")}
 
 IMG = os.path.dirname(os.path.dirname(HERE))
 WIREDIR = "/nfs/data/1/xqian/toolkit-dev/wire-cell-data"
@@ -490,7 +496,7 @@ def test_image_split(det):
         return
     with open(fns[0]) as fh:
         d = json.load(fh)
-    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    arm = ARM[det]
     zp = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm), "mabc-pr.zip")
     ck(os.path.exists(zp), "%s: %s missing" % (det, zp))
     if not os.path.exists(zp):
@@ -688,7 +694,7 @@ def test_meas_causal(det):
     except ImportError:
         print("     (uproot missing -- H2/H3 skipped)")
         return
-    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    arm = ARM[det]
     fns = sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
                                         "tracking-pr.root")))[:8]
     ck(bool(fns), "%s: no arm files for the causal measurement gates" % det)
@@ -897,7 +903,7 @@ def test_pf_selector(det):
     except ImportError:
         print("     (uproot missing -- I1 skipped)")
         return
-    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    arm = ARM[det]
     nz = ndiff = ncand = 0
     for fn in sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
                                             "tracking-pr.root")))[:8]:
@@ -1103,7 +1109,7 @@ def test_save_readback(det, tmp):
 def test_bundle_payload(det):
     print("[K] the Q-L bundle in the payload, %s" % det)
     import zipfile
-    arm = {"pdhd": "d51hnu", "pdvd": "d51vnu"}[det]
+    arm = ARM[det]
     fns = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
     ck(bool(fns), "%s: no payloads for the bundle test" % det)
     if not fns:
@@ -1234,6 +1240,229 @@ def test_bundle_app(det, tmp):
           % (det, best_out, best_in + best_out))
 
 
+# ---------------------------------------------------------------------------
+# L -- doc pdhd/14: the kinematics CheckSTM_Michel now writes
+#
+# The display is forbidden to compute an energy (owner, 2026-09-07: "all the
+# information should be taken from the output of the chain, not by your
+# calculations. Otherwise we cannot improve this module"), so these checks run
+# the OTHER way round: smkine reimplements the two toolkit estimators and is
+# used HERE, against the production binary's own branches, and nowhere near the
+# payload.  A disagreement means the C++ is wrong, not the display.
+# ---------------------------------------------------------------------------
+def test_kine_gate(det):
+    print("[L] the chain's muon kinematics, %s" % det)
+    arm = ARM[det]
+    fns = sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
+                                        "tracking-pr.root")))
+    ck(bool(fns), "%s: no %s arm files for the kinematics gate" % (det, arm))
+    n_rng = n_dq = n_dots = n_seg = n_prof = n_gap = 0
+    w_rng = w_dq = w_dots = 0.0
+    prof = []
+    for rf in fns:
+        f = uproot.open(rf)
+        if "T_stm_michel" not in {k.split(";")[0] for k in f.keys()}:
+            continue
+        a = f["T_stm_michel"].arrays(library="np")
+        if "muon_ke_range" not in a:
+            ck(False, "%s: %s carries no muon_ke_range -- arm predates doc 14"
+               % (det, os.path.basename(os.path.dirname(rf))))
+            return
+        p = f["T_stm_michel_pts"].arrays(
+            ["cluster_id", "role", "seg_id", "q", "L"], library="np")
+        rc = f["T_rec_charge"].arrays(
+            ["x", "y", "z", "q", "nq", "sub_cluster_id", "particle_id",
+             "flag_vertex"], library="np")
+        tr = f["Trun"].arrays(["dQdx_scale", "dQdx_offset"], library="np")
+        sc, off = float(tr["dQdx_scale"][0]), float(tr["dQdx_offset"][0])
+        raw = (rc["q"] - off) / sc          # fit.dQ, before the visitor scaled it
+        XYZ = np.c_[rc["x"], rc["y"], rc["z"]]
+
+        for i in range(len(a["cluster_id"])):
+            cid = int(a["cluster_id"][i])
+            # L1  muon_ke_range == cal_kine_range(muon_len, 13)
+            want = smkine.ke_range(float(a["muon_len"][i]), 13, det)
+            d = abs(float(a["muon_ke_range"][i]) - want)
+            w_rng = max(w_rng, d); n_rng += 1
+            ck(d < 1e-6, "%s cl %d: muon_ke_range %.4f != %.4f"
+               % (det, cid, a["muon_ke_range"][i], want))
+
+            # L2  muon_ke_dqdx, two ways.
+            #
+            # It CANNOT be checked by selecting pdg-13 rows: `particle_id` is
+            # the PR's own direction/PID verdict, not chain membership, and it
+            # marks far more track than the STM chain -- measured on PDVD
+            # 039253_6 cluster 82, twelve pdg-13 segments totalling 723.4 cm
+            # against a muon_len of 418.6 cm.  Nor is the chain's segment list
+            # in the output at all: n_chain_segs gives the COUNT, role-1 points
+            # are the resampled profile and every one of them is stamped with
+            # chain.back()'s id (CheckSTM_Michel.cxx:671, add_points), so the
+            # composition of a multi-segment chain is unrecoverable.  Doc
+            # pdhd/14 sec 8 names the one-line fix (StmMichelProfile::seg_idx
+            # already carries it per point).
+            #
+            # So: EXACT where the chain is one segment and role-1's seg_id
+            # therefore names it, and an independent PROFILE integral on the
+            # rest -- a different quantity (resampled), so it is a
+            # physics-level cross-check with a measured band, not a bit gate.
+            k1 = (p["cluster_id"] == cid) & (p["role"] == 1)
+            sids = {int(t) for t in p["seg_id"][k1]}
+            ref = float(a["muon_ke_dqdx"][i])
+            if int(a["n_chain_segs"][i]) == 1 and len(sids) == 1:
+                k = ((rc["sub_cluster_id"] == sids.pop()) & (rc["flag_vertex"] == 0))
+                if k.sum():
+                    got = smkine.ke_dqdx(raw[k], rc["nq"][k], XYZ[k], det)
+                    rel = abs(ref - got) / max(got, 1e-9)
+                    w_dq = max(w_dq, rel); n_dq += 1
+                    ck(rel < 1e-6, "%s cl %d: muon_ke_dqdx %.4f != %.4f"
+                       % (det, cid, ref, got))
+            if int(k1.sum()) > 2 and ref > 0:
+                o = np.argsort(p["L"][k1])
+                L, qq = p["L"][k1][o], p["q"][k1][o]
+                d = np.diff(L)
+                # The profile is a fixed-step resample (~0.6 cm), but the job
+                # runs profile_min_dqdx_frac=0.15, which DELETES points in dead
+                # cells and leaves multi-cm gaps.  A trapezoid across such a gap
+                # multiplies one point's dQ/dx by tens of cm: measured 1.60 and
+                # 1.63 on PDHD 028084_30/107 and 029107_18/54 (30.7 and 27.3 cm
+                # steps), 0.43 on PDVD 039349_30/44.  That is this check's
+                # artefact, not the chain's -- so a gapped profile is not
+                # cross-checkable this way and is counted as skipped, never
+                # silently widened away.
+                gapped = bool(d.size and d.max() > 3.0 * max(float(np.median(d)), 1e-6))
+                if gapped:
+                    n_gap += 1
+                e = 0.0 if gapped else float(
+                    (smkine.dedx_from_dqdx(qq, det) * np.gradient(L)).sum())
+                r = e / ref
+                n_prof += 0 if gapped else 1
+                # measured 2026-09-07 over 904 candidates: median 0.996,
+                # p05-p95 [0.965, 1.011] on both detectors.  The window is
+                # deliberately wide -- it exists to catch a wrong recombination
+                # model or a unit slip, which would be off by 10x, not 3 %.
+                if not gapped:
+                    # measured 2026-09-07 over the 593 gap-free profiles of both
+                    # arms: median 0.996, full range [0.84, 1.02].  The window is
+                    # set from that range, not tightened onto it -- this check
+                    # exists to catch a wrong recombination model or a unit slip
+                    # (which are 10x errors), and the residual few per cent is
+                    # the resampling difference it can never remove.
+                    ck(0.75 < r < 1.25,
+                       "%s cl %d: profile integral / muon_ke_dqdx = %.3f"
+                       % (det, cid, r))
+                    prof.append(r)
+
+            # L3  muon_ke_best follows the toolkit's own >= 4 cm rule
+            #     (PRSegmentFunctions.cxx:2900)
+            exp = (float(a["muon_ke_dqdx"][i]) if float(a["muon_len"][i]) < 4.0
+                   else float(a["muon_ke_range"][i]))
+            ck(abs(float(a["muon_ke_best"][i]) - exp) < 1e-9,
+               "%s cl %d: muon_ke_best is neither route" % (det, cid))
+
+            # L4  michel_seg_id names a segment of the right ROLE, or -1
+            conn = int(a["michel_conn_type"][i])
+            msid = int(a["michel_seg_id"][i])
+            role = {1: 3, 2: 4}.get(conn)
+            if role is None:
+                ck(msid == -1, "%s cl %d: conn 0 but michel_seg_id %d"
+                   % (det, cid, msid))
+            else:
+                have = {int(t) for t in
+                        p["seg_id"][(p["cluster_id"] == cid) & (p["role"] == role)]}
+                # add_points skips every fit with dx <= 0 (:683), so a dot whose
+                # fits ALL have dx <= 0 is counted in n_dots and named by
+                # michel_seg_id while leaving no role-4 point at all -- and is
+                # therefore invisible on the display.  Seen once: PDHD
+                # 029107_20 cluster 136, seg 135010, 2 fits, both dx == 0.
+                nofit = not (((rc["sub_cluster_id"] == msid)
+                              & (rc["flag_vertex"] == 0) & (rc["nq"] > 0)).any())
+                ck(msid in have or nofit,
+                   "%s cl %d: michel_seg_id %d not a role-%d segment"
+                   % (det, cid, msid, role))
+                n_seg += 1
+
+            # L5  dots_ke_dqdx -- the pre-doc-14 branch, still the anchor that
+            #     keeps smkine honest about the endpoint/clamp rules
+            if int(a["n_dots"][i]):
+                k4 = (p["cluster_id"] == cid) & (p["role"] == 4)
+                got = 0.0
+                for sid in sorted({int(t) for t in p["seg_id"][k4]}):
+                    k = (rc["sub_cluster_id"] == sid) & (rc["flag_vertex"] == 0)
+                    if not k.sum():
+                        continue
+                    got += smkine.ke_dqdx(raw[k], rc["nq"][k], XYZ[k], det)
+                ref = float(a["dots_ke_dqdx"][i])
+                rel = abs(got - ref) / max(ref, 1e-9)
+                w_dots = max(w_dots, rel); n_dots += 1
+                ck(rel < 2e-3, "%s cl %d: dots_ke_dqdx %.4f != %.4f"
+                   % (det, cid, ref, got))
+    print("     %d muon_ke_range exact (worst %.1e MeV), %d single-segment"
+          " muon_ke_dqdx exact (worst rel %.1e), %d profile cross-checks"
+          " (median %.3f, %d skipped for a gapped profile), %d dots_ke_dqdx"
+          " (worst rel %.1e), %d michel_seg_id links"
+          % (n_rng, w_rng, n_dq, w_dq, n_prof,
+             float(np.median(prof)) if prof else float("nan"), n_gap,
+             n_dots, w_dots, n_seg))
+
+
+def test_kine_payload(det):
+    """The four branches reach the payload, unmodified, and nothing else does."""
+    print("[L] the kinematics in the payload, %s" % det)
+    arm = ARM[det]
+    fns = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    ck(bool(fns), "%s: no payloads for the kinematics test" % det)
+    n = 0
+    for fn in fns[:: max(1, len(fns) // 25)]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        v = d.get("verdict") or {}
+        for k in ("muon_ke_range", "muon_ke_dqdx", "muon_ke_best", "michel_seg_id",
+                  "stop_vtx_id"):
+            ck(k in v, "%s %s/%s: verdict has no %s"
+               % (det, d["event"], d["cluster_id"], k))
+        rf = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm),
+                          "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        a = uproot.open(rf)["T_stm_michel"].arrays(library="np")
+        w = np.where(a["cluster_id"] == int(d["cluster_id"]))[0]
+        if not len(w):
+            continue
+        i = int(w[0])
+        for k in ("muon_ke_range", "muon_ke_dqdx", "muon_ke_best"):
+            ck(abs(float(v[k]) - float(a[k][i])) < 1e-9,
+               "%s %s/%s: %s was altered between tree and payload"
+               % (det, d["event"], d["cluster_id"], k))
+        ck(int(v["michel_seg_id"]) == int(a["michel_seg_id"][i]),
+           "%s %s/%s: michel_seg_id altered" % (det, d["event"], d["cluster_id"]))
+        n += 1
+    print("     %d payloads carry the chain's kinematics verbatim" % n)
+
+
+def test_kine_blind(det, tmp):
+    """The mu -> e panel is blinded, and says so rather than showing nothing."""
+    print("[L] the flow panel's blind, %s" % det)
+    g = load_app(det, os.path.join(tmp, "kine_" + det))
+    ck("flow_div" in g, "%s: no flow_div in the app" % det)
+    if "flow_div" not in g:
+        return
+    t = g["flow_div"].text
+    ck("hidden" in t.lower(), "%s: flow panel is not blinded on load" % det)
+    ck("MeV" not in t, "%s: flow panel leaks an energy before REVEAL" % det)
+    # ... and the muon KE that DOES ride un-blinded is the chain's own number
+    it = g["current"]()
+    v = (g["payload"](it) or {}).get("verdict") or {}
+    ck("MeV" in g["status"].text or v.get("muon_ke_best") is None,
+       "%s: status line carries no muon KE" % det)
+    if v.get("muon_ke_best") is not None:
+        ck(("%.1f" % v["muon_ke_best"]) in g["status"].text,
+           "%s: status muon KE is not the chain's muon_ke_best" % det)
+        # the reveal-only Michel energy must NOT be on the un-blinded line
+        ck(("%.1f MeV" % v.get("michel_ke_best", -1.0)) not in g["status"].text
+           or not v.get("michel_ke_best"),
+           "%s: status line leaks the Michel energy" % det)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -1257,7 +1486,10 @@ def main():
             test_pf_app(det, tmp)
             test_save_readback(det, tmp)
             test_bundle_app(det, tmp)
+            test_kine_payload(det)
+            test_kine_blind(det, tmp)
             if not a.quick:
+                test_kine_gate(det)
                 test_bundle_payload(det)
                 test_meas_causal(det)
                 test_pf_selector(det)
