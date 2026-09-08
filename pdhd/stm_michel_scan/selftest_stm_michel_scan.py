@@ -449,7 +449,12 @@ def test_view(det, tmp):
         ck((f3d.x_range.start, f3d.x_range.end) != ZOOM,
            "%s: a new item did not reframe the 3-D panel" % det)
         ck(st["centre"] is None, "%s: a new item kept the previous centre" % det)
+        # ... and the MODE goes with it: a sticky centre toggle would have the
+        # next tap moving the centre on an item where nobody asked for that
+        g["centre_tog"].active = True
         g["go"](0)
+        ck(g["centre_tog"].active is False,
+           "%s: the centre-tap mode survived a move to another item" % det)
 
     # V6 -- the copy box: the item key, and paste-to-navigate
     ck(g["copy_key"].value == g["item_key"](g["current"]()),

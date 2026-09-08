@@ -2271,8 +2271,12 @@ def go(idx):
     state["pin_i"] = None
     state["pin_manual"] = None
     # a centre picked on the previous item names a point that is not on screen
-    # any more; the new item starts on its own stopping point
+    # any more; the new item starts on its own stopping point -- and the MODE
+    # goes with it, because picking a centre is an occasional act and a scanner
+    # who left it on would find their next tap moving the centre instead of the
+    # pin on an item where they never asked for that
     state["centre"] = None
+    centre_tog.active = False
     off_fit_chk.active = []
     manual_x.value = manual_y.value = manual_z.value = ""
     pay = payload(current())

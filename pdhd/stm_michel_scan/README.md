@@ -44,7 +44,7 @@ letting a second `bokeh serve` exit and leave the old app answering.
     middle of the track, so zooming into the Bragg end and turning it keeps it
     on screen. Turn on `tap sets the 3-D rotation centre` and a tap puts the
     centre on any drawn point instead of moving the pin; `centre on the stop`
-    puts it back. The price: a centre at one end of the track needs a framing
+    puts it back, and moving to another item turns the toggle off again. The price: a centre at one end of the track needs a framing
     radius equal to the whole track, so the starting view is about twice as
     wide as it was — one wheel-scroll, paid once per item, because
   - **your zoom survives everything but a new item.** Labelling, tagging a PF
@@ -357,7 +357,7 @@ writer's default wire.
 | `smx3d.py` | the 3-D trackball; fork of `sbnd_xin/em_display/em3d.py`, which is untouched |
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
-| `selftest_stm_michel_scan.py` | 45623 (PDVD) / 26508 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
+| `selftest_stm_michel_scan.py` | 45624 (PDVD) / 26509 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
 | `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and segment picker are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |

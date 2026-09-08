@@ -57,8 +57,8 @@ cd wcp-porting-img/pdhd/stm_michel_scan
 ./prep_stm_michel_scan.py --det pdhd            # 61 events  -> 302 items, 126 MB
 ./prep_stm_michel_scan.py --det pdvd            # 120 events -> 568 items, 212 MB
 git -C .. diff --exit-code -- pdhd/docs/scan pdvd/docs/scan   # sheets unchanged
-./selftest_stm_michel_scan.py --det pdvd        # 45623 headless checks
-./selftest_stm_michel_scan.py --det pdhd        # 26508 headless checks
+./selftest_stm_michel_scan.py --det pdvd        # 45624 headless checks
+./selftest_stm_michel_scan.py --det pdhd        # 26509 headless checks
 ./selftest_smx3d_browser.py --det pdhd --port 5093   # 77 checks in chromium
 ./selftest_smx3d_browser.py --det pdvd --port 5091   # 77 checks in chromium
 ./serve_stm_michel_scan.sh 5023 --det pdhd --scan-tag smx1
@@ -920,7 +920,10 @@ tap from *move the pin* to *move the centre*, snapping to the nearest such point
 behaviour the pin already has — over the fitted chain plus the
 full-density image layer — `image_far`, the thinned grey context, is excluded
 because nobody wants to rotate about background. `centre on the stop` restores
-the default.
+the default, and moving to another item clears both the centre **and the mode**
+— picking a centre is an occasional act, and a scanner who left the toggle on
+would find their next tap moving the centre on an item where they never asked
+for that.
 
 **The cost of item 1, stated rather than discovered.** The framing radius is
 `max |p − centre|` and the guarantee behind it is unchanged (`right/up/fwd` is
@@ -1016,8 +1019,8 @@ Both suites, both detectors, after the change:
 
 ```bash
 cd wcp-porting-img/pdhd/stm_michel_scan
-./selftest_stm_michel_scan.py --det pdvd      # 45623 checks, 0 failed
-./selftest_stm_michel_scan.py --det pdhd      # 26508 checks, 0 failed
+./selftest_stm_michel_scan.py --det pdvd      # 45624 checks, 0 failed
+./selftest_stm_michel_scan.py --det pdhd      # 26509 checks, 0 failed
 ./selftest_smx3d_browser.py --det pdvd --port 5091   # 77 browser checks
 ./selftest_smx3d_browser.py --det pdhd --port 5093   # 77 browser checks
 ```
