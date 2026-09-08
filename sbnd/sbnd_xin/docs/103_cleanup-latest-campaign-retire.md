@@ -5,8 +5,9 @@ space for sbnd_xin, pdhd, pdvd, and ~/tmp to recover some disk. For the
 sbnd_xin, we want to keep the most recent campaign, but we can retire some
 earlier campaign results to save space."*
 
-**Status: STAGED, NOTHING DELETED.** 13 interlocks PASS / 0 FAIL across three
-trees, three clean dry runs, the CONFIRM-only write path exercised end-to-end on
+**Status: STAGED, NOTHING DELETED — 0 bytes freed so far.** 11 interlocks PASS /
+0 FAIL on each of the three trees, plus INTERLOCK 12 on sbnd (the only tree with
+a materialise step) and INTERLOCK M inside the driver at confirm time, three clean dry runs, the CONFIRM-only write path exercised end-to-end on
 a throwaway stub with a causal negative control, and the record layer frozen —
 67 522 files hashed, manifests verified 12/12 against the live tree. The
 `CONFIRM=yes` steps are the owner's; the permission gate declines them for me,
@@ -20,7 +21,7 @@ cd wcp-porting-img/pdhd/scripts/retire
 # the census this round's decisions rest on
 python3 toks_20260908.py                              # 5558 dirs -> 5907 tokens
 python3 cit_20260908.py toks.txt cit_20260908.json    # 1024 cited, 453356 hits
-python3 plan_20260908.py                              # 13 interlocks, writes tier files
+python3 plan_20260908.py                              # 11+1 interlocks, writes tier files
 
 # the ~/tmp half -- deletes NOTHING, hardlinks identical pin files
 python3 dedup_pins_20260906.py                        # dry run: 5.22 GiB recoverable
@@ -76,7 +77,7 @@ want to know it without re-deriving it.
 sbnd_xin's campaigns are a three-link chain — imaging → stage A Q/L → stage B PR:
 
 ```
-work-*-grp0825  (imaging, doc 81 epoch, 3261 evt dirs)
+work-*-grp0825  (imaging, doc 81 epoch: 3067 evt<N> + 194 g<K> group dirs)
    ^-- 3067 directory symlinks
 work-*-d97fv    (stage A Q/L, ref/prod-2026-09-04)
 work-*-d144fixprod (stage B PR tail, 3067/3067 rc=0, doc pr/144 §16.3.1)
@@ -90,10 +91,33 @@ protection list, not only the disk.
 
 | family | dirs | GiB | superseded by | cost, stated |
 |---|---:|---:|---|---|
-| `grp0825` | 4 | 15.59 | `d102m` re-images itself from Reco1 | the 08-25-epoch imaging stops being re-readable; a future A/B against that epoch must regenerate from `input_files_reco1/` |
-| `d97fv` | 4 | 10.02 | `d102m` (newer toolkit, same 3067 events) | doc 97's per-event Q/L products at the 09-04 point become text-only; `products/prod0902/` and `prod0904/` stay committed |
+| `grp0825` | 4 | 15.59 | `d102m` re-images itself from Reco1 — **coverage proven below** | the 08-25-epoch imaging stops being re-readable; a future A/B against that epoch must regenerate from `input_files_reco1/` (kept, 4.6 GiB) at the doc-81 commit |
+| `d97fv` | 4 | 10.02 | `d102m` (newer toolkit, same 3067 events) | doc 97's per-event Q/L products at the 09-04 point become text-only; the published tables stay committed (`products/prod0902/` 4 files, `prod0908/` 4). **Also strands pr/148's stage A — see below** |
 | `d144fixprod` | 4 | 10.23 | `d102mpr` | doc pr/144 §7's `d144on`-vs-`d144fixprod` byte gate becomes text-only; the sentinel suite loses its pre-pr/145 knob-off control |
 | **total** | **12** | **35.85** | | |
+
+### The coverage proof for grp0825 — a set diff, not a count match
+
+Releasing an imaging substrate rests on one claim: *the new campaign covers
+every event the old one did*. Equal counts do not show that, so this is the set
+difference, per sample:
+
+```bash
+comm -3 <(ls work-$s-grp0825 | grep '^evt' | sort) <(ls work-$s-d102m | grep '^evt' | sort)
+```
+
+| sample | in both | only in grp0825 | only in d102m |
+|---|---:|---:|---:|
+| mcp2k | 2000 | **0** | 0 |
+| mcp1k | 1000 | **0** | 0 |
+| nuecc48 | 48 | **0** | 0 |
+| ncpi0 | 19 | **0** | 0 |
+| **total** | **3067** | **0** | **0** |
+
+Exact set equality on all four samples. The 126 + 63 + 3 + 2 = 194 extra
+directories in grp0825 are the runner's `g<K>` per-*group* staging dirs, not
+per-event products — which is why the raw directory counts differ (3261 vs 3067)
+while the event sets are identical.
 
 **The d144fixprod cost was checked, not asserted.** The worry is that retiring it
 strands the sentinel registry. It does not — the suite runs clean at the new
@@ -113,6 +137,19 @@ learned that the hard way when pr/145 lifted 393505's waiver.
   has not happened, and it names this arm: *"a **fresh** work dir (M13 — nothing
   under an existing `work-*-d145np` is touched)"*, i.e. it reads it. An open
   round's named input stays, campaign or no.
+
+  **Disclosed, because the owner is signing this off:** pr/148 §16.2 item 1 is a
+  *re-run* of the PR stage on two events with `WCT_SHOWER_SPLIT_DEBUG=1`, and a
+  stage-B re-run needs a stage-A source. `d145np` was built on `d97fv`, which
+  this round releases — so after it, the only stage A on disk is `d102m`, a
+  **different operating point**. The gap is bounded and recoverable: the Reco1
+  inputs are kept (`input_files_reco1/`, 4.6 GiB) and `~/tmp/d97b-libsnap` is the
+  d97-epoch stage-A binary (doc 97 §98, doc 101 §203 — "the stage-A production
+  binary"), so a **two-event** regeneration at that point is still possible and
+  costs minutes. The alternative reading is equally defensible: run item 1 on
+  `d102mpr` instead, since that is where the next round's conclusions will have
+  to live anyway. Either way it is a decision to make knowingly, not a surprise
+  to discover.
 - **`work-vtx105-base-*` (4.0 GiB).** 1786 citations, 1756 of them from
   `vertex_labels/`. M13.
 - **the `s144pos/neg/posleg` 2×2 (0.14 GiB).** The sentinel suite's negative
@@ -230,16 +267,20 @@ now release nothing. The bytes were never the point in these two trees.
 
 ## 6. Interlocks, and the record layer
 
-13 checks per tree, 0 FAIL. Carried unchanged from the 09-06 machinery:
+**11 checks on each of the three trees, 0 FAIL**, plus one that runs only where
+it applies. Carried unchanged from the 09-06 machinery:
 substrate presence (1), no kept symlink into a releasing dir (2), live-writer
 guard by `ps`+mtime double-sample (3), pre-existing broken symlinks recorded
 *before* the round so the post-state number means something (4 — 0/0/0), tier 1
 clear of PROTECTED.txt (5), token-boundary cross-repo citation (6), no
 record/label dir released (7), never delete through a symlink (8), manifest
 resolution (9), every tier family exists and carries a ground (10), every
-substrate/production name resolves (11). New this round: **12**, the
-materialise-is-priced-and-implemented check, and **M**, the driver's confirm-time
-re-derivation that the copies actually happened.
+substrate/production name resolves (11). New this round: **INTERLOCK 12**, the
+materialise-is-priced-and-implemented check — it runs on **sbnd only**, because
+sbnd is the only tree with a `MATERIALISE` exemption, so pdvd and pdhd ran 11
+checks and sbnd ran 12 — and **INTERLOCK M**, which is not a planner check at all
+but the driver's confirm-time re-derivation, from the tree, that the copies
+actually happened.
 
 Record layer frozen **before** any deletion (M13), in a fresh directory —
 `archive/records/cleanup-20260908/sbnd-tier2/`, 119 MiB for 35.85 GiB released.
