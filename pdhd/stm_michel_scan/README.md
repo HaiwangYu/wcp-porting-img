@@ -210,15 +210,46 @@ Under **REVEAL** a `particle flow` block prints the chain's `mu -> e` relation:
       └─ attached at the shared stop vertex 77003
            e   pdg 11   seg 77009   8.4 cm   31.2 MeV   2 shower segs, kink 47 deg
 
-That shared vertex is the **only** parentage the chain ever writes. On a
-`detached` item there is no shared vertex and no link at all — the dots were
-admitted on distance to the stop alone — and the panel says so instead of
-drawing an edge that does not exist. On such an item it also warns that
-`michel_found` is 0 even though a Michel *was* reconstructed: doc pdhd/13's
-defect D1.
+That shared vertex is the parentage the chain writes on the attached side.
 
-If the panel tells you the arm predates doc pdhd/14, the PR arm needs re-running
-— there is no muon energy in that output to show.
+## The Michel as ONE object (doc pdhd/15)
+
+A Michel is usually a track, but the 3-D clustering routinely breaks pieces off
+it, and through doc pdhd/14 those pieces were added to the shower and then left
+out of its energy. Since doc pdhd/15 the object is assembled first and energised
+once, so the panel reads:
+
+    mu   pdg 13   180.5 cm   424.1 MeV (range 424.1 / dQ/dx 330.2)   1 chain seg
+      └─ attached at the shared stop vertex 91002
+           e   pdg 11   core seg 91002   2 pieces in the object   29.2 MeV = dQ/dx 29.2 + unfitted charge 0.0
+                  core alone 16.2 · pieces 13.0 · core range 36.5 · chain kine_charge 0.0
+                  core 11.2 cm, kink 36 deg · 1 dot (0 unfitted clusters carrying 0 e)
+
+Read it as: **29.2 MeV is the object**, 16.2 of it the core arm and 13.0 the
+piece 4.3 cm past its tip. `core alone` is exactly what `michel_ke_best` reported
+through doc pdhd/14, so an older number is still recoverable from the tree.
+
+A **bridged** item (`michel_conn_type == 2`) is one whose electron the 3-D
+clustering split off the muon entirely. It now carries the same parentage — the
+muon's stop vertex — plus the measured gap:
+
+      └─ bridged to the same stop vertex 77002 across 0.38 cm of empty space
+
+A **charge-only** item (`michel_conn_type == 3`) is one where the companion
+passed every admission test but the fitter produced no segment for it, so there
+is no shape, no `michel_seg_id` and no dQ/dx — only charge:
+
+      └─ charge only, 6.31 cm from the stop vertex 43002 — …
+
+`chain kine_charge` is the chain's own charge-based estimate of the same object.
+It is **0 by construction** on these arms and the panel says so: the estimator
+projects the 2-D charge map with no t0, while the point cloud is t0-corrected,
+so on a cosmic hundreds of cm off the beam frame nothing matches. Doc pdhd/15 §6
+has the diagnosis; the charge route that *does* work here is `unfitted charge`,
+which converts the blob charge of a companion cluster the fitter never reached.
+
+If the panel tells you the arm predates doc pdhd/14 or pdhd/15, the PR arm needs
+re-running — that output has no muon energy, or no object breakdown, to show.
 
 ## Am I sure it saved?
 

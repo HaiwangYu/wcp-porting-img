@@ -1679,15 +1679,25 @@ def _muon_ke_text(v):
 
 
 def fill_flow(v, rev):
-    """mu -> e as CheckSTM_Michel recorded it: two particles and the link.
+    """mu -> e as CheckSTM_Michel recorded it: two particles, one link.
 
-    The chain stamps a pdg on every segment (set_pdg, CheckSTM_Michel.cxx:661)
-    and T_rec_charge.particle_id persists it per point, but the only PARENTAGE
-    it writes is a shared vertex: stop_vtx_id is where the muon chain ends, and
-    with michel_seg_id (doc pdhd/14) that names both ends of the mu -> e edge.
-    conn_type 2 has no shared vertex to name -- the dots were admitted on
-    proximity to the stop, so the panel says the link is proximity and not
-    topology rather than drawing an edge the chain never established.
+    Every number here is a T_stm_michel branch; nothing is recomputed.
+
+    Since doc pdhd/15 the Michel is ONE object -- the stop arm (or, when the
+    3-D clustering detached it, the nearest admitted piece), everything the
+    shower walk reaches, and every fitted segment of an admitted companion
+    near the stop.  michel_ke_dqdx is that whole object, michel_ke_core is
+    the core alone (what michel_ke_dqdx meant through doc pdhd/14), and
+    dots_ke_unfit converts the charge of a companion the fitter never
+    reached, which has no dx and so no dQ/dx to invert.
+
+    The parentage is the muon's stop vertex in every case:
+      conn 1  the arm leaves stop_vtx_id itself -- a shared graph vertex;
+      conn 2  the 3-D clustering split the electron off, so the object is
+              BRIDGED to the same vertex across michel_dis_cm of empty space;
+      conn 3  CHARGE ONLY -- a companion cluster the fitter produced no segment
+              for, so there is no shape and no michel_seg_id, only charge.
+    michel_parent_vtx_id names the vertex in all three.
     """
     if not rev:
         flow_div.text = ("<span style='color:#777'>the chain's particle flow is "
@@ -1700,6 +1710,7 @@ def fill_flow(v, rev):
                          "michel_seg_id. Re-run the PR arm to populate them."
                          "</span></div>")
         return
+    one_object = v.get("michel_ke_core") is not None
 
     mu = ("<b>&mu;</b> &nbsp; pdg 13 &nbsp; %.1f cm &nbsp; <b>%.1f MeV</b>"
           " <span style='color:#777'>(range %.1f / dQ&thinsp;/&thinsp;dx %.1f)</span>"
@@ -1711,38 +1722,73 @@ def fill_flow(v, rev):
     conn = int(v.get("michel_conn_type") or 0)
     seg = v.get("michel_seg_id")
     seg = None if seg is None or int(seg) < 0 else int(seg)
+    parent = v.get("michel_parent_vtx_id")
+    parent = v.get("stop_vtx_id") if parent is None or int(parent) < 0 else int(parent)
+    gap = v.get("michel_dis_cm")
+
     if conn == 1:
         link = ("&#9492;&#9472; <b>attached</b> at the shared stop vertex "
-                "<code>%s</code> &mdash; this is the only mu &rarr; e parentage "
-                "CheckSTM_Michel writes" % v.get("stop_vtx_id"))
-        dau = ("<b>e</b> &nbsp; pdg 11 &nbsp; seg <code>%s</code> &nbsp; %.1f cm"
-               " &nbsp; <b>%.1f MeV</b> <span style='color:#777'>(dQ&thinsp;/&thinsp;dx"
-               " %.1f / range %.1f)</span> &nbsp; %d shower seg%s, kink %.0f deg"
-               % (seg, v.get("michel_len", 0.0), v.get("michel_ke_best", 0.0),
-                  v.get("michel_ke_dqdx", 0.0), v.get("michel_ke_range", 0.0),
-                  v.get("n_michel_segs", 0),
-                  "" if v.get("n_michel_segs") == 1 else "s",
-                  v.get("michel_kink_deg", -1.0)))
+                "<code>%s</code> &mdash; the arm leaves the very vertex where the "
+                "muon chain ends" % parent)
     elif conn == 2:
-        link = ("&#9492;&#9472; <b>detached</b> &mdash; <span style='color:#b00'>no "
-                "shared vertex, so no parentage is persisted</span>; the dots were "
-                "admitted on distance to the stop alone")
-        dau = ("<b>e</b> &nbsp; pdg 11 &nbsp; seed seg <code>%s</code> &nbsp; %d dot%s"
-               " &nbsp; <b>%.1f MeV</b> <span style='color:#777'>(dots %.1f MeV)</span>"
-               % (seg, v.get("n_dots", 0), "" if v.get("n_dots") == 1 else "s",
-                  v.get("michel_ke_best", 0.0), v.get("dots_ke_dqdx", 0.0)))
+        link = ("&#9492;&#9472; <b>bridged</b> to the same stop vertex "
+                "<code>%s</code> across <b>%.2f cm</b> of empty space &mdash; the "
+                "3-D clustering split the electron off the muon, so the parentage "
+                "is proximity to the stop, not a graph edge"
+                % (parent, gap if gap is not None else -1.0))
+    elif conn == 3:
+        link = ("&#9492;&#9472; <b>charge only</b>, %.2f cm from the stop vertex "
+                "<code>%s</code> &mdash; the companion passed every admission test "
+                "but the fitter produced no segment for it, so there is no shape "
+                "and no dQ&thinsp;/&thinsp;dx; the energy is the charge conversion "
+                "alone" % (gap if gap is not None else -1.0, parent))
     else:
         link = "&#9492;&#9472; <span style='color:#b00'><b>no daughter</b></span>"
+
+    if conn:
+        pieces = v.get("michel_n_pieces")
+        head = ("<b>e</b> &nbsp; pdg 11 &nbsp; %s &nbsp; %d piece%s in the object"
+                % ("no fitted segment" if conn == 3 else
+                   ("%s seg <code>%s</code>" % ("core" if conn == 1 else "seed", seg)),
+                   pieces if pieces is not None else v.get("n_michel_segs", 0),
+                   "" if pieces == 1 else "s"))
+        if one_object:
+            energy = ("&nbsp; <b>%.1f MeV</b> = dQ&thinsp;/&thinsp;dx <b>%.1f</b> "
+                      "+ unfitted charge <b>%.1f</b>"
+                      "<br><span style='color:#777'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                      "core alone %.1f &middot; pieces %.1f &middot; core range %.1f "
+                      "&middot; chain kine_charge %.1f%s</span>"
+                      % (v.get("michel_ke_best", 0.0), v.get("michel_ke_dqdx", 0.0),
+                         v.get("dots_ke_unfit", 0.0), v.get("michel_ke_core", 0.0),
+                         v.get("dots_ke_dqdx", 0.0), v.get("michel_ke_range", 0.0),
+                         v.get("michel_ke_charge", 0.0),
+                         " &mdash; 0 by construction on a t0-corrected cosmic, doc pdhd/15 sec 6"
+                         if not v.get("michel_ke_charge") else ""))
+        else:
+            energy = ("&nbsp; <b>%.1f MeV</b> <span style='color:#b00'>(pre-doc-15 arm: "
+                      "the pieces are not in this number)</span>"
+                      % v.get("michel_ke_best", 0.0))
+        extra = ("<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style='color:#777'>"
+                 "core %.1f cm, kink %.0f deg &middot; %d dot%s (%d unfitted cluster%s "
+                 "carrying %.3g e)</span>"
+                 % (v.get("michel_len", 0.0), v.get("michel_kink_deg", -1.0),
+                    v.get("n_dots", 0), "" if v.get("n_dots") == 1 else "s",
+                    v.get("n_dot_clusters_unfit", 0),
+                    "" if v.get("n_dot_clusters_unfit") == 1 else "s",
+                    v.get("dots_charge_unfit", 0.0)))
+        dau = head + energy + extra
+    else:
         dau = ("nothing at the stop: n_stop_arms %s, n_dots %s, unfitted dot "
                "clusters %s carrying %.3g e"
                % (v.get("n_stop_arms"), v.get("n_dots"),
                   v.get("n_dot_clusters_unfit"), v.get("dots_charge_unfit", 0.0)))
 
     warn = ""
-    if conn == 2 and not int(v.get("michel_found") or 0):
+    if conn and not int(v.get("michel_found") or 0):
         warn = ("<br><span style='color:#b00'>michel_found is 0 even though a "
-                "Michel WAS reconstructed &mdash; it is set only on the attached "
-                "path (CheckSTM_Michel.cxx:1197). Doc pdhd/13 defect D1.</span>")
+                "Michel WAS reconstructed &mdash; this arm predates doc pdhd/15, "
+                "where michel_found was set only on the attached path. "
+                "Doc pdhd/13 defect D1.</span>")
     flow_div.text = (
         "<div style='background:#fff6e5;padding:6px;font-size:96%%'><b>REVEALED "
         "&mdash; particle flow</b> <span style='color:#777'>(every field is a "

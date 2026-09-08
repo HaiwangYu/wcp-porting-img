@@ -167,9 +167,21 @@ graph-index spaces — so the same integer can name both, and does: on PDVD
 `T_stm_michel_pts.seg_id` (or `T_rec_charge.sub_cluster_id`) and `stop_vtx_id`
 against the vertex rows (`flag_vertex == 1`), never against each other.
 
-There is **no PF tree** on this path. `fill_bee_pf_tree` belongs to the
-`TaggerCheckNeutrino` tail that doc pdhd/13 §7 showed is absent by design —
-which remains the single largest missing PR capability in this module.
+> **CORRECTION (doc pdhd/15, 2026-09-07).** The two paragraphs above are
+> wrong on one point and this doc's claim below is wrong outright. There **is**
+> a PF tree on this path: `MultiAlgBlobClustering::fill_bee_pf_tree()` runs —
+> `bee_pf` is bound at `cfg/pgrapher/experiment/pdhd/pr.jsonnet:2243` and
+> `protodunevd/pr.jsonnet:2232` — and writes `mc.json` into `mabc-pr.zip`,
+> where `039252_15` reads `mu- 278 MeV` for cluster 77 and `mu- 425 MeV ->
+> e- 16 MeV` for cluster 91. A **detached** Michel is linked there too, through
+> a pseudo-gamma carrier node (`MultiAlgBlobClustering.cxx:2153-2177`), so
+> "no link of any kind" was also wrong: what `conn_type == 2` lacked was a link
+> in *this tree*, which doc pdhd/15 adds (`michel_parent_vtx_id`,
+> `michel_dis_cm`, `michel_start_*`, and `michel_found` for both types).
+> Doc pdhd/15 §2 carries the evidence.
+
+~~There is **no PF tree** on this path.~~ `fill_bee_pf_tree` is **not** confined
+to the `TaggerCheckNeutrino` tail — see the correction above.
 
 ## 5. The display
 

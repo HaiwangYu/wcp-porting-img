@@ -51,6 +51,11 @@ _prep = runpy.run_path(os.path.join(HERE, "prep_stm_michel_scan.py"),
 ARM = {d: _prep["DET"][d]["arm"] for d in ("pdhd", "pdvd")}
 
 IMG = os.path.dirname(os.path.dirname(HERE))
+# doc pdhd/15: the C++ admission radius (CheckSTM_Michel.cxx default 15 cm; the
+# ProtoDUNE bags do not set it) and the Michel endpoint (m_mu^2 + m_e^2)/(2 m_mu).
+MICHEL_DOT_RADIUS_CM = 15.0
+COMPANION_MAX_LEN_CM = 25.0
+MICHEL_ENDPOINT_MEV = 52.8
 WIREDIR = "/nfs/data/1/xqian/toolkit-dev/wire-cell-data"
 WIRES = {"pdhd": "protodunehd-wires-larsoft-v1.json.bz2",
          "pdvd": "protodunevd-wires-larsoft-v7-uvwfit.json.bz2"}
@@ -1463,6 +1468,243 @@ def test_kine_blind(det, tmp):
            "%s: status line leaks the Michel energy" % det)
 
 
+# ---------------------------------------------------------------------------
+# [M] doc pdhd/15 -- the Michel as ONE object.
+# ---------------------------------------------------------------------------
+
+def test_object_tree(det):
+    """The tree's own arithmetic: the object energy is core + pieces + charge.
+
+    Every claim here is a relation BETWEEN branches of T_stm_michel, checked
+    on the production tree, so it fails if the C++ ever stops adding a piece
+    to the energy (the doc-14 defect) or starts double counting.
+    """
+    print("[M] the Michel object, %s" % det)
+    arm = ARM[det]
+    dirs = sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm)))
+    ck(bool(dirs), "%s: no %s event dirs" % (det, arm))
+    n = n_obj = n_attached = n_bridged = n_charge = n_piece = 0
+    worst = 0.0
+    worst_gap = [0.0]
+    for d in dirs:
+        rf = os.path.join(d, "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        f = uproot.open(rf)
+        if "T_stm_michel" not in [k.split(";")[0] for k in f.keys()]:
+            continue
+        a = f["T_stm_michel"].arrays(library="np")
+        ck("michel_ke_core" in a, "%s: %s predates doc pdhd/15 (no michel_ke_core)"
+           % (det, os.path.basename(d)))
+        if "michel_ke_core" not in a:
+            return
+        for i in range(len(a["cluster_id"])):
+            tag = "%s %s/%d" % (det, os.path.basename(d), int(a["cluster_id"][i]))
+            n += 1
+            # nothing persisted may be non-finite: a NaN passes no gate and
+            # fails every one silently (PDVD 039349_3 cluster 26, pre-doc-15)
+            for k in a:
+                x = a[k][i]
+                if isinstance(x, (float, np.floating)):
+                    ck(np.isfinite(x), "%s: %s is not finite (%s)" % (tag, k, x))
+            conn = int(a["michel_conn_type"][i])
+            found = int(a["michel_found"][i])
+            # michel_found now means "a Michel object exists", detached included
+            ck((found == 1) == (conn > 0),
+               "%s: michel_found %d with conn_type %d" % (tag, found, conn))
+            if conn == 0:
+                ck(a["michel_ke_best"][i] == 0 and a["n_michel_segs"][i] == 0,
+                   "%s: no object but a non-zero energy/segment count" % tag)
+                ck(int(a["michel_parent_vtx_id"][i]) < 0,
+                   "%s: no object but a parent vertex" % tag)
+                continue
+            n_obj += 1
+            n_attached += conn == 1
+            n_bridged += conn == 2
+            n_charge += conn == 3
+            n_piece += int(a["michel_n_pieces"][i])
+            # the object energy IS dQ/dx over everything fitted plus the charge
+            # term for what is not -- the owner's rule, doc pdhd/15 sec 1
+            lhs = float(a["michel_ke_best"][i])
+            rhs = float(a["michel_ke_dqdx"][i]) + float(a["dots_ke_unfit"][i])
+            worst = max(worst, abs(lhs - rhs))
+            ck(abs(lhs - rhs) < 1e-9,
+               "%s: michel_ke_best %.6f != ke_dqdx + dots_ke_unfit %.6f" % (tag, lhs, rhs))
+            # the object is never smaller than its own core
+            ck(float(a["michel_ke_dqdx"][i]) >= float(a["michel_ke_core"][i]) - 1e-9,
+               "%s: the object energy %.3f is below its core %.3f"
+               % (tag, a["michel_ke_dqdx"][i], a["michel_ke_core"][i]))
+            # the parentage is persisted for BOTH connection types
+            ck(int(a["michel_parent_vtx_id"][i]) == int(a["stop_vtx_id"][i]),
+               "%s: michel_parent_vtx_id %d is not the muon stop vertex %d"
+               % (tag, a["michel_parent_vtx_id"][i], a["stop_vtx_id"][i]))
+            # conn 3 is CHARGE ONLY: no fitted segment, hence no seg id and no
+            # dQ/dx -- its whole energy is the charge conversion.
+            if conn == 3:
+                ck(int(a["michel_seg_id"][i]) < 0,
+                   "%s: a charge-only object names a segment" % tag)
+                ck(int(a["n_michel_segs"][i]) == 0 and float(a["michel_ke_dqdx"][i]) == 0.0,
+                   "%s: a charge-only object has fitted members" % tag)
+                ck(float(a["dots_ke_unfit"][i]) > 0,
+                   "%s: a charge-only object with no charge" % tag)
+            else:
+                ck(int(a["michel_seg_id"][i]) >= 0, "%s: an object with no seg id" % tag)
+            # the gap is 0 exactly when the arm shares the stop vertex
+            gap = float(a["michel_dis_cm"][i])
+            ck((gap == 0.0) == (conn == 1),
+               "%s: michel_dis_cm %.3f with conn_type %d" % (tag, gap, conn))
+            ck(gap >= 0, "%s: negative gap %.3f" % (tag, gap))
+            if conn in (2, 3):
+                # The seed piece belongs to a CLUSTER admitted within
+                # michel_dot_radius_cm of the stop (doc pdhd/15 sec 3), so the
+                # piece itself is bounded by radius + the cluster length cap --
+                # NOT by the radius alone: the per-segment radius test was
+                # removed on purpose, and 039252_1 cluster 30 carries a piece
+                # whose own closest approach is 15.85 cm.
+                bound = (MICHEL_DOT_RADIUS_CM if conn == 3 else
+                         MICHEL_DOT_RADIUS_CM + COMPANION_MAX_LEN_CM)
+                ck(gap <= bound + 1e-6,
+                   "%s: conn-%d gap %.2f cm beyond the %.0f cm structural bound"
+                   % (tag, conn, gap, bound))
+                worst_gap[0] = max(worst_gap[0], gap)
+            # the unfitted-charge term is the published conversion, or 0
+            q = float(a["dots_charge_unfit"][i])
+            e = float(a["dots_ke_unfit"][i])
+            want = q / 0.7 / 0.95 * 23.6 / 1e6 if q > 0 else 0.0
+            ck(abs(e - want) < 1e-6,
+               "%s: dots_ke_unfit %.6f is not the 0.7/0.95/23.6 conversion of %.4g e (%.6f)"
+               % (tag, e, q, want))
+    print("     %d candidates, %d Michel objects (%d attached, %d bridged, %d charge-only), "
+          "%d pieces; worst |best - (dqdx+unfit)| = %.2e MeV, widest bridge %.2f cm"
+          % (n, n_obj, n_attached, n_bridged, n_charge, n_piece, worst, worst_gap[0]))
+
+
+def test_object_spectrum(det):
+    """A free absolute gate: the Michel spectrum ends at 52.8 MeV.
+
+    An object that gathers charge it should not own shows up here before it
+    shows up anywhere else -- the endpoint is fixed by (m_mu^2 + m_e^2)/(2 m_mu)
+    and owes nothing to this reconstruction.  A few items may sit above it
+    (the fit reads 2-D charge, so dQ can exceed a cluster's own blob charge),
+    but a POPULATION above it means the gathering rule is wrong.
+    """
+    print("[M] the Michel spectrum against the endpoint, %s" % det)
+    arm = ARM[det]
+    ke = []
+    for d in sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm))):
+        rf = os.path.join(d, "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        f = uproot.open(rf)
+        if "T_stm_michel" not in [k.split(";")[0] for k in f.keys()]:
+            continue
+        a = f["T_stm_michel"].arrays(library="np")
+        for i in range(len(a["cluster_id"])):
+            if a["has_pass"][i] == 1 and a["muon_len"][i] >= 10 and a["michel_found"][i]:
+                ke.append(float(a["michel_ke_best"][i]))
+    ck(bool(ke), "%s: no Michel objects to spectrum-check" % det)
+    if not ke:
+        return
+    k = np.array(ke)
+    over = int((k > MICHEL_ENDPOINT_MEV).sum())
+    print("     n=%d  med %.1f  p90 %.1f  max %.1f MeV  | above %.1f MeV: %d (%.1f %%)"
+          % (k.size, np.median(k), np.percentile(k, 90), k.max(),
+             MICHEL_ENDPOINT_MEV, over, 100.0 * over / k.size))
+    ck(np.median(k) < MICHEL_ENDPOINT_MEV,
+       "%s: the MEDIAN Michel energy %.1f is above the %.1f MeV endpoint"
+       % (det, np.median(k), MICHEL_ENDPOINT_MEV))
+    ck(over <= 0.10 * k.size,
+       "%s: %d of %d Michel objects (%.0f %%) exceed the %.1f MeV endpoint -- "
+       "the object is gathering charge it does not own"
+       % (det, over, k.size, 100.0 * over / k.size, MICHEL_ENDPOINT_MEV))
+
+
+def test_object_payload(det):
+    """The doc-15 branches reach the payload unmodified."""
+    print("[M] the object in the payload, %s" % det)
+    arm = ARM[det]
+    fns = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    ck(bool(fns), "%s: no payloads for the object test" % det)
+    KEYS = ("michel_ke_core", "michel_ke_charge", "michel_n_pieces",
+            "michel_parent_vtx_id", "michel_dis_cm", "dots_ke_unfit")
+    n = 0
+    for fn in fns[:: max(1, len(fns) // 25)]:
+        with open(fn) as fh:
+            d = json.load(fh)
+        v = d.get("verdict") or {}
+        for k in KEYS:
+            ck(k in v, "%s %s/%s: verdict has no %s"
+               % (det, d["event"], d["cluster_id"], k))
+        rf = os.path.join(IMG, det, "work", "%s_%s" % (d["event"], arm),
+                          "tracking-pr.root")
+        if not os.path.exists(rf):
+            continue
+        a = uproot.open(rf)["T_stm_michel"].arrays(library="np")
+        w = np.where(a["cluster_id"] == int(d["cluster_id"]))[0]
+        if not len(w):
+            continue
+        i = int(w[0])
+        for k in KEYS:
+            if k not in a:
+                continue
+            ck(abs(float(v[k]) - float(a[k][i])) < 1e-9,
+               "%s %s/%s: %s was altered between tree and payload"
+               % (det, d["event"], d["cluster_id"], k))
+        n += 1
+    print("     %d payloads carry the object fields verbatim" % n)
+
+
+def test_object_panel(det, tmp):
+    """The flow panel states one object and one link, for both connection types."""
+    print("[M] the flow panel says ONE object, %s" % det)
+    g = load_app(det, os.path.join(tmp, "obj_" + det))
+    ck("flow_div" in g, "%s: no flow_div in the app" % det)
+    if "flow_div" not in g:
+        return
+    seen = {1: 0, 2: 0, 3: 0, 0: 0}
+    for i, it in enumerate(g["ITEMS"]):
+        v = (g["payload"](it) or {}).get("verdict") or {}
+        conn = int(v.get("michel_conn_type") or 0)
+        if seen[conn]:
+            continue
+        g["go"](i)
+        g["reveal_tog"].active = True
+        t = g["flow_div"].text
+        ck("REVEALED" in t, "%s: REVEAL did not fill the flow panel" % det)
+        ck("no parentage is persisted" not in t,
+           "%s: the panel still claims a bridged Michel has no persisted parentage" % det)
+        if conn == 1:
+            # substring checks skip the <b> tags: the panel renders
+            # "<b>attached</b> at the shared stop vertex"
+            ck("at the shared stop vertex" in t,
+               "%s: an attached Michel is not described as attached" % det)
+            ck(str(int(v["stop_vtx_id"])) in t,
+               "%s: the attached link does not name the shared vertex" % det)
+        elif conn in (2, 3):
+            ck(("to the same stop vertex" if conn == 2 else "charge only") in t,
+               "%s: a conn-%d Michel is not described as such" % (det, conn))
+            ck(("%.2f cm" % v["michel_dis_cm"]) in t,
+               "%s: the conn-%d link does not carry the measured gap" % (det, conn))
+            ck(str(int(v["michel_parent_vtx_id"])) in t,
+               "%s: the conn-%d link does not name the parent vertex" % (det, conn))
+        else:
+            ck("no daughter" in t, "%s: an item with no Michel does not say so" % det)
+        if conn:
+            ck(("%.1f" % v["michel_ke_best"]) in t,
+               "%s: the panel does not show the object energy" % det)
+            ck(("%.1f" % v["michel_ke_core"]) in t,
+               "%s: the panel does not show the core energy" % det)
+            ck("piece" in t, "%s: the panel does not describe the object's pieces" % det)
+        g["reveal_tog"].active = False
+        seen[conn] = 1
+        # conn 3 exists only where a companion went unfitted (PDHD only on these
+        # arms), so do not require it before stopping.
+        if all(seen[k] for k in (0, 1, 2)):
+            break
+    print("     panel checked for conn types: %s"
+          % ", ".join(str(k) for k, v in sorted(seen.items()) if v))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default=None, choices=["pdhd", "pdvd"])
@@ -1488,8 +1730,12 @@ def main():
             test_bundle_app(det, tmp)
             test_kine_payload(det)
             test_kine_blind(det, tmp)
+            test_object_payload(det)
+            test_object_panel(det, tmp)
             if not a.quick:
                 test_kine_gate(det)
+                test_object_tree(det)
+                test_object_spectrum(det)
                 test_bundle_payload(det)
                 test_meas_causal(det)
                 test_pf_selector(det)

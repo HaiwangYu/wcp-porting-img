@@ -583,3 +583,11 @@ KE, which is why the window ships ON at 0.6):
    bit-unchanged; the tree is NOT bit-identical.  That doc also states what parentage the stage
    does and does not write: a shared stop vertex for `michel_conn_type==1`, nothing at all for
    `==2`.
+8. **doc pdhd/15** (2026-09-07) turns the Michel into a single object and closes the `mu -> e` link
+   for BOTH connection types.  It corrects item 7's closing claim: `mc.json` *is* written on this
+   path (`bee_pf`, `protodunevd/pr.jsonnet:2232`) and a `conn_type==2` Michel *is* linked there
+   through a pseudo-gamma carrier -- what was missing was a link in `T_stm_michel`, now
+   `michel_parent_vtx_id` / `michel_dis_cm` / `michel_start_*`, with `michel_found` redefined to
+   mean "a Michel object exists" (PDVD 115 -> 158).  The energy is now dQ/dx over every fitted
+   member plus a charge conversion for the unfitted ones; `michel_ke_core` preserves the doc-14
+   number.  NOT bit-identical.

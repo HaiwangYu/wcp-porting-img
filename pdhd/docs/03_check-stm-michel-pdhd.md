@@ -412,3 +412,10 @@ doc, `pdhd/docs/scripts/{run_d03_arms.sh,d03_stm_michel_census.py,d03_render_can
 9. **doc pdhd/14** persists the muon energy this module already computed and threw away, plus the
    daughter segment id that closes the `mu -> e` edge on the attached path.  Four new
    `T_stm_michel` branches, default on (owner 2026-09-07), 75 pre-existing branches bit-unchanged.
+10. **doc pdhd/15** makes the Michel **one object** — the stop arm (or, when the 3-D clustering
+   detached it, the nearest admitted piece), the shower completion, and every fitted segment of an
+   admitted companion — energised once through `PatternAlgorithms::calculate_shower_kinematics`.
+   Fixes doc pdhd/13's D1 and D2 and an energy-accounting bug that left the pieces out of
+   `michel_ke_best` (PDVD 039252_15 cluster 91: 16.2 MeV reported for a 29.2 MeV Michel; 9 PDHD /
+   17 PDVD candidates, missing fraction median 22.5 % / 12.2 %).  Nine new `T_stm_michel` branches;
+   `dot_max_len_cm`'s default moves 10 -> 25 cm and `companion_max_len_cm` is new at 25.

@@ -447,9 +447,39 @@ def main():
             ck("MeV" in after_m, "no energy reached the flow panel after REVEAL")
             ck(_painted("MeV") > 0, "no energy painted after REVEAL")
             ck("pdg 13" in after_m, "the flow panel names no mother particle")
+            # doc pdhd/15: the Michel is ONE object.  Whatever the item, the
+            # panel must state the link with the parent vertex, and when there
+            # IS a daughter it must break the energy into the object's parts --
+            # the whole point of the round is that the pieces are counted.
+            has_dau = "pdg 11" in after_m
+            # tag-free fragments: the panel renders "<b>attached</b> at the
+            # shared stop vertex" / "<b>bridged</b> to the same stop vertex"
+            ck(("at the shared stop vertex" in after_m)
+               or ("to the same stop vertex" in after_m)
+               or ("charge only" in after_m)
+               or ("no daughter" in after_m),
+               "the flow panel states no mu -> e link at all")
+            if has_dau:
+                ck("piece" in after_m, "the daughter is not described as an object of pieces")
+                ck("core alone" in after_m,
+                   "the flow panel does not separate the object energy from its core")
+                ck("unfitted charge" in after_m,
+                   "the flow panel does not show the charge term for unfitted pieces")
+                ck("pre-doc-15 arm" not in after_m,
+                   "the served arm predates doc pdhd/15: michel_ke_core is absent")
+                ck(_painted("core alone") > 0, "the energy breakdown did not paint")
+            else:
+                ck("nothing at the stop" in after_m,
+                   "an item with no daughter does not say so")
+            # the pre-doc-15 wording must be gone: mc.json DOES carry a parentage
+            # for a bridged Michel (through a pseudo-gamma carrier), so the old
+            # "no parentage is persisted" line was wrong (doc pdhd/15 sec 2).
+            ck("no parentage is persisted" not in after_m,
+               "the flow panel still claims a bridged Michel has no persisted parentage")
             ck(not errs, "javascript errors after the flow checks: %s" % errs[:3])
             print("     mu -> e flow panel: blinded on load, painted after REVEAL "
-                  "(%d MeV figures on the page)" % _painted("MeV"))
+                  "(%d MeV figures on the page, daughter=%s)"
+                  % (_painted("MeV"), has_dau))
             b.close()
     finally:
         proc.terminate()

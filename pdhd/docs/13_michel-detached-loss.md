@@ -418,3 +418,15 @@ in one field: on `039252_15 / 77` the chain reports a 278.0 MeV muon and
 only `mu -> e` parentage the chain writes is the vertex shared by the muon's end
 and an *attached* arm, so the detached population of D1 has no persisted link at
 all.
+
+**Follow-up, doc pdhd/15 (2026-09-07).** Defects **D1** and **D2** are fixed.
+D2: companion **admission** now has its own knob (`companion_max_len_cm`, C++
+default 25 cm = `michel_max_len_cm`) separate from the per-piece cap, so
+`039252_15 / 77`'s 20.1 cm Michel enters the PR and is reconstructed — 51.6 MeV,
+`michel_conn_type 2`, gap 0.38 cm. D1: `michel_found` now means "a Michel object
+exists", detached included (PDVD 115 → 158). That doc also **corrects this one's
+premise about the particle flow**: `mc.json` *is* written on this path, and a
+detached Michel *is* linked there, through a pseudo-gamma carrier node. What was
+missing was a link in `T_stm_michel`, now `michel_parent_vtx_id` /
+`michel_dis_cm` / `michel_start_*`. D3 (segments fitted and then discarded by
+the arm classifier) is untouched and remains open.

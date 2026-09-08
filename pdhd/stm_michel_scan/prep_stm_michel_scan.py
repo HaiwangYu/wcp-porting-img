@@ -68,8 +68,8 @@ DET = {
     # pctree input re-run through the same -nu chain with the feature in; every
     # pre-existing T_stm_michel branch is bit-unchanged (doc pdhd/14 sec 3), so
     # the sheet and the stratification are unaffected.
-    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d14hnu"),
-    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d14vnu"),
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d15hnu"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d15vnu"),
 }
 IMAGE_MEMBER = "clustering-global"
 IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
@@ -118,7 +118,14 @@ VERDICT_SCALARS = [
     # keys, and the viewer renders the gap rather than inventing a number.
     "muon_ke_range", "muon_ke_dqdx", "muon_ke_best", "michel_seg_id",
     "stop_vtx_id", "n_chain_segs",
+    # doc pdhd/15 -- the Michel as ONE object.  michel_ke_dqdx is now the whole
+    # object (core + every piece); michel_ke_core is the core alone, i.e. what
+    # michel_ke_dqdx meant through doc pdhd/14.  Also absent on an older arm.
+    "michel_ke_core", "michel_ke_charge", "michel_n_pieces",
+    "michel_parent_vtx_id", "michel_dis_cm",
+    "michel_start_x", "michel_start_y", "michel_start_z",
     "n_dots", "dots_ke_dqdx", "n_dot_clusters_unfit", "dots_charge_unfit",
+    "dots_ke_unfit",
     "n_delta", "delta_len", "n_body_hadron", "n_stop_arms",
     "cont_len", "cont_angle_deg", "cont_mip", "n_ext", "ext_len", "dead_ahead",
     "contrast", "contrast_expected", "plateau_med", "tail_med",
