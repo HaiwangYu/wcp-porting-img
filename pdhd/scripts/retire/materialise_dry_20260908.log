@@ -1,0 +1,8 @@
+138 links from 5 arms pin 119 sources, 0.608 GiB to copy
+       48 links   work-d97prodchk-nuecc48
+       28 links   work-d97prodchk-mcp2k
+       24 links   work-d97prodchk-mcp1k
+       19 links   work-d97prodchk-ncpi0
+       19 links   work-ncpi0-d99r3prod
+
+DRY RUN.  Re-run with CONFIRM=yes to materialise.

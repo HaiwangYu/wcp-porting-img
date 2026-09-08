@@ -46,6 +46,15 @@ magnify	the Magnify dump root; not an arm	-
 # --- label dirs: CLAUDE.md M13 -------------------------------------------
 work/d08_scan_labels/ work/d08pv_scan_labels/	hand-scan labels, the scientific record itself.  They are not <run6>_<idx>_<arm> dirs so a planner's arm grammar leaves them out of scope -- that is luck, not protection, so they are named here	M13
 
+# --- added 2026-09-08 (doc 103): the LIVE doc-50/pdhd-16 round -------------
+# Protected by PREFIX, not enumeration -- doc pdvd/50 was still being edited on
+# 2026-09-08 (round 2 landed 09-07, the pdhd/16 follow-up 09-08) and the 09-04
+# lesson is that a live round grows new arm families between plan and confirm.
+d51v*	doc pdvd/50 round 2's four PDVD arms (d51vclus/d51vnu/d51vfit0/d51vstm, 120 dirs each): the dQ/dx-vs-residual-range measurement redone on the post-doc-11 chain.  Doc 50 names them 40 times and doc pdhd/16 (2026-09-08) reads the normalization off them	doc pdvd/50 sec 10-16; docs/nf_sp_img_clus/scripts/d51_dqdx_rr_apa.py
+d30vpre d30vpost d30vnupre d30vnupost d30r3v*	the doc pdvd/30 PR-memory before/after arms (2026-09-07); the round's whole claim is a paired comparison, so releasing either half makes the other unreadable	doc pdvd/30
+d14vnu d15vnu d16vnu d15leg	the doc pdhd/14+15+16 STM/Michel kinematics arms on PDVD (120 dirs each, 2026-09-07/08).  d15leg is the legacy-comparison half	doc pdhd/14, 15, 16; doc pdvd/48
+work/stm_michel_labels/	hand-scan labels including the LIVE scan tag smx1 -- a bokeh server was serving it on 2026-09-08.  M13	M13; pdhd/stm_michel_scan/serve_stm_michel_scan.sh
+
 # ================= RETIRED =================
 # 2026-09-06 (doc 101 tier 2): d48nu, d48nu2 (superseded inside doc 48 sec 8.0
 # by d48nu3, which the doc says outright), d48nu4, d48nu5, d48nu6 (sec 10

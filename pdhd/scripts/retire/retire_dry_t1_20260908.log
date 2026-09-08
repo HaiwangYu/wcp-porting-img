@@ -1,0 +1,18 @@
+==================================================================
+== sbnd   tier 1   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_sbnd_20260908.txt
+   (empty or missing tier file -- nothing planned for this tree/tier)
+==================================================================
+== pdvd   tier 1   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdvd_20260908.txt
+   (empty or missing tier file -- nothing planned for this tree/tier)
+==================================================================
+== pdhd   tier 1   file: /home/xqian/toolkit-dev/wcp-porting-img/pdhd/scripts/retire/tier1_pdhd_20260908.txt
+   (empty or missing tier file -- nothing planned for this tree/tier)
+
+POST-STATE CHECK.  interlock 4 recorded the PRE-existing broken-symlink
+count per tree (0 / 0 / 0 on 2026-09-08); this number only means
+something compared against that.
+   pdhd: 0 broken symlinks
+   pdvd: 0 broken symlinks
+   sbnd/sbnd_xin: 0 broken symlinks
+
+DRY RUN.  Re-run with CONFIRM=yes to execute.

@@ -1,0 +1,15 @@
+      1/12  work-mcp1k-d144fixprod                   files  10465 (kept 6004, dropped 4461) links     0  4.82 MiB
+      2/12  work-mcp1k-d97fv                         files  10000 (kept 3001, dropped 6999) links  4000  18.18 MiB
+      3/12  work-mcp1k-grp0825                       files   4821 (kept 821, dropped 4000) links     0  12.90 MiB
+      4/12  work-mcp2k-d144fixprod                   files  20909 (kept 12004, dropped 8905) links     0  9.59 MiB
+      5/12  work-mcp2k-d97fv                         files  20000 (kept 6001, dropped 13999) links  8000  36.14 MiB
+      6/12  work-mcp2k-grp0825                       files   9577 (kept 1577, dropped 8000) links     0  24.51 MiB
+      7/12  work-ncpi0-d144fixprod                   files    212 (kept 118, dropped 94) links     0  0.36 MiB
+      8/12  work-ncpi0-d97fv                         files    190 (kept 58, dropped 132) links    76  0.19 MiB
+      9/12  work-ncpi0-grp0825                       files    104 (kept 28, dropped 76) links     0  0.25 MiB
+     10/12  work-nuecc48-d144fixprod                 files    531 (kept 292, dropped 239) links     0  1.00 MiB
+     11/12  work-nuecc48-d97fv                       files    480 (kept 145, dropped 335) links   192  0.73 MiB
+     12/12  work-nuecc48-grp0825                     files    233 (kept 41, dropped 192) links     0  0.56 MiB
+
+archived 12/12 arms into /home/xqian/toolkit-dev/wcp-porting-img/sbnd/sbnd_xin/archive/records/cleanup-20260908
+integrity: every released dir has a .manifest.tsv with a SHA-256 per file, a .links.txt, and a .tar.zst of the non-heavy record layer.

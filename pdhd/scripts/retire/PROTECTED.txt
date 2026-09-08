@@ -47,6 +47,19 @@ input_data_14_old_coh_grouping	symlink -> /nfs/data/1/xning/wirecell-working/dat
 
 029107_*_d08cap10	**THE ARM AT THE SHIPPED VALUE.**  doc pdhd/08 sec 9.1 flipped `retile_hack_max_bridge = 10 cm` to PDHD AND PDVD production 2026-09-06, and line 616 calls this "the arm taken to the hand scan, and now to production".  The 2026-09-06 tier 3 released it by mis-reading d08both as the shipped arm; regenerated and verified the same day (doc 101 sec 8.10).  READ THIS BEFORE ANY FUTURE SWEEP RELEASE: a doc names the shipped VALUE in its flip section and the ARM in its sweep table, in different sentences, so grepping for ship words near an arm name finds nothing.  Audit value-first.	docs/08_steiner-ghost-fix.md sec 9.1, line 616, sec 6 table
 
+# --- added 2026-09-08 (doc 103): the LIVE and yesterday's rounds ----------
+# Protected by PREFIX where the round is still moving.  Citation counts were
+# measured 2026-09-08: EVERY pdhd arm family in work/ carries at least one doc
+# citation, so nothing here is a name-guess.
+029107_*_d51h* 028084_*_d51h*	doc pdvd/50 round 2's PDHD side (d51hclus/d51hnu/d51hstm/d51hfit0/d51hnoum/d51hnoum2, 61 dirs each), written 2026-09-07 and read by doc pdhd/16 on 2026-09-08.  A LIVE round: protect by prefix	doc pdvd/50 sec 10-16, doc pdvd/48
+029107_*_d09* 028084_*_d09*	doc pdhd/09's space-charge fiducial family (d09, d09ctl, d09ctl2, d09ref, d09fvoff, d09p80c5, d09p80c3) -- 10.18 GiB, the tree's largest.  Doc dated 2026-09-07; an arm backing yesterday's decision is not superseded (the 08-31 prod0825 doctrine)	docs/09_pdhd-space-charge-fiducial.md, pdvd/docs/30
+029107_*_d30h* 028084_*_d30h*	the doc pdvd/30 PR-memory before/after arms (d30hpre/post, d30hnupre/post, 2026-09-07).  The claim IS the pair; releasing one half makes the other unreadable	pdvd/docs/30_pdhd-pdvd-pr-perf-memory.md
+029107_*_d14hnu 029107_*_d15hnu 029107_*_d16hnu 028084_*_d14hnu 028084_*_d15hnu 028084_*_d16hnu	the doc pdhd/14+15+16 STM/Michel kinematics arms (2026-09-07/08); doc 16's before/after energy census is read off d15hnu vs d16hnu	docs/14, 15, 16
+029107_*_d11* 028084_*_d11*	doc pdhd/11's separation arms (d11prod, d11seponA, d11sepoffA)	docs/11_stm-fit-vs-image.md
+029107_*_d02* 028084_*_d02*	doc pdhd/02's transverse-smearing arms (d02ref/d02sig/d02sigb/d02fix) behind the PDHD sigma_T flip	docs/02_effective-transverse-smearing-pdhd.md
+029107_*_stmwc 029107_*_phdumpwc 029107_*_d46skip 029107_*_d05mON 029107_*_d05mOFF	single-purpose probe arms, each cited by the doc that made it	docs/01, 05, 06; pdvd/docs/46, 47
+work/stm_michel_labels/ work/stm_scan_labels/ work/ql_labels/	hand-scan labels, the scientific record itself.  M13	M13
+
 # ================= RETIRED =================
 # (nothing yet)
 

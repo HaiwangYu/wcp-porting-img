@@ -815,3 +815,34 @@ work-pr130r1-probe98-mcp1k work-pr130r1-probe98-mcp2k work-pr130r1-probe98-ncpi0
 # suite, so this cannot silently leave a threshold green and unfalsifiable.
 # Proven able to fire -- drop any one control and it refuses that sentinel.
 # work-sent130neg-mcp1k work-sent130neg-mcp2k work-sent130neg2-mcp1k work-sent130neg2-mcp2k work-sent130neg3-mcp2k work-sent130neg4-mcp2k	the sentinel registry's NEGATIVE controls -- the only on-disk proof the suite CAN fail; regenerable by scripts/pr130_sentinel_neg34.sh but not re-derivable after the fact	docs/pr/127, docs/pr/130, doc 91
+
+# --- added 2026-09-08 (doc 103): THE LATEST CAMPAIGN ----------------------
+# Doc 102 (2026-09-08) produced the four-sample PR validation set for
+# colleagues at WCT master eacacafe: 3067 events, ref/prod-2026-09-08.
+# MEASURED, not assumed: this campaign is entirely SELF-CONTAINED.  A symlink
+# census over both target spellings (28415 links) finds ZERO cross-arm edges
+# out of the eight d102m/d102mpr dirs -- the 12268 links inside them are all
+# intra-arm `ql_evt<N>/... -> ../evt<N>/...`, 0 broken.  So it borrows nothing
+# from grp0825, d97fv or any earlier campaign, and no earlier campaign can be
+# released "through" it.
+work-mcp1k-d102m work-mcp2k-d102m work-ncpi0-d102m work-nuecc48-d102m	**LATEST PRODUCTION stage A** (imaging + clustering + Q/L), ref/prod-2026-09-08, 3067 events, toolkit eacacafe = master.  Supersedes work-*-d97fv	doc 102 sec 0, ref/prod-2026-09-08/README.md
+work-mcp1k-d102mpr work-mcp2k-d102mpr work-ncpi0-d102mpr work-nuecc48-d102mpr	**LATEST PRODUCTION stage B** (the 15-stage tagger + PR chain), ref/prod-2026-09-08, 3067 events; the source of products/prod0908/*-scores-prod0908.tsv.  Supersedes work-*-d144fixprod	doc 102, products/prod0908/
+ref/ products/	the generation records and the published score tables; not work dirs, named here so no future planner's grammar has to be lucky	doc 102 sec 6
+
+# --- STAGED FOR RETIREMENT 2026-09-08 (doc 103 tier 2) -- NOT YET EXECUTED ---
+# The three lines below are still ACTIVE protections.  They are listed here
+# because doc 103 stages them for release and the release is the owner's
+# CONFIRM, not mine.  When `CONFIRM=yes retire_20260908.sh 2 sbnd` has run,
+# move these three protections into the RETIRED section with the date; until
+# then they protect exactly as before.
+#
+#   work-*-grp0825      superseded by work-*-d102m (which re-images itself)
+#   work-*-d97fv        superseded by work-*-d102m      -- prod-2026-09-08
+#   work-*-d144fixprod  superseded by work-*-d102mpr    -- prod-2026-09-08
+#
+# Grounds, costs and the measurements behind them: plan_20260908.py TREES,
+# tier2_sbnd_20260908.txt, and docs/103_cleanup-latest-campaign-retire.md.
+# Record layer already frozen (67522 files hashed, manifests verified 12/12)
+# in archive/records/cleanup-20260908/sbnd-tier2/.
+# ORDER IS NOT OPTIONAL: materialise_20260908.py must run first, or the five
+# PROTECTED arms that still borrow from grp0825 lose their imaging.
