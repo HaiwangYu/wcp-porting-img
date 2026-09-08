@@ -311,6 +311,18 @@ changed mid-production.
 uninitialised read** on clusters without a valid flash (doc 92 part 2, doc 99).
 Unchanged by this round; never put them in a bit-identity gate.
 
+**`git commit -- <dir>` ignores what you staged.** This round's commit was first
+made as `git commit -- sbnd/sbnd_xin/scripts`, which swept in three
+`scripts/retire/state-*/plan.json` files belonging to a concurrent session in
+this shared repo — even though only this round's paths had been staged. A
+directory pathspec on `git commit` commits *every* modified file under that
+directory and discards the index selection; staging explicitly protects the
+`git add` step and nothing else. Caught by `git show --name-only` before any
+push, and repaired with `git reset --soft HEAD~1` → `git restore --staged` the
+three files → re-commit from the index. The safe form, and the one this round's
+final commit used: stage explicit paths, then `git commit` with **no pathspec at
+all**, and read `git show --name-only` before pushing.
+
 ## 8. What a colleague does with this
 
 ```bash
