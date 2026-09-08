@@ -17,6 +17,14 @@
 > the Modified-Box *shape* at each detector's field is right and only the scale
 > was uncalibrated.
 
+> **And by doc pdhd/17 (2026-09-08),** which splits that normalization into the
+> two factors this doc names separately: **0.828** — inverting the PID tables
+> without their own ×0.85, a pure model bug, identical on both detectors — times
+> **0.921 (PDVD) / 0.941 (PDHD)**, the charge the reconstruction does not
+> recover, which is §14's `k_pop` measured a second way. Doc 17 also shows that
+> once the last 5 cm are dropped from both data and model, the shipped inverse
+> reproduces the CSDA dE/dx to 1 % flat over muon lengths 40–450 cm.
+
 **Scope.** No code is changed. This is an analysis of reconstruction products
 already on disk, against the Modified-Box expectation tables the production
 taggers already carry. Owner question (2026-09-07): *"For PDHD, I forgot if we

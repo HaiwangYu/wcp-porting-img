@@ -27,6 +27,10 @@ times the charge the reconstruction does not recover. One measured
 normalization `C` closes it, and the same number falls out of doc pdvd/50's
 independent differential comparison.
 
+**Follow-up:** doc pdhd/17 (2026-09-08) re-asks this round's model question
+forward *and* backward, splits `C` into its two measured halves
+(0.828 model x 0.921 charge on PDVD), and amends §6.2 below.
+
 ## Repro
 
 ```bash
@@ -356,6 +360,18 @@ Two entries in that list carry more weight than the rest:
   recombination degeneracy moved. These ride the flat `kine_*` /
   `stm_michel_charge_to_energy` factors, which this round deliberately leaves
   alone, and they did not budge.
+
+  **AMENDED 2026-09-08 (doc pdhd/17 §7): on PDVD that evidence is vacuous.**
+  `dots_charge_unfit` and `dots_ke_unfit` are identically **zero** on all 160
+  `michel_found` candidates of *both* arms, and a branch that is zero on both
+  sides is bit-identical for free; `michel_ke_charge` is non-zero on 6 of 160.
+  The control is real on **PDHD**, where `dots_ke_unfit` is non-zero on 17 of
+  124 candidates with values up to 36 MeV and is bit-identical across the arms
+  — that is the arm of this line that carries the statement, and the "one
+  carrier only" conclusion stands on it. Nothing else in this section changes:
+  the 74-of-80 partition and the six movers are unaffected. Doc pdhd/17 §6 also
+  prices what leaving the flat conversion alone now costs — it is 16-20 % away
+  from the calibrated fitted path, and `michel_ke_best` adds the two.
 
 **Moved (6):** `muon_ke_dqdx` (×1.3114 PDVD / ×1.2587 PDHD, median),
 `michel_ke_dqdx` (×1.2994 / ×1.2273), `michel_ke_core`, `dots_ke_dqdx`,
