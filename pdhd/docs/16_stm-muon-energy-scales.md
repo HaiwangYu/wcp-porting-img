@@ -12,6 +12,11 @@ verdict moves**: `is_stm`, `reject_bits`, `contrast`, `plateau_med`, `ks_mu`,
 `muon_len` are bit-identical candidate by candidate (§6), and the STM and
 neutrino taggers keep the uncalibrated recombination instance untouched.
 
+**Follow-up, same day: §9** audits the MCS cathode band on both ProtoDUNEs,
+builds the negative control this doc never had (the band turned *off*), and
+adds two branches — 97 → **99** — so the excision is auditable on every future
+arm. No band value changed.
+
 Owner ask, 2026-09-08: *"integrate the MCS so that we can provide the MCS
 momentum estimation for the STM … the range estimation of muon energy is the
 baseline … the inverse of this recombination model should be what we can use to
@@ -450,7 +455,7 @@ to MC truth. Nothing in this round tunes it.
 | `./build/gen/wcdoctest-gen` | **18 / 18**, 789 assertions — includes the p = 1 identity for both fields, the whole-domain replay of `segment_cal_kine_dQdx`'s guards, and the calibrated PDVD operating point |
 | `./build/clus/wcdoctest-clus` | **335 / 335**, 23 172 assertions |
 | `./build/mcs/wcdoctest-mcs` | **4 / 4**, 5 651 assertions |
-| compiled-config, knob **off** vs pre-doc-16 HEAD | 60 nodes vs 60, **one** difference: the three `mcs_*` keys added to `CheckSTM_Michel` |
+| compiled-config, knob **off** vs pre-doc-16 HEAD | 60 nodes vs 60, **one** difference: the four `mcs_*` keys added to `CheckSTM_Michel` (`mcs_enable`, `mcs_min_len_cm`, `mcs_cathode_x`, `mcs_cathode_xcut` — §5.2's own list and `default_configuration()` both say four; "three" here was a miscount, corrected 2026-09-08 in §9) |
 | compiled-config, knob **on** vs off | adds exactly one node (`PowerBoxRecombination:pdvd_stm_recomb`) and changes exactly one (`CheckSTM_Michel`); `TaggerCheckSTM` keeps `pdvd_box_recomb` |
 | python re-implementation vs the chain (G1) | 1.0017 PDVD / 1.0024 PDHD at the shipped `C` |
 | before/after census coverage | **all 80 pre-existing scalar branches** (of the 89 `persist()` now writes) on 579 / 325 common candidates; **74 bit-identical, 6 moved**, the same partition on both detectors (§6.2) |
@@ -509,6 +514,9 @@ the owner's four labels keep their tag, their `scan_id` and their list order.
 | `pdhd/docs/scripts/d16_energy_plots.py`, `d16_run_arms.sh` | the figure, the arms |
 | `pdhd/stm_michel_scan/{prep_stm_michel_scan,stm_michel_viewer,smkine,selftest_stm_michel_scan}.py` | d16 arms, the MCS keys, the calibrated inverse, group `[O]` |
 | `pdhd/docs/figs/d16_energy_scales_{pdvd,pdhd}.png` | the figure |
+| `pdhd/docs/scripts/d16_mcs_cathode_export.py` | §9 — the MCS input cloud out of an arm already on disk |
+| `pdhd/docs/scripts/d16_mcs_cathode_sweep.cxx`, `d16_mcs_cathode_build.sh` | §9 — the engine re-run at several bands; links the installed `libWireCellMcs.so`, no toolkit build change |
+| `pdhd/docs/scripts/d16_mcs_cathode_report.py` | §9 — every number §9 quotes |
 
 **Not touched, on purpose:** `energy_loss/` is a separate repository, and
 nothing in this round changes it. Its `pion_travel/convert_field.C` is the
@@ -524,3 +532,261 @@ this round did was give the *inverse* the matching normalization.
 ![PDVD](figs/d16_energy_scales_pdvd.png)
 
 ![PDHD](figs/d16_energy_scales_pdhd.png)
+
+---
+
+## 9. The cathode band, audited (2026-09-08)
+
+Owner ask: *"For PDHD and PDVD, the cathode plane also represents some
+discontinuity as the cathode plane in SBND. I recall that we exclude the region
+near cathode plane in SBND for a better MCS estimation. I would like to do the
+same for PDHD and PDVD. Note, we do not need to worry about the boundary among
+nearby TPCS in one side of cathode plane. Those should be solid."*
+
+**It is already there, on both detectors, and it is doing real work.** §5.2
+shipped `mcs_cathode_x = 0, mcs_cathode_xcut = 5.0` in both drivers'
+`stm_michel_knobs` bags. What was missing was *evidence*: every MCS number in
+§6.4 was measured with the band already on, so nothing on record said what it
+bought — and the engine's two fire counters were computed and thrown away, so
+no arm could be asked whether it had fired at all. This section supplies both.
+
+**Nothing about the band's value changed.** The 5 cm is now measured rather
+than inherited from SBND, and it sits on a plateau.
+
+**Repro** (no new arm — the engine is re-run over clouds already on disk):
+
+```
+cd wcp-porting-img
+pdhd/docs/scripts/d16_mcs_cathode_build.sh
+python3 pdhd/docs/scripts/d16_mcs_cathode_export.py PDVD 'pdvd/work/*_d16vnu' > pdvd.mcsin
+python3 pdhd/docs/scripts/d16_mcs_cathode_export.py PDHD 'pdhd/work/*_d16hnu' > pdhd.mcsin
+pdhd/docs/scripts/d16_mcs_cathode_sweep 0 5 8 10 15 < pdvd.mcsin > pdvd.sweep.tsv
+pdhd/docs/scripts/d16_mcs_cathode_sweep 0 5 8 10 15 < pdhd.mcsin > pdhd.sweep.tsv
+python3 pdhd/docs/scripts/d16_mcs_cathode_report.py pdvd.sweep.tsv pdhd.sweep.tsv
+```
+
+### 9.1 Why no new arm was needed
+
+`fill_mcs` hands the engine `prof.pts` (`CheckSTM_Michel.cxx:847-850`), and
+`add_points(rec, chain.back(), 1, &prof)` at `:1284` persists **that same
+vector, in that same order, in cm** (`:808-812`, `:961-969`). `prof` is built
+at `:1263` and nothing between there and `:1284` touches it; `entry_pt` /
+`stop_pt` are last written at `:1240/:1249`, i.e. **before** `fill_mcs`. So the
+role-1 rows of `T_stm_michel_pts` *are* the engine's input cloud and the
+persisted endpoints *are* its two vertices. Everything the engine needs is
+already in the d16 arms.
+
+**The gate that makes this usable.** The engine is reused verbatim, but the
+input assembly is reimplemented, so before any swept number is believed the
+replay must reproduce the arm's own binary. At `xcut = 5`:
+
+| | muons | bit-exact on (`ke_MCS`, `amb`, `nsegs`, `tracklen`) |
+|---|---|---|
+| PDVD | 515 | **515** |
+| PDHD | 283 | **283** |
+
+798 of 798, exact doubles, not "within a tolerance". (Both detectors' pooled
+`ke_MCS/ke_range` at `amb < 0.2` also come back as §6.4's published **0.933**
+and **0.897**, from a completely separate code path.)
+
+### 9.2 The single-plane band is complete, not a simplification
+
+The owner's "we do not need to worry about the boundary among nearby TPCs" is
+true **by construction**: on both ProtoDUNEs — and on SBND — the only
+x-boundaries are the central cathode and the outer anode face. Every
+inter-TPC / inter-APA seam is in y or z (PDVD y = 0, |y| = 168.5, z = 149.65;
+PDHD z = 231), so a single `|x − cathode_x| ≤ cathode_xcut` test is the whole
+description. `Mcs::McsOptions` carries one scalar plane
+(`MuonMCS.h:80-81`) and one is all three detectors need.
+
+| | cathode structure half-thickness | measured dead half-width | anode \|x\| | median \|Δx\|/muon_len | path inside ±5 cm |
+|---|---|---|---|---|---|
+| SBND | 0.45 cm | ~0.45 (hole is *empty*, R = 0.00) | 202.05 cm | — | — |
+| PDHD | **0.159** cm (`cpa_thick` 3.175 mm) | not measured | 352.094 cm | **0.217** | ≈ 46 cm |
+| PDVD | **3.00** cm (`cpa_thick` 60 mm) | **4.08** cm, ~25 % of nominal density *survives* inside (doc pdvd/35 §3.2) | 339.91 cm | **0.785** | ≈ 12.7 cm |
+
+Two things in that table are worth keeping. First, PDVD's cathode hole is
+**not empty** — unlike SBND's, it reconstructs a quarter of nominal density at
+normal charge, which is exactly the material that can fake a kink. Second, the
+cost of the band is **inverted** from cathode thickness: PDVD is a vertical-drift
+detector, so its cosmics run *along* the drift axis (|Δx|/len 0.785) and a
+crossing muon spends only ~13 cm inside a ±5 cm band, while PDHD's cosmics run
+transverse to drift (0.217) and spend ~46 cm there. **PDHD pays ~3.6× more path
+per cm of band than PDVD**, despite having the thinner cathode. Any future
+argument about widening must use this, not the cathode dimensions.
+
+### 9.3 How much of the sample is even exposed
+
+`is_stm`, `muon_len ≥ 40` (`fill_mcs`'s own gate), stratified on the **cloud**
+rather than the endpoints, because a muon can graze the cathode with neither
+end near it:
+
+| stratum | PDVD | PDHD |
+|---|---|---|
+| A — never reaches \|x\| < 5 | 118 (87.4 %) | 56 (94.9 %) |
+| B — reaches the band, no sign change | 3 (2.2 %) | 0 |
+| C — sign change (true crosser) | 14 (10.4 %) | 3 (5.1 %) |
+
+Stratum A is a *provable* control, not a statistical one: with no segment in
+the band the engine's `angle_keep` mask stays empty and the answer is
+bit-identical to the band being off (`MuonMCS.cxx:1181-1210`). Measured:
+**118 of 118** (PDVD) and **56 of 56** (PDHD) bit-identical between
+`xcut = 0` and `xcut = 5`. So **at the shipped 5 cm** the band is inert on
+~90 % of the sample by construction, and everything below concerns the other
+~10 %. The strata are defined by that same 5 cm and would have to be redrawn
+for any other band — which is why the sweep rows below quote stratum A and
+B+C separately rather than re-cutting the sample per row.
+
+### 9.4 The negative control, and why 5 cm stays
+
+Turning the band **off** is the control that never existed:
+
+On the **same muons** at both settings — the exposed muons that pass
+`amb < 0.2` with the band both off and on, so this is a paired comparison and
+not two different populations:
+
+| | n (paired) | `ke_MCS/ke_range`, band 0 → 5 cm |
+|---|---|---|
+| PDVD | 12 of 17 exposed | **0.902 → 0.961** |
+| PDHD | 2 of 3 exposed | **0.621 → 1.020** |
+
+(The unpaired medians are 0.866 → 0.961 and 0.621 → 1.020; the PDVD pair
+differs because three muons pass `amb < 0.2` only with the band off — that is
+the resolution cost, priced below, not an accuracy change.)
+
+The band is not cosmetic. Two cases carry it, both on disk:
+
+- **PDVD `039349_63_d16vnu` cluster 67** — 46 fitted segments, of which the
+  band drops **one** (2 angles masked). `ke_MCS` **787.66 → 1489.86 MeV**
+  against a range energy of 1555.7. One fake kink at the cathode, in 1 of 46
+  segments, was halving the MCS energy.
+- **PDHD `028084_20_d16hnu` cluster 124** — 15 segments, 3 dropped / 4 angles
+  masked. `ke_MCS` **151.65 → 536.91 MeV** against a range energy of 530.8,
+  i.e. 0.286 → 1.011 of range.
+
+And the sweep says 5 cm is already on the plateau — this is the measurement
+that justifies leaving it alone:
+
+| `xcut` | PDVD computed / `amb<0.2` | PDVD A | PDVD B+C | PDHD computed / `amb<0.2` | PDHD A | PDHD B+C |
+|---|---|---|---|---|---|---|
+| 0 | 99.3 % / 50.4 % | 0.921 | **0.866** | 100 % / 66.1 % | 0.892 | **0.621** |
+| **5** | 99.3 % / 48.1 % | 0.921 | **0.961** | 100 % / 66.1 % | 0.892 | **1.020** |
+| 8 | 99.3 % / 48.1 % | 0.921 | 0.962 | 100 % / 66.1 % | 0.892 | 1.020 |
+| 10 | 99.3 % / 48.1 % | 0.921 | 0.962 | 100 % / 66.1 % | 0.892 | 1.019 |
+| 15 | 99.3 % / 48.1 % | 0.921 | 0.962 | **98.3 %** / 64.4 % | 0.895 | 1.013 |
+
+Everything above 5 cm is flat to ≤ 0.001, and at 15 cm PDHD starts losing
+muons outright — the `kept < 1` abort at `MuonMCS.cxx:1204`, which is the
+predictable end state of masking angles on a detector whose tracks lie in the
+cathode plane (§9.2). The price already paid at 5 cm is visible too and is the
+one the engine's header predicts ("the cost is resolution, not accuracy"):
+PDVD's `amb < 0.2` fraction falls **50.4 % → 48.1 %**, i.e. ~2 points of usable
+sample bought +9.5 % of accuracy on the exposed stratum. That is a good trade
+and it is the trade that stops being good above 5 cm.
+
+**Conclusion: the value is unchanged on both detectors**, now for a measured
+reason rather than by analogy with SBND.
+
+### 9.5 The change — the excision is now auditable
+
+`T_stm_michel` goes **97 → 99 branches**. Both are additive; no existing value
+moves.
+
+| branch | meaning |
+|---|---|
+| `muon_mcs_cathode_segs` | 14 cm segments dropped for intersecting the band |
+| `muon_mcs_cathode_angles` | likelihood terms masked with them, **including the bridging angle** |
+
+Read them as follows. Both 0 means either the band is off *or* no segment
+reached it — and in the second case the fit is bit-identical to off, which is
+the ~90 % of §9.3. A cathode-caused abort needs no branch of its own: it is
+exactly `muon_ke_mcs < 0 && muon_mcs_nsegs >= 2 && muon_mcs_cathode_angles > 0`
+(`nsegs` and `tracklen` are set *before* the cathode block, so a muon that
+aborts there still publishes a plausible `nsegs` — anyone filtering on
+`nsegs > 0` would wrongly conclude MCS ran).
+
+The per-candidate INFO line gains `cath {segs}/{angles}`, which is how both
+case studies above were read off a production log. The scan-display plumbing is
+deferred (§9.7).
+
+`mcs_cathode_x` in both `stm_michel_knobs` bags now rides the shared
+`cathode_x` job parameter instead of a literal `0.0`, matching what the
+`TaggerCheckNeutrino` bag already did. Both are 0 today, so the compiled
+config is byte-identical (proved below); it removes a trap where the two bands
+could silently diverge.
+
+### 9.6 A second binding exists, and it is dead on both ProtoDUNEs
+
+`mcs_cathode_xcut = 5` is also set for `TaggerCheckNeutrino`
+(`pdhd:1727`, `pdvd:1685`, reaching `PR::mcs_fill_kine`). **That component is
+in neither detector's default `pipeline_names`** — PDVD's list omits it and
+PDHD's comment says so explicitly. So on both ProtoDUNEs today only the
+`CheckSTM_Michel` binding can move anything, and it is the only one this
+section measured. The neutrino copy is deliberately left at 5; it needs its
+own measurement on its own population (`mcs_muon_source =
+'long_muon_else_pf'`, not a stopping muon) if that chain is ever turned on.
+
+### 9.7 Gates
+
+| gate | result |
+|---|---|
+| replay reproduces the arm at `xcut = 5` | **798 / 798 bit-exact** on `ke_MCS`, `amb`, `nsegs`, `tracklen` |
+| stratum A bit-identical `xcut` 0 vs 5 | **118/118** PDVD, **56/56** PDHD |
+| branch census, binary A/B (§9.7 note) | **0 movers of 106** pre-existing `T_stm_michel` branches on **both** detectors; exactly the 2 new columns; `T_stm_michel_pts` untouched |
+| new columns populated | PDHD 2 of 7 candidates fire (1/1 and 3/4), PDVD 1 of 6 (1/2) — zeros and non-zeros in the same run |
+| chain determinism | same binary, two PDVD runs: **0 movers** on both trees |
+| `./build/clus/wcdoctest-clus` | 338 / 338, 23 236 assertions |
+| `./build/mcs/wcdoctest-mcs` | 4 / 4, 5 651 assertions |
+| compiled config, `mcs_cathode_x` rewiring | **byte-identical** on both drivers |
+| freshness (M1) | `libWireCellClus.so` newer than the source at every build |
+
+`mcs/` is **not modified by this section at all** — the two counters it
+publishes already existed in `McsResult::counters`; they were simply never read.
+
+**The condition on the smoke and A/B rows.** They were taken in a working tree
+that also carried a *concurrent* session's uncommitted doc pdvd/51 work in this
+same file (capture-gamma branches, `stop_gamma_enable` defaulting on). The
+offline replay does not — its arms predate that work entirely. The two agree
+**bit-for-bit** on both case studies (PDHD 536.9 MeV / `cath 3/4`, PDVD
+1489.9 MeV / `cath 1/2`, matching the replay's 536.91 and 1489.86 exactly),
+which is itself the evidence that the pdvd/51 round does not perturb the MCS
+path — it does not touch `prof.pts`.
+
+The **binary A/B was therefore built to hold that session's code constant**:
+the baseline is the working tree *minus this section's five hunks and nothing
+else*, sha256-pinned before and after the build window so a concurrent edit
+could not slip in unseen. (One did arrive mid-window on the second attempt —
+comment-only, and after the build; caught by the hash, which is why the pinning
+is worth the trouble. An earlier attempt whose two builds straddled a real peer
+edit showed seven `stop_gamma_*` movers on PDVD and was discarded, not
+explained away.) With the code pinned, **both** detectors give 0 movers of 106.
+Run-to-run determinism was checked separately — the same binary twice on the
+same PDVD event moves nothing — so the discarded pair was a code difference,
+not chain noise.
+
+For the same reason, **the scan self-test is red in this tree and not by this
+section's doing**: that session has repointed `prep_stm_michel_scan.py` at its
+own `d51gh`/`d51gv` arms while the committed payloads are still `d16hnu`, so
+97 payload-vs-tree checks compare across arms. No check added or touched here.
+The scan-display plumbing for the two new branches is **deliberately deferred**
+to that round, which is mid-restructure of the very files it would land in
+(role 4 → 3 migration, new markers, new arm names).
+
+### 9.8 Open, reported not fixed
+
+- **PDHD's cathode seam has never been measured** the way doc pdvd/35 §3.2
+  measured PDVD's. Its geometric half-thickness is 0.159 cm and the band clears
+  it by 31×, so nothing here is blocked on it — but the "4.08 vs 3.00" dilation
+  PDVD showed has no PDHD counterpart on record.
+- **`degenerate_plane`** (`McsCounters`, the drift-parallel projection-plane
+  fallback, bug #9) is the PDVD-specific concern §9.2 implies: at
+  |Δx|/len = 0.785 a large fraction of PDVD segments are near drift-parallel.
+  The counter already exists and is not persisted. Not touched here.
+- The **6–10 % low bias** of §6.4 survives this section intact: it is a
+  property of stratum A (0.921 PDVD / 0.892 PDHD), which the band provably
+  never touches. It is not a cathode artefact, and doc 84's deferred item 1
+  (MCS absolute scale vs truth) remains the arbiter.
+- The exposed strata are **n = 12 (PDVD) and n = 2 (PDHD)** after the
+  `amb < 0.2` cut. The direction of the effect is unambiguous and the two case
+  studies are individually large, but the plateau above 5 cm is thinly
+  measured; a larger arm would firm it up.

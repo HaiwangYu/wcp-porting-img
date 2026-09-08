@@ -239,8 +239,20 @@ function(
         // seam loses charge, so the 14 cm segments crossing it are dropped
         // from the likelihood (mcs/inc/WireCellMcs/MuonMCS.h:68-79), the same
         // value SBND production runs.  mcs_min_len_cm rides the C++ 40.
+        //
+        // doc pdhd/16 sec 9 MEASURED this band rather than inheriting it.  The
+        // 5 cm is at the plateau: widening to 8/10/15 cm changes the exposed
+        // stratum's ke_MCS/ke_range by <= 0.001 and at 15 cm starts losing
+        // muons outright, while dropping to 0 costs it 0.902 -> 0.961 (PDVD,
+        // paired n=12) / 0.621 -> 1.020 (PDHD, n=2).  Do not retune without
+        // re-running pdhd/docs/scripts/d16_mcs_cathode_{export,sweep,report}.
+        //
+        // mcs_cathode_x rides the shared cathode_x rather than a literal, the
+        // way the TaggerCheckNeutrino bag below already does -- both are 0
+        // today, so the compiled config is unchanged; this only stops the two
+        // bands silently diverging if the convention ever moves.
         mcs_enable: true,
-        mcs_cathode_x: 0.0,
+        mcs_cathode_x: cathode_x,
         mcs_cathode_xcut: 5.0,
         // doc pdhd/17: read the unfitted-charge survival OUT of the
         // recombination model this component is already holding, instead of
