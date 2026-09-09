@@ -17,19 +17,25 @@
 # local/lib, so relinking build/ truncates the .so the live jobs are dlopening.
 # It cost doc pdhd/15 20 of 31 PDHD events.
 #
-# The legacy arm passes ONE key.  stm_michel_extra (doc pdvd/51, added to both
-# wct-pr-perevt.jsonnet) merges on top of the driver's default bag, so
-# `-S stm_michel_extra={survey_enable:false}` is provably a one-key change --
+# stm_michel_extra (doc pdvd/51, added to both wct-pr-perevt.jsonnet) merges on
+# top of the driver's default bag, so the survey keys are provably an additive
+# change --
 # unlike -S stm_michel_knobs={...}, which replaces the bag and makes the arm's
 # correctness depend on re-transcribing every other knob.
 #
 # Usage:
-#   ARM=d53v    DET=pdvd SRC=d16vnu JOBS=8 ./d53_run_arms.sh
-#   ARM=d53vleg DET=pdvd SRC=d16vnu JOBS=8 \
-#       PR_TLA='-S stm_michel_extra={survey_enable:false}' ./d53_run_arms.sh
-#   ARM=d53h    DET=pdhd SRC=d16hnu JOBS=8 ./d53_run_arms.sh
-#   ARM=d53hleg DET=pdhd SRC=d16hnu JOBS=8 \
-#       PR_TLA='-S stm_michel_extra={survey_enable:false}' ./d53_run_arms.sh
+# OWNER RULING 2026-09-08: the survey is OFF in both ProtoDUNE pr.jsonnet, so
+# the SCAN arm is the one that carries a TLA and the ...leg arm is bare
+# production.  Passing all three keys rather than survey_enable alone pins the
+# radius in the arm: relying on the C++ defaults would let a future default
+# change move the scan silently.  Verified with wcsonnet that this reproduces
+# the component config the retired pr.jsonnet stm_survey=true route produced.
+#
+#   SURVEY='-S stm_michel_extra={survey_enable:true,survey_radius_cm:60.0,survey_max_len_cm:25.0}'
+#   ARM=d53v    DET=pdvd SRC=d16vnu JOBS=8 PR_TLA="$SURVEY" ./d53_run_arms.sh
+#   ARM=d53vleg DET=pdvd SRC=d16vnu JOBS=8 ./d53_run_arms.sh
+#   ARM=d53h    DET=pdhd SRC=d16hnu JOBS=8 PR_TLA="$SURVEY" ./d53_run_arms.sh
+#   ARM=d53hleg DET=pdhd SRC=d16hnu JOBS=8 ./d53_run_arms.sh
 set -uo pipefail
 IMG=/nfs/data/1/xqian/toolkit-dev/wcp-porting-img
 DET=${DET:?set DET to pdvd or pdhd}

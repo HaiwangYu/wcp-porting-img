@@ -11,7 +11,7 @@
 # That draw was seed=20260907, tranche1=60, S1 cap 24, floor 8, stratified
 # on ITS arm's is_stm/michel_found -- deliberately the PRE-doc-15
 # meaning of michel_found, so the sample does not move with the
-# quantity it measures.  1 key(s) absent from it are tranche 2.
+# quantity it measures.  0 key(s) absent from it are tranche 2.
 scan_id	tranche	stratum	event	cluster	npts	muon_len_cm	is_stm	michel_found	michel_conn_type	michel_len	michel_ke_best	michel_kink_deg	n_dots	in_fv	reject_bits	reject_names	n_near	n_far
 4	1	S2	039252_0	77	211	125.7	1	0	0	0.0	0.0	-1.0	0	1	0	STM	1108	7196
 27	1	S1	039252_15	77	189	113.08	1	1	2	16.08	76.76	-1.0	2	1	0	STM	1873	7611

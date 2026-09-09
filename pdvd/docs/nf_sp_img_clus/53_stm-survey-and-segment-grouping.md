@@ -1,10 +1,23 @@
 # doc pdvd/53 — every piece near the stop, fitted, named and re-groupable
 
-**Status: NOT bit-identical with `survey_enable` on.** With it **off** — the C++
-default — every branch of `T_stm_michel` *and* every row and column of
-`T_stm_michel_pts` is byte-identical to doc pdvd/51 (§6.1). The two ProtoDUNE
-`pr.jsonnet` turn it on; nothing else binds `CheckSTM_Michel`, so SBND exposure
-is zero.
+**Status: OFF in production.** `survey_enable` is `false` in the C++ *and* in
+both ProtoDUNE `pr.jsonnet`, so the compiled production job is **byte-identical
+to doc pdvd/51** on both detectors (§6.4) and every branch of `T_stm_michel` and
+every row and column of `T_stm_michel_pts` are unchanged (§6.1). The hand-scan
+arms turn it on per job:
+
+```
+-S stm_michel_extra={survey_enable:true,survey_radius_cm:60.0,survey_max_len_cm:25.0}
+```
+
+**Owner ruling, 2026-09-08, taken on the measured cost rather than the
+estimate.** The round was planned with the survey on in both `pr.jsonnet`,
+priced at "+0.86 companion clusters per candidate". It is not the cluster count
+that matters: through `preload_clusters` it moves **20 % of PDVD and 25 % of
+PDHD candidates** on the muon's own profile branches (§6.2), for a feature with
+no physics value — it is scan scaffolding. So production keeps doc pdvd/51's
+output and the scan gets its display. Nothing else binds `CheckSTM_Michel`, so
+SBND exposure is zero either way.
 
 ## Repro
 
@@ -12,11 +25,11 @@ is zero.
 # the arms (all four on ONE pinned binary; see sec 6 for why the pin is not optional)
 S=pdvd/docs/nf_sp_img_clus/scripts
 export PIN=/home/xqian/tmp/d53/libpin
-LEG='-S stm_michel_extra={survey_enable:false}'
-ARM=d53v    DET=pdvd SRC=d16vnu JOBS=10 $S/d53_run_arms.sh
-ARM=d53vleg DET=pdvd SRC=d16vnu JOBS=10 PR_TLA="$LEG" $S/d53_run_arms.sh
-ARM=d53h    DET=pdhd SRC=d16hnu JOBS=10 $S/d53_run_arms.sh
-ARM=d53hleg DET=pdhd SRC=d16hnu JOBS=10 PR_TLA="$LEG" $S/d53_run_arms.sh
+SURVEY='-S stm_michel_extra={survey_enable:true,survey_radius_cm:60.0,survey_max_len_cm:25.0}'
+ARM=d53v    DET=pdvd SRC=d16vnu JOBS=10 PR_TLA="$SURVEY" $S/d53_run_arms.sh
+ARM=d53vleg DET=pdvd SRC=d16vnu JOBS=10 $S/d53_run_arms.sh      # bare production
+ARM=d53h    DET=pdhd SRC=d16hnu JOBS=10 PR_TLA="$SURVEY" $S/d53_run_arms.sh
+ARM=d53hleg DET=pdhd SRC=d16hnu JOBS=10 $S/d53_run_arms.sh
 
 # the gates
 python3 $S/d51g_branch_census.py --before 'pdvd/work/*_d53vleg' --before-arm d53vleg \
@@ -94,14 +107,20 @@ drawn where it is not. Only the middle one is a reconstruction gap.
 
 ## 2. The fix: one knob, four effects
 
-`CheckSTM_Michel` gains three keys, C++ **default OFF**, turned on in
-`cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet`:
+`CheckSTM_Michel` gains three keys, C++ **default OFF** and left off in
+`cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet` (the `stm_survey`
+function argument is threaded with the key-suppression idiom, so `false` omits
+all three keys and the compiled job is byte-identical):
 
-| knob | default | shipped | what it does |
-|---|---|---|---|
-| `survey_enable` | `false` | `true` | gates everything below |
-| `survey_radius_cm` | 60.0 | 60.0 | admission ring, outer edge, from the stop |
-| `survey_max_len_cm` | 25.0 | 25.0 | mirrors `companion_max_len_cm` |
+| knob | C++ default | production | scan arm | what it does |
+|---|---|---|---|---|
+| `survey_enable` | `false` | `false` | `true` | gates everything below |
+| `survey_radius_cm` | 60.0 | — | 60.0 | admission ring, outer edge, from the stop |
+| `survey_max_len_cm` | 25.0 | — | 25.0 | mirrors `companion_max_len_cm` |
+
+The scan arm passes all three rather than `survey_enable` alone, so the radius is
+pinned in the arm: relying on the C++ defaults would let a future default change
+move a scan silently.
 
 **(a) It widens ADMISSION and nothing else.** The companion admission radius
 becomes `stm_michel_admit_radius(michel_dot_radius_cm, stop_gamma_radius_cm,
@@ -217,29 +236,32 @@ events, 325 candidates). Per candidate:
 |---|---|---|---|---|---|
 | PDVD survey segments | 1.51 | 1 | 4.0 | 30 | **872** |
 | PDVD survey clusters | 1.44 | 1 | 4.0 | 19 | 834 |
+| PDHD survey segments | 1.88 | 1 | 5.0 | 15 | **610** |
 | PDVD clusters admitted but unfittable | 0.00 | 0 | 0 | 1 | 2 |
 
-**All 839 surveyed segments carrying a reject code are in the candidate's own
-Q-L bundle**, and zero are from another flash. That is a check on the scope
-ruling, not a finding: the survey admits same-bundle clusters only, so a
-non-zero second row would have been a defect.
+**Every one of those 872 (PDVD) and 610 (PDHD) segments emits point rows and is
+therefore in the scanner's table**, and every one is in the candidate's own Q-L
+bundle with zero from another flash. Both are checks rather than findings — see
+§5.3 for the version of this table that did *not* reconcile, and why.
 
-Why each was left unclaimed (PDVD, one row per **segment**):
+Why each was left unclaimed, one row per **segment**:
 
-| `rej` | gate | n | |
-|---|---|---|---|
-| 9 | survey only — neither stage was offered it | 494 | 58.9 % |
-| 6 | **gamma body exclusion** | 275 | 32.8 % |
-| 4 | Michel body exclusion | 52 | 6.2 % |
-| 5 | outside the gamma ring | 11 | 1.3 % |
-| 8 | energy window / per-candidate cap | 5 | 0.6 % |
-| 2 | segment too far from the stop | 2 | 0.2 % |
+| `rej` | gate | PDVD | | PDHD | |
+|---|---|---|---|---|---|
+| 9 | survey only — neither stage was offered it | 513 | 58.8 % | 382 | 62.6 % |
+| 6 | **gamma body exclusion** | 283 | 32.5 % | 157 | 25.7 % |
+| 4 | Michel body exclusion | 53 | 6.1 % | 24 | 3.9 % |
+| 5 | outside the gamma ring | 11 | 1.3 % | 10 | 1.6 % |
+| 8 | energy window / per-candidate cap | 10 | 1.1 % | 9 | 1.5 % |
+| 2 | segment too far from the stop | 2 | 0.2 % | 27 | 4.4 % |
+| 3 | longer than the piece cap | — | — | 1 | 0.2 % |
 
 **The single discriminator doing the most work is the gamma body exclusion**,
 and it is not doing it marginally: the margin `d_stop − d_body` has median
-**8.29 cm** (p10 0.87, p90 17.76), and only **4 of 275** are rejected by under
-1 mm. The Michel body exclusion is tighter but still comfortable — median
-2.34 cm, 1 of 52 under 1 mm. Neither is a coin flip at these radii.
+**8.27 cm** on PDVD (p10 0.85, p90 17.71) and **9.46 cm** on PDHD, with only
+**4 of 283** PDVD rejections under 1 mm. The Michel body exclusion is tighter but
+still comfortable — median 2.09 cm, 1 of 53 under 1 mm. Neither is a coin flip
+at these radii.
 
 ### The owner's three items, on the new arm
 
@@ -249,7 +271,7 @@ and it is not doing it marginally: the margin `d_stop − d_body` has median
 | `039253_14` cl 49 | five same-bundle pieces, all now fitted and named: `185007` (Michel body exclusion, 14.51 vs 7.36), `184006` (gamma body exclusion, 33.98 vs 23.46), and `183005` / `186008` / `187009` at 48.9 / 35.7 / 54.4 cm, survey-only. The Michel is now **two** role-3 segments, `49003` **and `49004`** |
 | `039252_15` cl 77, `039252_0` cl 77 | unchanged from doc pdvd/51 — the bridged Michel is 35 role-3 points over `265003`/`265004`, and the capture gamma is still `206004` at role 5 |
 
-## 5. Two things this round got wrong first
+## 5. Three things this round got wrong first
 
 Both were caught by measuring rather than by reading, and both would have been
 published as physics.
@@ -289,6 +311,28 @@ distance from the shipped predicate rather than re-deriving it offline. The
 shipped predicate is optimised to answer a *question*, and the intermediate it
 leaves behind need not be the quantity its name suggests.
 
+**5.3 The defect this round exists to fix, surviving inside the fix — caught by
+two totals that would not reconcile.** The first §4 read *survey segments total
+**872*** beside a reject histogram totalling ***839***. The gap is
+`add_points`'s `if (f.dx <= 0) continue;`: a surveyed segment whose every fit
+has non-positive `dx` is counted in `n_survey_segs` and emits **no point row**,
+so it is never named in `stm_michel_pts`, so `prep`'s role-keyed selector never
+picks it up, so **it is not in the scanner's table** — which is exactly the
+doc pdvd/51 defect, on 33 of 872 PDVD and 26 of 610 PDHD surveyed segments
+(3.8 % and 4.3 %).
+
+The points are real and drawable. `039252_12` cluster 130's companion segment
+`429055` has two rows in `T_rec_charge` at the candidate's own stop, carrying
+`nq` 0 and `q` at the `dQdx_offset` sentinel — the visitor writes them and
+`add_points` refused to. Role 6 now passes `keep_dead`, emitting those points
+with the **−1 dQ/dx sentinel roles 2/3/4 already use** for "the fit found no
+charge here". The two totals now reconcile exactly: 872 = 872, 610 = 610.
+
+The general lesson is that **two independent counts of the same thing are worth
+carrying in a census even when you are sure they agree.** Nothing else in this
+round would have found those 59 segments: every gate passed, every self-test
+passed, and the display simply showed one row fewer than it should have.
+
 ## 6. Gates
 
 **Binary pin.** All four arms ran under `LD_LIBRARY_PATH=/home/xqian/tmp/d53/libpin`
@@ -296,8 +340,10 @@ with `libWireCellClus.so` md5 `419b9dbfd777`, printed before and after each arm
 and unchanged; no job died in the loader. The arms were re-run from scratch
 after the §5.2 fix so that all four share one binary.
 
-**6.1 Legacy equivalence — a true byte-identical gate.** Because the C++ default
-is OFF, `survey_enable:false` is not a census waiver, it is the real thing:
+**6.1 Legacy equivalence — a true byte-identical gate.** Because the survey is
+off in the C++ *and* in both `pr.jsonnet`, the `…leg` arms are **bare
+production** — no TLA at all — so this is not a census waiver, it is the real
+thing:
 
 | | matched candidates | shared branches | bit-identical | `is_stm` flips |
 |---|---|---|---|---|
@@ -360,14 +406,29 @@ survey is invisible to the renderer, which is what "do not worry about the PF
 yet" required. The small net change is the §6.2 perturbation moving fits, not
 the survey adding nodes.
 
-**6.4 Compiled-config proof.** `wcsonnet` on both ProtoDUNE drivers, against the
-same file at HEAD: **exactly one node differs** (`CheckSTM_Michel:pr`), by
-exactly three added keys (`survey_enable`, `survey_radius_cm`,
-`survey_max_len_cm`), with no key changed or dropped, on both detectors. Only
-`cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet` were touched; SBND's own
-`pr.jsonnet` is unmodified.
+**6.4 Compiled-config proof, both routes.** `wcsonnet` on both ProtoDUNE
+drivers:
 
-**6.5 Tests.**
+* **production** (`stm_survey=false`) against the doc pdvd/51 job at HEAD — the
+  **whole compiled JSON is byte-identical**, on both detectors. Not "one node
+  differs by three keys": identical.
+* **the scan arm** (`stm_michel_extra={survey_enable:true,survey_radius_cm:60.0,
+  survey_max_len_cm:25.0}`) against the retired `pr.jsonnet stm_survey=true`
+  route — the `CheckSTM_Michel` component config is **identical**, which is why
+  the arms already on disk did not need re-running when the ruling landed.
+
+Only `cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet` were touched;
+SBND's own `pr.jsonnet` is unmodified.
+
+**6.5 Cost.** From `pr_resource_*.txt` over the arms, survey off → on:
+PDVD wall **2991 s → 2989 s** (−0.1 %), PDHD **1965 s → 1968 s** (+0.2 %);
+per-event delta median **0 s**, p90 +1 s, worst +4 s. Peak RSS delta median
+**0.000 GB**, worst +0.41 GB against an arm maximum of 2.96 GB. Admitting ~1
+more small companion per candidate and running the body-exclusion loop out are
+both free at this scale; the mover rate in §6.2, not the clock, is the reason
+the survey is off in production.
+
+**6.6 Tests.**
 
 * `./build/clus/wcdoctest-clus` — 340 cases, **23 272 assertions**, 0 failed,
   including a new suite pinning `stm_michel_admit_radius` (each stage off drops
@@ -375,14 +436,14 @@ exactly three added keys (`survey_enable`, `survey_radius_cm`,
   radius; a non-finite radius contributes nothing rather than poisoning the
   maximum) and the ring/survey partition on the owner's own measured distances.
 * `doctest_check_stm_michel_defaults.cxx` round-trips the three new keys.
-* `selftest_stm_michel_scan.py`: **51 117** checks PDVD, **30 149** PDHD, 0
+* `selftest_stm_michel_scan.py`: **51 139** checks PDVD, **30 158** PDHD, 0
   failed — including the new `[Q]` group, with a causal negative control on each
   claim (emptying `chain_role` must collapse the table to muon/unassigned, and
   the control asserts it was not already collapsed).
 * `selftest_smx3d_browser.py`: **82 + 82** checks in headless chromium, 0
   failed, driving the grouped table's real selection and the four move buttons.
 
-**6.6 The live scan (M13).** `smx1` was backed up before anything, re-prepped
+**6.7 The live scan (M13).** `smx1` was backed up before anything, re-prepped
 with `--pin-tranche`, and kept. All **12** labels still resolve to a sheet row,
 all still in tranche 1, tranche 1 still 60 rows, and **none of the 12 was
 renumbered** — the one added candidate sorts after them all. 224 of 568
@@ -407,11 +468,15 @@ selectable; deciding what they *are* is the scan's job and the next round's.
    31.72. If the scan calls it a real capture gamma, the body exclusion is too
    aggressive for blobs at large radius; if it calls it a satellite of the muon,
    the cut is right and the 4 % margin is simply where this class lives.
-3. **The 20 % / 25 % mover rate.** It is the price of the survey and it is paid
-   on the *muon's own* profile branches. Nothing in this round's evidence says
-   whether the perturbed fits are better or worse — only that they differ. A
-   smaller `survey_radius_cm` would buy fewer movers and fewer visible pieces;
-   the trade is the owner's to set after scanning.
+3. **The 20 % / 25 % mover rate is why the survey is off in production**, and
+   it stays an open question for the scan arm, where it is paid on the *muon's
+   own* profile branches. Nothing in this round's evidence says whether the
+   perturbed fits are better or worse — only that they differ. So a hand scan
+   done on the `d53` arms is scanning slightly different muons from the ones
+   production reconstructs, and **any number taken from that scan and applied to
+   production output inherits that difference**. A smaller `survey_radius_cm`
+   would buy fewer movers and fewer visible pieces; the trade is the owner's to
+   set after scanning.
 4. **`survey_radius_cm` = 60 cm has no measurement behind it.** It was chosen to
    put the owner's named pieces on screen (the farthest, `187009`, is at
    54.4 cm) and to match the display's near-image radius. That is a scanning
