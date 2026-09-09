@@ -1,0 +1,23 @@
+# doc pdvd/55 sec 16.1 / 17.6 -- the eight tranche-2 items scanned TWICE.
+# A re-spawned wave covered items another scanner had already banked.  Seven
+# pairs agree exactly; 039349_62/63 does not, and that disagreement is the
+# inter-scanner number quoted in sec 16.1 -- it is real data, not corruption.
+# 'kept' is the reading resolve.py selected: the one matching the label the
+# app actually wrote (pdhd/stm_michel_scan/resolve.py).
+item	wave	kept	verdict	michel_kind	n_tags	confidence	pin_rr	agrees_with_pair
+039349_62/63	w7_a3	no	STM_MICHEL	attached	7	high	None	NO
+039349_62/63	w8_a0	yes	STM_ONLY	none	7	high	None	NO
+039349_62/66	w7_a3	no	THRU	none	4	medium	None	yes
+039349_62/66	w8_a0	yes	THRU	none	4	medium	None	yes
+039349_71/43	w8_a2	no	STM_ONLY	detached dots	5	high	None	yes
+039349_71/43	w9_a0	yes	STM_ONLY	detached dots	5	medium	None	yes
+039349_71/51	w8_a2	no	THRU	none	26	medium	None	yes
+039349_71/51	w9_a0	yes	THRU	none	26	low	None	yes
+039349_82/48	w9_a1	no	STM_MICHEL	both	12	high	None	yes
+039349_82/48	w10_a0	yes	STM_MICHEL	both	12	high	None	yes
+039349_9/19	w9_a2	yes	STM_MICHEL	both	7	medium	None	yes
+039349_9/19	w10_a0	no	STM_MICHEL	both	7	medium	None	yes
+039349_9/20	w9_a2	yes	STM_ONLY	none	9	medium	None	yes
+039349_9/20	w10_a0	no	STM_ONLY	none	9	medium	None	yes
+039349_9/55	w9_a2	yes	STM_MICHEL	both	6	high	None	yes
+039349_9/55	w10_a0	no	STM_MICHEL	both	6	high	None	yes

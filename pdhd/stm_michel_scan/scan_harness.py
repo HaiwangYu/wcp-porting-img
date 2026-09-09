@@ -763,6 +763,14 @@ def do_apply(app, spec, labelfile):
         # source="manual" with off_fit set -- i.e. "the true stop is not on this
         # fit at all".  Prefer the slider: saying the fit overshot is a weaker
         # and more common claim than saying the fit is in the wrong place.
+        # The spec is the WHOLE statement of the item's state, so a spec that
+        # declines a pin has to be able to take one away.  Without the else the
+        # apply could only ever add: re-running it over a corrected spec left
+        # the old stop in place, and the label silently disagreed with the
+        # record (039349_82/60, tranche 2 -- a spec cut while the scanning wave
+        # was still writing carried a pin the scanner then declined).
+        # clear_pin() is a no-op when nothing is pinned, so this is safe on
+        # every item that never had one.
         pin = it.get("pin")
         if it.get("pin_rr") is not None:
             app.slider("residual range", it["pin_rr"])
@@ -771,6 +779,8 @@ def do_apply(app, spec, labelfile):
             app.text("y", "%.2f" % pin[1])
             app.text("z", "%.2f" % pin[2])
             app.click("pin at x,y,z")
+        else:
+            app.click("unset pin")
 
         # Scale the wait with the work just queued: on a 53-object item the tag
         # clicks leave a long callback queue, and a verdict click still sitting

@@ -1,0 +1,572 @@
+# doc pdvd/55 -- STM + Michel hand scan, tranches 1+2, tag smx1a.
+# verdict/kind/tags/pin read from the label ARTIFACT; confidence from the scan record.
+scan_id	tranche	key	muon_len_cm	chain_is_stm	chain_reject	verdict	michel_kind	confidence	n_obj	muon	michel	gamma	delta_other	pin_rr	stop_d_face	entry_d_face	undershoot
+4	1	039252_0/77	125.7	1	STM	STM_ONLY	detached dots	high	2	1	0	1	0		35.2	0.2	0
+27	1	039252_15/77	113.1	1	STM	STM_MICHEL	attached	high	3	1	2	0	0		79.0	0.5	0
+30	1	039252_15/91	180.5	1	STM	STM_MICHEL	both	high	5	1	2	2	0		49.8	0.0	0
+34	1	039252_16/88	304.5	1	STM	STM_MICHEL	attached	high	2	1	1	0	0		94.0	0.3	0
+47	1	039252_2/83	30.1	1	STM	STM_MICHEL	both	high	7	1	3	3	0		27.1	0.3	0
+52	1	039252_3/40	264.9	1	STM	STM_MICHEL	attached	high	2	1	1	0	0		73.8	10.2	0
+55	1	039252_3/74	87.8	1	STM	STM_MICHEL	both	high	22	5	1	1	15		42.2	0.1	0
+66	1	039252_6/114	224.7	0	no_bragg|shape_flat	THRU	none	high	8	4	0	0	4		148.0	11.2	0
+81	1	039252_9/52	28.4	0	no_bragg|shape_flat	STM_MICHEL	both	high	8	1	3	4	0		9.5	0.6	0
+112	1	039253_13/102	630.1	1	STM	STM_ONLY	detached dots	high	7	6	0	1	0		75.8	0.2	0
+115	1	039253_14/49	269.2	1	STM	STM_MICHEL	both	high	8	1	2	4	1		104.1	2.2	0
+117	1	039253_14/110	379.9	1	STM	STM_ONLY	detached dots	high	11	4	0	5	2		59.2	0.0	0
+119	1	039253_15/36	321.8	1	STM	STM_ONLY	none	high	1	1	0	0	0		21.2	15.8	0
+124	1	039253_15/105	577.7	0	no_bragg|shape_flat	STM_MICHEL	both	high	11	5	1	3	2		106.0	0.1	0
+136	1	039253_2/34	22.4	1	STM	STM_MICHEL	attached	high	3	1	2	0	0		10.7	0.5	0
+139	1	039253_2/89	256.6	1	STM	STM_MICHEL	attached	medium	6	3	3	0	0		118.3	0.1	0
+141	1	039253_2/117	71.4	1	STM	STM_MICHEL	both	high	4	1	2	1	0		19.9	0.2	0
+144	1	039253_3/66	162.1	1	STM	STM_MICHEL	attached	high	5	3	1	0	1		83.0	0.6	0
+152	1	039253_5/107	25.8	1	STM	STM_ONLY	detached dots	high	3	1	0	2	0		23.0	0.2	0
+170	1	039253_8/59	280.8	1	STM	STM_MICHEL	both	high	7	2	2	2	1		105.0	1.4	0
+171	1	039253_8/62	274.6	1	STM	STM_MICHEL	both	high	17	7	2	3	5		70.9	1.1	0
+178	1	039349_0/68	279.3	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		61.3	0.1	0
+181	1	039349_10/27	238.1	0	shape_flat	THRU	none	high	13	8	0	0	5		139.2	1.3	0
+194	1	039349_12/45	120.4	0	profile_sparse	FRAG_THRU	none	medium	6	5	0	0	1	58.78	19.0	16.9	0
+210	1	039349_15/59	253.7	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		111.7	0.1	0
+221	1	039349_18/36	147.4	0	no_bragg|shape_flat	STM_MICHEL	attached	high	8	7	1	0	0	9.56	52.2	0.4	0
+229	1	039349_2/38	70.9	0	shape_flat	STM_ONLY	none	high	7	4	0	0	3		57.1	3.4	0
+241	1	039349_21/51	198.6	0	no_bragg|shape_flat	STM_MICHEL	both	high	7	3	1	2	1		37.8	0.3	0
+249	1	039349_22/64	477.0	1	STM	STM_ONLY	detached dots	high	9	7	0	1	1		79.2	1.4	0
+261	1	039349_25/47	242.7	1	STM	STM_ONLY	none	high	3	2	0	0	1		82.3	1.8	0
+264	1	039349_26/18	74.2	0	no_bragg|shape_flat	STM_ONLY	detached dots	high	5	3	0	1	1		47.2	21.1	0
+266	1	039349_26/40	27.4	0	no_bragg|shape_flat	STM_MICHEL	both	medium	4	1	1	2	0	0.6	16.8	0.6	0
+270	1	039349_27/41	70.8	0	stop_near_boundary	STM_MICHEL	attached	medium	2	1	1	0	0		66.7	0.2	0
+273	1	039349_28/36	348.4	1	STM	STM_MICHEL	both	high	12	5	4	3	0		54.5	0.0	0
+275	1	039349_28/52	91.7	0	shape_flat|plateau_off_mip	MESSY	none	high	26	0	0	0	26		50.9	3.0	0
+281	1	039349_29/45	231.9	0	shape_flat	STM_MICHEL	both	high	7	1	1	5	0		70.4	1.9	0
+285	1	039349_3/46	16.8	0	shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0		17.1	0.5	0
+314	1	039349_35/62	219.8	1	STM	STM_MICHEL	attached	high	4	1	3	0	0		79.8	1.2	0
+317	1	039349_36/41	51.8	1	STM	STM_MICHEL	attached	high	5	3	2	0	0		21.9	1.0	0
+329	1	039349_38/60	119.4	1	STM	THRU	none	medium	1	1	0	0	0		35.3	0.1	0
+337	1	039349_4/47	44.9	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		11.6	0.6	0
+342	1	039349_40/49	56.0	0	plateau_off_mip	MESSY	none	high	21	0	0	0	21		21.9	3.1	0
+352	1	039349_43/54	86.8	1	STM	STM_MICHEL	attached	high	4	1	2	1	0		71.6	0.3	0
+368	1	039349_46/58	29.6	0	shape_flat|profile_sparse	MESSY	none	high	19	0	0	0	19		20.1	11.3	0
+376	1	039349_48/49	186.1	1	STM	STM_ONLY	detached dots	high	3	1	0	2	0		40.8	0.1	0
+410	1	039349_54/54	181.4	1	STM	STM_MICHEL	attached	high	6	3	1	2	0		33.8	0.1	0
+436	1	039349_59/61	266.6	1	STM	STM_MICHEL	attached	high	3	1	1	1	0		64.9	15.4	0
+444	1	039349_61/18	99.3	1	STM	STM_MICHEL	attached	high	3	2	1	0	0		45.6	8.8	0
+460	1	039349_63/48	365.1	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	7	2	0	0	5		0.1	2.2	0
+470	1	039349_64/71	257.4	1	STM	STM_MICHEL	both	high	6	2	2	1	1		52.7	7.7	0
+474	1	039349_66/78	209.2	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	11	5	0	3	3		68.5	0.3	0
+481	1	039349_67/78	83.7	0	shape_flat	STM_MICHEL	both	medium	4	1	2	1	0	4.8	58.5	0.8	0
+498	1	039349_7/67	58.0	1	STM	STM_MICHEL	attached	medium	7	4	2	1	0		15.7	1.1	0
+514	1	039349_72/65	267.0	1	STM	STM_MICHEL	attached	high	5	3	2	0	0		54.2	0.1	0
+524	1	039349_75/72	163.0	0	shape_flat|profile_sparse	MESSY	none	high	17	0	0	0	17		112.5	63.6	0
+529	1	039349_76/75	181.3	1	STM	STM_ONLY	none	medium	3	2	0	0	1		84.2	17.3	0
+554	1	039349_81/54	105.2	0	shape_flat|plateau_off_mip	MESSY	none	high	53	0	0	0	53		19.3	3.3	0
+558	1	039349_82/52	103.3	1	STM	STM_ONLY	none	high	8	3	0	0	5		32.9	0.6	0
+564	1	039349_83/60	172.9	1	STM	STM_MICHEL	attached	high	5	1	4	0	0		71.5	0.0	0
+568	1	039349_9/47	231.0	1	STM	STM_MICHEL	both	high	7	1	4	2	0		45.3	0.1	0
+1	2	039252_0/35	309.1	0	no_bragg|shape_flat	THRU	none	high	8	2	0	0	6		45.3	0.6	0
+2	2	039252_0/75	323.2	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	9	3	5	0	1		103.9	0.6	0
+3	2	039252_0/76	362.9	1	STM	STM_ONLY	detached dots	high	5	3	0	1	1		69.9	0.0	0
+5	2	039252_0/82	107.4	1	STM	STM_MICHEL	both	high	5	1	2	2	0		21.1	0.2	0
+6	2	039252_1/30	132.7	1	STM	STM_MICHEL	both	high	5	1	2	2	0		115.3	10.3	0
+7	2	039252_1/36	236.7	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	12	8	0	0	4		0.0	9.3	0
+8	2	039252_10/73	350.1	1	STM	STM_MICHEL	attached	high	5	4	1	0	0		105.8	0.4	0
+9	2	039252_10/103	139.8	1	STM	STM_ONLY	detached dots	medium	6	1	0	1	4		41.8	8.7	0
+10	2	039252_12/44	158.8	1	STM	STM_ONLY	detached dots	high	4	2	0	2	0		104.8	30.1	0
+11	2	039252_12/45	86.6	0	shape_flat	THRU	none	medium	1	1	0	0	0		42.2	11.8	0
+12	2	039252_12/88	43.6	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	1	1	0	0	0		3.1	4.6	0
+13	2	039252_12/90	125.7	0	no_bragg|shape_flat	THRU	none	high	7	1	0	0	6		41.4	1.1	0
+14	2	039252_12/95	155.1	0	shape_flat	STM_MICHEL	both	high	12	5	1	1	5		75.7	0.4	0
+15	2	039252_12/114	62.3	0	no_bragg|plateau_off_mip	THRU	none	medium	6	2	0	0	4		40.7	0.7	0
+16	2	039252_12/123	265.4	0	no_bragg	STM_ONLY	detached dots	medium	6	3	0	1	2		73.4	0.7	0
+17	2	039252_12/130	719.0	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	17	14	0	0	3		3.1	11.4	0
+18	2	039252_13/66	170.3	0	profile_sparse	MESSY	none	medium	21	0	0	0	21		57.9	0.1	0
+19	2	039252_13/74	202.2	0	no_bragg|shape_flat	THRU	none	medium	3	2	0	0	1		37.8	18.4	0
+20	2	039252_13/91	738.2	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	THRU	none	high	13	10	0	0	3		1.0	17.2	0
+21	2	039252_14/37	100.6	1	STM	STM_MICHEL	both	high	8	1	2	2	3		24.5	0.4	0
+22	2	039252_14/62	54.5	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	1	1	0	0	0		29.4	0.1	0
+23	2	039252_14/64	96.1	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	10	8	0	0	2		46.2	0.7	0
+24	2	039252_14/81	105.6	1	STM	STM_MICHEL	both	medium	6	1	3	1	1		46.8	0.3	0
+25	2	039252_14/84	160.9	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		64.9	0.1	0
+26	2	039252_15/32	33.8	0	shape_flat	THRU	none	medium	7	2	0	0	5		18.9	0.6	0
+28	2	039252_15/81	206.4	0	no_bragg|shape_flat	STM_MICHEL	both	high	5	1	2	1	1	2.4	37.1	0.8	0
+29	2	039252_15/82	34.7	1	STM	STM_MICHEL	attached	high	4	1	1	0	2		7.9	0.6	0
+31	2	039252_16/32	133.4	0	profile_sparse	STM_MICHEL	attached	high	6	3	2	0	1	3.35	89.2	104.7	0
+32	2	039252_16/33	144.3	0	no_bragg|stop_near_boundary	THRU	none	high	11	6	0	0	5		1.5	0.3	0
+33	2	039252_16/40	72.5	1	STM	STM_ONLY	detached dots	high	11	1	0	2	8		41.3	31.7	0
+35	2	039252_16/91	117.5	0	shape_flat|profile_sparse	MESSY	none	medium	20	0	0	0	20		22.5	3.2	0
+36	2	039252_16/98	16.2	0	shape_flat|profile_sparse	STM_MICHEL	both	high	8	1	6	1	0	3.6	13.8	0.2	0
+37	2	039252_16/108	80.8	0	plateau_off_mip	STM_ONLY	none	high	13	7	0	0	6		49.8	8.8	0
+38	2	039252_16/110	155.6	0	no_bragg|shape_flat	STM_ONLY	detached dots	high	4	2	0	2	0	3.6	67.3	0.5	0
+39	2	039252_17/80	152.6	0	no_bragg|shape_flat	THRU	none	medium	8	3	0	0	5		94.7	3.5	0
+40	2	039252_17/88	68.5	0	plateau_off_mip	STM_MICHEL	attached	high	7	1	1	0	5		45.1	0.9	0
+41	2	039252_17/90	193.7	0	no_bragg|shape_flat	THRU	none	medium	9	5	0	0	4		29.6	0.7	0
+42	2	039252_17/91	21.5	0	stop_unmatched|no_bragg|shape_flat	THRU	none	low	4	2	0	0	2		14.6	0.2	0
+43	2	039252_17/104	194.6	0	shape_flat	STM_ONLY	detached dots	high	6	2	0	1	3		116.0	4.0	0
+44	2	039252_2/39	43.2	0	no_bragg|shape_flat	STM_MICHEL	both	high	5	1	3	1	0	11.04	14.1	0.5	0
+45	2	039252_2/55	30.6	0	shape_flat	STM_MICHEL	both	high	4	1	2	1	0		17.8	0.5	0
+46	2	039252_2/79	149.7	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		36.9	2.3	0
+48	2	039252_2/86	65.7	1	STM	STM_MICHEL	both	high	4	1	2	1	0		57.6	0.9	0
+49	2	039252_2/87	162.9	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	THRU	none	high	7	5	0	0	2		4.4	2.6	0
+50	2	039252_2/103	91.5	0	stop_near_boundary	STM_MICHEL	both	medium	8	1	3	4	0		0.7	1.2	0
+51	2	039252_2/109	152.0	1	STM	STM_ONLY	detached dots	high	9	4	0	1	4		44.2	0.2	0
+53	2	039252_3/45	13.2	0	no_bragg|shape_flat	THRU	none	low	4	2	0	0	2		7.6	0.8	0
+54	2	039252_3/68	222.2	1	STM	STM_MICHEL	attached	high	10	4	1	0	5		116.5	0.2	0
+56	2	039252_3/75	33.0	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	6	1	0	2	3		24.9	0.4	0
+57	2	039252_3/90	116.6	0	shape_flat|profile_sparse	THRU	none	medium	5	4	0	0	1		13.2	4.0	0
+58	2	039252_4/55	150.8	0	no_bragg|shape_flat	THRU	none	high	7	6	0	0	1		19.9	1.2	0
+59	2	039252_5/73	62.3	0	shape_flat	STM_ONLY	detached dots	medium	10	4	0	1	5		26.3	0.7	1
+60	2	039252_6/26	246.6	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		147.9	0.2	0
+61	2	039252_6/88	68.3	0	shape_flat|profile_sparse	THRU	none	medium	6	5	0	0	1		12.6	12.1	0
+62	2	039252_6/90	64.4	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	1	1	0	0	0		0.1	5.8	0
+63	2	039252_6/98	74.3	0	no_bragg|shape_flat	THRU	none	high	15	4	0	0	11		15.4	1.2	0
+64	2	039252_6/100	103.6	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	3	2	0	1	0		15.8	0.1	0
+65	2	039252_6/106	23.7	0	plateau_off_mip	STM_ONLY	none	high	1	1	0	0	0		7.5	0.1	0
+67	2	039252_7/32	453.5	0	shape_flat	THRU	none	medium	7	6	0	0	1		145.2	0.5	0
+68	2	039252_7/34	140.2	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		8.0	0.0	0
+69	2	039252_7/37	96.2	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	9	5	0	0	4		15.8	0.6	0
+70	2	039252_7/98	113.4	0	no_bragg|shape_flat	STM_MICHEL	both	medium	5	1	1	1	2		46.4	1.1	0
+71	2	039252_7/99	328.8	0	no_bragg|shape_flat	STM_MICHEL	both	high	6	1	2	2	1		45.1	0.4	0
+72	2	039252_8/32	177.5	1	STM	STM_MICHEL	both	high	8	2	2	3	1		120.4	9.7	0
+73	2	039252_8/77	241.6	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	THRU	none	high	4	1	0	0	3		0.7	0.6	0
+74	2	039252_8/82	166.3	0	shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0		116.2	0.4	0
+75	2	039252_8/83	356.7	0	no_bragg|shape_flat	THRU	none	medium	10	3	0	0	7		65.3	14.9	0
+76	2	039252_8/93	45.2	1	STM	THRU	none	medium	8	3	0	0	5		6.4	0.6	0
+77	2	039252_8/97	138.5	0	plateau_off_mip	THRU	none	medium	13	3	0	0	10		28.5	0.6	0
+78	2	039252_8/102	106.9	0	no_bragg|plateau_off_mip	STM_MICHEL	both	medium	5	2	1	2	0		27.0	0.1	0
+79	2	039252_9/31	21.2	1	STM	STM_ONLY	none	high	1	1	0	0	0		14.2	0.1	0
+80	2	039252_9/49	145.2	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	12	6	0	2	4		66.6	0.8	0
+82	2	039252_9/88	91.9	1	STM	STM_ONLY	detached dots	medium	2	1	0	1	0		20.5	0.1	0
+83	2	039252_9/94	118.2	0	shape_flat	STM_MICHEL	both	medium	7	1	2	4	0		56.6	0.2	0
+84	2	039252_9/101	113.4	0	no_bragg|shape_flat	STM_MICHEL	both	medium	4	1	1	2	0	4.78	88.6	1.6	0
+85	2	039253_0/40	42.6	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	1	1	0	0	0		11.0	0.4	0
+86	2	039253_0/44	81.2	0	shape_flat	STM_ONLY	detached dots	high	2	1	0	1	0		38.3	8.4	0
+87	2	039253_0/87	100.1	1	STM	STM_MICHEL	both	high	7	1	2	2	2		55.0	11.9	0
+88	2	039253_0/99	46.7	0	no_bragg|shape_flat	MESSY	none	medium	13	0	0	0	13		21.2	0.9	0
+89	2	039253_0/102	14.4	0	no_bragg|shape_flat	STM_MICHEL	both	medium	7	2	4	1	0		11.8	0.7	0
+90	2	039253_0/110	87.9	0	stop_near_boundary	STM_MICHEL	both	medium	5	2	1	2	0		67.3	0.9	1
+91	2	039253_1/36	226.7	1	STM	STM_MICHEL	attached	medium	6	3	1	0	2		95.4	1.3	0
+92	2	039253_1/79	62.0	0	shape_flat	STM_ONLY	detached dots	medium	2	1	0	1	0		37.1	0.4	0
+93	2	039253_1/98	93.0	0	not_muon_pid	STM_ONLY	none	medium	4	2	0	0	2		63.8	0.4	0
+94	2	039253_1/105	64.0	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	11	4	0	0	7		38.1	1.0	0
+95	2	039253_1/116	489.5	0	no_bragg	THRU	none	high	8	7	0	0	1		108.3	0.6	0
+96	2	039253_10/25	310.9	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		132.4	10.1	0
+97	2	039253_10/35	165.9	0	no_bragg|shape_flat	THRU	none	medium	8	4	0	0	4		13.2	2.4	0
+98	2	039253_10/77	206.6	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	3	2	1	0	0		66.1	0.5	0
+99	2	039253_10/93	243.4	0	no_bragg|shape_flat	THRU	none	medium	6	4	0	0	2		101.1	14.7	0
+100	2	039253_11/39	132.3	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		3.5	0.6	0
+101	2	039253_11/44	101.5	0	shape_flat|profile_sparse	THRU	none	high	4	3	0	0	1		11.8	0.5	0
+102	2	039253_11/80	33.0	0	no_bragg|shape_flat	THRU	none	medium	1	1	0	0	0		41.4	12.9	0
+103	2	039253_11/86	96.7	0	no_bragg|shape_flat	THRU	none	high	8	1	0	0	7		51.8	1.0	0
+104	2	039253_11/106	311.4	1	STM	STM_ONLY	none	high	8	5	0	0	3		55.0	0.9	0
+105	2	039253_11/116	40.0	1	STM	STM_MICHEL	both	high	4	1	1	1	1		34.0	0.0	0
+106	2	039253_12/35	205.8	1	STM	STM_MICHEL	both	high	8	1	2	3	2		114.0	14.9	0
+107	2	039253_12/41	63.0	1	STM	STM_ONLY	none	medium	27	8	0	0	19		22.0	1.5	0
+108	2	039253_12/69	38.7	1	STM	STM_ONLY	none	high	1	1	0	0	0		27.8	0.2	0
+109	2	039253_12/88	42.7	0	continuation|stop_near_boundary|plateau_off_mip	THRU	none	high	5	3	0	0	2		1.3	11.4	0
+110	2	039253_13/39	50.0	0	shape_flat	STM_MICHEL	attached	medium	6	2	1	0	3		31.1	0.5	1
+111	2	039253_13/73	141.7	0	no_bragg|shape_flat	STM_MICHEL	both	medium	10	3	3	4	0	8.16	115.2	0.2	0
+113	2	039253_13/103	248.0	1	STM	STM_ONLY	detached dots	high	2	1	0	1	0		80.7	8.0	0
+114	2	039253_14/47	312.0	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		61.2	47.8	0
+116	2	039253_14/84	143.5	1	STM	THRU	none	medium	12	8	0	0	4		53.1	6.7	0
+118	2	039253_15/30	314.3	0	no_bragg|shape_flat|stop_into_dead	THRU	none	high	6	3	0	0	3		9.2	7.2	0
+120	2	039253_15/45	106.8	0	shape_flat	STM_MICHEL	both	high	12	3	3	4	2		21.4	10.3	0
+121	2	039253_15/77	192.8	1	STM	STM_ONLY	none	high	6	5	0	0	1		133.5	0.8	0
+122	2	039253_15/81	85.8	0	shape_flat|profile_sparse	THRU	none	medium	5	1	0	0	4		33.8	2.5	0
+123	2	039253_15/99	104.9	1	STM	STM_ONLY	none	high	2	1	0	0	1		49.6	0.4	0
+125	2	039253_16/51	38.6	1	STM	STM_ONLY	detached dots	medium	4	1	0	3	0		11.1	12.4	0
+126	2	039253_16/95	57.8	0	shape_flat|profile_sparse	THRU	none	medium	6	4	0	0	2		32.9	0.7	0
+127	2	039253_16/98	267.3	1	STM	STM_ONLY	detached dots	high	3	2	0	1	0		58.3	0.5	0
+128	2	039253_16/109	202.5	1	STM	STM_ONLY	detached dots	medium	9	2	0	1	6		43.6	0.6	0
+129	2	039253_16/119	307.4	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		148.2	6.6	0
+130	2	039253_17/44	600.6	1	STM	STM_ONLY	detached dots	high	4	3	0	1	0		94.9	7.2	0
+131	2	039253_17/77	83.9	0	shape_flat|profile_sparse	STM_MICHEL	attached	medium	4	1	3	0	0	10.06	26.9	0.0	0
+132	2	039253_17/91	122.1	0	no_bragg|shape_flat|plateau_off_mip	MESSY	none	medium	20	0	0	0	20		82.4	0.6	0
+133	2	039253_17/115	85.8	0	shape_flat	STM_MICHEL	attached	high	7	1	3	0	3		19.2	0.2	0
+134	2	039253_17/127	835.6	1	STM	STM_ONLY	none	high	16	9	0	0	7		18.5	0.2	0
+135	2	039253_2/13	253.0	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	4	3	1	0	0	3.41	76.5	0.1	0
+137	2	039253_2/75	93.7	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	2	1	0	0	1		0.4	21.8	0
+138	2	039253_2/77	324.8	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	17	8	1	0	8		95.6	0.6	0
+140	2	039253_2/102	391.2	1	STM	STM_ONLY	none	high	5	4	0	0	1		105.7	0.4	0
+142	2	039253_3/29	118.7	0	no_bragg|shape_flat	STM_MICHEL	both	medium	6	2	2	2	0	3.6	20.4	0.6	0
+143	2	039253_3/61	197.6	0	no_bragg|shape_flat	STM_MICHEL	both	medium	6	1	3	2	0	2.36	93.9	0.5	0
+145	2	039253_3/79	94.3	1	STM	STM_MICHEL	both	high	6	1	3	1	1		46.0	0.2	0
+146	2	039253_4/79	37.3	0	shape_flat	STM_MICHEL	both	medium	4	2	1	1	0		17.0	0.8	0
+147	2	039253_4/80	214.6	1	STM	STM_ONLY	none	high	2	2	0	0	0		47.7	1.0	0
+148	2	039253_4/91	328.6	1	STM	STM_ONLY	detached dots	medium	9	1	0	2	6		88.4	2.6	0
+149	2	039253_4/95	377.6	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	18	5	0	0	13		105.2	0.7	0
+150	2	039253_5/32	134.0	1	STM	STM_MICHEL	both	high	8	2	2	3	1		19.4	4.9	0
+151	2	039253_5/53	150.0	0	no_bragg|shape_flat	THRU	none	medium	2	2	0	0	0		18.9	0.4	0
+153	2	039253_5/121	94.4	0	no_bragg	THRU	none	medium	1	1	0	0	0		47.5	17.8	0
+154	2	039253_6/31	62.3	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		28.0	1.4	0
+155	2	039253_6/34	256.5	0	no_bragg|shape_flat	THRU	none	high	10	6	0	0	4		131.7	22.6	0
+156	2	039253_6/41	83.9	1	STM	STM_ONLY	detached dots	medium	9	4	0	2	3		26.6	1.1	0
+157	2	039253_6/76	79.6	0	shape_flat|profile_sparse	THRU	none	high	1	1	0	0	0		2.6	1.0	0
+158	2	039253_6/79	77.2	1	STM	STM_MICHEL	attached	high	3	1	1	0	1		32.7	0.3	0
+159	2	039253_6/82	418.6	0	shape_flat	THRU	none	medium	22	12	0	0	10		63.3	8.3	0
+160	2	039253_6/85	27.1	1	STM	STM_ONLY	none	medium	8	4	0	0	4		13.6	0.6	0
+161	2	039253_6/90	159.7	0	profile_sparse	STM_MICHEL	attached	medium	5	4	1	0	0		58.4	5.8	0
+162	2	039253_7/64	251.9	0	no_bragg|shape_flat	THRU	none	medium	8	6	0	0	2		84.9	0.4	0
+163	2	039253_7/80	152.1	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	3	1	2	0	0	9.29	97.5	0.0	0
+164	2	039253_7/92	83.9	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	3	2	0	0	1		3.5	23.9	0
+165	2	039253_8/27	29.5	0	shape_flat	STM_ONLY	detached dots	medium	3	1	0	1	1		17.1	0.3	0
+166	2	039253_8/28	197.8	0	shape_flat	STM_MICHEL	both	medium	4	2	1	1	0		13.0	0.9	0
+167	2	039253_8/31	384.6	0	no_bragg|shape_flat	THRU	none	high	10	7	0	0	3		19.2	47.4	0
+168	2	039253_8/40	247.3	0	no_bragg|shape_flat	THRU	none	medium	4	4	0	0	0		51.0	0.4	0
+169	2	039253_8/53	37.8	0	shape_flat|plateau_off_mip	MESSY	none	medium	11	0	0	0	11		4.7	5.1	0
+172	2	039253_8/64	22.2	0	shape_flat	STM_MICHEL	attached	high	4	1	2	0	1		20.9	0.1	0
+173	2	039253_9/42	269.3	0	shape_flat	STM_ONLY	detached dots	medium	5	4	0	1	0		127.2	0.9	0
+174	2	039253_9/75	153.0	1	STM	STM_ONLY	none	high	6	5	0	0	1		129.5	0.2	0
+175	2	039253_9/108	76.5	1	STM	STM_ONLY	none	medium	1	1	0	0	0		35.0	0.5	0
+176	2	039253_9/111	71.8	1	STM	STM_MICHEL	both	high	6	1	2	2	1		13.9	0.2	0
+177	2	039349_0/28	35.4	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	7	2	0	1	4		46.2	32.2	0
+179	2	039349_1/52	81.0	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0		30.6	0.2	0
+180	2	039349_1/62	321.2	0	no_bragg|shape_flat	THRU	none	high	6	4	0	0	2		58.2	1.3	0
+182	2	039349_10/54	85.6	0	no_bragg|plateau_off_mip	MESSY	none	high	28	0	0	0	28		21.4	12.7	0
+183	2	039349_10/58	172.6	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	5	3	1	0	1	9.67	64.2	5.7	0
+184	2	039349_11/19	48.8	0	no_bragg|shape_flat	STM_MICHEL	attached	high	5	2	3	0	0		27.3	0.5	0
+185	2	039349_11/24	314.4	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		63.8	0.3	0
+186	2	039349_11/41	34.0	0	shape_flat	THRU	none	high	1	1	0	0	0		25.4	0.2	0
+187	2	039349_11/43	53.3	0	shape_flat|profile_sparse	THRU	none	medium	1	1	0	0	0		17.9	9.7	0
+188	2	039349_11/46	87.7	1	STM	STM_MICHEL	both	medium	11	2	6	2	1		80.2	0.2	0
+189	2	039349_11/47	309.4	0	no_bragg|shape_flat|vertex_hadron	THRU	none	high	15	9	0	0	6		73.5	0.1	0
+190	2	039349_12/19	228.8	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		31.2	5.3	0
+191	2	039349_12/24	301.9	0	no_bragg|shape_flat	THRU	none	high	8	7	0	0	1		67.6	60.7	0
+192	2	039349_12/27	26.9	0	no_bragg|shape_flat	THRU	none	medium	4	1	0	0	3		23.7	1.3	0
+193	2	039349_12/44	403.8	1	STM	STM_ONLY	none	high	4	4	0	0	0		38.4	5.1	0
+195	2	039349_12/49	186.3	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		21.0	0.7	0
+196	2	039349_12/51	45.0	1	STM	STM_ONLY	none	medium	1	1	0	0	0		42.9	0.2	0
+197	2	039349_12/54	172.6	0	no_bragg|shape_flat	THRU	none	medium	3	3	0	0	0		59.8	0.3	0
+198	2	039349_13/28	325.7	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		118.7	13.3	0
+199	2	039349_13/29	316.7	0	no_bragg|shape_flat	THRU	none	medium	8	4	0	0	4		25.9	0.3	0
+200	2	039349_13/32	256.2	0	no_bragg|shape_flat	THRU	none	high	2	1	0	0	1		36.7	0.6	0
+201	2	039349_13/56	26.1	1	STM	THRU	none	medium	9	2	0	0	7		6.7	5.2	0
+202	2	039349_13/60	91.8	1	STM	STM_ONLY	detached dots	high	4	1	0	3	0		85.0	0.2	0
+203	2	039349_14/22	76.2	0	no_bragg|shape_flat	THRU	none	low	4	2	0	0	2		25.8	0.1	0
+204	2	039349_15/17	120.7	0	no_bragg|shape_flat	THRU	none	medium	5	4	0	0	1		22.8	9.6	0
+205	2	039349_15/18	43.6	0	no_bragg|shape_flat	THRU	none	medium	3	3	0	0	0		24.4	1.1	0
+206	2	039349_15/23	97.8	0	shape_flat	STM_ONLY	none	high	1	1	0	0	0		60.5	0.1	0
+207	2	039349_15/29	52.9	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		12.4	0.5	0
+208	2	039349_15/30	262.1	0	no_bragg|shape_flat	THRU	none	high	4	4	0	0	0		35.6	0.5	0
+209	2	039349_15/45	126.8	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		74.9	0.1	0
+211	2	039349_16/56	121.8	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	2	2	0	0	0		97.3	9.2	0
+212	2	039349_16/70	147.3	0	plateau_off_mip	STM_ONLY	none	low	4	2	0	0	2		120.6	17.3	0
+213	2	039349_17/51	130.3	0	no_bragg|shape_flat	THRU	none	high	12	7	0	0	5		35.9	0.2	0
+214	2	039349_17/52	85.8	1	STM	STM_ONLY	detached dots	high	3	1	0	2	0		37.0	0.0	0
+215	2	039349_17/62	86.8	0	no_bragg|shape_flat	THRU	none	medium	5	1	0	0	4		14.8	0.6	0
+216	2	039349_18/8	49.2	0	no_bragg|shape_flat	THRU	none	medium	6	4	0	0	2		27.8	0.1	0
+217	2	039349_18/9	92.9	0	no_bragg|shape_flat	THRU	none	medium	1	1	0	0	0		18.2	1.1	0
+218	2	039349_18/10	109.0	0	no_bragg|shape_flat	THRU	none	medium	3	2	0	0	1		32.2	1.2	0
+219	2	039349_18/18	343.6	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		36.9	0.1	0
+220	2	039349_18/33	57.8	0	shape_flat	STM_ONLY	none	high	3	3	0	0	0		24.6	0.0	1
+222	2	039349_18/39	87.8	1	STM	STM_MICHEL	both	medium	5	1	1	3	0		56.1	0.1	0
+223	2	039349_18/40	290.1	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		42.8	0.3	0
+224	2	039349_19/24	90.3	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	medium	7	3	0	0	4		0.8	0.5	0
+225	2	039349_19/52	186.7	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	6	3	1	0	2	7.19	134.8	0.0	0
+226	2	039349_19/56	20.0	0	no_bragg|shape_flat	THRU	none	medium	12	1	0	0	11		13.8	0.6	0
+227	2	039349_2/10	49.3	0	no_bragg|shape_flat	THRU	none	medium	2	2	0	0	0		18.2	0.4	0
+228	2	039349_2/15	89.3	0	no_bragg|shape_flat	THRU	none	high	2	1	0	0	1		51.5	2.0	0
+230	2	039349_2/39	161.9	0	no_bragg|shape_flat	THRU	none	high	7	3	0	0	4		75.8	1.1	0
+231	2	039349_2/41	127.6	0	shape_flat|profile_sparse	MESSY	none	high	43	0	0	0	43		74.5	0.5	0
+232	2	039349_2/56	136.5	0	no_bragg|shape_flat	STM_MICHEL	both	medium	8	3	3	1	1		72.5	1.6	0
+233	2	039349_20/29	105.4	0	no_bragg	THRU	none	medium	8	4	0	0	4		44.2	0.1	0
+234	2	039349_20/32	345.2	0	shape_flat	STM_ONLY	none	medium	5	3	0	0	2		11.0	10.8	0
+235	2	039349_20/41	42.8	0	shape_flat|profile_sparse	THRU	none	low	3	2	0	0	1		25.8	0.9	0
+236	2	039349_20/73	279.4	0	no_bragg|shape_flat	THRU	none	medium	2	1	0	0	1		81.8	0.1	0
+237	2	039349_20/77	135.3	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		69.7	0.5	0
+238	2	039349_20/79	326.5	0	no_bragg|shape_flat	THRU	none	medium	10	5	0	0	5		131.6	0.2	0
+239	2	039349_20/80	39.2	1	STM	STM_ONLY	none	high	3	2	0	0	1		17.2	0.1	0
+240	2	039349_21/26	401.9	1	STM	THRU	none	medium	10	8	0	0	2		26.1	18.9	0
+242	2	039349_22/22	67.0	0	no_bragg|shape_flat	STM_MICHEL	attached	high	8	2	4	0	2		30.2	14.8	0
+243	2	039349_22/28	305.7	0	no_bragg|shape_flat	THRU	none	medium	9	4	0	0	5		60.0	0.4	0
+244	2	039349_22/39	227.0	0	no_bragg|shape_flat	THRU	none	low	6	6	0	0	0		124.9	0.6	0
+245	2	039349_22/41	172.1	0	shape_flat	STM_MICHEL	attached	high	3	2	1	0	0		43.7	0.5	0
+246	2	039349_22/45	448.9	1	STM	THRU	none	high	11	7	0	0	4		78.7	0.1	0
+247	2	039349_22/56	54.1	0	shape_flat	STM_ONLY	detached dots	medium	8	3	0	4	1		33.8	7.2	0
+248	2	039349_22/63	439.3	0	shape_flat	STM_MICHEL	attached	high	5	2	3	0	0		119.1	0.2	0
+250	2	039349_23/28	289.5	0	no_bragg|shape_flat	THRU	none	high	7	3	0	0	4		44.2	0.1	0
+251	2	039349_23/43	155.9	0	no_bragg|shape_flat|vertex_hadron	THRU	none	high	15	7	0	0	8		103.7	12.2	0
+252	2	039349_23/54	160.2	1	STM	STM_MICHEL	both	high	4	1	2	1	0		83.2	0.2	0
+253	2	039349_24/19	299.5	1	STM	STM_ONLY	detached dots	medium	5	3	0	2	0		87.4	16.9	0
+254	2	039349_24/21	61.5	0	plateau_off_mip	UNCLEAR	none	low	2	1	0	0	1		31.7	18.3	0
+255	2	039349_24/23	90.5	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		24.2	0.2	0
+256	2	039349_24/35	60.8	0	no_bragg	STM_ONLY	detached dots	low	2	1	0	1	0		35.6	0.5	0
+257	2	039349_24/51	69.8	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		14.0	0.8	0
+258	2	039349_24/58	103.5	0	no_bragg|shape_flat	THRU	none	medium	5	2	0	0	3		39.3	0.1	0
+259	2	039349_25/37	209.3	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	5	3	0	0	2		86.0	0.3	0
+260	2	039349_25/43	126.3	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	6	5	0	0	1		9.5	0.6	0
+262	2	039349_25/48	122.7	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	5	3	0	0	2		59.9	4.7	0
+263	2	039349_26/16	194.1	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		110.2	0.3	0
+265	2	039349_26/34	112.4	0	plateau_off_mip	STM_ONLY	none	medium	2	1	0	0	1		83.8	1.9	0
+267	2	039349_26/51	186.1	1	STM	THRU	none	medium	14	8	0	0	6		63.1	0.3	0
+268	2	039349_26/59	623.8	1	STM	STM_ONLY	detached dots	high	17	14	0	1	2		42.2	0.8	0
+269	2	039349_27/13	28.3	0	no_bragg|shape_flat	THRU	none	high	3	3	0	0	0		14.2	2.0	0
+271	2	039349_27/61	81.9	0	no_bragg|shape_flat	THRU	none	high	6	3	0	0	3		21.7	1.1	0
+272	2	039349_27/62	306.5	1	STM	STM_MICHEL	attached	high	3	2	1	0	0		64.6	0.3	0
+274	2	039349_28/42	166.9	0	no_bragg|shape_flat	THRU	none	medium	6	4	0	0	2		6.6	8.2	0
+276	2	039349_28/53	85.5	0	shape_flat	THRU	none	high	4	2	0	0	2		71.7	0.1	0
+277	2	039349_28/57	267.5	0	no_bragg|shape_flat	THRU	none	high	6	5	0	0	1		103.1	0.5	0
+278	2	039349_28/60	167.2	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0	18.04	54.9	3.2	0
+279	2	039349_29/20	373.5	0	no_bragg|shape_flat	THRU	none	high	15	9	0	0	6		80.3	0.5	0
+280	2	039349_29/40	304.9	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	10	2	0	3	5		127.1	0.1	0
+282	2	039349_29/47	118.2	0	no_bragg|shape_flat	THRU	none	high	5	3	0	0	2		48.7	3.4	0
+283	2	039349_29/49	215.0	1	STM	STM_ONLY	none	high	4	3	0	0	1		93.5	0.2	0
+284	2	039349_3/26	166.2	0	no_bragg|shape_flat	THRU	none	medium	4	2	0	0	2		117.3	0.6	0
+286	2	039349_3/47	71.7	0	no_bragg|shape_flat	FRAG_STM_ONLY	none	medium	3	3	0	0	0		68.3	59.8	0
+287	2	039349_3/50	33.2	1	STM	STM_ONLY	none	high	1	1	0	0	0		29.7	2.6	0
+288	2	039349_3/58	75.3	0	shape_flat	THRU	none	medium	3	1	0	0	2		12.0	3.2	0
+289	2	039349_30/21	294.3	0	no_bragg|shape_flat	THRU	none	medium	8	3	0	0	5		86.2	0.3	0
+290	2	039349_30/28	260.0	0	no_bragg|shape_flat	THRU	none	high	5	4	0	0	1		66.2	0.2	0
+291	2	039349_30/41	448.7	0	shape_flat|continuation|plateau_off_mip	THRU	none	medium	19	6	0	0	13		19.2	0.6	0
+292	2	039349_30/45	221.2	0	shape_flat|profile_sparse	STM_MICHEL	none	medium	3	2	0	0	1	3.95	102.8	0.3	0
+293	2	039349_30/66	457.0	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	9	7	0	0	2		91.8	0.1	0
+294	2	039349_31/20	386.4	0	no_bragg|shape_flat	THRU	none	high	21	13	0	0	8		23.8	0.2	0
+295	2	039349_31/29	195.1	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		36.9	0.0	0
+296	2	039349_31/32	298.5	0	no_bragg|shape_flat	THRU	none	high	7	5	0	0	2		70.9	0.0	0
+297	2	039349_31/39	47.0	0	shape_flat	STM_MICHEL	attached	medium	5	3	1	0	1		28.9	0.2	1
+298	2	039349_31/51	54.6	0	no_bragg|shape_flat	STM_MICHEL	both	high	10	1	4	4	1	6.6	30.8	0.6	0
+299	2	039349_32/43	194.7	0	no_bragg|shape_flat	THRU	none	high	4	4	0	0	0		45.5	1.7	0
+300	2	039349_32/52	324.2	0	no_bragg|shape_flat	THRU	none	high	5	3	0	0	2		37.6	0.7	0
+301	2	039349_32/56	205.3	0	no_bragg|shape_flat	THRU	none	medium	4	1	0	0	3		91.5	0.3	0
+302	2	039349_32/58	265.3	0	no_bragg|shape_flat	THRU	none	high	17	11	0	0	6		123.0	6.8	0
+303	2	039349_32/63	199.2	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	5	2	2	0	1		25.2	0.4	0
+304	2	039349_32/68	179.7	1	STM	STM_ONLY	detached dots	high	4	2	0	2	0		69.5	2.8	0
+305	2	039349_33/21	193.7	1	STM	STM_ONLY	detached dots	medium	2	1	0	1	0		72.1	12.8	0
+306	2	039349_33/45	700.4	0	no_bragg|shape_flat	THRU	none	medium	6	4	0	0	2		44.6	1.1	0
+307	2	039349_33/58	340.9	1	STM	STM_ONLY	detached dots	medium	9	5	0	2	2		47.1	0.7	0
+308	2	039349_33/66	573.7	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	39	7	0	0	32		1.1	2.9	0
+309	2	039349_34/40	76.4	1	STM	STM_ONLY	none	high	1	1	0	0	0		29.7	0.8	0
+310	2	039349_34/46	29.0	1	STM	STM_MICHEL	attached	high	3	2	1	0	0		21.5	1.5	0
+311	2	039349_34/48	457.8	0	shape_flat|profile_sparse	STM_ONLY	detached dots	low	12	6	0	4	2	5.24	25.6	0.1	0
+312	2	039349_35/24	109.5	0	no_bragg|shape_flat	THRU	none	medium	2	2	0	0	0		30.0	12.7	0
+313	2	039349_35/30	80.9	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	medium	3	1	0	0	2		2.0	0.9	0
+315	2	039349_35/75	555.4	1	STM	STM_ONLY	none	medium	8	4	0	0	4		72.1	0.5	0
+316	2	039349_36/23	326.4	0	shape_flat	THRU	none	medium	3	2	0	0	1		87.9	0.6	0
+318	2	039349_36/46	145.8	1	STM	STM_MICHEL	attached	medium	4	2	1	0	1		63.9	0.4	0
+319	2	039349_36/63	334.2	0	no_bragg|shape_flat	STM_MICHEL	both	high	7	1	3	2	1	1.8	46.1	0.1	0
+320	2	039349_36/64	95.6	1	STM	STM_ONLY	detached dots	medium	2	1	0	1	0		17.9	0.8	0
+321	2	039349_37/33	96.2	0	shape_flat|profile_sparse	MESSY	none	medium	12	0	0	0	12		39.0	14.1	0
+322	2	039349_37/39	260.9	1	STM	STM_MICHEL	both	high	23	12	3	1	7		24.7	0.1	0
+323	2	039349_37/52	67.4	0	plateau_off_mip	THRU	none	medium	18	9	0	0	9		30.8	1.1	0
+324	2	039349_37/67	708.6	0	no_bragg|shape_flat	THRU	none	medium	11	10	0	0	1		122.5	0.3	0
+325	2	039349_38/27	390.8	0	no_bragg|shape_flat	THRU	none	high	6	4	0	0	2		22.8	0.7	0
+326	2	039349_38/32	24.0	0	no_bragg|shape_flat	THRU	none	medium	3	1	0	0	2		19.9	0.1	0
+327	2	039349_38/33	377.3	0	shape_flat	THRU	none	medium	9	6	0	0	3		44.4	0.6	0
+328	2	039349_38/57	274.6	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	4	2	1	0	1	3.6	130.2	0.2	0
+330	2	039349_38/61	107.2	0	no_bragg|shape_flat	THRU	none	medium	13	6	0	0	7		29.4	0.4	0
+331	2	039349_38/67	210.6	1	STM	STM_MICHEL	both	high	4	2	1	1	0		22.5	0.6	0
+332	2	039349_39/27	402.7	0	no_bragg|shape_flat	THRU	none	high	11	6	0	0	5		67.1	1.0	0
+333	2	039349_39/46	244.9	1	STM	STM_ONLY	none	high	3	2	0	0	1		107.1	0.3	0
+334	2	039349_39/56	142.9	0	no_bragg|shape_flat	THRU	none	medium	5	3	0	0	2		20.0	0.3	0
+335	2	039349_4/26	364.2	0	no_bragg|shape_flat	THRU	none	high	15	8	0	0	7		71.5	0.5	0
+336	2	039349_4/36	89.2	1	STM	STM_MICHEL	both	high	7	1	1	4	1		9.1	0.2	0
+338	2	039349_4/54	34.5	0	no_bragg|shape_flat	THRU	none	medium	1	1	0	0	0		22.3	0.2	0
+339	2	039349_4/56	242.2	0	no_bragg|shape_flat	THRU	none	medium	5	3	0	0	2		63.4	0.3	0
+340	2	039349_4/60	411.5	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		92.6	0.1	0
+341	2	039349_40/42	179.5	0	no_bragg|shape_flat	THRU	none	high	9	4	0	0	5		23.6	1.0	0
+343	2	039349_41/23	301.7	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		120.4	0.3	0
+344	2	039349_41/51	162.9	0	shape_flat|profile_sparse	STM_MICHEL	attached	medium	5	3	2	0	0		110.8	0.3	0
+345	2	039349_42/41	12.6	0	stop_unmatched|plateau_off_mip	MESSY	none	high	27	0	0	0	27		7.1	0.1	0
+346	2	039349_42/43	292.4	0	no_bragg|shape_flat	THRU	none	medium	9	6	0	0	3		82.7	4.3	0
+347	2	039349_42/45	93.4	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		75.7	0.1	0
+348	2	039349_42/48	178.5	0	no_bragg|shape_flat	THRU	none	medium	7	4	0	0	3		118.1	0.2	0
+349	2	039349_42/52	190.7	1	STM	STM_MICHEL	both	high	11	4	5	2	0		120.0	0.5	0
+350	2	039349_42/53	139.9	0	no_bragg|shape_flat	THRU	none	high	3	3	0	0	0		23.4	0.3	0
+351	2	039349_43/50	19.3	1	STM	STM_MICHEL	attached	high	2	1	1	0	0		15.9	1.7	0
+353	2	039349_43/62	22.8	0	stop_unmatched|stop_near_boundary|plateau_off_mip	THRU	none	high	4	1	0	0	3		2.4	8.9	0
+354	2	039349_43/65	300.3	0	no_bragg|shape_flat	THRU	none	high	7	4	0	0	3		74.9	0.4	0
+355	2	039349_43/66	190.7	0	no_bragg	THRU	none	medium	5	2	0	0	3		48.4	0.1	0
+356	2	039349_44/18	60.4	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		31.6	1.3	0
+357	2	039349_44/26	224.0	0	no_bragg|shape_flat	THRU	none	medium	29	13	0	0	16		93.6	0.7	0
+358	2	039349_44/28	24.1	0	no_bragg|shape_flat	FRAG_STM_MICHEL	both	medium	6	2	1	1	2	4.27	131.3	121.9	0
+359	2	039349_44/53	102.9	0	no_bragg|shape_flat	THRU	none	high	5	2	0	0	3		36.3	0.1	0
+360	2	039349_44/66	260.1	0	shape_flat|profile_sparse	THRU	none	medium	22	12	0	0	10		133.8	0.4	0
+361	2	039349_44/68	72.9	0	no_bragg|shape_flat	THRU	none	high	4	2	0	0	2		48.1	0.0	0
+362	2	039349_44/72	102.9	0	shape_flat|profile_sparse	THRU	none	medium	12	6	0	0	6		43.4	40.4	0
+363	2	039349_44/75	772.5	1	STM	STM_ONLY	detached dots	medium	18	11	0	3	4		32.2	0.1	0
+364	2	039349_45/16	263.0	0	no_bragg|shape_flat	THRU	none	high	6	5	0	0	1		33.1	0.5	0
+365	2	039349_45/25	47.4	0	no_bragg|shape_flat	FRAG_THRU	none	medium	4	2	0	0	2		58.0	59.2	0
+366	2	039349_45/52	412.8	0	no_bragg|shape_flat	THRU	none	high	9	6	0	0	3		40.4	0.3	0
+367	2	039349_46/47	80.2	1	STM	STM_ONLY	none	high	1	1	0	0	0		63.9	0.5	0
+369	2	039349_47/24	294.4	0	no_bragg|shape_flat	THRU	none	high	9	6	0	0	3		58.6	0.6	0
+370	2	039349_47/31	98.2	1	STM	STM_MICHEL	attached	high	4	1	1	0	2		15.9	0.4	0
+371	2	039349_47/57	261.9	1	STM	STM_ONLY	none	high	6	5	0	0	1		30.2	0.7	0
+372	2	039349_47/59	155.7	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		98.2	0.4	0
+373	2	039349_47/68	112.3	1	STM	STM_ONLY	none	medium	5	2	0	0	3		71.8	0.1	0
+374	2	039349_48/14	234.7	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	12	7	0	0	5		0.3	18.8	0
+375	2	039349_48/21	225.0	0	no_bragg|shape_flat	THRU	none	medium	7	7	0	0	0		131.9	2.7	0
+377	2	039349_48/54	129.0	0	no_bragg|shape_flat	STM_MICHEL	attached	low	7	4	1	0	2		61.8	0.1	0
+378	2	039349_48/58	265.4	1	STM	STM_ONLY	detached dots	high	7	4	0	2	1		132.4	0.3	0
+379	2	039349_48/63	329.7	1	STM	STM_ONLY	detached dots	medium	9	5	0	3	1		142.6	6.2	1
+380	2	039349_49/48	298.1	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		28.9	0.1	0
+381	2	039349_49/70	143.4	1	STM	STM_ONLY	detached dots	high	2	1	0	1	0		72.9	17.0	0
+382	2	039349_49/72	74.1	0	stop_near_boundary|profile_sparse	THRU	none	medium	7	2	0	0	5		3.2	1.4	0
+383	2	039349_5/54	321.1	0	no_bragg|shape_flat	STM_MICHEL	both	medium	9	4	2	1	2	4.12	61.6	0.1	0
+384	2	039349_5/64	423.3	0	shape_flat	STM_MICHEL	attached	high	6	2	4	0	0		35.0	0.3	0
+385	2	039349_5/65	34.2	0	shape_flat|continuation	STM_MICHEL	both	high	7	1	3	3	0		23.7	1.0	0
+386	2	039349_50/15	64.2	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		53.5	14.6	0
+387	2	039349_50/17	84.3	0	no_bragg|shape_flat	THRU	none	medium	2	1	0	0	1		9.2	0.5	0
+388	2	039349_50/45	261.5	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	6	3	0	2	1		115.9	0.2	0
+389	2	039349_50/46	216.1	0	no_bragg|shape_flat	THRU	none	medium	5	3	0	0	2		33.3	1.5	0
+390	2	039349_50/58	32.5	0	no_bragg|shape_flat	THRU	none	high	5	2	0	0	3		15.1	0.2	0
+391	2	039349_51/16	71.3	0	no_bragg|shape_flat	THRU	none	high	4	2	0	0	2		41.6	7.0	0
+392	2	039349_51/17	61.3	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		44.5	0.4	0
+393	2	039349_51/21	92.4	0	no_bragg|shape_flat	STM_ONLY	detached dots	medium	5	3	0	1	1		22.4	2.1	0
+394	2	039349_51/24	281.3	0	shape_flat	STM_MICHEL	both	high	9	1	2	5	1		70.9	128.9	0
+395	2	039349_51/25	54.9	1	STM	STM_ONLY	detached dots	high	2	1	0	1	0		48.6	12.3	0
+396	2	039349_51/29	73.8	0	no_bragg|shape_flat	STM_MICHEL	detached dots	medium	4	1	0	3	0	8.99	52.2	1.8	0
+397	2	039349_51/44	148.8	0	no_bragg|shape_flat	THRU	none	medium	9	7	0	0	2		74.4	0.4	0
+398	2	039349_51/59	311.2	0	no_bragg|shape_flat	THRU	none	high	5	4	0	0	1		46.9	0.5	0
+399	2	039349_52/36	201.3	0	no_bragg|shape_flat	STM_MICHEL	both	medium	5	1	2	2	0	6.29	49.1	0.2	0
+400	2	039349_52/50	38.9	1	STM	STM_ONLY	detached dots	high	3	1	0	1	1		34.5	0.4	0
+401	2	039349_52/52	120.5	1	STM	STM_ONLY	detached dots	high	7	1	0	4	2		77.1	0.5	0
+402	2	039349_53/20	131.2	0	no_bragg|shape_flat	THRU	none	high	2	1	0	0	1		45.3	0.1	0
+403	2	039349_53/45	277.3	1	STM	STM_MICHEL	both	high	5	1	3	1	0		77.9	0.4	0
+404	2	039349_53/46	305.1	0	no_bragg|shape_flat	THRU	none	medium	4	3	0	0	1		143.4	0.7	0
+405	2	039349_53/51	242.9	0	shape_flat	STM_ONLY	none	medium	8	3	0	0	5		101.7	0.3	0
+406	2	039349_53/56	43.4	0	no_bragg|shape_flat	THRU	none	high	5	3	0	0	2		35.3	0.0	0
+407	2	039349_54/18	309.1	0	no_bragg|shape_flat	THRU	none	medium	3	2	0	0	1		33.3	1.2	0
+408	2	039349_54/20	312.2	0	no_bragg|shape_flat	THRU	none	high	20	7	0	0	13		148.7	0.5	0
+409	2	039349_54/30	130.0	0	shape_flat	STM_MICHEL	both	high	10	4	2	4	0		56.6	4.3	0
+411	2	039349_54/56	27.1	0	shape_flat|profile_sparse	STM_MICHEL	both	medium	13	1	4	8	0	11.06	30.2	14.9	0
+412	2	039349_54/62	80.1	0	no_bragg|shape_flat|stop_near_boundary	FRAG_THRU	none	high	2	1	0	0	1		2.3	26.3	0
+413	2	039349_54/65	149.5	0	stop_near_boundary|plateau_off_mip	FRAG_THRU	none	high	5	5	0	0	0		0.1	15.9	0
+414	2	039349_54/66	302.2	0	shape_flat|plateau_off_mip	THRU	none	high	11	6	0	0	5		48.0	10.5	0
+415	2	039349_55/24	312.6	0	shape_flat	STM_ONLY	none	high	14	9	0	0	5		125.1	0.4	0
+416	2	039349_55/31	198.5	0	no_bragg|shape_flat	THRU	none	high	9	5	0	0	4		13.7	1.0	0
+417	2	039349_55/55	222.9	0	no_bragg|shape_flat	THRU	none	high	3	3	0	0	0		20.5	1.0	0
+418	2	039349_56/18	103.3	0	plateau_off_mip	THRU	none	high	6	6	0	0	0		45.2	0.4	0
+419	2	039349_56/23	231.6	0	no_bragg|shape_flat	THRU	none	high	8	4	0	0	4		137.6	0.5	0
+420	2	039349_56/28	102.2	1	STM	STM_ONLY	detached dots	medium	9	4	0	2	3		52.1	0.7	0
+421	2	039349_56/30	23.7	0	no_bragg|shape_flat	THRU	none	medium	2	1	0	0	1		22.5	28.6	0
+422	2	039349_56/36	218.4	0	shape_flat	STM_MICHEL	attached	high	5	3	1	0	1	1.8	87.0	0.3	0
+423	2	039349_56/41	360.7	1	STM	STM_ONLY	none	high	1	1	0	0	0		138.3	0.2	0
+424	2	039349_56/47	156.6	0	no_bragg|shape_flat	THRU	none	high	2	1	0	0	1		85.0	0.3	0
+425	2	039349_56/53	325.4	1	STM	STM_ONLY	detached dots	medium	10	3	0	4	3		50.8	2.0	0
+426	2	039349_57/22	291.1	0	no_bragg|shape_flat	THRU	none	high	5	3	0	0	2		27.7	0.2	0
+427	2	039349_57/26	181.6	0	shape_flat|profile_sparse	FRAG_THRU	none	high	3	2	0	0	1		129.5	116.8	0
+428	2	039349_57/27	151.7	0	no_bragg|shape_flat	THRU	none	high	11	7	0	0	4		21.9	0.1	0
+429	2	039349_57/67	319.2	0	no_bragg|shape_flat	THRU	none	high	14	7	0	0	7		64.7	0.4	0
+430	2	039349_58/21	24.9	0	shape_flat	STM_ONLY	none	medium	1	1	0	0	0		19.7	5.8	0
+431	2	039349_58/69	41.2	0	no_bragg|shape_flat	STM_MICHEL	detached dots	medium	12	1	0	7	4	2.79	14.0	0.3	0
+432	2	039349_58/72	129.9	1	STM	STM_MICHEL	both	high	6	2	3	1	0		45.8	0.0	0
+433	2	039349_59/14	24.9	1	STM	THRU	none	medium	1	1	0	0	0		23.1	6.2	0
+434	2	039349_59/25	87.7	0	no_bragg|shape_flat	THRU	none	high	7	2	0	0	5		72.1	1.5	0
+435	2	039349_59/29	157.8	0	no_bragg|shape_flat	THRU	none	high	7	3	0	0	4		72.8	2.1	0
+437	2	039349_6/56	85.6	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		30.3	0.1	0
+438	2	039349_6/61	374.2	0	shape_flat	THRU	none	high	4	4	0	0	0		120.0	0.0	0
+439	2	039349_6/62	295.8	1	STM	THRU	none	high	10	3	0	0	7		58.1	0.1	0
+440	2	039349_6/75	244.6	0	no_bragg|shape_flat	THRU	none	high	8	6	0	0	2		39.9	4.8	0
+441	2	039349_60/40	328.9	0	shape_flat	STM_MICHEL	attached	medium	3	1	1	0	1	6.21	141.2	0.2	0
+442	2	039349_60/46	137.1	0	profile_sparse	MESSY	none	medium	4	0	0	0	4		62.6	5.8	0
+443	2	039349_60/47	91.0	0	plateau_off_mip	MESSY	none	medium	9	0	0	0	9		68.5	3.1	0
+445	2	039349_61/20	332.1	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		55.4	0.5	0
+446	2	039349_61/21	115.1	0	no_bragg|shape_flat	STM_MICHEL	both	medium	6	2	2	1	1	13.88	7.1	0.1	0
+447	2	039349_61/30	179.1	1	STM	STM_ONLY	none	high	6	4	0	0	2		13.9	11.8	0
+448	2	039349_61/50	224.6	1	STM	STM_MICHEL	both	high	3	1	1	1	0		82.2	0.1	0
+449	2	039349_61/51	89.3	1	STM	STM_MICHEL	both	high	6	1	1	2	2		42.9	0.3	0
+450	2	039349_61/58	49.2	1	STM	STM_MICHEL	both	medium	24	5	3	8	8		28.5	3.2	0
+451	2	039349_61/62	83.0	0	no_bragg|shape_flat	THRU	none	high	13	4	0	0	9		67.3	0.4	0
+452	2	039349_62/32	340.7	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		53.3	0.0	0
+453	2	039349_62/35	133.4	0	shape_flat	THRU	none	medium	2	2	0	0	0		76.7	0.4	0
+454	2	039349_62/36	26.5	0	no_bragg|shape_flat	THRU	none	medium	4	1	0	0	3		21.5	1.7	0
+455	2	039349_62/63	204.3	1	STM	STM_ONLY	none	high	7	6	0	0	1		115.6	2.2	0
+456	2	039349_62/66	252.8	0	no_bragg|shape_flat	THRU	none	medium	4	3	0	0	1		146.5	0.4	0
+457	2	039349_62/70	86.7	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		31.4	0.8	0
+458	2	039349_63/41	84.0	0	no_bragg|shape_flat	STM_MICHEL	both	medium	14	1	10	3	0		43.0	0.3	0
+459	2	039349_63/47	119.9	0	no_bragg|plateau_off_mip	THRU	none	medium	8	5	0	0	3		29.6	0.4	0
+461	2	039349_63/52	112.3	1	STM	STM_ONLY	none	high	3	1	0	0	2		92.5	0.3	0
+462	2	039349_63/55	180.8	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	7	2	1	0	4		102.0	0.4	0
+463	2	039349_63/67	696.6	1	STM	STM_MICHEL	attached	high	10	6	1	0	3		47.4	0.8	0
+464	2	039349_64/24	188.3	0	shape_flat	STM_MICHEL	both	medium	6	2	1	1	2		45.4	32.0	0
+465	2	039349_64/52	51.6	0	no_bragg|shape_flat	STM_MICHEL	both	medium	13	4	5	3	1		31.0	0.3	0
+466	2	039349_64/58	211.7	0	no_bragg|shape_flat	THRU	none	high	5	2	0	0	3		28.0	0.0	0
+467	2	039349_64/61	290.8	1	STM	STM_ONLY	detached dots	medium	16	5	0	7	4		24.8	0.0	0
+468	2	039349_64/65	38.5	0	shape_flat	STM_MICHEL	attached	low	6	3	1	0	2		6.9	0.0	0
+469	2	039349_64/70	108.3	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		53.1	0.6	0
+471	2	039349_65/40	293.2	0	stop_near_boundary	STM_ONLY	detached dots	medium	3	2	0	1	0		123.7	0.4	0
+472	2	039349_66/32	139.5	0	no_bragg|shape_flat	THRU	none	high	2	1	0	0	1		36.5	0.0	0
+473	2	039349_66/33	261.1	0	no_bragg|shape_flat	THRU	none	medium	5	2	0	0	3		16.3	0.6	0
+475	2	039349_66/81	81.8	0	no_bragg|shape_flat	THRU	none	high	9	3	0	0	6		38.5	0.2	0
+476	2	039349_67/37	197.0	1	STM	STM_ONLY	none	high	7	6	0	0	1		110.2	0.3	0
+477	2	039349_67/41	231.1	0	no_bragg|shape_flat	THRU	none	high	6	3	0	0	3		89.7	0.4	0
+478	2	039349_67/64	218.4	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		127.3	0.4	0
+479	2	039349_67/75	154.1	1	STM	STM_MICHEL	both	high	4	1	1	2	0		21.0	0.3	0
+480	2	039349_67/76	75.6	0	no_bragg|shape_flat	THRU	none	high	3	2	0	0	1		40.3	0.2	0
+482	2	039349_68/24	44.2	1	STM	STM_ONLY	none	high	1	1	0	0	0		11.2	10.2	0
+483	2	039349_68/28	204.6	0	shape_flat|profile_sparse	THRU	none	medium	14	4	0	0	10		22.0	37.5	0
+484	2	039349_68/34	242.7	0	no_bragg|shape_flat	THRU	none	high	8	5	0	0	3		113.3	0.4	0
+485	2	039349_68/38	341.6	0	no_bragg|shape_flat	THRU	none	medium	17	7	0	0	10		36.2	0.1	0
+486	2	039349_68/49	331.1	0	no_bragg|shape_flat	THRU	none	high	5	4	0	0	1		139.1	0.2	0
+487	2	039349_68/63	102.0	0	no_bragg|shape_flat	STM_MICHEL	both	medium	6	3	2	1	0		81.0	0.2	0
+488	2	039349_68/65	67.6	1	STM	STM_ONLY	none	medium	2	1	0	0	1		7.8	1.9	0
+489	2	039349_68/71	59.0	0	plateau_off_mip	MESSY	none	medium	7	0	0	0	7		24.5	20.9	0
+490	2	039349_69/23	330.4	0	no_bragg|shape_flat	THRU	none	high	10	5	0	0	5		28.0	0.1	0
+491	2	039349_69/56	113.8	1	STM	STM_MICHEL	both	medium	4	2	1	1	0		106.1	2.2	0
+492	2	039349_7/4	209.1	0	shape_flat|profile_sparse	STM_MICHEL	attached	medium	6	2	3	0	1	5.66	91.9	0.8	0
+493	2	039349_7/29	383.1	0	no_bragg|shape_flat	THRU	none	medium	6	3	0	0	3		56.1	8.9	0
+494	2	039349_7/56	252.8	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		90.3	0.6	0
+495	2	039349_7/57	98.3	0	no_bragg|shape_flat	THRU	none	medium	16	8	0	0	8		36.4	6.3	0
+496	2	039349_7/63	23.9	0	shape_flat	STM_ONLY	none	high	2	1	0	0	1		13.9	0.6	0
+497	2	039349_7/65	118.1	0	plateau_off_mip	STM_ONLY	detached dots	medium	4	1	0	3	0		51.7	4.0	0
+499	2	039349_70/20	139.7	0	no_bragg|shape_flat	THRU	none	high	9	5	0	0	4		109.9	0.6	0
+500	2	039349_70/44	69.9	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		30.9	0.5	0
+501	2	039349_70/56	391.4	1	STM	STM_ONLY	detached dots	medium	12	6	0	3	3		97.8	0.5	0
+502	2	039349_70/61	279.5	0	no_bragg|shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0		38.3	0.1	0
+503	2	039349_71/27	41.0	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	FRAG_THRU	none	medium	2	1	0	0	1		0.8	1.3	0
+504	2	039349_71/28	264.8	0	no_bragg|shape_flat	THRU	none	high	8	3	0	0	5		68.0	0.2	0
+505	2	039349_71/37	197.4	0	no_bragg|shape_flat	STM_MICHEL	none	medium	11	7	0	0	4	6.6	44.9	2.3	0
+506	2	039349_71/43	100.7	1	STM	STM_ONLY	detached dots	medium	5	2	0	1	2		55.2	2.7	0
+507	2	039349_71/51	93.0	0	plateau_off_mip	THRU	none	low	26	7	0	0	19		42.9	3.5	0
+508	2	039349_71/59	228.2	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	8	7	0	0	1		19.9	0.3	0
+509	2	039349_72/11	342.3	0	no_bragg|shape_flat	THRU	none	high	6	6	0	0	0		128.5	0.2	0
+510	2	039349_72/19	447.3	0	no_bragg|shape_flat	THRU	none	high	9	7	0	0	2		113.5	0.5	0
+511	2	039349_72/49	119.1	1	STM	STM_ONLY	none	high	1	1	0	0	0		42.3	3.1	0
+512	2	039349_72/51	323.3	0	no_bragg|shape_flat	THRU	none	high	8	4	0	0	4		62.7	0.4	0
+513	2	039349_72/54	90.7	0	no_bragg|shape_flat	THRU	none	medium	3	2	0	0	1		33.7	0.9	0
+515	2	039349_73/25	121.6	0	no_bragg|shape_flat	THRU	none	high	4	2	0	0	2		113.5	127.5	0
+516	2	039349_73/55	145.6	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		41.9	0.1	0
+517	2	039349_73/60	26.4	1	STM	STM_ONLY	detached dots	medium	2	1	0	1	0		18.6	0.4	0
+518	2	039349_73/62	115.9	1	STM	STM_MICHEL	both	high	3	1	1	1	0		45.9	0.7	0
+519	2	039349_73/72	114.7	0	no_bragg|shape_flat	THRU	none	high	5	1	0	0	4		44.5	5.7	0
+520	2	039349_74/28	242.4	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	high	12	6	0	0	6		71.6	0.7	0
+521	2	039349_74/47	162.9	0	no_bragg|shape_flat	THRU	none	high	1	1	0	0	0		114.5	2.4	0
+522	2	039349_75/26	247.1	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		63.5	0.6	0
+523	2	039349_75/69	331.3	0	no_bragg|shape_flat	THRU	none	medium	4	2	0	0	2		24.1	0.3	0
+525	2	039349_75/73	177.4	0	no_bragg|shape_flat|stop_near_boundary	THRU	none	high	10	7	0	0	3		4.7	1.2	0
+526	2	039349_76/23	285.9	0	no_bragg|shape_flat|vertex_hadron	THRU	none	medium	25	11	0	0	14		104.3	0.1	0
+527	2	039349_76/25	173.3	0	shape_flat	STM_ONLY	none	medium	8	5	0	0	3		27.6	0.6	0
+528	2	039349_76/27	194.7	0	no_bragg|shape_flat	THRU	none	medium	4	3	0	0	1		103.6	0.1	0
+530	2	039349_77/20	169.3	0	no_bragg|shape_flat	THRU	none	medium	6	3	0	0	3		16.5	0.5	0
+531	2	039349_77/26	301.4	0	shape_flat|plateau_off_mip	THRU	none	medium	6	3	0	0	3		78.6	0.1	0
+532	2	039349_77/48	58.9	0	shape_flat|profile_sparse	THRU	none	medium	2	1	0	0	1		49.1	8.2	0
+533	2	039349_77/52	41.1	0	plateau_off_mip	MESSY	none	medium	8	0	0	0	8		15.5	11.0	0
+534	2	039349_77/63	154.5	0	shape_flat	STM_MICHEL	both	high	3	1	1	1	0		24.5	0.0	0
+535	2	039349_78/22	163.5	0	shape_flat|continuation|stop_near_boundary	THRU	none	high	20	5	0	0	15		2.8	1.6	0
+536	2	039349_79/26	147.5	0	no_bragg|shape_flat	THRU	none	low	20	8	0	0	12		79.9	4.5	0
+537	2	039349_79/29	195.1	0	no_bragg|shape_flat	THRU	none	high	31	11	0	0	20		3.5	0.5	0
+538	2	039349_79/71	291.9	0	no_bragg|shape_flat|plateau_off_mip	THRU	none	medium	10	6	0	0	4		100.4	6.8	0
+539	2	039349_8/19	378.0	0	no_bragg|shape_flat	THRU	none	high	2	2	0	0	0		46.5	0.1	0
+540	2	039349_8/52	326.2	0	no_bragg|shape_flat	THRU	none	high	4	3	0	0	1		70.4	0.3	0
+541	2	039349_8/53	205.7	1	STM	STM_ONLY	none	high	2	2	0	0	0		80.9	0.1	0
+542	2	039349_8/54	105.6	1	STM	STM_MICHEL	both	high	4	1	1	2	0		78.7	0.4	0
+543	2	039349_80/27	34.9	0	no_bragg|shape_flat	THRU	none	medium	1	1	0	0	0		22.5	9.9	0
+544	2	039349_80/48	54.4	0	shape_flat|plateau_off_mip	THRU	none	medium	4	3	0	0	1		62.1	8.2	0
+545	2	039349_80/56	353.1	0	shape_flat	THRU	none	high	14	5	0	0	9		146.9	0.2	0
+546	2	039349_80/70	299.6	0	no_bragg|shape_flat	THRU	none	medium	6	3	0	0	3		95.4	3.5	0
+547	2	039349_81/14	187.6	0	no_bragg|shape_flat	THRU	none	high	6	5	0	0	1		93.8	0.2	0
+548	2	039349_81/21	299.6	0	no_bragg|shape_flat	THRU	none	high	10	7	0	0	3		82.5	5.6	0
+549	2	039349_81/25	84.3	0	no_bragg|shape_flat	STM_MICHEL	none	medium	3	2	0	0	1	6.25	25.0	9.7	0
+550	2	039349_81/41	37.6	0	shape_flat	STM_MICHEL	attached	medium	2	1	1	0	0		22.7	4.7	0
+551	2	039349_81/44	153.9	0	shape_flat	STM_MICHEL	attached	medium	7	1	1	0	5	7.59	59.1	0.2	0
+552	2	039349_81/45	124.2	0	shape_flat|profile_sparse	MESSY	none	high	35	0	0	0	35		85.7	0.2	0
+553	2	039349_81/51	72.2	0	no_bragg|shape_flat	THRU	none	medium	14	3	0	0	11		57.3	0.5	0
+555	2	039349_82/25	99.5	0	no_bragg|shape_flat	STM_ONLY	none	medium	2	2	0	0	0		39.7	0.0	0
+556	2	039349_82/41	212.7	1	STM	STM_ONLY	none	high	9	4	0	0	5		61.2	1.8	0
+557	2	039349_82/48	255.5	1	STM	STM_MICHEL	both	high	12	3	2	5	2		128.6	0.2	0
+559	2	039349_82/54	11.2	0	shape_flat	STM_MICHEL	both	medium	5	1	3	1	0		8.6	0.2	0
+560	2	039349_82/60	451.5	0	no_bragg|shape_flat	STM_ONLY	none	medium	6	5	0	0	1		70.6	0.4	0
+561	2	039349_83/23	210.7	0	no_bragg|shape_flat	THRU	none	high	11	4	0	0	7		57.9	0.3	0
+562	2	039349_83/49	77.0	0	no_bragg|shape_flat	THRU	none	high	6	3	0	0	3		33.8	0.2	0
+563	2	039349_83/53	172.9	0	shape_flat|stop_near_boundary|profile_sparse	THRU	none	medium	16	7	0	0	9		3.2	29.5	0
+565	2	039349_83/68	67.2	0	no_bragg|shape_flat	THRU	none	high	6	4	0	0	2		30.8	0.6	0
+566	2	039349_9/19	39.6	0	no_bragg|shape_flat	STM_MICHEL	both	medium	7	2	1	2	2		24.7	6.9	0
+567	2	039349_9/20	191.3	1	STM	STM_ONLY	none	medium	9	5	0	0	4		11.8	0.2	0
+569	2	039349_9/55	130.7	1	STM	STM_MICHEL	both	high	6	1	3	2	0		78.5	0.1	0

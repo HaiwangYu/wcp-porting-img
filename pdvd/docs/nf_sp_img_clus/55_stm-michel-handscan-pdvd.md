@@ -41,6 +41,9 @@ numbers are in §14, the two failure mechanisms and the recommended cut in
     python3 check_shots.py $W/shots_t2 $W/reshoot.txt
     # the frozen rubric the 509 were scanned against
     less ../../pdvd/docs/scan/pdvd_stm_michel_scan_rubric.md
+    # every number in sections 14 and 15, re-derived from the committed record,
+    # and diffed against the literals published here
+    python3 mkstats.py --check
 
 Sheet `pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv` (tranche 1 = 60 items),
 payloads `pdhd/stm_michel_scan/prep-pdvd/`, labels
@@ -1122,6 +1125,25 @@ mechanisms are untouched by it: they are payload arithmetic over all 569 items.
 one-line change plus regenerating the shots — and it is what would *measure* the
 flag rather than review it.
 
+### 16.4 Gates on the census
+
+| gate | result |
+|---|---|
+| every one of the 509 written by clicking the real widgets | 509 saved, **0 retries**, no `SystemExit` in any apply log |
+| the five private label dirs merge disjointly | 102+102+102+102+101 = **509**, no key written twice |
+| the 60 tranche-1 rows survive the merge | **all 60 byte-identical** to the pre-round snapshot `7456ee89` |
+| the owner's two live pins survive | `039349_12/45` rr 58.78, `039349_26/40` rr 0.60 — **preserved as found** |
+| `pdvd/work/stm_michel_labels/smx1/` untouched (M13) | sha `8fc76b33…` unchanged start to end |
+| `verify_scan_record.py … --record …` | **569 records over 569 rows**; every verdict, kind and tag matches. Two mismatches remain **by design** — the owner's pins above, which the record does not claim |
+| `score_stm_michel_scan.py --det pdvd --tag smx1a` | clean, rc 0 (it refuses an unknown `label`) |
+| `mkstats.py --check` | **0 of 4** published tables differ from the recomputed values |
+| `mkfailures.py` regenerated deterministically | reproduces the committed `failures.tsv` **byte-identically** |
+| every drawn object carries a tag | `allow_partial` on **0** of 509; **3462** tags over the 509, **3927** over all 569 |
+
+The label file went `7456ee89` (60 rows) → `724693b3` (569) → `afa025be` after
+the one-row correction of §17.6. Those shas are recorded so a later clobber is
+detectable rather than silent.
+
 ---
 
 ## 17. Found and not fixed
@@ -1227,6 +1249,67 @@ plateau ratio (§15.2) and the shape tests, which are scale-free and survive
 harness neither detects the loss per-item nor retries — it reports
 `(regl) context lost` in an end-of-run summary naming nothing, and writes the
 degraded PNG without complaint. §13.2 has the measurement and the workaround.
+
+**`do_apply` could add a pin but never take one away** — *fixed in this round.*
+The spec is the whole statement of an item's state, but the pin branch only had
+`pin_rr` and `pin` arms: an item whose spec declines a pin left whatever pin was
+already saved. That made `apply` non-idempotent, so re-running it over a
+corrected spec silently kept the old stop. `scan_harness.py` now clicks
+**`unset pin`** in the else branch; `clear_pin()` is a no-op when nothing is
+pinned, so the other 508 items are unaffected. §17.6 is the case that found it.
+
+### 17.6 Two defects of mine in the round's own tooling
+
+Both were caught by `verify_scan_record.py` over the merged 569 rows, which
+named **three** mismatches where only the owner's two live pins were expected.
+
+1. **A spec cut from a wave that was still writing.** `mkspec.py` snapshotted
+   `spec_1.json` at 13:03:29; the scanner's record for `039349_82/60` was
+   rewritten at **13:09:16**, six minutes later. The captured version asked for
+   `pin_rr = 4.0`; the scanner's final record declines it, opening *"Declined
+   overshoot candidate, and this is the hard call."* Both versions call the item
+   `STM_ONLY / none` — they differ **only** on whether to move the stop — so the
+   app placed a pin (rr 4.2, stop moved 3.86 cm) the scanner had decided
+   against.
+
+   Measured over all 509 applied items against the final records: **verdict 0,
+   `michel_kind` 0, tags 0** differ; `pin_rr` **1**; notes 5. The physics content
+   of every row is intact. The item was re-applied through the real widgets from
+   the corrected record (pin now `placed: false`, `source: fit-end`, moved
+   0.00 cm) and the patch proved the other 568 rows byte-identical.
+
+   *Why the earlier check missed it:* the per-row check compared the label on
+   disk against **the spec**, proving the apply was faithful — which it was. It
+   could not see that the spec itself was stale. The comparison that matters is
+   spec-against-record, and it now runs over all 509.
+
+2. **Non-deterministic duplicate resolution.** `v_parts/` holds **517 files for
+   509 items** — eight were scanned twice, when a re-spawned wave covered items
+   another scanner had already banked. Seven pairs agree exactly; one does not
+   (`039349_62/63`: `STM_MICHEL/attached` in wave 7, `STM_ONLY/none` in wave 8 —
+   a genuine inter-scanner disagreement, and the one quoted in §16.1). Three
+   scripts read that tree with `os.walk` + `recs[key] = r`, i.e. **last-writer-
+   wins in filesystem order**, so two runs could publish different rows.
+
+   That mattered concretely: the chain has `is_stm=1, michel_found=0` here, so
+   `STM_ONLY` yields no failure row while `STM_MICHEL` yields a
+   `D_michel_false_negative`. `t2/resolve.py` now collapses the 517 to 509 once,
+   breaking the tie to **whichever record matches the label the app actually
+   wrote** — not a judgement about which scan is better — and refusing rather
+   than guessing when it cannot. `mkfailures.py` reads only the committed record
+   and no longer touches the scratch tree, so anyone can regenerate it.
+
+   The pushed register was checked, not assumed: regenerating it deterministically
+   reproduces the committed `pdvd_stm_michel_failures.tsv` **byte-identically**,
+   so the non-determinism never reached published output — but it was correct by
+   walk order, not by construction.
+
+   Both readings of all eight pairs are kept in
+   `pdvd/docs/scan/pdvd_stm_michel_duplicate_scans.tsv`, with the one `resolve.py`
+   selected marked. They are worth reading as free repeat measurements: beyond
+   `039349_62/63`, two pairs agree on verdict, kind and every tag but disagree on
+   **confidence** (`039349_71/43` high vs medium, `039349_71/51` medium vs low) —
+   which is the §16.2 point about the softer fields, arrived at independently.
 
 ---
 

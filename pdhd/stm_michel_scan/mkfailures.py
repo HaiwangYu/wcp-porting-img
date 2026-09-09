@@ -11,7 +11,6 @@ and prints the per-class census.
 """
 import csv, json, math, os, statistics as st, sys, collections
 
-SC = "/home/xqian/tmp/claude-25225/-home-xqian-toolkit-dev-toolkit/d9d688aa-85d3-4ebf-900f-e2f746766f40/scratchpad/scan"
 IMG = "/home/xqian/toolkit-dev/wcp-porting-img"
 P = IMG + "/pdhd/stm_michel_scan/prep-pdvd"
 sys.path.insert(0, IMG + "/pdhd/stm_michel_scan")
@@ -19,17 +18,18 @@ import scan_harness as H                                          # noqa: E402
 
 MIP = 54000.0
 
-# ---- the hand scan: tranche 1 from the committed record, tranche 2 from v_parts
+# ---- the hand scan: the committed 569-record scan record, and nothing else.
+#
+# This used to merge a raw os.walk of the scratch t2/v_parts tree on top of the
+# record.  That was a defect: v_parts holds 517 per-scanner files for 509 items
+# (eight were scanned twice), and one of those pairs disagrees, so "recs[key] =
+# r" in filesystem order let two runs of this script produce different rows for
+# 039349_62/63.  A published register has to regenerate identically, so the
+# duplicate is now resolved once, upstream, by t2/resolve.py -- which breaks the
+# tie to whichever scan matches the label the app actually wrote -- and this
+# reads only the committed record that resolution produced.
 scan = {r["key"]: r for r in
         json.load(open(IMG + "/pdvd/docs/scan/pdvd_stm_michel_smx1a_verdicts.json"))}
-for dd, _, fns in os.walk(SC + "/t2/v_parts"):
-    for f in fns:
-        if f.endswith(".json"):
-            try:
-                r = json.load(open(os.path.join(dd, f)))
-                scan[r["key"]] = r
-            except Exception:
-                pass
 
 sheet = {"%s/%s" % (r["event"], r["cluster"]): r for r in csv.DictReader(
     [l for l in open(IMG + "/pdvd/docs/scan/pdvd_stm_michel_scan_sheet.tsv")
