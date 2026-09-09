@@ -354,6 +354,18 @@ deliberate: `score_stm_michel_scan.py` reads `rec["label"]` unguarded, so a row
 without one would not enlarge the scan, it would stop the scorer. Click a label
 first — the label click writes the pin and the tags with it.
 
+### What comes back when you step between items
+
+Everything the row holds: the verdict, the Michel kind, the notes, your segment
+tags and your pin. `next >` and `< prev` re-seed all five from the file.
+
+Two of those used to be re-seeded on **every repaint**, not only on an item
+change, which is a different bug with the same look: type a note and then move
+the pin, and the note was gone; pick `attached` and then move the pin, and the
+radio went back to unset — so the **STM + MICHEL** button refused the label as
+undescribed and you had to pick it twice. Both are fixed (2026-09-08); the
+box and the radio now only reload when you actually change item.
+
 ### What used to be lost, and is not any more
 
 Until 2026-09-08 the pin was the one hand-placed datum with **no write-through
@@ -451,7 +463,7 @@ writer's default wire.
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
 | `selftest_stm_michel_scan.py` | 45624 (PDVD) / 26509 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
-| `selftest_pin_persistence.py` | 28 checks (PDVD) / 21 (PDHD, check 10 skipped): that a pin placed before a label is held and *said* to be held, that the label click stores it, that **moving it after the label writes through**, that leaving an item and returning restores it as `source='pin'` at the same point, that a re-label cannot downgrade a placed pin, that `unset pin` still un-pins and persists that, that a PF tag on a labelled item writes through and is restored, that `SAVE this item` writes all three and its confirmation survives the repaint, and that it refuses an item with no verdict. Check 10 replays the live `smx1` row `039349_18/36` — the only one with a hand-placed pin — out of a copy. Run the same file against the pre-2026-09-08 viewer and checks 1, 3, 4 and 5 fail: that negative control is what makes it a test of the fix |
+| `selftest_pin_persistence.py` | 34 checks (PDVD) / 27 (PDHD, check 10 skipped): that a pin placed before a label is held and *said* to be held, that the label click stores it, that **moving it after the label writes through**, that leaving an item and returning restores it as `source='pin'` at the same point, that a re-label cannot downgrade a placed pin, that `unset pin` still un-pins and persists that, that a PF tag on a labelled item writes through and is restored, that `SAVE this item` writes all three and its confirmation survives the repaint, that it refuses an item with no verdict, and that a note and a Michel kind entered *before* the label survive every repaint and are stored by the label click. Check 10 replays the live `smx1` row `039349_18/36` — the only one with a hand-placed pin — out of a copy. Run the same file against the pre-2026-09-08 viewer and checks 1, 3, 4 and 5 fail: that negative control is what makes it a test of the fix |
 | `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and the grouped object table are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |

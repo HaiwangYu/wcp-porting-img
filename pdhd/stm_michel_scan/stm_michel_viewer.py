@@ -1544,6 +1544,9 @@ def render(reframe=False):
         state["_pf_item"] = item_key(it)
         # ... and the stopping point, on the same terms (see restore_pin)
         state["pin_warn"] = restore_pin(rec0, X, Y, Z)
+        # the notes box and the Michel radio are re-seeded from the row further
+        # down, and ONLY here -- see the comment there
+        state["_just_switched"] = True
     refresh_segments(pay)
 
     P = pin_point(pay)
@@ -1615,10 +1618,19 @@ def render(reframe=False):
     fill_reveal(v, rev)
     fill_flow(v, rev)
 
+    # Re-seed from the row ON AN ITEM CHANGE ONLY.  These used to be assigned on
+    # EVERY render, which meant any repaint before the label click threw away
+    # what the scanner had just entered: type a note and move the pin, the note
+    # was gone; pick `attached` and move the pin, the radio went back to unset
+    # and the STM + MICHEL button then REFUSED the label as undescribed.  The
+    # header says "type BEFORE clicking a label", and that was the trap.
+    # Restoring on a real item change is what the scanner wants and is what the
+    # pin and the PF tags already do a few lines above.
     rec = LABELS.get(item_key(it), {})
-    notes.value = rec.get("notes", "")
-    mk = rec.get("michel_kind")
-    michel_kind.active = MICHEL_KINDS.index(mk) if mk in MICHEL_KINDS else 0
+    if state.pop("_just_switched", False):
+        notes.value = rec.get("notes", "")
+        mk = rec.get("michel_kind")
+        michel_kind.active = MICHEL_KINDS.index(mk) if mk in MICHEL_KINDS else 0
     michel_kind.width = 560
     done = sum(1 for i in ITEMS if item_key(i) in LABELS)
     t1 = [i for i in ITEMS if i["tranche"] == 1]

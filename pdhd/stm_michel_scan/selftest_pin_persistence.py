@@ -137,6 +137,34 @@ try:
        "9. SAVE refuses to write a row with no label")
     ck("needs a verdict" in G["status"].text, "9. ... and says why")
     # ------------------------------------------------------------------
+    # 9b. A note and a Michel kind entered BEFORE the label must survive the
+    # repaints that every other control triggers.  They used to be re-seeded
+    # from the row on every render, so moving the pin wiped both -- and a wiped
+    # radio makes the STM + MICHEL button refuse the label as undescribed.
+    # ------------------------------------------------------------------
+    G["go"](0)
+    G["notes"].value = "typed before the label"
+    G["michel_kind"].active = 1
+    G["set_pin_index"](j_new)
+    ck(G["notes"].value == "typed before the label",
+       "9b. a typed note survives moving the pin")
+    ck(G["michel_kind"].active == 1,
+       "9b. a Michel kind picked before the label survives moving the pin")
+    G["render"]()
+    ck(G["notes"].value == "typed before the label",
+       "9b. ... and a plain repaint")
+    G["set_label"]("STM_MICHEL")
+    d9 = disk(LD)[key]
+    ck(d9["notes"] == "typed before the label" and d9["label"] == "STM_MICHEL",
+       "9b. the label click stores the note it was typed with")
+    ck(d9["michel_kind"] == G["MICHEL_KINDS"][1],
+       "9b. ... and the Michel kind, so the label is not refused")
+    # switching items still re-seeds both from the row
+    G["go"](other); G["go"](0)
+    ck(G["notes"].value == "typed before the label",
+       "9b. a real item change restores the saved note")
+
+    # ------------------------------------------------------------------
     # 10. THE OWNER'S OWN ROW.  smx1/039349_18/36 is the only one of the 25
     # live labels with placed=True, so it is the one datum whose restore has
     # never been exercised.  Copied into a scratch labeldir -- smx1 is read,
