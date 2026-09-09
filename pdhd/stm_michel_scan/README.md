@@ -140,7 +140,8 @@ Keep the escape hatches distinct: `FRAG` is about the **cluster**, `MESSY` about
 the **object**, `UNCLEAR` about **your confidence**. Do not spend a fragment on
 `UNCLEAR` — that is the one substitution the scan cannot recover.
 
-Clicking a label **saves immediately** and jumps to the next unlabelled item.
+Clicking a label **saves immediately** — the verdict, the pin and the segment
+tags together.
 Type a note *before* clicking. `next unlabelled >>` resumes where you left off.
 
 ## Only the muon's own bundle
@@ -339,7 +340,49 @@ this item's own row — label, Michel kind, pin, segment tags.
   banner says so in amber. Tagging an item that already has a label writes
   through immediately.
 
-## The pin, and one honest limit
+### `SAVE this item` (2026-09-08)
+
+The green **SAVE this item** button beside the notes box writes the item on
+screen — **the stopping point, the segment tags and the notes** — into its row
+and prints what the file then holds. It is not a new persistence path: every
+control already writes through. It is the one place that does all three at once,
+for when you want to be sure rather than to reason about which control wrote
+what.
+
+It **refuses** on an item you have not given a verdict yet, and says so. That is
+deliberate: `score_stm_michel_scan.py` reads `rec["label"]` unguarded, so a row
+without one would not enlarge the scan, it would stop the scorer. Click a label
+first — the label click writes the pin and the tags with it.
+
+### What used to be lost, and is not any more
+
+Until 2026-09-08 the pin was the one hand-placed datum with **no write-through
+and no restore**. Three consequences, all silent:
+
+- moving the pin *after* labelling an item never reached the file, unless you
+  happened to click a label again;
+- coming back to an item redrew it on the fit's own end, so a pin you had placed
+  looked as though it had never been saved;
+- and because the pin was rebuilt from that cleared state, **re-labelling an
+  item replaced a placed pin with `placed=false, moved_cm=0.0`** — the file is
+  written atomically over itself and keeps no history, so the placement was
+  gone with no trace.
+
+The pin now behaves exactly as the segment tags do: every move writes through
+when the item has a row, returning to an item restores it (matched back to the
+nearest chain point, or kept at its stored x/y/z and flagged in red if the
+payload no longer has a point there), and a re-label can no longer downgrade
+one. `unset pin` is the only way back to the fit end, and it persists too.
+
+## The pin, and two honest limits
+
+**The restore's own limit.** A pin comes back matched to the nearest point of
+the drawn chain. If the payload no longer has a point there — a re-prepped arm,
+a changed fit — it is restored at the exact x/y/z you placed instead, the
+distance is printed in red beside the item line, and from that moment the row
+records it as `source: "manual"` with `rr: null`. The **coordinates**, `placed`
+and `moved_cm` are preserved, which is everything `score_stm_michel_scan.py`
+reads; what is lost is the provenance saying it once sat on a chain point.
 
 You place the muon's **stopping point**: tap any panel to snap to the nearest
 point of the fitted chain, drag the residual-range slider, or type an x/y/z if
@@ -408,6 +451,7 @@ writer's default wire.
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
 | `selftest_stm_michel_scan.py` | 45624 (PDVD) / 26509 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
+| `selftest_pin_persistence.py` | 28 checks (PDVD) / 21 (PDHD, check 10 skipped): that a pin placed before a label is held and *said* to be held, that the label click stores it, that **moving it after the label writes through**, that leaving an item and returning restores it as `source='pin'` at the same point, that a re-label cannot downgrade a placed pin, that `unset pin` still un-pins and persists that, that a PF tag on a labelled item writes through and is restored, that `SAVE this item` writes all three and its confirmation survives the repaint, and that it refuses an item with no verdict. Check 10 replays the live `smx1` row `039349_18/36` — the only one with a hand-placed pin — out of a copy. Run the same file against the pre-2026-09-08 viewer and checks 1, 3, 4 and 5 fail: that negative control is what makes it a test of the fix |
 | `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and the grouped object table are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |

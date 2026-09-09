@@ -1103,6 +1103,13 @@ pf_oth_btn = Button(label="delta / other", button_type="default", width=112)
 pf_mix_btn = Button(label="straddles", button_type="warning", width=92)
 pf_clr_btn = Button(label="→ unassigned", button_type="default", width=120)
 save_info_btn = Button(label="what is saved on disk?", button_type="default", width=200)
+# Owner 2026-09-08.  Every writer already calls save_labels(), so this button is
+# not a new persistence path -- it is the affordance that says so, and the one
+# place that writes the pin, the PF tags and the notes of the item on screen in
+# a single act.  It REFUSES on an item with no verdict yet: score_stm_michel_scan
+# reads rec["label"] unguarded, so a row without one does not make the scan
+# bigger, it makes the scorer die.
+save_now_btn = Button(label="SAVE this item", button_type="success", width=150)
 # Owner 2026-09-08, item 4: the event and cluster as SELECTABLE TEXT.  The badge
 # and the status line already say them, but inside HTML that is awkward to grab;
 # a TextInput can be clicked, ctrl-A'd and copied.  Both forms are here because
@@ -1131,7 +1138,7 @@ saved_table = DataTable(
              TableColumn(field="item", title="event / cluster", width=118),
              TableColumn(field="label", title="label", width=110),
              TableColumn(field="michel", title="michel", width=56),
-             TableColumn(field="pin", title="pin", width=36),
+             TableColumn(field="pin", title="pin cm", width=48),
              TableColumn(field="pf", title="pf", width=26)])
 saved_head = Div(text="", width=430, name="saved_head")
 
@@ -1237,11 +1244,122 @@ def pin_point(pay):
     return float(X[i]), float(Y[i]), float(Z[i]), float(RR[i]), "pin"
 
 
+def _set_off_fit(active):
+    """Set the checkbox WITHOUT firing its callback.
+
+    on_off_fit persists and repaints, and every pin control sets this box as
+    part of its own work -- so an unguarded write re-enters render() from
+    inside render().  Same shape as the _seg_busy guard on the object table.
+    """
+    state["_pin_busy"] = True
+    try:
+        off_fit_chk.active = list(active)
+    finally:
+        state["_pin_busy"] = False
+
+
 def set_pin_index(i):
     state["pin_i"] = int(i)
     state["pin_manual"] = None
-    off_fit_chk.active = []
+    _set_off_fit([])
+    persist_pin()
     render()
+
+
+# How far the nearest trajectory point may sit from a restored pin's stored
+# x/y/z before we refuse to call them the same point.  The chain's own spacing
+# is sub-cm, so anything past this means the payload is not the one the pin was
+# placed on and snapping would move a hand-placed datum.
+PIN_RESTORE_TOL_CM = 1.0
+
+
+def restore_pin(rec, X, Y, Z):
+    """Put a saved pin back on an item the scanner is returning to.
+
+    The row stores x/y/z, never the index, so a 'pin' source is matched back to
+    the NEAREST trajectory point -- the same argmin the tap and the slider use,
+    so it round-trips as source='pin'.  A 'manual' pin goes back verbatim.
+
+    Returns a warning string, or None.  Before this existed the pin was the one
+    hand-placed datum in the row with no restore: go() cleared it, the item
+    re-drew on the fit end, and the NEXT label click on that item rebuilt the
+    pin from the cleared state -- silently replacing placed=True, moved=8.3 with
+    placed=False, moved=0.0.  Mirrors the pf_segments restore in render().
+    """
+    p = (rec or {}).get("pin") or {}
+    state["pin_i"] = None
+    state["pin_manual"] = None
+    _set_off_fit([0] if p.get("off_fit") else [])
+    if not p.get("placed"):
+        return None
+    try:
+        px, py, pz = float(p["x"]), float(p["y"]), float(p["z"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if p.get("source") == "manual" or not X.size:
+        state["pin_manual"] = (px, py, pz)
+        return None
+    d = np.hypot(np.hypot(X - px, Y - py), Z - pz)
+    i = int(np.argmin(d))
+    if float(d[i]) > PIN_RESTORE_TOL_CM:
+        # do not fake a match: keep the coordinates the scanner actually placed
+        state["pin_manual"] = (px, py, pz)
+        return ("your saved pin is %.1f cm from the nearest point of the drawn "
+                "trajectory &mdash; restored at its stored x, y, z rather than "
+                "snapped onto this fit" % float(d[i]))
+    state["pin_i"] = i
+    return None
+
+
+def build_pin(pay):
+    """The pin dict as it goes on disk.  ONE builder for every writer.
+
+    Was inline in set_label(); the Save button, the write-throughs and the label
+    click must all produce the identical shape or a row's provenance depends on
+    which control the scanner happened to use.
+    """
+    P = pin_point(pay) if pay is not None else None
+    if P is None:
+        return None
+    px, py, pz, prr, psrc = P
+    u, cr, fa, how = pin_unit(pay, px, py, pz, psrc)
+    # how far the scanner moved it from the drawn chain end.  0.0 with
+    # placed=True means "I looked and I agree", which is a different datum
+    # from placed=False ("I never touched it").
+    X, Y, Z, Q, RR = muon_arrays(pay)
+    j = int(np.argmin(RR)) if RR.size else 0
+    moved = (float(np.hypot(np.hypot(px - X[j], py - Y[j]), pz - Z[j]))
+             if RR.size else None)
+    return dict(x=round(px, 2), y=round(py, 2), z=round(pz, 2),
+                rr=None if prr is None else round(prr, 2),
+                placed=(psrc != "fit-end"), source=psrc,
+                moved_cm=None if moved is None else round(moved, 2),
+                off_fit=bool(off_fit_chk.active),
+                unit=u, cru=cr, face=fa, unit_source=how)
+
+
+def persist_pin():
+    """Write the pin through the moment it moves, exactly as set_pf_tag does.
+
+    Waiting for a label click meant a pin moved AFTER the verdict was never
+    written, and one moved before it was only written if the scanner happened to
+    click a label again.  With no label row yet there is nothing to write into,
+    so say that instead of inventing a row.
+    """
+    it = current()
+    if it is None:
+        return
+    rec = LABELS.get(item_key(it))
+    if rec is None:
+        save_div.text = (
+            "<div style='background:#fff6e5;padding:6px;font-size:92%'>"
+            "<b>pin held, NOT yet on disk</b> &mdash; it is written with the "
+            "label. Click a label button (or <b>SAVE this item</b>) to save."
+            "</div>")
+        return
+    rec["pin"] = build_pin(payload(it))
+    save_labels()
+    show_save()
 
 
 def centre_candidates(pay):
@@ -1424,6 +1542,8 @@ def render(reframe=False):
         # `unassigned` click pops the tag
         state["pf_stick"] = set(rec0.get("pf_segments") or {})
         state["_pf_item"] = item_key(it)
+        # ... and the stopping point, on the same terms (see restore_pin)
+        state["pin_warn"] = restore_pin(rec0, X, Y, Z)
     refresh_segments(pay)
 
     P = pin_point(pay)
@@ -1514,9 +1634,12 @@ def render(reframe=False):
     # picked silently.  Absent on a pre-doc-14 arm -> say so, invent nothing.
     ke = _muon_ke_text(pay.get("verdict") or {})
     status.text = ("event %s cluster %d &mdash; %d chain points over %.1f cm%s, "
-                   "%d image points at full density, %d thinned context points"
+                   "%d image points at full density, %d thinned context points%s"
                    % (it["event"], it["cluster"], X.size, it["muon_len"], ke,
-                      len(near["x"]), len(far["x"])))
+                      len(near["x"]), len(far["x"]),
+                      "" if not state.get("pin_warn") else
+                      " <span style='color:#b00'>&mdash; %s</span>"
+                      % state["pin_warn"]))
 
 
 def camera_centre(pay):
@@ -1720,11 +1843,14 @@ def fill_saved_table(reread=True):
                        if state["pf_tag"] else ""))
         elif dtag != dict(state["pf_tag"]):
             pend = ("<span style='color:#b00'>PF tags differ from the file "
-                    "(%d held, %d saved)</span> &mdash; click a label to write them"
+                    "(%d held, %d saved)</span> &mdash; click <b>SAVE this item</b>"
                     % (len(state["pf_tag"]), len(dtag)))
         else:
-            pend = ("this item is <b>saved</b> as <b>%s</b>"
-                    % (drec.get("choice") or "?"))
+            dp = drec.get("pin") or {}
+            pend = ("this item is <b>saved</b> as <b>%s</b>, pin %s"
+                    % (drec.get("choice") or "?",
+                       "<b>yours</b>, %s cm off the drawn end" % dp.get("moved_cm")
+                       if dp.get("placed") else "the fit's own end (not placed)"))
     saved_head.text = (
         "<div style='font-size:92%%'><b>what is in the scan</b> &mdash; <b>%d</b> "
         "of %d item%s labelled%s<br><span style='font-size:92%%;color:#555'>read "
@@ -2628,7 +2754,7 @@ def go(idx):
     # pin on an item where they never asked for that
     state["centre"] = None
     centre_tog.active = False
-    off_fit_chk.active = []
+    _set_off_fit([])
     manual_x.value = manual_y.value = manual_z.value = ""
     pay = payload(current())
     if pay is not None:
@@ -2651,24 +2777,16 @@ def set_label(choice):
                        "&mdash; pick attached, detached dots or both below the "
                        "buttons, then click the label again.")
         return
-    P = pin_point(pay) if pay is not None else None
-    pin = None
-    if P is not None:
-        px, py, pz, prr, psrc = P
-        u, cr, fa, how = pin_unit(pay, px, py, pz, psrc)
-        # how far the scanner moved it from the drawn chain end.  0.0 with
-        # placed=True means "I looked and I agree", which is a different datum
-        # from placed=False ("I never touched it").
-        X, Y, Z, Q, RR = muon_arrays(pay)
-        j = int(np.argmin(RR)) if RR.size else 0
-        moved = (float(np.hypot(np.hypot(px - X[j], py - Y[j]), pz - Z[j]))
-                 if RR.size else None)
-        pin = dict(x=round(px, 2), y=round(py, 2), z=round(pz, 2),
-                   rr=None if prr is None else round(prr, 2),
-                   placed=(psrc != "fit-end"), source=psrc,
-                   moved_cm=None if moved is None else round(moved, 2),
-                   off_fit=bool(off_fit_chk.active),
-                   unit=u, cru=cr, face=fa, unit_source=how)
+    pin = build_pin(pay)
+    # Never let a re-label DOWNGRADE a hand-placed pin.  restore_pin should have
+    # put it back before we got here, but if the payload moved under it (the
+    # tolerance branch, a re-prepped arm) the rebuilt pin would say placed=False
+    # and the scanner's own placement would be gone with no trace -- labels.json
+    # is written atomically over itself and keeps no history.  Only `unset pin`
+    # clears a pin.
+    old = (LABELS.get(item_key(it)) or {}).get("pin") or {}
+    if old.get("placed") and not (pin or {}).get("placed"):
+        pin = old
     LABELS[item_key(it)] = dict(
         label=c["label"], partial=c["partial"], choice=choice,
         michel_kind=MICHEL_KINDS[michel_kind.active],
@@ -2743,15 +2861,68 @@ def on_manual():
         return
     state["pin_manual"] = p
     state["pin_i"] = None
-    off_fit_chk.active = [0]
+    _set_off_fit([0])
+    persist_pin()
     render()
 
 
 def clear_pin():
     state["pin_i"] = None
     state["pin_manual"] = None
-    off_fit_chk.active = []
+    _set_off_fit([])
+    persist_pin()
     render()
+
+
+def on_off_fit(attr, old, new):
+    """`off_fit` rides in the pin dict, so ticking it after a label must land."""
+    if state.get("_pin_busy"):
+        return
+    persist_pin()
+    render()
+
+
+def save_now():
+    """The explicit Save: the pin, the PF tags and the notes, into THIS row.
+
+    It refuses when the item has no verdict yet rather than writing a row with
+    no `label`: score_stm_michel_scan.py reads rec["label"] unguarded and would
+    die on it, so a permissive Save here would corrupt the scan rather than
+    enlarge it.
+    """
+    it = current()
+    if it is None:
+        return
+    k = item_key(it)
+    rec = LABELS.get(k)
+    if rec is None:
+        status.text = (
+            "<b style='color:#b00'>nothing to save yet on %s</b> &mdash; a row "
+            "needs a verdict before the pin and the tags have somewhere to go. "
+            "Click a label button; it writes the pin and the %d tag%s with it."
+            % (k, len(state["pf_tag"]), "" if len(state["pf_tag"]) == 1 else "s"))
+        return
+    rec["pin"] = build_pin(payload(it))
+    rec["pf_segments"] = dict(state["pf_tag"])
+    rec["pf_tagged"] = len(state["pf_tag"])
+    rec["notes"] = notes.value
+    save_labels()
+    show_save()
+    # repaint BEFORE speaking.  render() reassigns status.text (the "event %s
+    # cluster %d" line) and Bokeh ships only the LAST value written during a
+    # callback -- so a render() after this would silently swallow the one
+    # confirmation this button exists to give.
+    render()
+    p = rec["pin"] or {}
+    status.text = (
+        "<div style='background:#eef4ff;padding:6px'><b>%s saved</b> &mdash; "
+        "verdict <b>%s</b>, %d PF tag%s, pin %s.</div>"
+        % (k, rec.get("choice") or "?", rec["pf_tagged"],
+           "" if rec["pf_tagged"] == 1 else "s",
+           ("(%.1f, %.1f, %.1f), %s, moved %s cm from the drawn end"
+            % (p.get("x", 0), p.get("y", 0), p.get("z", 0),
+               "yours" if p.get("placed") else "the fit's own end",
+               p.get("moved_cm"))) if p else "none"))
 
 
 item_select.on_change("value", on_item_select)
@@ -2778,6 +2949,8 @@ pf_mix_btn.on_click(lambda: set_pf_tag("straddles the stop"))
 pf_clr_btn.on_click(lambda: set_pf_tag(None))
 pin_clear_btn.on_click(clear_pin)
 manual_btn.on_click(on_manual)
+save_now_btn.on_click(save_now)
+off_fit_chk.on_change("active", on_off_fit)
 rr_slider.on_change("value_throttled", on_rr)
 # on_change("active"), never on_click: on_click is a browser button event, while
 # on_change fires for a click AND for a programmatic set -- so the self-test can
@@ -2867,7 +3040,7 @@ curdoc().add_root(column(
     row(messy_btn, uncl_btn, clear_btn),
     Div(text="<b>the Michel, if any, is:</b> &mdash; required before a STM&nbsp;+&nbsp;MICHEL label is accepted", width=700),
     michel_kind,
-    row(notes, progress, save_info_btn),
+    row(notes, progress, save_now_btn, save_info_btn),
     save_div,
     row(left, right),
     status,
