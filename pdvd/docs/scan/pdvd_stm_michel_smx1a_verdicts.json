@@ -1,0 +1,1079 @@
+[
+ {
+  "key": "039252_0/77",
+  "scan_id": 4,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "126 cm, enters 0.2 cm from the y face, stops 35.2 cm from the z wall. Bragg to 1.3e5 on the muon curve. Nothing attached at the stop -- no arm on the profile at all. One 0.6 cm two-point dot 27 cm out, forward and isolated, which the chain already types a capture gamma. Dots seen, judged gamma, so STM_ONLY.",
+  "tags": {
+   "77003": "muon",
+   "206004": "gamma"
+  }
+ },
+ {
+  "key": "039252_15/77",
+  "scan_id": 27,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "113 cm, enters 0.5 cm from the z face, stops 79 cm inside. Bragg to 1.6e5, straight up the muon reference curve. A contiguous 17.8 cm two-piece arm leaves the stop forward (cos_fwd 0.41/0.46) at 4.6-5.5e4 e/cm with profile charge to -20 cm -- a full Michel; the second piece starts exactly where the first ends, so it is one object, not a detached dot.",
+  "tags": {
+   "77001": "muon",
+   "265003": "michel",
+   "265004": "michel"
+  }
+ },
+ {
+  "key": "039252_15/91",
+  "scan_id": 30,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "181 cm, enters at the anode face, stops 49.8 cm from the z wall. Bragg to 1.2e5 on the muon curve. A 14 cm two-piece arm covers 0-13.8 cm past the stop (cos_fwd 0.59/0.82) with dense profile charge to -17 cm. Two isolated specks further out, 33.5 cm (4.8e4 e/cm) and 40.4 cm (7.5e3), both forward and clear of the muon body: gamma.",
+  "tags": {
+   "91001": "muon",
+   "91002": "michel",
+   "309010": "michel",
+   "310011": "gamma",
+   "308003": "gamma"
+  }
+ },
+ {
+  "key": "039252_16/88",
+  "scan_id": 34,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "305 cm, enters 0.3 cm from the z face, stops 94 cm inside. Bragg to 1.35e5 on the muon curve, MCS amb 0.00. An 8.2 cm arm at 4.3e4 e/cm leaves the stop forward (cos_fwd 0.41) with profile charge to -10 cm. Nothing else drawn.",
+  "tags": {
+   "88007": "muon",
+   "88006": "michel"
+  }
+ },
+ {
+  "key": "039252_2/83",
+  "scan_id": 47,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "30 cm, enters 0.3 cm from the anode face, stops 27 cm inside. Bragg to 1.2e5 on the muon curve. A three-piece arm covers 0-9.1 cm past the stop with profile charge to -10 cm. Three isolated specks at 16.4, 30.0 and 45.6 cm, all past the stop and clear of the 30 cm muon body: gamma. Note 31 blobs from another flash are hidden here, the most in this tranche, so the neighbourhood is busy.",
+  "tags": {
+   "83010": "muon",
+   "83009": "michel",
+   "83011": "michel",
+   "83012": "michel",
+   "226015": "gamma",
+   "224013": "gamma",
+   "225014": "gamma"
+  }
+ },
+ {
+  "key": "039252_3/40",
+  "scan_id": 52,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "265 cm, enters 10.2 cm from the y face, stops 73.8 cm from the z wall. Bragg to 1.3e5 on the muon curve, MCS amb 0.00. A 14.3 cm arm at 3.9e4 e/cm leaves the stop sideways-back (cos_fwd -0.57) with profile charge to -12 cm; the charge and range are a Michel's, and at 14 cm it is far too long to be a delta from a stopping muon.",
+  "tags": {
+   "40000": "muon",
+   "40001": "michel"
+  }
+ },
+ {
+  "key": "039252_3/74",
+  "scan_id": 55,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "88 cm, enters 0.1 cm from the anode face, stops 42.2 cm inside. Bragg to 1.1e5 on the muon curve. A 12.2 cm arm at 2.7e4 e/cm leaves the stop (cos_fwd -0.48) with profile charge to -12 cm. One 0.1 cm speck 36 cm out and FORWARD (cos_fwd 0.32): gamma. The other fourteen objects all sit 20-67 cm BACK along the muon body at cos_fwd -0.83 to -0.99, most of them under 0.2 MIP (778 to 13010 e/cm) -- body activity beside the track, which is the owner's own not-the-Michel case, so delta / other. That includes 225041 (7.2 cm, 4.9e4 e/cm, 24-29 cm out at cos_fwd -0.57), the one substantial piece; it is behind the stop, not past it.",
+  "tags": {
+   "74004": "muon",
+   "74020": "muon",
+   "74021": "muon",
+   "74033": "muon",
+   "74034": "muon",
+   "74036": "michel",
+   "224037": "gamma",
+   "225041": "delta / other",
+   "226042": "delta / other",
+   "74009": "delta / other",
+   "74011": "delta / other",
+   "74017": "delta / other",
+   "74018": "delta / other",
+   "74019": "delta / other",
+   "74022": "delta / other",
+   "74023": "delta / other",
+   "74024": "delta / other",
+   "74026": "delta / other",
+   "74027": "delta / other",
+   "74028": "delta / other",
+   "74030": "delta / other",
+   "74035": "delta / other"
+  }
+ },
+ {
+  "key": "039252_6/114",
+  "scan_id": 66,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "225 cm whose fit ends 148 cm from every face -- it cannot have exited -- and whose dQ/dx is FLAT on the 5-6.5e4 MIP plateau right to the last point, with no rise at all. A stopping muon cannot end without a Bragg peak, so this fit end is not a stop. 114002 is 1.7 cm sitting 0-1.7 cm STRAIGHT AHEAD (cos_fwd 0.91) at 4.4e4 e/cm: the track carrying on, so muon rather than Michel. A separate 157.7 cm cluster (C36, 290 points) sits 47-60 cm away and shows in the wide view as a faint trail leaving at a large angle -- tagged delta / other because it is a different object, not this one's continuation.",
+  "tags": {
+   "114003": "muon",
+   "114006": "muon",
+   "114007": "muon",
+   "114002": "muon",
+   "114005": "delta / other",
+   "114008": "delta / other",
+   "574009": "delta / other",
+   "C36": "delta / other"
+  }
+ },
+ {
+  "key": "039252_9/52",
+  "scan_id": 81,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "28 cm, enters 0.6 cm from the z face, stops 9.5 cm from the anode face -- close, but the muon is only 95 MeV and its whole length sits above the MIP curve, ending at 1.15e5. A three-piece arm covers 0-14.5 cm past the stop, all forward (cos_fwd 0.49-0.79), with profile charge to -16 cm. Four small dots at 18.6-32 cm, every one forward (cos_fwd 0.47-0.94) and clear of the short muon body: gamma.",
+  "tags": {
+   "52016": "muon",
+   "52007": "michel",
+   "52010": "michel",
+   "52015": "michel",
+   "170011": "gamma",
+   "171012": "gamma",
+   "172013": "gamma",
+   "173014": "gamma"
+  }
+ },
+ {
+  "key": "039253_13/102",
+  "scan_id": 112,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "630 cm -- the longest in the tranche -- entering 0.2 cm from the anode face and stopping 75.8 cm from the y wall. The profile climbs the muon reference curve to 1.65e5, as clean a Bragg as this sample has, and MCS amb 0.00. NOTHING is attached at the stop. One 0.6 cm two-point dot sits 33 cm out at 2.7e4 e/cm, essentially perpendicular to the muon (cos_fwd -0.18) and therefore ~33 cm clear of the body line: isolated, so gamma. Dot seen, judged gamma, so STM_ONLY.",
+  "tags": {
+   "102004": "muon",
+   "102009": "muon",
+   "102012": "muon",
+   "102013": "muon",
+   "102015": "muon",
+   "102016": "muon",
+   "431017": "gamma"
+  }
+ },
+ {
+  "key": "039253_14/49",
+  "scan_id": 115,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "269 cm, enters 2.2 cm from the y face, stops 104 cm from the z wall. Bragg to 1.25e5 on the muon curve. A contiguous 15 cm two-piece arm covers 0-12.1 cm past the stop with profile charge to -14 cm. Four specks at 34.6, 36.4, 49.0 and 55.0 cm are all near-perpendicular or forward and well clear of the body: gamma. 185007 is different -- 14.5 cm out at cos_fwd -0.86, i.e. 12 cm BACK along the muon and 7 cm off it, which is the owner's own 'close to the track and backward' case, so delta / other.",
+  "tags": {
+   "49001": "muon",
+   "49003": "michel",
+   "49004": "michel",
+   "184006": "gamma",
+   "186008": "gamma",
+   "183005": "gamma",
+   "187009": "gamma",
+   "185007": "delta / other"
+  }
+ },
+ {
+  "key": "039253_14/110",
+  "scan_id": 117,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "380 cm, enters at the anode face, stops 59.2 cm from the z wall. Bragg to 1.27e5 on the muon curve, MCS amb 0.06. NOTHING attached at the stop -- the profile has no arm at all. Five small dots sit 18.6-55.7 cm out, forward or perpendicular and clear of the body; the chain already types three of them capture gammas. 110007 and 110009 lie 245 and 330 cm back ON the muon body line (cos_fwd -0.98): body activity, delta / other.",
+  "tags": {
+   "110001": "muon",
+   "110003": "muon",
+   "110005": "muon",
+   "110006": "muon",
+   "435010": "gamma",
+   "436011": "gamma",
+   "438013": "gamma",
+   "437012": "gamma",
+   "443014": "gamma",
+   "110007": "delta / other",
+   "110009": "delta / other"
+  }
+ },
+ {
+  "key": "039253_15/36",
+  "scan_id": 119,
+  "verdict": "STM_ONLY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "322 cm, enters 15.8 cm from the z face, stops 21.2 cm from the anode face. The profile climbs the muon reference curve to 1.58e5 -- an unmistakable Bragg -- and MCS amb 0.01. The display draws exactly ONE object: nothing past the stop, no arm, no dots, nothing on the negative side of the profile at all.",
+  "tags": {
+   "36000": "muon"
+  }
+ },
+ {
+  "key": "039253_15/105",
+  "scan_id": 124,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "578 cm, enters at the anode face, stops 106 cm from the z wall. The chain calls this no_bragg, but the profile does rise -- 5.5e4 plateau to 9e4 over the last 3 cm. A 9.5 cm arm at 5.0e4 e/cm leaves the stop with profile charge to -10 cm. Three specks at 33, 54.7 and 55.2 cm are forward or perpendicular and clear of the body: gamma. 105009 and 105013 sit 242 and 457 cm back ON the body line: delta / other.",
+  "tags": {
+   "105017": "muon",
+   "105018": "muon",
+   "105020": "muon",
+   "105025": "muon",
+   "105029": "muon",
+   "105030": "michel",
+   "386033": "gamma",
+   "383031": "gamma",
+   "384032": "gamma",
+   "105009": "delta / other",
+   "105013": "delta / other"
+  }
+ },
+ {
+  "key": "039253_2/34",
+  "scan_id": 136,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "22.4 cm, entry 0.5 cm from the z face, stop 10.7 cm inside it. Clear Bragg rise, 6e4 at 20 cm to 1.0e5 at the last cm, on the muon reference curve. A 12.8 cm two-piece arm leaves the stop at 43 deg at MIP dQ/dx -- a muon at its own Bragg peak cannot continue at MIP, so the arm is a second particle, and 12.8 cm is the right range for a ~31 MeV electron. No dead region at the stop in any plane.",
+  "tags": {
+   "34006": "muon",
+   "34005": "michel",
+   "34007": "michel"
+  }
+ },
+ {
+  "key": "039253_2/89",
+  "scan_id": 139,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "medium",
+  "evidence": "257 cm, enters at the anode face, stops 118 cm from the z wall. The Bragg is modest -- 4.5e4 plateau to 8.5e4 -- but the last chain segment runs 7.0e4 e/cm against 4.4e4 for the body, so it is real. The 3-D view at the stop shows a compact spray rather than a single arm: 89014 (7.1 cm, 5.3e4) plus 89009 and 89015, all of them within 8 cm of the stop. Their cos_fwd is negative, but at that distance direction says nothing -- a Michel is emitted isotropically, and the owner's 'close and backward' exclusion is about activity beside the muon BODY, which none of these is (the chain types them pdg 11 shower, not body-excluded). All three tagged michel.",
+  "tags": {
+   "89010": "muon",
+   "89011": "muon",
+   "89019": "muon",
+   "89014": "michel",
+   "89009": "michel",
+   "89015": "michel"
+  }
+ },
+ {
+  "key": "039253_2/117",
+  "scan_id": 141,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "71 cm, enters 0.2 cm from the z face, stops 19.9 cm inside. Bragg to 1.1e5 on the muon curve. A contiguous 8.4 cm two-piece arm covers 0-6.8 cm past the stop (cos_fwd 0.42/0.66) with profile charge to -8 cm. A separate 5.4 cm piece at 5.7e4 e/cm sits 26-29 cm out, perpendicular and clear of the body: gamma.",
+  "tags": {
+   "117006": "muon",
+   "117005": "michel",
+   "117007": "michel",
+   "467012": "gamma"
+  }
+ },
+ {
+  "key": "039253_3/66",
+  "scan_id": 144,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "162 cm, enters 0.6 cm from the y face, stops 83 cm from the z wall. The profile climbs the reference curve to 1.6e5 -- textbook Bragg -- and the last chain segment runs 8.0e4 e/cm against 4.9e4 for the body. A 15 cm arm at 5.0e4 e/cm leaves the stop forward (cos_fwd 0.62) with profile charge to -15 cm. 66008 is 3.6 cm of shower charge lying ON the muon body line (cos_fwd -1.0) 10-13 cm back: a delta ray beside the track, not part of the decay, so delta / other.",
+  "tags": {
+   "66003": "muon",
+   "66006": "muon",
+   "66007": "muon",
+   "66005": "michel",
+   "66008": "delta / other"
+  }
+ },
+ {
+  "key": "039253_5/107",
+  "scan_id": 152,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "26 cm, enters 0.2 cm from the anode face, stops 23 cm inside. Short and low energy (89 MeV) so the whole track sits above MIP, and it still climbs the reference curve to 1.3e5. NOTHING attached at the stop. Two dots at 24.4 and 31.7 cm, both clear of the 26 cm body -- the chain already types the far one a capture gamma. Dots seen, judged gamma, so STM_ONLY.",
+  "tags": {
+   "107000": "muon",
+   "519001": "gamma",
+   "520002": "gamma"
+  }
+ },
+ {
+  "key": "039253_8/59",
+  "scan_id": 170,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "281 cm, enters 1.4 cm from the anode face, stops 105 cm from the y wall. Bragg to 1.15e5 on the muon curve. A 9.8 cm arm at 5.1e4 e/cm leaves the stop forward (cos_fwd 0.61) with profile charge to -11 cm, and a further 0.5 cm piece the chain also calls Michel sits 16 cm out on the same side. Two dots at 40 and 51 cm, perpendicular and forward, clear of the body: gamma. 59005 lies 45-50 cm back ON the body line at 0.1 MIP: delta / other.",
+  "tags": {
+   "59003": "muon",
+   "59004": "muon",
+   "59002": "michel",
+   "285008": "michel",
+   "288009": "gamma",
+   "289010": "gamma",
+   "59005": "delta / other"
+  }
+ },
+ {
+  "key": "039253_8/62",
+  "scan_id": 171,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "275 cm, enters 1.1 cm from the z face, stops 70.9 cm from the anode face. Bragg to 1.07e5 on the muon curve, MCS amb 0.02. A short two-piece arm covers 0-4.1 cm past the stop (6.6e4 and 2.5e4 e/cm) with profile charge to -3 cm -- a low-energy Michel. Three dots at 22.5, 30.6 and 31.2 cm, clear of the body: gamma. Five further objects lie 38-220 cm back along the body line (cos_fwd -0.96 to -1.0), including a 59 cm pdg-4 piece: delta / other.",
+  "tags": {
+   "62005": "muon",
+   "62008": "muon",
+   "62010": "muon",
+   "62012": "muon",
+   "62013": "muon",
+   "62016": "muon",
+   "62017": "muon",
+   "62001": "michel",
+   "62021": "michel",
+   "295023": "gamma",
+   "296024": "gamma",
+   "299025": "gamma",
+   "62011": "delta / other",
+   "62015": "delta / other",
+   "62018": "delta / other",
+   "62019": "delta / other",
+   "62020": "delta / other"
+  }
+ },
+ {
+  "key": "039349_0/68",
+  "scan_id": 178,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "279 cm whose fit ends 61 cm from every face, and whose dQ/dx is FLAT on the 5e4 MIP plateau to the very last point with no rise at all -- a stopping muon cannot do that. MCS returns 3243 MeV against 644 MeV from range (amb 0.96), which is what a fit through a track that does not end there looks like. 68009 is 1.6 cm sitting straight ahead of the fit end (cos_fwd 0.87): the track carrying on, so muon. With no stop there is no Michel, so 68011 and the two shower pieces 200 cm back are delta / other.",
+  "tags": {
+   "68009": "muon",
+   "68013": "muon",
+   "68014": "muon",
+   "68017": "muon",
+   "68011": "delta / other",
+   "68012": "delta / other",
+   "68016": "delta / other"
+  }
+ },
+ {
+  "key": "039349_10/27",
+  "scan_id": 181,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "238 cm whose fit ends 139 cm from every face -- the deepest end in this tranche -- with dQ/dx FLAT on the 5-6e4 plateau to the last point and no rise. A muon that stops 139 cm inside the detector must show a Bragg peak; this one shows none, so the fit end is not the track's end. 27016 is 1.1 cm at the stop pointing 48 deg off the muon line, too little to call anything; the four shower pieces lie 197-211 cm back ON the body line. All delta / other.",
+  "tags": {
+   "27003": "muon",
+   "27005": "muon",
+   "27013": "muon",
+   "27017": "muon",
+   "27018": "muon",
+   "27019": "muon",
+   "27022": "muon",
+   "27023": "muon",
+   "27016": "delta / other",
+   "27001": "delta / other",
+   "27020": "delta / other",
+   "27021": "delta / other",
+   "27024": "delta / other"
+  }
+ },
+ {
+  "key": "039349_12/45",
+  "scan_id": 194,
+  "verdict": "FRAG_THRU",
+  "michel_kind": "none",
+  "confidence": "medium",
+  "notes": "the drawn cluster is two disconnected pieces with a ~22 cm gap; the full object cannot be judged from what is drawn",
+  "evidence": "The wide 3-D view shows TWO disconnected pieces with a clear gap, and the profile has a matching 22 cm hole between 20 and 42 cm. So this is a fragment, and the FRAG buttons are what that is for. On the fragment itself the evidence for a stop is weak: the profile is sparse, reaches 9.5e4 at the end against a 1.6e5 reference, and both ends sit close to the same z face (16.9 and 19.0 cm). I record the full object as a through-goer, at medium confidence -- with a 22 cm hole in the middle this is the row where FRAG_STM_ONLY is the live alternative. 45020, 2.5 cm at 7.6e4 e/cm pointing straight ahead (cos_fwd 0.87), reads as the track carrying on: muon.",
+  "tags": {
+   "45007": "muon",
+   "45014": "muon",
+   "45019": "muon",
+   "45021": "muon",
+   "45020": "muon",
+   "45022": "delta / other"
+  }
+ },
+ {
+  "key": "039349_15/59",
+  "scan_id": 210,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "254 cm whose fit ends 112 cm from every face, dQ/dx flat at 4-6e4 to the last point with no rise, and MCS returning its 4000 MeV ceiling at amb 1.00 against 586 MeV from range. The display draws ONE object and nothing at all past the end. No Bragg and no decay activity is the owner's TGM case.",
+  "tags": {
+   "59003": "muon"
+  }
+ },
+ {
+  "key": "039349_18/36",
+  "scan_id": 221,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "pin_rr": 9.5,
+  "notes": "the fit OVERSHOOTS the stop by ~9 cm: the Bragg peak is at residual range 8-12 cm and the last 9 cm is the Michel; pin moved back to rr 9.5",
+  "evidence": "147 cm, enters 0.4 cm from the anode face, ends 52 cm from the y wall. The chain calls it no_bragg -- and the peak is there, just not where the fit's last point is. The profile runs 5e4 on the plateau, climbs through 7-12e4 at 12-20 cm, PEAKS at 1.05-1.45e5 between 5 and 12 cm, and then COLLAPSES to 1-3e4 over the last 5 cm. A muon's Bragg peak is its last centimetre, so the real stop is at residual range ~9-10 cm and the fit runs 9 cm past it. What it runs into is object 36018: 9.0 cm at 2.5e4 e/cm (0.45 MIP) leaving the peak at a large angle -- the chain types it muon, but a muon cannot fall from its own Bragg peak to half MIP and keep going. That is the Michel. Pin moved to rr 9.5, which the slider snapped to the chain point at rr 9.56 -- 8.32 cm off the fit end, the same point the owner picked; 36018 tagged michel, the other seven segments muon.",
+  "tags": {
+   "36001": "muon",
+   "36013": "muon",
+   "36015": "muon",
+   "36020": "muon",
+   "36024": "muon",
+   "36028": "muon",
+   "36031": "muon",
+   "36018": "michel"
+  }
+ },
+ {
+  "key": "039349_2/38",
+  "scan_id": 229,
+  "verdict": "STM_ONLY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "71 cm, enters 3.4 cm from the z face, stops 57.1 cm inside. Bragg to 1.2e5 on the muon curve. NOTHING attached at the stop -- no arm on the profile. The three extra objects sit 34-65 cm back ON the muon body line (cos_fwd -1.0), which is body activity beside the track: delta / other.",
+  "tags": {
+   "38003": "muon",
+   "38005": "muon",
+   "38006": "muon",
+   "38007": "muon",
+   "38008": "delta / other",
+   "38009": "delta / other",
+   "38010": "delta / other"
+  }
+ },
+ {
+  "key": "039349_21/51",
+  "scan_id": 241,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "199 cm, enters 0.3 cm from the z face, stops 37.8 cm inside. The chain calls it no_bragg; the rise is modest but real, 4.5e4 plateau to 8e4 over the last 5 cm, which is where the reference curve is at 5 cm. A 12 cm arm at 3.3e4 e/cm leaves the stop forward (cos_fwd 0.50) with profile charge to -12 cm. Two dots at 32 and 52 cm, forward and clear of the body: gamma. 51011 lies 141-147 cm back on the body line: delta / other.",
+  "tags": {
+   "51009": "muon",
+   "51010": "muon",
+   "51012": "muon",
+   "51007": "michel",
+   "113013": "gamma",
+   "114014": "gamma",
+   "51011": "delta / other"
+  }
+ },
+ {
+  "key": "039349_22/64",
+  "scan_id": 249,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "477 cm, enters 1.4 cm from the anode face, stops 79 cm from the y wall. The profile climbs the reference curve to 1.62e5 -- an unmistakable Bragg -- and MCS amb 0.03. NOTHING attached at the stop. One 2.0 cm dot 22 cm out, ~18 cm clear of the body: gamma. 64007 lies 360 cm back ON the body line: delta / other.",
+  "tags": {
+   "64001": "muon",
+   "64006": "muon",
+   "64011": "muon",
+   "64014": "muon",
+   "64015": "muon",
+   "64016": "muon",
+   "64018": "muon",
+   "201019": "gamma",
+   "64007": "delta / other"
+  }
+ },
+ {
+  "key": "039349_25/47",
+  "scan_id": 261,
+  "verdict": "STM_ONLY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "243 cm, enters 1.8 cm from the anode face, stops 82.3 cm from the z wall. Bragg to 1.5e5 on the muon curve. Nothing past the stop at all. The one extra object is 4.7 cm of shower charge lying ON the muon body line (cos_fwd -1.0) 21 cm back: a delta ray beside the track, delta / other.",
+  "tags": {
+   "47001": "muon",
+   "47002": "muon",
+   "47003": "delta / other"
+  }
+ },
+ {
+  "key": "039349_26/18",
+  "scan_id": 264,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "74 cm, enters 21.1 cm from the y face, stops 47.2 cm inside. Bragg to 1.2e5 on the muon curve -- the chain calls this no_bragg and its MCS returns the 3948 MeV ceiling at amb 1.00, but the profile is clear. Nothing attached. One 0.3 cm dot 58.5 cm out, perpendicular and therefore ~58 cm clear of the body: gamma. 18006 sits on the body line 57-60 cm back: delta / other.",
+  "tags": {
+   "18002": "muon",
+   "18004": "muon",
+   "18005": "muon",
+   "90007": "gamma",
+   "18006": "delta / other"
+  }
+ },
+ {
+  "key": "039349_26/40",
+  "scan_id": 266,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "medium",
+  "pin_rr": 4.0,
+  "notes": "profile peaks 5-8 cm before the fit end, so the fit slightly overshoots; pin moved to rr 4.0, uncertain at the +-3 cm level",
+  "evidence": "27 cm, enters 0.6 cm from the z face, ends 16.8 cm inside. The muon is only 93 MeV so its whole length sits above MIP, and the profile peaks at 9.2e4 five to eight centimetres BEFORE the fit end, falling to ~6e4 over the last two -- the same overshoot signature as 039349_18/36, much smaller. Pin moved back to rr 4.0, snapped to the chain point at rr 4.2 (4.07 cm off the fit end; the owner's sits one point closer in at rr 3.0); at this contrast the correction is good to no better than +-3 cm. A 12.1 cm arm at 3.2e4 e/cm leaves the stop forward (cos_fwd 0.53) with profile charge to -17 cm. Two dots at 47 and 50 cm, both forward and clear of the 27 cm body: gamma.",
+  "tags": {
+   "40004": "muon",
+   "40013": "michel",
+   "115014": "gamma",
+   "116015": "gamma"
+  }
+ },
+ {
+  "key": "039349_27/41",
+  "scan_id": 270,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "medium",
+  "evidence": "71 cm, enters 0.2 cm from the anode face, ends 66.7 cm inside it. Modest Bragg: 5e4 plateau to 9e4 over the last 5 cm, which is where the reference curve is at 5 cm. A 3.5 cm arm at 5.0e4 e/cm leaves the stop forward (cos_fwd 0.59) with profile charge to -3 cm -- short, so medium confidence. Worth the owner's eye: the chain rejects this on stop_near_boundary and sets in_fv 0, yet the stop is 66.7 cm from the nearest ACTIVE face, so the call comes from the tighter curved fiducial map, not from the envelope the display draws.",
+  "tags": {
+   "41006": "muon",
+   "41007": "michel"
+  }
+ },
+ {
+  "key": "039349_28/36",
+  "scan_id": 273,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "348 cm, enters at the anode face, stops 54.5 cm from the nearest (y) wall. Bragg rise 5e4 -> 9e4 over the last 20 cm along the muon curve. Attached 4-piece Michel out to 12 cm past the stop, cos_fwd 0.6-0.82. Three further isolated pieces at 21.7, 32.7 and 55.4 cm, all forward (cos_fwd 0.04-0.59) and none on the muon's own line, so they are shower gammas, not a continuation.",
+  "tags": {
+   "36009": "muon",
+   "36012": "muon",
+   "36013": "muon",
+   "36015": "muon",
+   "36016": "muon",
+   "138018": "michel",
+   "36001": "michel",
+   "36003": "michel",
+   "36011": "michel",
+   "139019": "gamma",
+   "140020": "gamma",
+   "141021": "gamma"
+  }
+ },
+ {
+  "key": "039349_28/52",
+  "scan_id": 275,
+  "verdict": "MESSY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "notes": "not one track: a 55 cm EM-like blob broken into 26 objects, no Bragg, spine well below MIP",
+  "evidence": "A compact diffuse spray at the z face, not a track: the 91.7 cm fit wanders inside a ~55 cm blob, and the chain splits it into 10 spine segments plus 16 pdg-11 shower pieces, ALL behind the stop (cos_fwd -0.84 to -0.99). dQ/dx is chaotic with no rise at the stop and four spine segments at 11-18 ke/cm, a third of MIP. MCS amb 1.00. Chain agrees (shape_flat, plateau_off_mip).",
+  "tags": {
+   "52017": "delta / other",
+   "52038": "delta / other",
+   "52041": "delta / other",
+   "52043": "delta / other",
+   "52046": "delta / other",
+   "52047": "delta / other",
+   "52053": "delta / other",
+   "52056": "delta / other",
+   "52057": "delta / other",
+   "52058": "delta / other",
+   "268059": "delta / other",
+   "269060": "delta / other",
+   "270061": "delta / other",
+   "271062": "delta / other",
+   "52001": "delta / other",
+   "52025": "delta / other",
+   "52027": "delta / other",
+   "52028": "delta / other",
+   "52032": "delta / other",
+   "52035": "delta / other",
+   "52036": "delta / other",
+   "52039": "delta / other",
+   "52040": "delta / other",
+   "52044": "delta / other",
+   "52045": "delta / other",
+   "52050": "delta / other"
+  }
+ },
+ {
+  "key": "039349_29/45",
+  "scan_id": 281,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "232 cm, enters 1.9 cm from the z face, stops 70.4 cm inside. Bragg rise 4e4 -> 9.5e4 over the last 20 cm on the muon curve. A 5.6 cm arm at a 36 deg kink leaves the stop vertex at 8.1e4 e/cm. Five isolated pieces at 21-54 cm, cos_fwd 0.4-0.61, i.e. forward and roughly along the Michel axis -- checked at two azimuths, they do NOT lie on the muon's own line, so they are the Michel's gammas and not a broken continuation. The chain calls this not-an-STM on shape_flat; the profile plainly rises.",
+  "tags": {
+   "45007": "muon",
+   "45002": "michel",
+   "101014": "gamma",
+   "100012": "gamma",
+   "100013": "gamma",
+   "102015": "gamma",
+   "215016": "gamma"
+  }
+ },
+ {
+  "key": "039349_3/46",
+  "scan_id": 285,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "medium",
+  "evidence": "16.8 cm, enters 0.5 cm from the anode face and stops 17.1 cm inside it. Short and low energy (67 MeV), so the whole track sits high on the muon curve; the profile still climbs from 6e4 at 15 cm to 9e4 in the last 3 cm. A 7.7 cm arm leaves the stop at a sharp angle. At 67 MeV the muon cannot make a 7.7 cm delta ray, so the arm is a decay product; its 3.2e4 e/cm is low but that is normal for a sparse few-MeV electron. Medium only because the track is short and the Bragg contrast is modest.",
+  "tags": {
+   "46002": "muon",
+   "46001": "michel"
+  }
+ },
+ {
+  "key": "039349_35/62",
+  "scan_id": 314,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "220 cm, enters 1.2 cm from the anode face, stops 79.8 cm from the nearest wall. Clean Bragg: 5e4 plateau rising to 9e4 in the last 3 cm along the muon curve. A three-piece 9.6 cm arm leaves the stop roughly perpendicular to the muon (cos_fwd -0.11 to -0.26) at 2.7-6.4e4 e/cm. Sideways rather than forward, which is what a Michel does and what a broken continuation does not.",
+  "tags": {
+   "62006": "muon",
+   "62001": "michel",
+   "62003": "michel",
+   "62005": "michel"
+  }
+ },
+ {
+  "key": "039349_36/41",
+  "scan_id": 317,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "51.8 cm, enters 1.0 cm from the z face, stops 21.9 cm inside. Textbook Bragg -- 5e4 plateau to 1.45e5 in the last centimetre, sitting on the muon reference curve the whole way. An 11.3 cm two-piece arm leaves the stop forward (cos_fwd 0.70/0.73) at 3.5-7.8e4 e/cm; range and charge are right for a ~25 MeV Michel.",
+  "tags": {
+   "41011": "muon",
+   "41013": "muon",
+   "41014": "muon",
+   "41016": "michel",
+   "41019": "michel"
+  }
+ },
+ {
+  "key": "039349_38/60",
+  "scan_id": 329,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "medium",
+  "notes": "fit ends abruptly with no Bragg, no dead channels and no charge past it -- worth a look; the track runs 24 deg from the drift axis",
+  "evidence": "119 cm, enters at the anode face, fit ends 110 cm inside it. NO Bragg: dQ/dx is flat at 4e4, BELOW the 5.5e4 MIP reference, from 100 cm right down to the last 2 cm, and nothing at all is drawn past the stop -- no arm, no dots. A stopping muon cannot end without a rise. The measurement panels show clean charge in all three planes ending at the same time slice with no dead region there, so the end is not an escape through unresponsive channels either. Flagged rather than resolved: the track runs only 24 deg off the drift axis, the hardest case for the 2-D charge attribution the dQ/dx is built from, and MCS (1076 MeV) disagrees violently with range (293 MeV).",
+  "tags": {
+   "60000": "muon"
+  }
+ },
+ {
+  "key": "039349_4/47",
+  "scan_id": 337,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "45 cm, enters 0.6 cm from the z face and the fit ends 11.6 cm from the SAME face -- it skims that wall rather than stopping in the bulk. dQ/dx is flat at 4-5e4 over the whole length with no rise at the end, and there is nothing past the stop in any view. No Bragg and no decay activity is the owner's TGM case.",
+  "tags": {
+   "47001": "muon",
+   "47002": "muon"
+  }
+ },
+ {
+  "key": "039349_40/49",
+  "scan_id": 342,
+  "verdict": "MESSY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "notes": "not one track: a 56 cm fit through a busy region, spine dQ/dx 0.03-0.4 MIP",
+  "evidence": "21 objects around a 56 cm fit, and the fit is not a muon: its own spine segments run 1374, 2202, 9629, 21313 and 22713 e/cm, i.e. 0.03 to 0.4 of the 5.5e4 MIP. The profile never rises -- most of the length sits under 1e4 -- and the 3-D view is a knot of short segments in several directions with vertices scattered over 60 cm, not one track with one end. MCS amb 1.00 and range 157 MeV against dQ/dx 48 MeV say the same. Every row is tagged 'delta / other' meaning 'drawn here, but part of neither a stopping muon nor a Michel'.",
+  "tags": {
+   "49001": "delta / other",
+   "49004": "delta / other",
+   "49007": "delta / other",
+   "49008": "delta / other",
+   "49024": "delta / other",
+   "149019": "delta / other",
+   "143013": "delta / other",
+   "144014": "delta / other",
+   "145015": "delta / other",
+   "146016": "delta / other",
+   "147017": "delta / other",
+   "148018": "delta / other",
+   "150020": "delta / other",
+   "151021": "delta / other",
+   "152022": "delta / other",
+   "153023": "delta / other",
+   "49006": "delta / other",
+   "49010": "delta / other",
+   "49011": "delta / other",
+   "49012": "delta / other",
+   "49025": "delta / other"
+  }
+ },
+ {
+  "key": "039349_43/54",
+  "scan_id": 352,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "87 cm, enters 0.3 cm from the anode face, stops 71.6 cm inside. Clean Bragg on the muon curve, 5e4 plateau to 1.35e5 at the last point. A 14 cm two-piece arm leaves the stop sideways-forward (cos_fwd 0.17/0.36) at ~5e4 e/cm, and one further 0.2 cm piece sits 16 cm out at cos_fwd 0.70 -- isolated, forward, along the arm's direction, so a shower gamma.",
+  "tags": {
+   "54001": "muon",
+   "54003": "michel",
+   "54007": "michel",
+   "156008": "gamma"
+  }
+ },
+ {
+  "key": "039349_46/58",
+  "scan_id": 368,
+  "verdict": "MESSY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "notes": "not one track: 29.6 cm of fit through a 19-object knot",
+  "evidence": "A compact busy blob: 19 objects inside ~35 cm, 13 of them the chain's own pdg-11 shower pieces, with vertices in every direction and no single spine. The 29.6 cm fit has no Bragg -- dQ/dx runs 1-6e4 and falls toward the end -- and its segments disagree wildly (8894, 37307, 45440 e/cm). Chain agrees it is neither (shape_flat, profile_sparse) and cannot even compute MCS.",
+  "tags": {
+   "58007": "delta / other",
+   "58026": "delta / other",
+   "58035": "delta / other",
+   "142038": "delta / other",
+   "143039": "delta / other",
+   "58030": "delta / other",
+   "144040": "delta / other",
+   "145041": "delta / other",
+   "146042": "delta / other",
+   "147047": "delta / other",
+   "147048": "delta / other",
+   "58019": "delta / other",
+   "58027": "delta / other",
+   "58028": "delta / other",
+   "58029": "delta / other",
+   "58031": "delta / other",
+   "58032": "delta / other",
+   "58036": "delta / other",
+   "58037": "delta / other"
+  }
+ },
+ {
+  "key": "039349_48/49",
+  "scan_id": 376,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "high",
+  "evidence": "186 cm, enters at the anode face, stops 40.8 cm from the z wall. Strong Bragg: 4e4 plateau to 1.2e5 at the last point, on the muon curve. NOTHING attached at the stop -- no arm at all -- so this is a stopping muon without a visible Michel. Two 2-point dots sit 24.5 and 36.2 cm out (cos_fwd -0.05 and 0.12, i.e. sideways), isolated from the muon body; the chain already calls the nearer one a capture gamma. Dots seen, judged gamma, so the verdict stays STM_ONLY.",
+  "tags": {
+   "49003": "muon",
+   "183004": "gamma",
+   "184005": "gamma"
+  }
+ },
+ {
+  "key": "039349_54/54",
+  "scan_id": 410,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "181 cm, enters at the anode face, stops 33.8 cm from the y wall. Bragg rise 5e4 -> 9e4 on the muon curve. A 12.8 cm arm at 4.8e4 e/cm leaves the stop sideways (cos_fwd -0.07) -- range and charge of a ~25 MeV Michel. Two isolated dots: 139007 sits 14 cm out, just past the arm's tip and ~15 deg off its axis; 138006 is 50 cm out on the same side, clear of the muon body in the wide view. Both tagged gamma; the 50 cm one is the weakest call in this row.",
+  "tags": {
+   "54001": "muon",
+   "54003": "muon",
+   "54004": "muon",
+   "54005": "michel",
+   "139007": "gamma",
+   "138006": "gamma"
+  }
+ },
+ {
+  "key": "039349_59/61",
+  "scan_id": 436,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "267 cm, enters 15.4 cm from the z face, stops 64.9 cm inside. Textbook Bragg to 1.35e5 on the muon curve. A 14.7 cm arm at 4.6e4 e/cm leaves the stop forward (cos_fwd 0.42) with charge out to -15 cm on the profile -- a full-energy Michel. One 1.1 cm dot 58 cm out, forward and isolated, tagged gamma; at 58 cm that is the weakest call in the row.",
+  "tags": {
+   "61011": "muon",
+   "61009": "michel",
+   "162012": "gamma"
+  }
+ },
+ {
+  "key": "039349_61/18",
+  "scan_id": 444,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "99 cm, enters 8.8 cm from the y face, stops 45.6 cm inside. Bragg to 1.2e5 on the muon curve. An 11.3 cm arm at 3.6e4 e/cm leaves the stop (cos_fwd 0.11) with profile charge out to -12 cm. Nothing else drawn near the stop.",
+  "tags": {
+   "18008": "muon",
+   "18009": "muon",
+   "18001": "michel"
+  }
+ },
+ {
+  "key": "039349_63/48",
+  "scan_id": 460,
+  "verdict": "THRU",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "365 cm, and the fit END sits 0.1 cm from the y wall -- it leaves the detector, which the side view shows directly with the last point on the red boundary. in_fv 0. Nothing to judge as a stop. The five extra objects all lie 246-330 cm back along the muon body, not at the end, so they are body activity (the chain types three of them pdg 4) and not a Michel; tagged delta / other. The drawn track also breaks into two pieces between z 110 and 150.",
+  "tags": {
+   "48012": "muon",
+   "48013": "muon",
+   "48001": "delta / other",
+   "48002": "delta / other",
+   "48003": "delta / other",
+   "48007": "delta / other",
+   "48011": "delta / other"
+  }
+ },
+ {
+  "key": "039349_64/71",
+  "scan_id": 470,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "257 cm, enters 7.7 cm from the anode face, stops 52.7 cm from the z wall. Bragg to 1.35e5 on the muon curve. A 25 cm two-piece arm leaves the stop forward (cos_fwd 0.39/0.42), contiguous (the second piece starts where the first ends), with profile charge out to -22 cm -- a full-energy Michel. One 0.3 cm dot 33 cm out, forward, isolated: gamma. 71008 (pdg 211, 11.7 cm) sits 247-258 cm back at the ENTRY end, nothing to do with this stop: delta / other.",
+  "tags": {
+   "71005": "muon",
+   "71007": "muon",
+   "71001": "michel",
+   "71003": "michel",
+   "240006": "gamma",
+   "71008": "delta / other"
+  }
+ },
+ {
+  "key": "039349_66/78",
+  "scan_id": 474,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "medium",
+  "notes": "no attached arm; a detached 17 cm MIP-like clump sits 24-31 cm out, perpendicular -- if that is read as a detached Michel this row becomes STM_MICHEL",
+  "evidence": "209 cm ending 68 cm from the nearest wall with nothing continuing in the muon's own direction, so it stopped -- there is no other option at that distance from every face. But the Bragg is weak: dQ/dx sits on the 5e4 plateau to within 5 cm and reaches only 6-8e4, where the reference is 1.6e5. The likely reason is object 78041, 1.8 cm of 1.2e5 e/cm sitting 0-1.7 cm straight ahead of the fit end: the tip is clustered separately, so the fit stops ~2 cm short and never sees its own peak. I tag 78041 muon for that reason though the chain types it pdg 11. NOTHING is attached at the stop. Three pieces 24-31 cm out carry ~17 cm of 5-6e4 e/cm, perpendicular to the muon (cos_fwd 0.08-0.18) and clear of it in two azimuths. Following the owner's 5 STM_ONLY + detached-dots rows I record dots seen, judged not a Michel; but 17 cm of MIP charge is a lot for a capture gamma, and 24 cm is a long gap for a Michel, so this is the row to open first.",
+  "tags": {
+   "78008": "muon",
+   "78015": "muon",
+   "78039": "muon",
+   "78040": "muon",
+   "78041": "muon",
+   "225034": "gamma",
+   "225036": "gamma",
+   "225037": "gamma",
+   "78010": "delta / other",
+   "78013": "delta / other",
+   "78038": "delta / other"
+  }
+ },
+ {
+  "key": "039349_67/78",
+  "scan_id": 481,
+  "verdict": "STM_ONLY",
+  "michel_kind": "detached dots",
+  "confidence": "medium",
+  "evidence": "84 cm, enters 0.8 cm from the y face, stops 58.5 cm inside. The profile rises from a 5-6e4 plateau to 1.1e5 in the last 2 cm, on the muon curve -- a real Bragg. Nothing electron-like at the stop: the only thing there is a 2-point 0.3 cm blip 3.9 cm out (tagged gamma), far too small to be a Michel, and the profile carries only a handful of points to -4 cm at 2-4e4. 224014 sits 53 cm out at 2714 e/cm, 0.05 MIP -- below anything attributable, so delta / other rather than gamma.  [REVISED at the end of the pass: 224014 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]",
+  "tags": {
+   "78010": "muon",
+   "78013": "muon",
+   "225015": "gamma",
+   "224014": "gamma"
+  }
+ },
+ {
+  "key": "039349_7/67",
+  "scan_id": 498,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "medium",
+  "evidence": "58 cm, enters 1.1 cm from the z face, stops 15.7 cm inside. Bragg to 1.25e5 at the last point on the muon curve. An 8.4 cm two-piece arm leaves the stop forward (cos_fwd 0.20/0.25) with profile charge to -8 cm; its 1.8e4 e/cm is low for an electron, which is why this is medium and not high. 246011 sits 56 cm out at 1.1e4 e/cm (0.2 MIP) -- too far and too faint to attribute -- but see below.  [REVISED at the end of the pass: 246011 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]",
+  "tags": {
+   "67003": "muon",
+   "67005": "muon",
+   "67009": "muon",
+   "67010": "muon",
+   "67007": "michel",
+   "67008": "michel",
+   "246011": "gamma"
+  }
+ },
+ {
+  "key": "039349_72/65",
+  "scan_id": 514,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "267 cm, enters 0.1 cm from the z face, stops 54.2 cm inside. Bragg to 1.25e5 on the muon curve, MCS amb 0.00. A 13.3 cm arm at 3.5e4 e/cm leaves the stop sideways with profile charge to -12 cm; the 0.3 cm piece 7.6 cm out lies inside that arm's own extent, so it is the same object rather than a separate dot.",
+  "tags": {
+   "65008": "muon",
+   "65009": "muon",
+   "65011": "muon",
+   "65012": "michel",
+   "237013": "michel"
+  }
+ },
+ {
+  "key": "039349_75/72",
+  "scan_id": 524,
+  "verdict": "MESSY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "notes": "not one track: a broken, sparse zig-zag of 17 objects, spine 0.06-0.6 MIP",
+  "evidence": "A 163 cm fit threaded through a sparse, disconnected zig-zag: 15 'muon' segments whose dQ/dx runs 3280 to 34354 e/cm, most of them under 0.3 MIP, with vertices scattered in every direction and visible gaps between the pieces in the wide 3-D view. Only 436 image points over 163 cm. MCS amb 1.00 and range 386 MeV against dQ/dx 115 MeV. Neither end is at a face (63.6 and 112.5 cm), so this is not a containment question -- it is simply not one track.",
+  "tags": {
+   "72003": "delta / other",
+   "72007": "delta / other",
+   "72009": "delta / other",
+   "72011": "delta / other",
+   "72013": "delta / other",
+   "72015": "delta / other",
+   "72017": "delta / other",
+   "72019": "delta / other",
+   "72021": "delta / other",
+   "72023": "delta / other",
+   "72025": "delta / other",
+   "72036": "delta / other",
+   "72037": "delta / other",
+   "72039": "delta / other",
+   "72040": "delta / other",
+   "370038": "delta / other",
+   "72001": "delta / other"
+  }
+ },
+ {
+  "key": "039349_76/75",
+  "scan_id": 529,
+  "verdict": "STM_ONLY",
+  "michel_kind": "none",
+  "confidence": "medium",
+  "evidence": "181 cm ending 84 cm from the nearest face with nothing continuing, so it stopped. The Bragg is modest -- 4.5e4 plateau to 7.8e4 at the last point, a factor 1.7 -- but it is a rise, and the last segment runs 6.8e4 e/cm against 4.9e4 for the body. Nothing electron-like past the stop. The one extra object is 1.5 cm at 7 cm out with cos_fwd -0.39, i.e. close to the track and BACKWARD, which is the owner's own counter-example for 'not part of the Michel': delta / other.",
+  "tags": {
+   "75007": "muon",
+   "75008": "muon",
+   "220009": "delta / other"
+  }
+ },
+ {
+  "key": "039349_81/54",
+  "scan_id": 554,
+  "verdict": "MESSY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "notes": "not one track: a full EM shower, 53 objects, 3806 image points in ~50 cm",
+  "evidence": "An electromagnetic shower, not a track: 53 objects and 3806 image points packed into ~50 cm, 41 of them the chain's own pdg-11 shower pieces, and every single one BEHIND the fit end (cos_fwd -0.72 to -0.99). The 12 segments the chain calls muon run 4222-24254 e/cm, 0.08 to 0.44 MIP. MCS amb 1.00 with 39.9 MeV against 262 MeV from range. The 3-D view is a dense blue cloud with about fifty vertices in it.",
+  "tags": {
+   "54009": "delta / other",
+   "54019": "delta / other",
+   "54027": "delta / other",
+   "54029": "delta / other",
+   "54030": "delta / other",
+   "54032": "delta / other",
+   "54034": "delta / other",
+   "54039": "delta / other",
+   "54044": "delta / other",
+   "54045": "delta / other",
+   "54085": "delta / other",
+   "54086": "delta / other",
+   "214089": "delta / other",
+   "215090": "delta / other",
+   "216091": "delta / other",
+   "217096": "delta / other",
+   "217097": "delta / other",
+   "218098": "delta / other",
+   "219099": "delta / other",
+   "220100": "delta / other",
+   "221101": "delta / other",
+   "222102": "delta / other",
+   "223103": "delta / other",
+   "54023": "delta / other",
+   "54028": "delta / other",
+   "54038": "delta / other",
+   "54041": "delta / other",
+   "54042": "delta / other",
+   "54043": "delta / other",
+   "54046": "delta / other",
+   "54050": "delta / other",
+   "54051": "delta / other",
+   "54060": "delta / other",
+   "54061": "delta / other",
+   "54062": "delta / other",
+   "54063": "delta / other",
+   "54064": "delta / other",
+   "54065": "delta / other",
+   "54066": "delta / other",
+   "54071": "delta / other",
+   "54072": "delta / other",
+   "54073": "delta / other",
+   "54074": "delta / other",
+   "54075": "delta / other",
+   "54076": "delta / other",
+   "54078": "delta / other",
+   "54079": "delta / other",
+   "54080": "delta / other",
+   "54081": "delta / other",
+   "54082": "delta / other",
+   "54084": "delta / other",
+   "54087": "delta / other",
+   "54088": "delta / other"
+  }
+ },
+ {
+  "key": "039349_82/52",
+  "scan_id": 558,
+  "verdict": "STM_ONLY",
+  "michel_kind": "none",
+  "confidence": "high",
+  "evidence": "103 cm, enters 0.6 cm from the anode face, stops 32.9 cm from the z wall. Textbook Bragg to 1.38e5 on the muon curve. NOTHING past the stop: the profile has two faint survey crosses at -6 and -9 cm (0.5-2.3e4) and no arm. All five extra objects sit 8-29 cm BACK along the muon body (cos_fwd -0.78 to -1.0) -- body activity, not a decay product, so delta / other.",
+  "tags": {
+   "52001": "muon",
+   "52019": "muon",
+   "52020": "muon",
+   "164021": "delta / other",
+   "52003": "delta / other",
+   "52005": "delta / other",
+   "52007": "delta / other",
+   "52009": "delta / other"
+  }
+ },
+ {
+  "key": "039349_83/60",
+  "scan_id": 564,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "attached",
+  "confidence": "high",
+  "evidence": "173 cm, enters at the anode face, stops 71.5 cm from the z wall. Bragg to 1.15e5 on the muon curve. A four-piece arm covering 0-11 cm past the stop, all forward (cos_fwd 0.70-0.82), at 3.3-6.4e4 e/cm, with dense profile charge out to -13 cm -- a well-reconstructed Michel.",
+  "tags": {
+   "60001": "muon",
+   "60005": "michel",
+   "60006": "michel",
+   "60007": "michel",
+   "60008": "michel"
+  }
+ },
+ {
+  "key": "039349_9/47",
+  "scan_id": 568,
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
+  "confidence": "high",
+  "evidence": "231 cm, enters 0.1 cm from the z face, stops 45.3 cm from the y wall. The profile hugs the muon reference curve all the way to 1.5e5 -- as clean a Bragg as this sample has. A four-piece arm covers 0-12 cm past the stop (cos_fwd 0.13-0.68) with profile charge to -14 cm. 122009 is a 0.7 cm dot 42 cm out, forward and at 8.5e4 e/cm: gamma. 124016 is 52 cm out, sideways-backward and 0.3 MIP -- too far, too faint and off-axis to attribute -- but see below.  [REVISED at the end of the pass: 124016 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]",
+  "tags": {
+   "47017": "muon",
+   "123014": "michel",
+   "123015": "michel",
+   "47007": "michel",
+   "47018": "michel",
+   "122009": "gamma",
+   "124016": "gamma"
+  }
+ }
+]
