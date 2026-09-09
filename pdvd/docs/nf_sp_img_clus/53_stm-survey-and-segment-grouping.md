@@ -598,3 +598,65 @@ tie-breaker, §5).
   (muon 1, michel 2) and the head line reports the 2 hidden blobs;
   `039252_0/77` still shows the tagged `C199` marked `OTHER FLASH`;
   `039253_14/49` drops 8 foreign blobs and keeps its 5 surveyed pieces.
+
+## 9. The stale object table (owner, 2026-09-08)
+
+**Repro**
+
+```bash
+cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/pdhd/stm_michel_scan
+python3 selftest_smx3d_browser.py --det pdvd    # "object table: 6 step(s), 4 same-row-count transition(s)"
+python3 selftest_smx3d_browser.py --det pdhd
+```
+
+**Symptom.** *"when I click next or prev, the list of segments does not change
+when the number of objects are the same"* — and it is exactly that: stepping
+between two items whose tables hold the same number of rows left the **previous
+item's objects on screen**, attached to the new item's picture. Every other
+panel updated, so the table looked authoritative while naming segments of
+another muon.
+
+**Root cause.** Bokeh 3.9's `DataTable` is SlickGrid, which repaints only the
+rows it has **invalidated**, and the view's `updateGrid()` invalidates nothing
+when the row *count* is unchanged. Replacing `seg_src.data` therefore updated
+the model and repainted nothing.
+
+**Why it hid.** The server side was **already correct** — `refresh_segments()`
+had built the right rows and `seg_src.data` held them. Every in-process check
+reads that source, so all 51147 PDVD / 30166 PDHD in-process checks passed
+straight through the regression, as did the browser gate: it ran on a **one-item
+manifest**, where there is no `next >` to press. The failure lived in the last
+hop, between a correct model and the pixels.
+
+**Fix** (`stm_michel_viewer.py`, `refresh_segments`): when the row keys change,
+empty the source and then set it — the count changes twice, which is what forces
+SlickGrid to invalidate. `on_seg_pick` is suppressed during the rebuild
+(`state["_seg_busy"]`), since the empty step drops the selection and would
+otherwise re-enter `render()` twice for nothing; the row the rebuild lands on is
+adopted explicitly, so nothing is lost.
+
+**Verification.** A new browser check steps `next >` three times and `< prev`
+twice, reading the **rendered** cells out of Bokeh's shadow roots and comparing
+them with the source at every step: no object may be painted that this item's
+source does not hold, and each step must paint its whole source up to the grid's
+measured capacity (SlickGrid virtualises — a 24-row source paints ~22 — so the
+capacity is measured from the run, not guessed). `heaviest_manifest()` now
+writes the heaviest item **first**, so every existing check still opens on it,
+then three items chosen to have an **equal row count**, which guarantees the walk
+crosses the transition that was broken rather than hoping the sheet contains one.
+
+- Fixed: **102** browser checks PDVD, **102** PDHD, 0 failed (4 same-row-count
+  transitions each).
+- **Causal negative control**: with the two-step assignment reverted and nothing
+  else changed, the same gate fails **6 times**, each naming the leftover rows —
+  `after 'next >' the table still paints ['S224037', 'S225041', 'S226042',
+  'S74004'] -- rows left over from another item`.
+- In-process suites re-run after the callback guard: **51147** PDVD, **30166**
+  PDHD, 0 failed.
+
+**The general lesson, for the next widget.** A Bokeh model that holds the right
+value is not a panel that shows it (this is the fifth member of the
+`feedback_bokeh3_silent_js_traps` family). Any check that reads the model proves
+the server's arithmetic and nothing about the page; and a browser gate pinned to
+a single item cannot see a transition bug at all. Both halves failed here
+together.

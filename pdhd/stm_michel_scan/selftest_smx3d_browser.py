@@ -52,7 +52,7 @@ Four Bokeh 3 traps make a broken binding look like a working page with no
 console error, so a failure here is read as "the handler never bound", not as
 "the formula is wrong": see feedback_bokeh3_silent_js_traps.
 """
-import argparse, json, os, socket, subprocess, sys, time
+import argparse, json, os, re, socket, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BOKEH = "/nfs/data/1/xqian/toolkit-dev/.direnv/python-3.11.9/bin/bokeh"
@@ -138,23 +138,58 @@ CURSOR = """() => {
 }"""
 
 
+def table_rows(d):
+    """How many rows the grouped object table will hold for this payload.
+
+    Mirrors object_rows()/unfitted_near() with `bundle only` ON (doc pdvd/53
+    sec 8): every PF segment, plus every near cluster that has no segment, is
+    not the candidate itself and is IN the bundle.
+    """
+    n = len((d.get("pf") or {}).get("seg") or [])
+    for c in d.get("near_clusters") or []:
+        if c.get("segs") or c["id"] == d.get("cluster_id"):
+            continue
+        if c.get("in_bundle") == 0:
+            continue
+        n += 1
+    return n
+
+
 def heaviest_manifest(det, path):
-    """A one-line sheet holding the arm's biggest item, for the paint check."""
+    """The arm's biggest item FIRST, then a short walk set for the step check.
+
+    Row 1 is still the heaviest item, so every check that runs on the opening
+    item is unchanged.  The extra rows exist for one reason: the object table
+    used to keep the PREVIOUS item's rows on screen whenever the next item had
+    the same NUMBER of rows (doc pdvd/53 sec 9), and a one-item sheet has no
+    `next >` to press.  The walk set is chosen so that at least one adjacent
+    pair has an EQUAL row count -- the transition that was broken -- rather than
+    hoping the sheet happens to contain one.
+    """
     import glob as _g
     best = None
+    by_n = {}
     for fn in _g.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")):
         with open(fn) as fh:
             d = json.load(fh)
         n = sum(len((d.get("proj") or {}).get(p, {}).get("ch", [])) for p in "uvw")
         if best is None or n > best[0]:
             best = (n, d)
+        by_n.setdefault(table_rows(d), []).append(d)
     if best is None:
         return None, 0
-    d = best[1]
+    walk = []
+    for k in sorted(by_n, reverse=True):          # a busy table, not an empty one
+        if k >= 2 and len(by_n[k]) >= 3:
+            walk = sorted(by_n[k], key=lambda x: (x["event"], x["cluster_id"]))[:3]
+            break
+    rows = [best[1]] + [d for d in walk if d is not best[1]]
     with open(path, "w") as fh:
         fh.write("scan_id\ttranche\tevent\tcluster\tnpts\tmuon_len_cm\tn_near\tn_far\n")
-        fh.write("1\t1\t%s\t%d\t%d\t%.2f\t0\t0\n"
-                 % (d["event"], d["cluster_id"], d["npts"], d["muon_len_cm"]))
+        for i, d in enumerate(rows):
+            fh.write("%d\t1\t%s\t%d\t%d\t%.2f\t0\t0\n"
+                     % (i + 1, d["event"], d["cluster_id"], d["npts"],
+                        d["muon_len_cm"]))
     return path, best[0]
 
 
@@ -674,6 +709,75 @@ def main():
                   "(%d MeV figures on the page, daughter=%s)"
                   % (_painted("MeV"), has_dau))
             print("     copy box %s, saved table %d row(s)" % (key, len(rows or [])))
+
+            # ---- the object table repaints when the ITEM changes ------------
+            # doc pdvd/53 sec 9, owner 2026-09-08: `next >` / `< prev` left the
+            # PREVIOUS item's rows on screen whenever the new item happened to
+            # have the same NUMBER of rows -- SlickGrid repaints only rows it has
+            # invalidated, and nothing is invalidated when the count is equal.
+            # The server's ColumnDataSource was already correct, which is why
+            # every in-process test passed through the whole regression: only a
+            # check that reads the RENDERED DOM can see this.  The grid lives in
+            # a shadow root (feedback_bokeh3_silent_js_traps trap 1), so the read
+            # walks the roots.
+            READ_TBL = r"""() => {
+              const out = [];
+              const walk = (root) => {
+                for (const el of root.querySelectorAll('*')) {
+                  if (el.classList && el.classList.contains('slick-cell'))
+                    out.push((el.textContent || '').trim());
+                  if (el.shadowRoot) walk(el.shadowRoot);
+                }
+              };
+              walk(document);
+              const m = Bokeh.documents[0].get_model_by_name('seg_table');
+              return {dom: out, objs: m ? Array.from(m.source.data.obj) : []};
+            }"""
+            walk = []
+            n_same = 0
+            prev_objs = None
+            for btn in [None] + ["next >"] * 3 + ["< prev"] * 2:
+                if btn:
+                    if page.get_by_role("button", name=btn).count() == 0:
+                        break
+                    page.get_by_role("button", name=btn).first.click()
+                    page.wait_for_timeout(1800)
+                t = page.evaluate(READ_TBL)
+                # Cell by cell: a row's text runs the columns together
+                # ("muonS7700321112..."), so an object name is a token only when
+                # it is read from its own cell.
+                shown = {c for c in t["dom"] if re.match(r"^[SC]\d+$", c)}
+                want = set(t["objs"])
+                # THE regression signal: an object on screen that this item's
+                # source does not hold is a row left behind by the previous item.
+                ck(not (shown - want),
+                   "after %r the table still paints %r -- rows left over from "
+                   "another item" % (btn or "load", sorted(shown - want)[:4]))
+                ck(shown, "after %r the object table painted nothing" % (btn or "load"))
+                if prev_objs is not None and len(prev_objs) == len(t["objs"]):
+                    n_same += 1
+                prev_objs = list(t["objs"])
+                walk.append((btn or "load", shown, want))
+            # SlickGrid VIRTUALISES: it paints only the rows that fit, so a
+            # 24-row source legitimately paints ~22.  The capacity is measured
+            # from this run rather than guessed, and then every step must paint
+            # its whole source up to that capacity -- which is what makes the
+            # check see a table that painted a stale subset.
+            cap = max((len(sh) for _, sh, _ in walk), default=0)
+            for btn, sh, wa in walk:
+                ck(len(sh) == min(len(wa), cap),
+                   "after %r the table paints %d of the source's %d object(s) "
+                   "(the grid fits %d) -- missing %r"
+                   % (btn, len(sh), len(wa), cap, sorted(wa - sh)[:4]))
+            n_step = len(walk)
+            # ... and the check is only worth anything if the walk actually hit
+            # the broken transition
+            ck(n_same > 0,
+               "the walk never hit two items with the same row count -- this "
+               "check cannot see the doc pdvd/53 sec 9 regression on this sheet")
+            ck(not errs, "javascript errors after the table walk: %s" % errs[:3])
+            print("     object table: %d step(s), %d same-row-count transition(s),"
+                  " every rendered row matches the source" % (n_step, n_same))
             b.close()
     finally:
         proc.terminate()

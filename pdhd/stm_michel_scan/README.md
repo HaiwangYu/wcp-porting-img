@@ -232,6 +232,12 @@ the same artifact. The chain never fits them: the survey admits same-bundle
 clusters only, and **every `S` row is in the bundle by construction** (3888 PF
 segments over 569 PDVD payloads, 0 foreign).
 
+**Stepping between items repaints the table** (doc pdvd/53 §9). Until
+2026-09-08 it did not when the next item happened to have the same *number* of
+rows — the previous item's objects stayed on screen beside the new item's
+picture. If you scanned before that date and a table ever looked wrong for the
+event, that is why.
+
 **A row you have already tagged is never hidden**, whatever the control says: it
 stays marked `OTHER FLASH` so you can move it, and it stays for the rest of the
 item even after `→ unassigned` — which pops the tag, and would otherwise make

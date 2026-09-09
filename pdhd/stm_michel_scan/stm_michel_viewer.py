@@ -1946,11 +1946,31 @@ def refresh_segments(pay, keep=True, bundle_only=None):
     """Rebuild the grouped object table, preserving the current pick if it survives."""
     rows = object_rows(pay, bundle_only)
     state["pf_rows"] = rows
-    seg_src.data = dict(
+    data = dict(
         group=[r["group"] for r in rows], obj=[r["obj"] for r in rows],
         npts=[r["npts"] for r in rows], size=[r["size"] for r in rows],
         dqdx=[r["dqdx"] for r in rows], chain=[r["chain"] for r in rows],
         dstop=[r["dstop"] for r in rows], key=[r["key"] for r in rows])
+    # Bokeh 3.9 DataTable trap, owner 2026-09-08: SlickGrid repaints only the
+    # rows it has INVALIDATED, and the view's updateGrid() invalidates nothing
+    # when the row COUNT is unchanged.  So stepping to an item with the same
+    # number of objects left the PREVIOUS item's rows on screen -- the server's
+    # ColumnDataSource was already correct (that is what made it look fine from
+    # Python).  Emptying the source first makes the count change twice, which is
+    # what forces the repaint.  Measured, not assumed: selftest_smx3d_browser.py
+    # steps `next >` across the arm and compares the RENDERED rows.
+    #
+    # _seg_busy: on_seg_pick fires on every selection change and calls render();
+    # the empty step drops the selection, so without the guard this rebuild
+    # re-enters render() twice for nothing.  Nothing is lost by suppressing it --
+    # the row this rebuild lands on is adopted explicitly below.
+    if list(seg_src.data.get("key") or []) != data["key"]:
+        state["_seg_busy"] = True
+        try:
+            seg_src.data = {k: [] for k in data}
+            seg_src.data = data
+        finally:
+            state["_seg_busy"] = False
     cur = state.get("pf_key")
     idx = next((i for i, r in enumerate(rows) if r["key"] == str(cur)), None)
     if not rows:
@@ -2224,6 +2244,8 @@ def fill_seg_div(pay, v, rev):
 
 def on_seg_pick(attr, old_, new_):
     """A row of the grouped table was clicked."""
+    if state.get("_seg_busy"):
+        return                       # the table is being rebuilt; see refresh_segments
     rows = state.get("pf_rows") or []
     if new_ and 0 <= new_[0] < len(rows):
         _adopt_row(rows[new_[0]])
