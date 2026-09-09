@@ -21,8 +21,16 @@ local LeventNo  = std.parseInt(initial_eventNo);
 
 local common_coords = ["x", "y", "z"];
 local common_corr_coords = ["x_t0cor", "y", "z"];
-local common_sce_coords = ["x_sce", "y", "z"];
+local common_sce_coords = ["x_sce", "y_sce", "z_sce"];
 
+
+local sce_field = {
+    type: "SCEFieldTH3",
+    name: "sbnd_dualmap",
+    data: {
+        sce_map_file: "/cvmfs/sbnd.opensciencegrid.org/products/sbnd/sbnd_data/v01_42_00/SCEoffsets/SCEoffsets_SBND_E500_dualmap_CV_voxelTH3.root",
+    },
+};
 
 local dvm = {
     overall: {
@@ -51,7 +59,7 @@ local dvm = {
         FV_xmax: -0.45 * wc.cm,
         FV_xmin_margin: 2 * wc.cm,
         FV_xmax_margin: 2 * wc.cm,
-        sce_map_file: "/cvmfs/sbnd.opensciencegrid.org/products/sbnd/sbnd_data/v01_42_00/SCEoffsets/SCEoffsets_SBND_E500_dualmap_CV_voxelTH3.root",
+        sce_field: wc.tn(sce_field),
     },
     a1f0pA: $.a0f0pA + {
         FV_xmin: 0.45 * wc.mm,
@@ -81,7 +89,7 @@ local pctransforms(dv) = {
     type: "PCTransformSet",
     name: dv.name,
     data: { detector_volumes: wc.tn(dv) },
-    uses: [dv]
+    uses: [dv, sce_field]
 };
 
 
@@ -343,7 +351,15 @@ local clus_all_apa (
                     detector: "sbnd",
                     algorithm: "sce",
                     pcname: "3d",
-                    coords: common_sce_coords,  // ["x_sce","y","z"]
+                    coords: ["x_sce", "y", "z"],  // original y,z kept for (y,z,q) pairing
+                    individual: false
+                },
+                {
+                    name: "sce3d",              // full 3D SCE-corrected coords (transverse closure)
+                    detector: "sbnd",
+                    algorithm: "sce3d",
+                    pcname: "3d",
+                    coords: ["x_sce", "y_sce", "z_sce"],
                     individual: false
                 }
             ],

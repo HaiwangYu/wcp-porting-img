@@ -1,5 +1,9 @@
 SBND WCT 0.36 SCECorrection validation -- 50 crossing-muon events
-points: 228404 (East 70503, West 157901)
-per-point residual reco-map: rms E=1.83e-04 W=2.23e-04 cm, max 8.42e-04 cm
-pooled mean|Dx|: East=0.4021 West=0.5338  W/E=1.327
+points: 226721 paired by q (East 69913, West 156808); 226721/228762 matched, 2041 dropped (ambiguous q)
+=== Per-point reco-vs-map closure ===
+Dx rms (cm):  E = 1.83e-04   W = 2.23e-04   max = 5.05e-04
+Dy rms (cm):  E = 2.63e-04   W = 1.65e-04   max = 9.91e-04   [Stage 3a]
+Dz rms (cm):  E = 3.35e-04   W = 2.99e-04   max = 9.50e-04   [Stage 3a]
+=> reproduces the TH3 backward map to interpolation precision in all three components
+pooled mean|Dx|: East=0.4026 West=0.5340  W/E=1.326
 references: map vol-avg 1.276, 0.33-era reco 1.271
