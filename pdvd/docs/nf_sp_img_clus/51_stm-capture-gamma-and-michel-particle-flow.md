@@ -144,6 +144,20 @@ never opens the point cloud: `michel_n_clusters`, how many clusters the object
 spans. The member list itself stays where it belongs — `T_stm_michel_pts`,
 `role ∈ {3,4,5}` keyed by `seg_id`.
 
+**It does not answer "is the Michel in the candidate's own cluster?", and a
+consumer will reach for it expecting that.** It counts clusters, so it reads 1
+for a wholly-own-cluster attached Michel *and* for a wholly-foreign bridged one —
+this item, `039252_15/77`, spans only cluster 265 and so reads **1**. Measured
+over the 160 PDVD objects with `michel_found == 1`:
+
+| | `n_clusters` 1 | 2 | 3 |
+|---|---|---|---|
+| conn 1 (attached), own cluster | 94 | 15 | 5 |
+| conn 2 (bridged), foreign cluster | 36 | 9 | 1 |
+
+The branch that answers the question is **`michel_seg_id // 1000 != cluster_id`**,
+and on this arm it agrees with `michel_conn_type` on all 160 objects.
+
 ## 3. Item 2 — the capture gamma was 27 cm away, and one cut kept it out
 
 `T_stm_michel` for `039252_0` cluster 77 said the chain saw **nothing**:
@@ -295,6 +309,13 @@ and that prediction owes nothing to any threshold in this census.
 
 (83 candidates with `michel_found == 0`, 68 with 1.)
 
+> **Read §6.5 before using this table.** Every row here comes from the *offline*
+> predicate, which was later found to diverge from the shipped C++ selection in
+> two ways. The arm re-derivation (§6.3) reproduces the **sign and magnitude** of
+> the R = 35 row (1.64 vs 2.05); the rest of the column — the peak at 35, the
+> collapse by 45 — has **not** been re-measured through the shipped selection and
+> must not be cited as support for the default (§5.2, §9 item 1).
+
 The direction is right and the effect dies exactly where §4.3's density knee is.
 **It is ~1.9 σ on this sample, and that is stated as a direction, not a
 measurement**: at R = 35 the split is 20/8 against 15.4/12.6 expected under a
@@ -336,6 +357,17 @@ against an ambient floor the foreign-bundle control measures **flat** at ~0.6)
 and by §4.4's µ⁻ anti-correlation, which peaks at 35 cm and collapses to 1.41 by
 45. `039252_0` cluster 77's gamma is at 26.5 cm, comfortably inside. It is a
 knob, and it is the value most likely to move after the owner scans.
+
+**What that ring scan is and is not, after §6.5.** Both numbers above come from
+the *offline* predicate, and §6.5 then found that predicate diverged from the
+shipped C++ in two ways. The arm re-derivation (§6.3) confirms the
+anti-correlation's **sign and rough magnitude** — 1.64 through the shipped
+selection against 2.05 offline — but the ring **scan** was never re-run through
+the fixed selection, so the shape of §4.4's column, including the peak at 35 and
+the collapse by 45, is *not* corroborated by anything the chain actually does.
+The 35 cm therefore rests on the offline knee plus a confirmed sign, not on a
+measured plateau in the shipped selection. Re-running the R scan `--from-arm`
+across several arms is what would properly set this default — §9 item 1.
 
 ### 5.3 The ring is doing real work
 
@@ -604,7 +636,11 @@ refuses to be quiet about it: it prints the md5 before and after, and warns if
 they differ. (One false positive was found and fixed in the same script: its
 loader-death check globbed *all* of an arm's logs, so a re-run over a previous
 campaign reported the **previous** run's deaths. It now only looks at logs newer
-than the arm's start.)
+than the arm's start. **That fix postdates the arms this doc reports** — the
+committed `d51g_run_arms.sh` is not byte-for-byte the script that produced
+them, and a re-runner should expect the checker to be stricter, not identical.
+The loader deaths of the void campaigns were confirmed by hand, from the four
+`file too short` logs and the ten `wall_s=0` rows, not by that check.)
 
 ### 6.7 The shipped binary reproduces the arm
 
@@ -738,11 +774,30 @@ question 2, and question 2 is what decides whether the 20 MeV ceiling and the
 ## 9. Open items — the owner's call
 
 1. **`stop_gamma_radius_cm = 35` is the value most likely to move.** §4.3's knee
-   and §4.4's plateau agree on it, but both are ~2 σ instruments. The scan of §8
-   is what should set it.
+   and §4.4's ratio agree on it, but both are ~2 σ instruments **and both are
+   offline** — §6.5 disowned that predicate, and the arm re-derivation confirms
+   only the anti-correlation's sign and magnitude (1.64 vs 2.05), never the ring
+   scan's shape. So no measurement through the shipped selection currently
+   supports 35 over, say, 30 or 45. Two things would: re-running the R scan in
+   `--from-arm` mode (the script already has the mode; it wants more than 119
+   PDVD events to separate adjacent rings), and the hand scan of §8.
 2. **The 20 MeV acceptance ceiling** is a guard against absorbing a neighbouring
    cosmic, not a physics limit; §7.5 says the tail above a few MeV is where the
-   class is weakest.
+   class is weakest. Two PDVD candidates are the whole of that tail and should
+   be the scan's first two items, because they are where the ceiling could
+   silently be doing the selecting:
+   * `039349_82` cluster 48 — `stop_gamma_ke_tot` **20.04 MeV**. The near-miss
+     against the 20.0 knob is arithmetic on a **sum**, not a clip: this is
+     **five** objects whose largest is 11.30 MeV, and `stop_gamma_max_ke_mev` is
+     a **per-object** cap, so nothing here was truncated. Five accepted objects
+     on one stop is itself the thing to look at — `stop_gamma_max_n` is 8.
+   * `039253_2` cluster 117 — a **single** object at **17.63 MeV**, the closest
+     any one object comes to the per-object ceiling. If the scan calls this one
+     real, 20 MeV is too low; if it calls it a neighbouring cosmic, the ceiling
+     is doing the right work for the wrong reason and the ring or the
+     compactness cut should be what rejects it.
+   Both carry `michel_found == 1`, which is the *disfavoured* population for
+   capture (§4.4) — another reason to scan them before trusting the tail.
 3. **`em_ke_min` 5 → 0.2 MeV** restores sub-5-MeV EM leaves across the *whole*
    PF tree, not only the new objects (§6.4 has the measured count). If the owner
    wants the capture gammas without the rest, the alternative is a default-OFF
