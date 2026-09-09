@@ -255,6 +255,7 @@
   "verdict": "STM_MICHEL",
   "michel_kind": "attached",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"139 looks OK\"",
   "evidence": "257 cm, enters at the anode face, stops 118 cm from the z wall. The Bragg is modest -- 4.5e4 plateau to 8.5e4 -- but the last chain segment runs 7.0e4 e/cm against 4.4e4 for the body, so it is real. The 3-D view at the stop shows a compact spray rather than a single arm: 89014 (7.1 cm, 5.3e4) plus 89009 and 89015, all of them within 8 cm of the stop. Their cos_fwd is negative, but at that distance direction says nothing -- a Michel is emitted isotropically, and the owner's 'close and backward' exclusion is about activity beside the muon BODY, which none of these is (the chain types them pdg 11 shower, not body-excluded). All three tagged michel.",
   "tags": {
    "89010": "muon",
@@ -397,6 +398,7 @@
   "verdict": "FRAG_THRU",
   "michel_kind": "none",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"329 and 194 is clearly not STM\"",
   "notes": "the drawn cluster is two disconnected pieces with a ~22 cm gap; the full object cannot be judged from what is drawn",
   "evidence": "The wide 3-D view shows TWO disconnected pieces with a clear gap, and the profile has a matching 22 cm hole between 20 and 42 cm. So this is a fragment, and the FRAG buttons are what that is for. On the fragment itself the evidence for a stop is weak: the profile is sparse, reaches 9.5e4 at the end against a 1.6e5 reference, and both ends sit close to the same z face (16.9 and 19.0 cm). I record the full object as a through-goer, at medium confidence -- with a 22 cm hole in the middle this is the row where FRAG_STM_ONLY is the live alternative. 45020, 2.5 cm at 7.6e4 e/cm pointing straight ahead (cos_fwd 0.87), reads as the track carrying on: muon.",
   "tags": {
@@ -526,9 +528,10 @@
   "verdict": "STM_MICHEL",
   "michel_kind": "both",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"266 looks good, I feel there is might be a small gap between the stopping STM and the Michel electron leading to low dQ/dx fit\"",
   "pin_rr": 4.0,
   "notes": "profile peaks 5-8 cm before the fit end, so the fit slightly overshoots; pin moved to rr 4.0, uncertain at the +-3 cm level",
-  "evidence": "27 cm, enters 0.6 cm from the z face, ends 16.8 cm inside. The muon is only 93 MeV so its whole length sits above MIP, and the profile peaks at 9.2e4 five to eight centimetres BEFORE the fit end, falling to ~6e4 over the last two -- the same overshoot signature as 039349_18/36, much smaller. Pin moved back to rr 4.0, snapped to the chain point at rr 4.2 (4.07 cm off the fit end; the owner's sits one point closer in at rr 3.0); at this contrast the correction is good to no better than +-3 cm. A 12.1 cm arm at 3.2e4 e/cm leaves the stop forward (cos_fwd 0.53) with profile charge to -17 cm. Two dots at 47 and 50 cm, both forward and clear of the 27 cm body: gamma.",
+  "evidence": "27 cm, enters 0.6 cm from the z face, ends 16.8 cm inside. The muon is only 93 MeV so its whole length sits above MIP, and the profile peaks at 9.2e4 five to eight centimetres BEFORE the fit end, falling to ~6e4 over the last two -- the same overshoot signature as 039349_18/36, much smaller. Pin moved back to rr 4.0, snapped to the chain point at rr 4.2 (4.07 cm off the fit end; the owner's sits one point closer in at rr 3.0); at this contrast the correction is good to no better than +-3 cm. A 12.1 cm arm at 3.2e4 e/cm leaves the stop forward (cos_fwd 0.53) with profile charge to -17 cm. Two dots at 47 and 50 cm, both forward and clear of the 27 cm body: gamma.  [owner 2026-09-09, on reviewing this row: \"there is might be a small gap between the stopping STM and the Michel electron leading to low dQ/dx fit\" -- i.e. the fit bridges the gap between the muon's true stop and the Michel, and the interpolated points carry little charge.  That is the mechanism behind the peak-then-collapse signature, and it is why the collapse is the thing to look for rather than the peak's height.]",
   "tags": {
    "40004": "muon",
    "40013": "michel",
@@ -542,6 +545,7 @@
   "verdict": "STM_MICHEL",
   "michel_kind": "attached",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"270 looks good\"",
   "evidence": "71 cm, enters 0.2 cm from the anode face, ends 66.7 cm inside it. Modest Bragg: 5e4 plateau to 9e4 over the last 5 cm, which is where the reference curve is at 5 cm. A 3.5 cm arm at 5.0e4 e/cm leaves the stop forward (cos_fwd 0.59) with profile charge to -3 cm -- short, so medium confidence. Worth the owner's eye: the chain rejects this on stop_near_boundary and sets in_fv 0, yet the stop is 66.7 cm from the nearest ACTIVE face, so the call comes from the tighter curved fiducial map, not from the envelope the display draws.",
   "tags": {
    "41006": "muon",
@@ -630,6 +634,7 @@
   "verdict": "STM_MICHEL",
   "michel_kind": "attached",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"285 Looks good\"",
   "evidence": "16.8 cm, enters 0.5 cm from the anode face and stops 17.1 cm inside it. Short and low energy (67 MeV), so the whole track sits high on the muon curve; the profile still climbs from 6e4 at 15 cm to 9e4 in the last 3 cm. A 7.7 cm arm leaves the stop at a sharp angle. At 67 MeV the muon cannot make a 7.7 cm delta ray, so the arm is a decay product; its 3.2e4 e/cm is low but that is normal for a sparse few-MeV electron. Medium only because the track is short and the Bragg contrast is modest.",
   "tags": {
    "46002": "muon",
@@ -671,6 +676,7 @@
   "verdict": "THRU",
   "michel_kind": "none",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"329 and 194 is clearly not STM\"",
   "notes": "fit ends abruptly with no Bragg, no dead channels and no charge past it -- worth a look; the track runs 24 deg from the drift axis",
   "evidence": "119 cm, enters at the anode face, fit ends 110 cm inside it. NO Bragg: dQ/dx is flat at 4e4, BELOW the 5.5e4 MIP reference, from 100 cm right down to the last 2 cm, and nothing at all is drawn past the stop -- no arm, no dots. A stopping muon cannot end without a rise. The measurement panels show clean charge in all three planes ending at the same time slice with no dead region there, so the end is not an escape through unresponsive channels either. Flagged rather than resolved: the track runs only 24 deg off the drift axis, the hardest case for the 2-D charge attribution the dQ/dx is built from, and MCS (1076 MeV) disagrees violently with range (293 MeV).",
   "tags": {
@@ -859,6 +865,7 @@
   "verdict": "STM_ONLY",
   "michel_kind": "detached dots",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"474 is OK, the Bragg peak is not as consistent, but I feel the scan is OK\"",
   "notes": "no attached arm; a detached 17 cm MIP-like clump sits 24-31 cm out, perpendicular -- if that is read as a detached Michel this row becomes STM_MICHEL",
   "evidence": "209 cm ending 68 cm from the nearest wall with nothing continuing in the muon's own direction, so it stopped -- there is no other option at that distance from every face. But the Bragg is weak: dQ/dx sits on the 5e4 plateau to within 5 cm and reaches only 6-8e4, where the reference is 1.6e5. The likely reason is object 78041, 1.8 cm of 1.2e5 e/cm sitting 0-1.7 cm straight ahead of the fit end: the tip is clustered separately, so the fit stops ~2 cm short and never sees its own peak. I tag 78041 muon for that reason though the chain types it pdg 11. NOTHING is attached at the stop. Three pieces 24-31 cm out carry ~17 cm of 5-6e4 e/cm, perpendicular to the muon (cos_fwd 0.08-0.18) and clear of it in two azimuths. Following the owner's 5 STM_ONLY + detached-dots rows I record dots seen, judged not a Michel; but 17 cm of MIP charge is a lot for a capture gamma, and 24 cm is a long gap for a Michel, so this is the row to open first.",
   "tags": {
@@ -878,14 +885,17 @@
  {
   "key": "039349_67/78",
   "scan_id": 481,
-  "verdict": "STM_ONLY",
-  "michel_kind": "detached dots",
+  "verdict": "STM_MICHEL",
+  "michel_kind": "both",
   "confidence": "medium",
-  "evidence": "84 cm, enters 0.8 cm from the y face, stops 58.5 cm inside. The profile rises from a 5-6e4 plateau to 1.1e5 in the last 2 cm, on the muon curve -- a real Bragg. Nothing electron-like at the stop: the only thing there is a 2-point 0.3 cm blip 3.9 cm out (tagged gamma), far too small to be a Michel, and the profile carries only a handful of points to -4 cm at 2-4e4. 224014 sits 53 cm out at 2714 e/cm, 0.05 MIP -- below anything attributable, so delta / other rather than gamma.  [REVISED at the end of the pass: 224014 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]",
+  "owner_review": "CORRECTED -- \"481, the S78013 is likely part of a Michel electron, and the end point should be at S78010\"",
+  "pin_rr": 4.8,
+  "notes": "owner 2026-09-09: S78013 is part of the Michel and the stop is at the end of S78010; pin moved back 4.8 cm",
+  "evidence": "84 cm, enters 0.8 cm from the y face, fit ends 58.5 cm inside.  OWNER CORRECTION 2026-09-09, and re-reading the profile against it shows the first pass had the stop in the wrong place: the rise does not run to the fit's last point.  dQ/dx climbs off a 5-6e4 plateau to 0.9-1.15e5 between +3 and +12 cm and the LAST ~4 cm collapse to 1-4.5e4, which is the same overshoot signature as 039349_18/36 and 039349_26/40.  What the fit runs into is S78013 -- 8.8 cm at 1.9e4 e/cm (0.35 MIP), spanning 0 to 4.8 cm from the old end at cos_fwd -0.47, and typed muon by the chain.  A muon at its own Bragg peak cannot continue at a third of MIP: that is the Michel.  Pin moved back to the S78010/S78013 junction at rr 4.8; S78013 tagged michel.  225015, the chain's own 0.3 cm pdg-11 seed, sits 3.9-4.1 cm from the old end and so ~0.7-0.9 cm from the NEW stop -- inside the radius where direction does not discriminate -- so it is michel too, and the kind is both rather than attached because it is drawn as its own piece.  224014 stays gamma: 53 cm out, forward, clear of the body line.",
   "tags": {
    "78010": "muon",
-   "78013": "muon",
-   "225015": "gamma",
+   "78013": "michel",
+   "225015": "michel",
    "224014": "gamma"
   }
  },
@@ -895,6 +905,7 @@
   "verdict": "STM_MICHEL",
   "michel_kind": "attached",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"498 Looks good\"",
   "evidence": "58 cm, enters 1.1 cm from the z face, stops 15.7 cm inside. Bragg to 1.25e5 at the last point on the muon curve. An 8.4 cm two-piece arm leaves the stop forward (cos_fwd 0.20/0.25) with profile charge to -8 cm; its 1.8e4 e/cm is low for an electron, which is why this is medium and not high. 246011 sits 56 cm out at 1.1e4 e/cm (0.2 MIP) -- too far and too faint to attribute -- but see below.  [REVISED at the end of the pass: 246011 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]",
   "tags": {
    "67003": "muon",
@@ -955,6 +966,7 @@
   "verdict": "STM_ONLY",
   "michel_kind": "none",
   "confidence": "medium",
+  "owner_review": "CONFIRMED -- \"529 probably OK\"",
   "evidence": "181 cm ending 84 cm from the nearest face with nothing continuing, so it stopped. The Bragg is modest -- 4.5e4 plateau to 7.8e4 at the last point, a factor 1.7 -- but it is a rise, and the last segment runs 6.8e4 e/cm against 4.9e4 for the body. Nothing electron-like past the stop. The one extra object is 1.5 cm at 7 cm out with cos_fwd -0.39, i.e. close to the track and BACKWARD, which is the owner's own counter-example for 'not part of the Michel': delta / other.",
   "tags": {
    "75007": "muon",

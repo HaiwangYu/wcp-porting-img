@@ -61,6 +61,12 @@ Owner decisions taken before scanning: all 60 rather than only the 28; a new
 tag rather than writing into `smx1`; tag every drawn object rather than only
 the overrides.
 
+**2026-09-09**: the owner reviewed the ten rows this scan had flagged as
+uncertain, on the display, serving `smx1a` on :5017.  Nine stand and one is
+corrected; three rules came out of their comments and are folded into the
+rubric in §3, which is the part that will outlive this tranche.  §9 has their
+words, row by row.
+
 ## 2. How the scan was taken — and the one thing to know about it
 
 `pdhd/stm_michel_scan/scan_harness.py` (new) starts **the app itself** —
@@ -117,13 +123,36 @@ checkable.
 **Bragg** is read on the dQ/dx panel against the overlaid reference curves,
 not against a number: a rise above the muon curve over the last 10–20 cm.
 A muon at its own Bragg peak cannot continue at MIP, so an arm that does is a
-second particle.
+second particle.  **A ragged rise still counts.**  The owner's reading of
+`039349_66/78` — *"the Bragg peak is not as consistent, but I feel the scan is
+OK"* — settles that: the test is whether the profile climbs above the muon
+curve towards the end, not whether it climbs monotonically.  Scatter of a
+factor of two point-to-point is normal at these charges and is not a reason to
+call a stopper a through-goer.
 
 **Stopping point.** The pin is a *confirmation* (doc pdhd/12 §6.2): the chain
 end equals `stop_*` to <0.01 cm on 97.7 % of items, so it is moved only when
 the picture says the fit is wrong.  The signature that says so is specific:
 **the profile peaks several cm before the fit's last point and then collapses**.
-Moved on 2 of 60.
+Moved on 3 of 60.
+
+  *Read the last few centimetres before accepting the fit end as the stop.*
+  The mechanism, in the owner's words on `039349_26/40`, is a **gap**: *"there
+  is might be a small gap between the stopping STM and the Michel electron
+  leading to low dQ/dx fit"* — the fit bridges the muon's true stop and the
+  Michel, and the interpolated points across the gap carry little charge.  So
+  the diagnostic is the collapse, not the height of the peak.  When it is
+  there, the segment past the peak is the Michel even when **the chain types it
+  `muon`**: that happened on `039349_18/36` and again on `039349_67/78`, 2 of
+  60, and in both the segment sits at a third to a half of MIP where a muon at
+  its Bragg peak would be far above it.  The pin goes to the junction between
+  the last real muon segment and that one, and the segment is tagged `michel`.
+
+  *Moving the stop moves the attribution with it.*  A small isolated piece that
+  reads as a lone capture gamma beside an `STM_ONLY` can become part of the
+  Michel once the stop moves back to where it belongs — `225015` on
+  `039349_67/78` went from `gamma` to `michel` on exactly that account, without
+  a single pixel of it changing.
 
 **Attribution**, per object, settled at the end of the fresh pass and applied
 to all 60:
@@ -136,6 +165,12 @@ to all 60:
 | `delta / other` | lies **ON** the muon body line (cos_fwd ≤ −0.85) at any distance; or is within ~10 cm of the stop, backward, and body-excluded by the chain — the owner's own "close to the track and backward" case; or belongs to a different object |
 | `straddles the stop` | used 0 times, as in `smx1` |
 
+**What the owner's review changed** (§9, 2026-09-09): the three paragraphs above
+in *italic emphasis* — the ragged-Bragg allowance, the gap mechanism and the
+"the chain's last `muon` segment may be the Michel" rule — are theirs, folded in
+after they reviewed the ten uncertain rows.  One row moved as a result
+(`039349_67/78`); the rubric change is the part that will matter on tranche 2.
+
 **The vocabulary gap, reported not fixed.** The owner's "leave the clusters
 associated with neither" has no value in the alphabet.  `delta / other` is
 doing double duty here for real delta rays *and* for unrelated neighbours, and
@@ -145,12 +180,13 @@ made in this round.
 
 ## 4. What the scan says
 
-**60 items, 465 object tags, 2 pin corrections.**
+**60 items, 465 object tags, 3 pin corrections** — after the owner's review of
+2026-09-09 (§9), which moved one row.
 
 | verdict | all 60 | the owner's 32 | the 28 new |
 |---|---:|---:|---:|
-| `STM_MICHEL` | 33 | 18 | 15 |
-| `STM_ONLY` | 14 | 9 | 5 |
+| `STM_MICHEL` | 34 | 18 | 16 |
+| `STM_ONLY` | 13 | 9 | 4 |
 | `THRU` | 7 | 4 | 3 |
 | `FRAG_THRU` | 1 | 1 | 0 |
 | `MESSY` | 5 | 0 | 5 |
@@ -158,11 +194,11 @@ made in this round.
 | `michel_kind` | n |
 |---|---:|
 | `attached` | 18 |
-| `both` | 15 |
-| `detached dots` | 9 |
+| `both` | 16 |
+| `detached dots` | 8 |
 | `none` | 18 |
 
-Tags: **muon 144, michel 62, gamma 61, delta / other 198, straddles 0**.
+Tags: **muon 143, michel 64, gamma 60, delta / other 198, straddles 0**.
 `pf_tagged == n_pf_objects` on every row, which is the point of tagging the
 agreements too: in `smx1a`, "I agree with the chain" and "I never looked" are
 distinguishable, and `pf_chain_group` rides alongside so the override rate is
@@ -209,7 +245,7 @@ against the committed key, stratum-reweighted:
 
     --- labels taken with the reconstruction REVEALED (55 scored) ---
       STM + Michel   purity     raw  25/25  = 1.000   reweighted = 1.000
-      STM + Michel   efficiency raw  25/33  = 0.758   reweighted = 0.477
+      STM + Michel   efficiency raw  25/34  = 0.735   reweighted = 0.457
       is_stm alone   purity     raw  35/36  = 0.972   efficiency raw  35/47 = 0.745
     under-clustering (FRAG) rate: S3 1/12
 
@@ -217,7 +253,7 @@ The `is_stm` line is the 2×2 above, arrived at independently: 35/36 purity is
 the one false positive, 35/47 efficiency the twelve missed stoppers.  The
 STM+Michel efficiency splits raw from reweighted by a factor of 1.6 because the
 draw is stratified and S4 — the stratum the chain calls neither — carries a
-weight of 32.8; the reweighted 0.477 is the population number and the raw 0.758
+weight of 32.8; the reweighted 0.457 is the population number and the raw 0.735
 is this sample's.  Five `MESSY` rows are unscored (2 in S3, 3 in S4), which is
 what that column is for.  All 60 rows are labelled, `pf_tagged ==
 n_pf_objects` on every one, and both pins carry a `moved_cm`.
@@ -258,13 +294,17 @@ n_pf_objects` on every one, and both pins carry a `moved_cm`.
   (§7).  These four-plus-one are worth an eye from whoever owns the Michel
   attachment: they are cases where the chain's own object typing survives a
   verdict that should have removed it.
-* **Both pins reproduced, and only those two.**  Their two placed pins are on
-  `039349_18/36` and `039349_26/40`; those are exactly the two rows of 60 where
-  I moved it.  On `039349_18/36` the slider snapped to the same chain point
-  they used — `rr 9.56`, `moved_cm 8.32`, the same (x, y, z) to the
+* **Both of their pins reproduced, on the two rows they had pinned.**  Their
+  two placed pins in `smx1` are on `039349_18/36` and `039349_26/40`, and both
+  are pinned here.  On `039349_18/36` the slider snapped to the same chain
+  point they used — `rr 9.56`, `moved_cm 8.32`, the same (x, y, z) to the
   centimetre.  On `039349_26/40` I landed one point further out (`rr 4.2`,
   moved 4.07 cm, against their `rr 3.0` and 2.88 cm), a 1.2 cm difference on a
-  correction §7 calls good to no better than ±3 cm.
+  correction §7 calls good to no better than ±3 cm.  This scan pins a **third**
+  row they had not scanned, `039349_67/78`, and that one came out of their
+  review rather than out of the first pass (§7, §9).  In the live tag they have
+  since moved the `039349_26/40` pin to `rr 0.60` and placed one on
+  `039349_12/45` (§11).
 
 **What this number is and is not.**  It is **not blind.**  The owner asked for
 their 32 to be used as calibration, so their per-item labels were in front of
@@ -310,10 +350,24 @@ sample is used for a rate: it may be a real feature of where their scan stopped
 would have called some of these `THRU`.  Either way `MESSY` is unscored, so
 this shows up as a 5/60 unjudgeable rate on tranche 1 rather than a bias.
 
-## 7. The two stopping points the fit got wrong
+## 7. The three stopping points the fit got wrong
 
-Only 2 of 60 pins moved, consistent with doc pdhd/12's 97.7 % figure — and both
-are the owner's own two.  The signature is specific and shows in the profile:
+3 of 60 pins moved, still consistent with doc pdhd/12's 97.7 % figure.  Two of
+the three are the owner's own two; the third (`039349_67/78`) came out of their
+review of 2026-09-09 (§9) and is the reason this section is no longer titled
+"two".  **The signature is one signature**, and the owner named the mechanism
+behind it when they looked at `039349_26/40`:
+
+> *"there is might be a small gap between the stopping STM and the Michel
+> electron leading to low dQ/dx fit"*
+
+That is what the profile shows in all three: the fit does not stop where the
+muon does, it carries on across the gap into the Michel, and the interpolated
+points across the gap carry little charge.  So the thing to look for is **the
+collapse after the peak, not the height of the peak** — dQ/dx rising to a real
+Bragg maximum several centimetres before the fit's last point and then falling
+back to a fraction of MIP.  Two of the three rows the chain calls `no_bragg`
+for exactly that reason: it measures the flat tail past the true stop.
 
 **`039349_18/36`, pin snapped to residual range 9.56 cm, 8.32 cm off the fit
 end.**  The profile runs 5e4
@@ -349,14 +403,33 @@ eight centimetres before the fit end and falls to ~6e4 over the last two.  At
 this contrast the correction is good to no better than ±3 cm, and the owner's
 own pin sits one chain point closer in (`rr 3.0`, 2.88 cm) — inside that.
 
+**`039349_67/78`, pin moved to residual range 4.8 cm, 3.57 cm off the fit end
+— the owner's correction of 2026-09-09**, in their words: *"the S78013 is
+likely part of a Michel electron, and the end point should be at S78010."*  The
+first pass had read the rise as running to the fit's last point and called the
+row `STM_ONLY`.  It does not: dQ/dx climbs off a 5–6e4 plateau to 0.9–1.15e5
+between +3 and +12 cm and the **last ~4 cm collapse to 1–4.5e4**.  What the fit
+runs into is `S78013` — 8.8 cm at 1.9e4 e/cm (0.35 MIP), spanning 0 to 4.8 cm
+from the old end, typed **muon** by the chain — and a muon at its own Bragg peak
+cannot continue at a third of MIP.  The row is now `STM_MICHEL` / `both`:
+`78013` michel, and `225015` (the chain's own 0.3 cm pdg-11 seed, 3.9 cm from
+the old end and so ~0.8 cm from the new stop) michel with it.  **This is the
+second instance of the `039349_18/36` failure — the chain typing the Michel as
+the muon's own last segment — and it was found by the owner, not by the first
+pass.**  Two in 60 is a rate worth carrying into tranche 2.
+
 Both were judged from frames taken with an empty label directory, so neither
 pin was on screen — but their `moved_cm` values were known to me from the
 calibration step, so §5's caveat applies here too.
 
-**This is a reportable defect in the fit, not in the scan.**  Two of 60 is
-small, but on both the chain's own `no_bragg` verdict is a *consequence* of the
-overshoot: it measures the flat tail past the real stop and concludes there is
-no peak.  Anything that trims a fit end on falling dQ/dx would recover both.
+**This is a reportable defect in the fit, not in the scan.**  Three of 60 is
+small, but on two of them the chain's own `no_bragg` verdict is a *consequence*
+of the overshoot — it measures the flat tail past the real stop and concludes
+there is no peak — and the third is rejected on `shape_flat` for the same
+reason.  Anything that trims a fit end on falling dQ/dx would recover all
+three.  Doc [pdvd/54](54_michel-lost-at-the-stop-two-mechanisms.md) §1 has the
+upstream cause for `039349_18/36`; whether `find_first_kink` fails the same way
+on `039349_67/78` is not checked here.
 
 ## 8. Open items, found and not fixed
 
@@ -408,22 +481,37 @@ no peak.  Anything that trims a fit end on falling dQ/dx would recover both.
    attribution the profile is built from — and MCS returns 1076 MeV against
    293 MeV from range.  Worth an eye.
 
-## 9. What to open first
+## 9. The owner's review of the ten uncertain rows (2026-09-09)
 
-Ten rows carry `medium` confidence.  In the order I would look at them:
+Ten of the 60 were recorded at `medium` confidence and put to the owner on the
+display, on :5017, serving `smx1a`.  They went through all ten.  **Nine stand;
+one is corrected**, and the correction is the interesting one.
 
-| item | why |
-|---|---|
-| `039349_66/78` | no attached arm, but a detached 17 cm MIP-like clump 24–31 cm out, perpendicular.  Recorded `STM_ONLY` + detached dots following the owner's five such rows; if that clump is a detached Michel the row is `STM_MICHEL`.  17 cm of MIP charge is a lot for a capture gamma and 24 cm is a long gap for a Michel — this is the one genuinely undecided item |
-| `039349_38/60` | §8.6 |
-| `039349_12/45` | two disconnected pieces with a 22 cm gap; recorded `FRAG_THRU` (as the owner did), but `FRAG_STM_ONLY` is live |
-| `039349_26/40` | the ±3 cm pin correction of §7 |
-| `039349_76/75` | modest Bragg (×1.7); the one extra object is 7 cm out and backward, so `STM_ONLY` rather than `STM_MICHEL` turns on the owner's own close-and-backward rule |
-| `039253_2/89` | modest Bragg; the "arm" is a compact three-piece spray at the stop, all tagged michel |
-| `039349_7/67` | the arm is real but at 1.8e4 e/cm, low for an electron |
-| `039349_3/46` | 17 cm track, modest contrast |
-| `039349_27/41` | 3.5 cm arm; also the `stop_near_boundary` oddity of §4 |
-| `039349_67/78` | the only thing at the stop is a 2-point blip 3.9 cm out |
+| scan | item | my call | the owner |
+|---:|---|---|---|
+| 474 | `039349_66/78` | STM_ONLY / detached dots | ✓ *"474 is OK, the Bragg peak is not as consistent, but I feel the scan is OK"* |
+| 329 | `039349_38/60` | THRU | ✓ *"329 and 194 is clearly not STM"* — and this is the row the chain flags `is_stm = 1`, so the chain's one false positive is now confirmed by both scanners |
+| 194 | `039349_12/45` | FRAG_THRU | ✓ *"clearly not STM"* |
+| 266 | `039349_26/40` | STM_MICHEL / both, pin back 4 cm | ✓ *"266 looks good, I feel there is might be a small gap between the stopping STM and the Michel electron leading to low dQ/dx fit"* — the mechanism, now in §7 |
+| 529 | `039349_76/75` | STM_ONLY | ✓ *"529 probably OK"* |
+| 139 | `039253_2/89` | STM_MICHEL / attached | ✓ *"139 looks OK"* |
+| 498 | `039349_7/67` | STM_MICHEL / attached | ✓ *"498 Looks good"* |
+| 285 | `039349_3/46` | STM_MICHEL / attached | ✓ *"285 Looks good"* |
+| 270 | `039349_27/41` | STM_MICHEL / attached | ✓ *"270 looks good"* |
+| 481 | `039349_67/78` | ~~STM_ONLY / detached dots~~ | **corrected** — *"the S78013 is likely part of a Michel electron, and the end point should be at S78010"*.  Now `STM_MICHEL` / `both` with the pin back 4.8 cm; see §7 |
+
+**What that is worth as a number, and what it is not.**  9 of 10 confirmed is
+9 of the 10 rows I was *least* sure of — it is not a 90 % accuracy figure for
+the scan, because the 50 `high` rows were not reviewed.  What it does say is
+that the medium bucket was drawn around the right rows: the one correction came
+out of it, and it came out of the row whose evidence sentence itself said the
+Bragg ran to the last point when it does not.
+
+**And it is a rate, not an anecdote.**  The corrected row is the *second*
+instance in 60 of the chain typing the Michel as the muon's own last segment
+(`039349_18/36` is the first, doc pdvd/54 §1).  One was found by the owner's
+scan, one by this one, and neither by the chain — which is the argument for
+scanning tranche 2 rather than trusting the flag.
 
 ## 10. What this does not do
 
@@ -435,88 +523,104 @@ record; the numbers in §4 are the input to whoever sets the `shape_flat` /
 
 ## 11. Gates
 
-The viewer is not modified in this round, so any move in its own tests would be
-the harness's fault.  Run after the scan, all green:
+The viewer is not modified in this round — `stm_michel_viewer.py` is unchanged
+since `67a0d02b`, before this scan started — so any move in its own tests would
+be the harness's fault.  Run after the scan, all green:
 
 | gate | result |
 |---|---|
 | `selftest_stm_michel_scan.py` (both detectors) | **81314 checks passed, 0 failed** |
 | `selftest_pin_persistence.py --det pdvd` / `--det pdhd` | **34/34** and **27/27** (check 10 skipped on PDHD: no `smx1` there) |
 | `selftest_smx3d_browser.py --det pdvd --port 5091` / `--det pdhd --port 5093` | **102/102** each |
-| `verify_scan_record.py --det pdvd --tag smx1a --record …` | **60/60 rows, no mismatch** |
+| `verify_scan_record.py --det pdvd --tag smx1a --record …` | 60/60 rows; every verdict, kind and tag matches, and it names the **two pins the owner has since moved in the live tag** — see below |
 | `score_stm_michel_scan.py --det pdvd --tag smx1a` | clean (it refuses an unknown `label`), §4 |
 | `compare_scan_tags.py --det pdvd --a smx1 --b smx1a` | §5 |
-| the owner's `smx1` | byte-identical, `sha256 8fc76b3368c3f6fb473b9ed3debe0923c6c1a95c9e74a38cac9c93ec4b3e9bd1`, 28310 bytes, before and after |
-| the owner's session on :5017 | still serving (HTTP 200), never touched — the harness runs on its own scratch port |
+| the owner's `smx1` | byte-identical, `sha256 8fc76b3368c3f6fb473b9ed3debe0923c6c1a95c9e74a38cac9c93ec4b3e9bd1`, 28310 bytes, unchanged throughout |
+| :5017 | serving `smx1a` since 2026-09-09 05:06 at the owner's request (it served `smx1` during the scan; the harness never used it, then or now — it runs on its own scratch port) |
+
+**`smx1a` is a live tag, and the record is this scan only.**  The owner edits it
+through the app while validating, so `labels.json` can hold placements this
+document does not describe.  As of the run above it carries **two pins that are
+not in the scan record**, both made in their own session on 2026-09-09:
+`039349_12/45` at `rr 58.78` (the record asks for none) and `039349_26/40` at
+`rr 0.60` (the record asks for `rr 4.00`, §7).  `verify_scan_record.py` names
+exactly those two and nothing else, which is the intended behaviour: the record
+is what *this scan* found, the file is what the tag currently holds, and the
+tool is what keeps the difference visible instead of silent.  The rows are
+marked **†** in §12.
 
 ## 12. The 60 rows
 
 `‡` marks the 32 the owner had already scanned in `smx1`.  `chain` is the
 chain's own verdict: `STM` when `is_stm = 1`, otherwise its reject names.
-`mu/mi/ga/ot` counts the tags: muon / michel / gamma / delta-other.
+`mu/mi/ga/ot` counts the tags: muon / michel / gamma / delta-other.  `owner` is
+their review of 2026-09-09 (§9): ✓ confirmed, **corrected** where it moved,
+blank where it was not reviewed.  Verdict, kind, tags and pin are read out of
+`labels.json`; a pin marked **†** is one the file holds and this scan did not
+place (§11).
 
-| scan | item | len | chain | my verdict | kind | conf | mu/mi/ga/ot | pin |
-|---:|---|---:|---|---|---|---|---|---|
-| 4 ‡ | `039252_0/77` | 126 | STM | **STM_ONLY** | detached dots | high | 1/0/1/0 | - |
-| 27 ‡ | `039252_15/77` | 113 | STM | **STM_MICHEL** | attached | high | 1/2/0/0 | - |
-| 30 ‡ | `039252_15/91` | 180 | STM | **STM_MICHEL** | both | high | 1/2/2/0 | - |
-| 34 ‡ | `039252_16/88` | 305 | STM | **STM_MICHEL** | attached | high | 1/1/0/0 | - |
-| 47 ‡ | `039252_2/83` | 30 | STM | **STM_MICHEL** | both | high | 1/3/3/0 | - |
-| 52 ‡ | `039252_3/40` | 265 | STM | **STM_MICHEL** | attached | high | 1/1/0/0 | - |
-| 55 ‡ | `039252_3/74` | 88 | STM | **STM_MICHEL** | both | high | 5/1/1/15 | - |
-| 66 ‡ | `039252_6/114` | 225 | no_bragg,shape_flat | **THRU** | none | high | 4/0/0/4 | - |
-| 81 ‡ | `039252_9/52` | 28 | no_bragg,shape_flat | **STM_MICHEL** | both | high | 1/3/4/0 | - |
-| 112 ‡ | `039253_13/102` | 630 | STM | **STM_ONLY** | detached dots | high | 6/0/1/0 | - |
-| 115 ‡ | `039253_14/49` | 269 | STM | **STM_MICHEL** | both | high | 1/2/4/1 | - |
-| 117 ‡ | `039253_14/110` | 380 | STM | **STM_ONLY** | detached dots | high | 4/0/5/2 | - |
-| 119 ‡ | `039253_15/36` | 322 | STM | **STM_ONLY** | none | high | 1/0/0/0 | - |
-| 124 ‡ | `039253_15/105` | 578 | no_bragg,shape_flat | **STM_MICHEL** | both | high | 5/1/3/2 | - |
-| 136 | `039253_2/34` | 22 | STM | **STM_MICHEL** | attached | high | 1/2/0/0 | - |
-| 139 ‡ | `039253_2/89` | 257 | STM | **STM_MICHEL** | attached | medium | 3/3/0/0 | - |
-| 141 ‡ | `039253_2/117` | 71 | STM | **STM_MICHEL** | both | high | 1/2/1/0 | - |
-| 144 ‡ | `039253_3/66` | 162 | STM | **STM_MICHEL** | attached | high | 3/1/0/1 | - |
-| 152 ‡ | `039253_5/107` | 26 | STM | **STM_ONLY** | detached dots | high | 1/0/2/0 | - |
-| 170 ‡ | `039253_8/59` | 281 | STM | **STM_MICHEL** | both | high | 2/2/2/1 | - |
-| 171 ‡ | `039253_8/62` | 275 | STM | **STM_MICHEL** | both | high | 7/2/3/5 | - |
-| 178 ‡ | `039349_0/68` | 279 | no_bragg,shape_flat | **THRU** | none | high | 4/0/0/3 | - |
-| 181 ‡ | `039349_10/27` | 238 | shape_flat | **THRU** | none | high | 8/0/0/5 | - |
-| 194 ‡ | `039349_12/45` | 120 | profile_sparse | **FRAG_THRU** | none | medium | 5/0/0/1 | - |
-| 210 ‡ | `039349_15/59` | 254 | no_bragg,shape_flat | **THRU** | none | high | 1/0/0/0 | - |
-| 221 ‡ | `039349_18/36` | 147 | no_bragg,shape_flat | **STM_MICHEL** | attached | high | 7/1/0/0 | rr 9.6 |
-| 229 ‡ | `039349_2/38` | 71 | shape_flat | **STM_ONLY** | none | high | 4/0/0/3 | - |
-| 241 ‡ | `039349_21/51` | 199 | no_bragg,shape_flat | **STM_MICHEL** | both | high | 3/1/2/1 | - |
-| 249 ‡ | `039349_22/64` | 477 | STM | **STM_ONLY** | detached dots | high | 7/0/1/1 | - |
-| 261 ‡ | `039349_25/47` | 243 | STM | **STM_ONLY** | none | high | 2/0/0/1 | - |
-| 264 ‡ | `039349_26/18` | 74 | no_bragg,shape_flat | **STM_ONLY** | detached dots | high | 3/0/1/1 | - |
-| 266 ‡ | `039349_26/40` | 27 | no_bragg,shape_flat | **STM_MICHEL** | both | medium | 1/1/2/0 | rr 4.2 |
-| 270 ‡ | `039349_27/41` | 71 | stop_near_boundary | **STM_MICHEL** | attached | medium | 1/1/0/0 | - |
-| 273 | `039349_28/36` | 348 | STM | **STM_MICHEL** | both | high | 5/4/3/0 | - |
-| 275 | `039349_28/52` | 92 | shape_flat,plateau_off_mip | **MESSY** | none | high | 0/0/0/26 | - |
-| 281 | `039349_29/45` | 232 | shape_flat | **STM_MICHEL** | both | high | 1/1/5/0 | - |
-| 285 | `039349_3/46` | 17 | shape_flat | **STM_MICHEL** | attached | medium | 1/1/0/0 | - |
-| 314 | `039349_35/62` | 220 | STM | **STM_MICHEL** | attached | high | 1/3/0/0 | - |
-| 317 | `039349_36/41` | 52 | STM | **STM_MICHEL** | attached | high | 3/2/0/0 | - |
-| 329 | `039349_38/60` | 119 | STM | **THRU** | none | medium | 1/0/0/0 | - |
-| 337 | `039349_4/47` | 45 | no_bragg,shape_flat | **THRU** | none | high | 2/0/0/0 | - |
-| 342 | `039349_40/49` | 56 | plateau_off_mip | **MESSY** | none | high | 0/0/0/21 | - |
-| 352 | `039349_43/54` | 87 | STM | **STM_MICHEL** | attached | high | 1/2/1/0 | - |
-| 368 | `039349_46/58` | 30 | shape_flat,profile_sparse | **MESSY** | none | high | 0/0/0/19 | - |
-| 376 | `039349_48/49` | 186 | STM | **STM_ONLY** | detached dots | high | 1/0/2/0 | - |
-| 410 | `039349_54/54` | 181 | STM | **STM_MICHEL** | attached | high | 3/1/2/0 | - |
-| 436 | `039349_59/61` | 267 | STM | **STM_MICHEL** | attached | high | 1/1/1/0 | - |
-| 444 | `039349_61/18` | 99 | STM | **STM_MICHEL** | attached | high | 2/1/0/0 | - |
-| 460 | `039349_63/48` | 365 | no_bragg,shape_flat,stop_near_boundary | **THRU** | none | high | 2/0/0/5 | - |
-| 470 | `039349_64/71` | 257 | STM | **STM_MICHEL** | both | high | 2/2/1/1 | - |
-| 474 | `039349_66/78` | 209 | no_bragg,shape_flat | **STM_ONLY** | detached dots | medium | 5/0/3/3 | - |
-| 481 | `039349_67/78` | 84 | shape_flat | **STM_ONLY** | detached dots | medium | 2/0/2/0 | - |
-| 498 | `039349_7/67` | 58 | STM | **STM_MICHEL** | attached | medium | 4/2/1/0 | - |
-| 514 | `039349_72/65` | 267 | STM | **STM_MICHEL** | attached | high | 3/2/0/0 | - |
-| 524 | `039349_75/72` | 163 | shape_flat,profile_sparse | **MESSY** | none | high | 0/0/0/17 | - |
-| 529 | `039349_76/75` | 181 | STM | **STM_ONLY** | none | medium | 2/0/0/1 | - |
-| 554 | `039349_81/54` | 105 | shape_flat,plateau_off_mip | **MESSY** | none | high | 0/0/0/53 | - |
-| 558 | `039349_82/52` | 103 | STM | **STM_ONLY** | none | high | 3/0/0/5 | - |
-| 564 | `039349_83/60` | 173 | STM | **STM_MICHEL** | attached | high | 1/4/0/0 | - |
-| 568 | `039349_9/47` | 231 | STM | **STM_MICHEL** | both | high | 1/4/2/0 | - |
+| scan | item | len | chain | my verdict | kind | conf | owner | mu/mi/ga/ot | pin |
+|---:|---|---:|---|---|---|---|---|---|---|
+| 4 ‡ | `039252_0/77` | 126 | STM | **STM_ONLY** | detached dots | high |  | 1/0/1/0 | - |
+| 27 ‡ | `039252_15/77` | 113 | STM | **STM_MICHEL** | attached | high |  | 1/2/0/0 | - |
+| 30 ‡ | `039252_15/91` | 180 | STM | **STM_MICHEL** | both | high |  | 1/2/2/0 | - |
+| 34 ‡ | `039252_16/88` | 305 | STM | **STM_MICHEL** | attached | high |  | 1/1/0/0 | - |
+| 47 ‡ | `039252_2/83` | 30 | STM | **STM_MICHEL** | both | high |  | 1/3/3/0 | - |
+| 52 ‡ | `039252_3/40` | 265 | STM | **STM_MICHEL** | attached | high |  | 1/1/0/0 | - |
+| 55 ‡ | `039252_3/74` | 88 | STM | **STM_MICHEL** | both | high |  | 5/1/1/15 | - |
+| 66 ‡ | `039252_6/114` | 225 | no_bragg,shape_flat | **THRU** | none | high |  | 4/0/0/4 | - |
+| 81 ‡ | `039252_9/52` | 28 | no_bragg,shape_flat | **STM_MICHEL** | both | high |  | 1/3/4/0 | - |
+| 112 ‡ | `039253_13/102` | 630 | STM | **STM_ONLY** | detached dots | high |  | 6/0/1/0 | - |
+| 115 ‡ | `039253_14/49` | 269 | STM | **STM_MICHEL** | both | high |  | 1/2/4/1 | - |
+| 117 ‡ | `039253_14/110` | 380 | STM | **STM_ONLY** | detached dots | high |  | 4/0/5/2 | - |
+| 119 ‡ | `039253_15/36` | 322 | STM | **STM_ONLY** | none | high |  | 1/0/0/0 | - |
+| 124 ‡ | `039253_15/105` | 578 | no_bragg,shape_flat | **STM_MICHEL** | both | high |  | 5/1/3/2 | - |
+| 136 | `039253_2/34` | 22 | STM | **STM_MICHEL** | attached | high |  | 1/2/0/0 | - |
+| 139 ‡ | `039253_2/89` | 257 | STM | **STM_MICHEL** | attached | medium | ✓ | 3/3/0/0 | - |
+| 141 ‡ | `039253_2/117` | 71 | STM | **STM_MICHEL** | both | high |  | 1/2/1/0 | - |
+| 144 ‡ | `039253_3/66` | 162 | STM | **STM_MICHEL** | attached | high |  | 3/1/0/1 | - |
+| 152 ‡ | `039253_5/107` | 26 | STM | **STM_ONLY** | detached dots | high |  | 1/0/2/0 | - |
+| 170 ‡ | `039253_8/59` | 281 | STM | **STM_MICHEL** | both | high |  | 2/2/2/1 | - |
+| 171 ‡ | `039253_8/62` | 275 | STM | **STM_MICHEL** | both | high |  | 7/2/3/5 | - |
+| 178 ‡ | `039349_0/68` | 279 | no_bragg,shape_flat | **THRU** | none | high |  | 4/0/0/3 | - |
+| 181 ‡ | `039349_10/27` | 238 | shape_flat | **THRU** | none | high |  | 8/0/0/5 | - |
+| 194 ‡ | `039349_12/45` | 120 | profile_sparse | **FRAG_THRU** | none | medium | ✓ | 5/0/0/1 | rr 58.8 † |
+| 210 ‡ | `039349_15/59` | 254 | no_bragg,shape_flat | **THRU** | none | high |  | 1/0/0/0 | - |
+| 221 ‡ | `039349_18/36` | 147 | no_bragg,shape_flat | **STM_MICHEL** | attached | high |  | 7/1/0/0 | rr 9.6 |
+| 229 ‡ | `039349_2/38` | 71 | shape_flat | **STM_ONLY** | none | high |  | 4/0/0/3 | - |
+| 241 ‡ | `039349_21/51` | 199 | no_bragg,shape_flat | **STM_MICHEL** | both | high |  | 3/1/2/1 | - |
+| 249 ‡ | `039349_22/64` | 477 | STM | **STM_ONLY** | detached dots | high |  | 7/0/1/1 | - |
+| 261 ‡ | `039349_25/47` | 243 | STM | **STM_ONLY** | none | high |  | 2/0/0/1 | - |
+| 264 ‡ | `039349_26/18` | 74 | no_bragg,shape_flat | **STM_ONLY** | detached dots | high |  | 3/0/1/1 | - |
+| 266 ‡ | `039349_26/40` | 27 | no_bragg,shape_flat | **STM_MICHEL** | both | medium | ✓ | 1/1/2/0 | rr 0.6 † |
+| 270 ‡ | `039349_27/41` | 71 | stop_near_boundary | **STM_MICHEL** | attached | medium | ✓ | 1/1/0/0 | - |
+| 273 | `039349_28/36` | 348 | STM | **STM_MICHEL** | both | high |  | 5/4/3/0 | - |
+| 275 | `039349_28/52` | 92 | shape_flat,plateau_off_mip | **MESSY** | none | high |  | 0/0/0/26 | - |
+| 281 | `039349_29/45` | 232 | shape_flat | **STM_MICHEL** | both | high |  | 1/1/5/0 | - |
+| 285 | `039349_3/46` | 17 | shape_flat | **STM_MICHEL** | attached | medium | ✓ | 1/1/0/0 | - |
+| 314 | `039349_35/62` | 220 | STM | **STM_MICHEL** | attached | high |  | 1/3/0/0 | - |
+| 317 | `039349_36/41` | 52 | STM | **STM_MICHEL** | attached | high |  | 3/2/0/0 | - |
+| 329 | `039349_38/60` | 119 | STM | **THRU** | none | medium | ✓ | 1/0/0/0 | - |
+| 337 | `039349_4/47` | 45 | no_bragg,shape_flat | **THRU** | none | high |  | 2/0/0/0 | - |
+| 342 | `039349_40/49` | 56 | plateau_off_mip | **MESSY** | none | high |  | 0/0/0/21 | - |
+| 352 | `039349_43/54` | 87 | STM | **STM_MICHEL** | attached | high |  | 1/2/1/0 | - |
+| 368 | `039349_46/58` | 30 | shape_flat,profile_sparse | **MESSY** | none | high |  | 0/0/0/19 | - |
+| 376 | `039349_48/49` | 186 | STM | **STM_ONLY** | detached dots | high |  | 1/0/2/0 | - |
+| 410 | `039349_54/54` | 181 | STM | **STM_MICHEL** | attached | high |  | 3/1/2/0 | - |
+| 436 | `039349_59/61` | 267 | STM | **STM_MICHEL** | attached | high |  | 1/1/1/0 | - |
+| 444 | `039349_61/18` | 99 | STM | **STM_MICHEL** | attached | high |  | 2/1/0/0 | - |
+| 460 | `039349_63/48` | 365 | no_bragg,shape_flat,stop_near_boundary | **THRU** | none | high |  | 2/0/0/5 | - |
+| 470 | `039349_64/71` | 257 | STM | **STM_MICHEL** | both | high |  | 2/2/1/1 | - |
+| 474 | `039349_66/78` | 209 | no_bragg,shape_flat | **STM_ONLY** | detached dots | medium | ✓ | 5/0/3/3 | - |
+| 481 | `039349_67/78` | 84 | shape_flat | **STM_MICHEL** | both | medium | **corrected** | 1/2/1/0 | rr 4.8 |
+| 498 | `039349_7/67` | 58 | STM | **STM_MICHEL** | attached | medium | ✓ | 4/2/1/0 | - |
+| 514 | `039349_72/65` | 267 | STM | **STM_MICHEL** | attached | high |  | 3/2/0/0 | - |
+| 524 | `039349_75/72` | 163 | shape_flat,profile_sparse | **MESSY** | none | high |  | 0/0/0/17 | - |
+| 529 | `039349_76/75` | 181 | STM | **STM_ONLY** | none | medium | ✓ | 2/0/0/1 | - |
+| 554 | `039349_81/54` | 105 | shape_flat,plateau_off_mip | **MESSY** | none | high |  | 0/0/0/53 | - |
+| 558 | `039349_82/52` | 103 | STM | **STM_ONLY** | none | high |  | 3/0/0/5 | - |
+| 564 | `039349_83/60` | 173 | STM | **STM_MICHEL** | attached | high |  | 1/4/0/0 | - |
+| 568 | `039349_9/47` | 231 | STM | **STM_MICHEL** | both | high |  | 1/4/2/0 | - |
 
 ### Per-item evidence
 
@@ -566,6 +670,7 @@ chain's own verdict: `STM` when `is_stm = 1`, otherwise its reject names.
 22.4 cm, entry 0.5 cm from the z face, stop 10.7 cm inside it. Clear Bragg rise, 6e4 at 20 cm to 1.0e5 at the last cm, on the muon reference curve. A 12.8 cm two-piece arm leaves the stop at 43 deg at MIP dQ/dx -- a muon at its own Bragg peak cannot continue at MIP, so the arm is a second particle, and 12.8 cm is the right range for a ~31 MeV electron. No dead region at the stop in any plane.
 
 **`039253_2/89`** (scan 139, 257 cm) — **STM_MICHEL** / attached / medium confidence  
+*owner review: CONFIRMED -- "139 looks OK"*  
 257 cm, enters at the anode face, stops 118 cm from the z wall. The Bragg is modest -- 4.5e4 plateau to 8.5e4 -- but the last chain segment runs 7.0e4 e/cm against 4.4e4 for the body, so it is real. The 3-D view at the stop shows a compact spray rather than a single arm: 89014 (7.1 cm, 5.3e4) plus 89009 and 89015, all of them within 8 cm of the stop. Their cos_fwd is negative, but at that distance direction says nothing -- a Michel is emitted isotropically, and the owner's 'close and backward' exclusion is about activity beside the muon BODY, which none of these is (the chain types them pdg 11 shower, not body-excluded). All three tagged michel.
 
 **`039253_2/117`** (scan 141, 71 cm) — **STM_MICHEL** / both / high confidence  
@@ -590,6 +695,7 @@ chain's own verdict: `STM` when `is_stm = 1`, otherwise its reject names.
 238 cm whose fit ends 139 cm from every face -- the deepest end in this tranche -- with dQ/dx FLAT on the 5-6e4 plateau to the last point and no rise. A muon that stops 139 cm inside the detector must show a Bragg peak; this one shows none, so the fit end is not the track's end. 27016 is 1.1 cm at the stop pointing 48 deg off the muon line, too little to call anything; the four shower pieces lie 197-211 cm back ON the body line. All delta / other.
 
 **`039349_12/45`** (scan 194, 120 cm) — **FRAG_THRU** / none / medium confidence  
+*owner review: CONFIRMED -- "329 and 194 is clearly not STM"*  
 *the drawn cluster is two disconnected pieces with a ~22 cm gap; the full object cannot be judged from what is drawn*  
 The wide 3-D view shows TWO disconnected pieces with a clear gap, and the profile has a matching 22 cm hole between 20 and 42 cm. So this is a fragment, and the FRAG buttons are what that is for. On the fragment itself the evidence for a stop is weak: the profile is sparse, reaches 9.5e4 at the end against a 1.6e5 reference, and both ends sit close to the same z face (16.9 and 19.0 cm). I record the full object as a through-goer, at medium confidence -- with a 22 cm hole in the middle this is the row where FRAG_STM_ONLY is the live alternative. 45020, 2.5 cm at 7.6e4 e/cm pointing straight ahead (cos_fwd 0.87), reads as the track carrying on: muon.
 
@@ -616,10 +722,12 @@ The wide 3-D view shows TWO disconnected pieces with a clear gap, and the profil
 74 cm, enters 21.1 cm from the y face, stops 47.2 cm inside. Bragg to 1.2e5 on the muon curve -- the chain calls this no_bragg and its MCS returns the 3948 MeV ceiling at amb 1.00, but the profile is clear. Nothing attached. One 0.3 cm dot 58.5 cm out, perpendicular and therefore ~58 cm clear of the body: gamma. 18006 sits on the body line 57-60 cm back: delta / other.
 
 **`039349_26/40`** (scan 266, 27 cm) — **STM_MICHEL** / both / medium confidence  
+*owner review: CONFIRMED -- "266 looks good, I feel there is might be a small gap between the stopping STM and the Michel electron leading to low dQ/dx fit"*  
 *profile peaks 5-8 cm before the fit end, so the fit slightly overshoots; pin moved to rr 4.0, uncertain at the +-3 cm level*  
-27 cm, enters 0.6 cm from the z face, ends 16.8 cm inside. The muon is only 93 MeV so its whole length sits above MIP, and the profile peaks at 9.2e4 five to eight centimetres BEFORE the fit end, falling to ~6e4 over the last two -- the same overshoot signature as 039349_18/36, much smaller. Pin moved back to rr 4.0, snapped to the chain point at rr 4.2 (4.07 cm off the fit end; the owner's sits one point closer in at rr 3.0); at this contrast the correction is good to no better than +-3 cm. A 12.1 cm arm at 3.2e4 e/cm leaves the stop forward (cos_fwd 0.53) with profile charge to -17 cm. Two dots at 47 and 50 cm, both forward and clear of the 27 cm body: gamma.
+27 cm, enters 0.6 cm from the z face, ends 16.8 cm inside. The muon is only 93 MeV so its whole length sits above MIP, and the profile peaks at 9.2e4 five to eight centimetres BEFORE the fit end, falling to ~6e4 over the last two -- the same overshoot signature as 039349_18/36, much smaller. Pin moved back to rr 4.0, snapped to the chain point at rr 4.2 (4.07 cm off the fit end; the owner's sits one point closer in at rr 3.0); at this contrast the correction is good to no better than +-3 cm. A 12.1 cm arm at 3.2e4 e/cm leaves the stop forward (cos_fwd 0.53) with profile charge to -17 cm. Two dots at 47 and 50 cm, both forward and clear of the 27 cm body: gamma.  [owner 2026-09-09, on reviewing this row: "there is might be a small gap between the stopping STM and the Michel electron leading to low dQ/dx fit" -- i.e. the fit bridges the gap between the muon's true stop and the Michel, and the interpolated points carry little charge.  That is the mechanism behind the peak-then-collapse signature, and it is why the collapse is the thing to look for rather than the peak's height.]
 
 **`039349_27/41`** (scan 270, 71 cm) — **STM_MICHEL** / attached / medium confidence  
+*owner review: CONFIRMED -- "270 looks good"*  
 71 cm, enters 0.2 cm from the anode face, ends 66.7 cm inside it. Modest Bragg: 5e4 plateau to 9e4 over the last 5 cm, which is where the reference curve is at 5 cm. A 3.5 cm arm at 5.0e4 e/cm leaves the stop forward (cos_fwd 0.59) with profile charge to -3 cm -- short, so medium confidence. Worth the owner's eye: the chain rejects this on stop_near_boundary and sets in_fv 0, yet the stop is 66.7 cm from the nearest ACTIVE face, so the call comes from the tighter curved fiducial map, not from the envelope the display draws.
 
 **`039349_28/36`** (scan 273, 348 cm) — **STM_MICHEL** / both / high confidence  
@@ -633,6 +741,7 @@ A compact diffuse spray at the z face, not a track: the 91.7 cm fit wanders insi
 232 cm, enters 1.9 cm from the z face, stops 70.4 cm inside. Bragg rise 4e4 -> 9.5e4 over the last 20 cm on the muon curve. A 5.6 cm arm at a 36 deg kink leaves the stop vertex at 8.1e4 e/cm. Five isolated pieces at 21-54 cm, cos_fwd 0.4-0.61, i.e. forward and roughly along the Michel axis -- checked at two azimuths, they do NOT lie on the muon's own line, so they are the Michel's gammas and not a broken continuation. The chain calls this not-an-STM on shape_flat; the profile plainly rises.
 
 **`039349_3/46`** (scan 285, 17 cm) — **STM_MICHEL** / attached / medium confidence  
+*owner review: CONFIRMED -- "285 Looks good"*  
 16.8 cm, enters 0.5 cm from the anode face and stops 17.1 cm inside it. Short and low energy (67 MeV), so the whole track sits high on the muon curve; the profile still climbs from 6e4 at 15 cm to 9e4 in the last 3 cm. A 7.7 cm arm leaves the stop at a sharp angle. At 67 MeV the muon cannot make a 7.7 cm delta ray, so the arm is a decay product; its 3.2e4 e/cm is low but that is normal for a sparse few-MeV electron. Medium only because the track is short and the Bragg contrast is modest.
 
 **`039349_35/62`** (scan 314, 220 cm) — **STM_MICHEL** / attached / high confidence  
@@ -642,6 +751,7 @@ A compact diffuse spray at the z face, not a track: the 91.7 cm fit wanders insi
 51.8 cm, enters 1.0 cm from the z face, stops 21.9 cm inside. Textbook Bragg -- 5e4 plateau to 1.45e5 in the last centimetre, sitting on the muon reference curve the whole way. An 11.3 cm two-piece arm leaves the stop forward (cos_fwd 0.70/0.73) at 3.5-7.8e4 e/cm; range and charge are right for a ~25 MeV Michel.
 
 **`039349_38/60`** (scan 329, 119 cm) — **THRU** / none / medium confidence  
+*owner review: CONFIRMED -- "329 and 194 is clearly not STM"*  
 *fit ends abruptly with no Bragg, no dead channels and no charge past it -- worth a look; the track runs 24 deg from the drift axis*  
 119 cm, enters at the anode face, fit ends 110 cm inside it. NO Bragg: dQ/dx is flat at 4e4, BELOW the 5.5e4 MIP reference, from 100 cm right down to the last 2 cm, and nothing at all is drawn past the stop -- no arm, no dots. A stopping muon cannot end without a rise. The measurement panels show clean charge in all three planes ending at the same time slice with no dead region there, so the end is not an escape through unresponsive channels either. Flagged rather than resolved: the track runs only 24 deg off the drift axis, the hardest case for the 2-D charge attribution the dQ/dx is built from, and MCS (1076 MeV) disagrees violently with range (293 MeV).
 
@@ -678,13 +788,17 @@ A compact busy blob: 19 objects inside ~35 cm, 13 of them the chain's own pdg-11
 257 cm, enters 7.7 cm from the anode face, stops 52.7 cm from the z wall. Bragg to 1.35e5 on the muon curve. A 25 cm two-piece arm leaves the stop forward (cos_fwd 0.39/0.42), contiguous (the second piece starts where the first ends), with profile charge out to -22 cm -- a full-energy Michel. One 0.3 cm dot 33 cm out, forward, isolated: gamma. 71008 (pdg 211, 11.7 cm) sits 247-258 cm back at the ENTRY end, nothing to do with this stop: delta / other.
 
 **`039349_66/78`** (scan 474, 209 cm) — **STM_ONLY** / detached dots / medium confidence  
+*owner review: CONFIRMED -- "474 is OK, the Bragg peak is not as consistent, but I feel the scan is OK"*  
 *no attached arm; a detached 17 cm MIP-like clump sits 24-31 cm out, perpendicular -- if that is read as a detached Michel this row becomes STM_MICHEL*  
 209 cm ending 68 cm from the nearest wall with nothing continuing in the muon's own direction, so it stopped -- there is no other option at that distance from every face. But the Bragg is weak: dQ/dx sits on the 5e4 plateau to within 5 cm and reaches only 6-8e4, where the reference is 1.6e5. The likely reason is object 78041, 1.8 cm of 1.2e5 e/cm sitting 0-1.7 cm straight ahead of the fit end: the tip is clustered separately, so the fit stops ~2 cm short and never sees its own peak. I tag 78041 muon for that reason though the chain types it pdg 11. NOTHING is attached at the stop. Three pieces 24-31 cm out carry ~17 cm of 5-6e4 e/cm, perpendicular to the muon (cos_fwd 0.08-0.18) and clear of it in two azimuths. Following the owner's 5 STM_ONLY + detached-dots rows I record dots seen, judged not a Michel; but 17 cm of MIP charge is a lot for a capture gamma, and 24 cm is a long gap for a Michel, so this is the row to open first.
 
-**`039349_67/78`** (scan 481, 84 cm) — **STM_ONLY** / detached dots / medium confidence  
-84 cm, enters 0.8 cm from the y face, stops 58.5 cm inside. The profile rises from a 5-6e4 plateau to 1.1e5 in the last 2 cm, on the muon curve -- a real Bragg. Nothing electron-like at the stop: the only thing there is a 2-point 0.3 cm blip 3.9 cm out (tagged gamma), far too small to be a Michel, and the profile carries only a handful of points to -4 cm at 2-4e4. 224014 sits 53 cm out at 2714 e/cm, 0.05 MIP -- below anything attributable, so delta / other rather than gamma.  [REVISED at the end of the pass: 224014 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]
+**`039349_67/78`** (scan 481, 84 cm) — **STM_MICHEL** / both / medium confidence  
+*owner review: CORRECTED -- "481, the S78013 is likely part of a Michel electron, and the end point should be at S78010"*  
+*owner 2026-09-09: S78013 is part of the Michel and the stop is at the end of S78010; pin moved back 4.8 cm*  
+84 cm, enters 0.8 cm from the y face, fit ends 58.5 cm inside.  OWNER CORRECTION 2026-09-09, and re-reading the profile against it shows the first pass had the stop in the wrong place: the rise does not run to the fit's last point.  dQ/dx climbs off a 5-6e4 plateau to 0.9-1.15e5 between +3 and +12 cm and the LAST ~4 cm collapse to 1-4.5e4, which is the same overshoot signature as 039349_18/36 and 039349_26/40.  What the fit runs into is S78013 -- 8.8 cm at 1.9e4 e/cm (0.35 MIP), spanning 0 to 4.8 cm from the old end at cos_fwd -0.47, and typed muon by the chain.  A muon at its own Bragg peak cannot continue at a third of MIP: that is the Michel.  Pin moved back to the S78010/S78013 junction at rr 4.8; S78013 tagged michel.  225015, the chain's own 0.3 cm pdg-11 seed, sits 3.9-4.1 cm from the old end and so ~0.7-0.9 cm from the NEW stop -- inside the radius where direction does not discriminate -- so it is michel too, and the kind is both rather than attached because it is drawn as its own piece.  224014 stays gamma: 53 cm out, forward, clear of the body line.
 
 **`039349_7/67`** (scan 498, 58 cm) — **STM_MICHEL** / attached / medium confidence  
+*owner review: CONFIRMED -- "498 Looks good"*  
 58 cm, enters 1.1 cm from the z face, stops 15.7 cm inside. Bragg to 1.25e5 at the last point on the muon curve. An 8.4 cm two-piece arm leaves the stop forward (cos_fwd 0.20/0.25) with profile charge to -8 cm; its 1.8e4 e/cm is low for an electron, which is why this is medium and not high. 246011 sits 56 cm out at 1.1e4 e/cm (0.2 MIP) -- too far and too faint to attribute -- but see below.  [REVISED at the end of the pass: 246011 is tagged **gamma**, not delta / other. The rule settled on charge NOT being a criterion -- any isolated object past the stop and clear of the muon body line is a gamma, however faint. The reasoning above is left as written so the change is visible.]
 
 **`039349_72/65`** (scan 514, 267 cm) — **STM_MICHEL** / attached / high confidence  
@@ -695,6 +809,7 @@ A compact busy blob: 19 objects inside ~35 cm, 13 of them the chain's own pdg-11
 A 163 cm fit threaded through a sparse, disconnected zig-zag: 15 'muon' segments whose dQ/dx runs 3280 to 34354 e/cm, most of them under 0.3 MIP, with vertices scattered in every direction and visible gaps between the pieces in the wide 3-D view. Only 436 image points over 163 cm. MCS amb 1.00 and range 386 MeV against dQ/dx 115 MeV. Neither end is at a face (63.6 and 112.5 cm), so this is not a containment question -- it is simply not one track.
 
 **`039349_76/75`** (scan 529, 181 cm) — **STM_ONLY** / none / medium confidence  
+*owner review: CONFIRMED -- "529 probably OK"*  
 181 cm ending 84 cm from the nearest face with nothing continuing, so it stopped. The Bragg is modest -- 4.5e4 plateau to 7.8e4 at the last point, a factor 1.7 -- but it is a rise, and the last segment runs 6.8e4 e/cm against 4.9e4 for the body. Nothing electron-like past the stop. The one extra object is 1.5 cm at 7 cm out with cos_fwd -0.39, i.e. close to the track and BACKWARD, which is the owner's own counter-example for 'not part of the Michel': delta / other.
 
 **`039349_81/54`** (scan 554, 105 cm) — **MESSY** / none / high confidence  

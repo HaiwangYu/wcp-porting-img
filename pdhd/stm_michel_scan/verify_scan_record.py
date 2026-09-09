@@ -21,6 +21,9 @@ import argparse, collections, json, os, sys
 
 IMG = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# cm; the pin snaps to the nearest chain point, so a match is never exact.
+PIN_TOL = 0.5
+
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
@@ -63,6 +66,15 @@ def main(argv=None):
         if bool(p.get("placed")) != (it.get("pin_rr") is not None):
             bad.append((k, "pin placed=%s, record asks pin_rr=%s"
                         % (p.get("placed"), it.get("pin_rr"))))
+        elif p.get("placed") and it.get("pin_rr") is not None \
+                and abs((p.get("rr") or 0.0) - it["pin_rr"]) > PIN_TOL:
+            # The slider SNAPS to the nearest chain point, so the stored rr is
+            # never exactly the requested one -- but the snap is sub-point
+            # (0.06 cm on 039349_18/36).  Anything past PIN_TOL is a different
+            # placement, i.e. somebody moved the pin after this record was
+            # written, and that is exactly what this tool is for.
+            bad.append((k, "pin at rr %.2f, record asks rr %.2f"
+                        % (p.get("rr") or 0.0, it["pin_rr"])))
         pins += int(bool(p.get("placed")))
         verdicts[r.get("choice")] += 1
         kinds[r.get("michel_kind")] += 1
