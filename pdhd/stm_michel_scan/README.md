@@ -215,14 +215,27 @@ uses, so they can never be confused with the reconstruction's colours. Only
 boundary, so the question is well posed nearly always — but not always, which is
 why the fourth button exists.
 
-**A `C<id>` row may not be where it looks.** The Bee image layer draws every
-cluster at its *own* Q-L bundle's t0-corrected x, so a cluster from another
-flash lands wherever its own drift correction puts it — on `039253_14` six of
-the eleven blobs within 60 cm of cluster 49's stop are like that, at t0 5168 µs
-and 2617 µs against the muon's 3709 µs, i.e. metres away in drift. The
-inspector says **ANOTHER FLASH** with the flash id and t0 when that is the case,
-and `bundle only` hides them from the 3-D view entirely. The chain never fits
-them: the survey admits same-bundle clusters only.
+**`bundle only` now governs the table too** (owner, 2026-09-08; doc pdvd/53
+§8). Only pieces inside this stop's own Q-L bundle are objects *of* this stop,
+so with the control on — the default — a `C<id>` row from another flash is not
+listed at all, and the head line says how many were dropped. It is not a trim:
+**97 % of the PDVD `C` rows and 96 % of the PDHD ones were foreign** (1292 of
+1331, 559 of 583). Untick the control and they come back, marked `OTHER FLASH`.
+
+The reason is doc pdhd/13 §4: the Bee image layer draws every cluster at its
+*own* Q-L bundle's t0-corrected x, so a cluster from another flash lands
+wherever its own drift correction puts it. On `039252_15` cluster 77 the two
+blobs 6 and 16 cm from the stop are flash 134 at t0 2542 µs against the muon's
+flash 298 at 6199 µs — 573 cm away in drift, one of them a 434 cm through-going
+track. On `039253_14` eight of the blobs within 60 cm of cluster 49's stop are
+the same artifact. The chain never fits them: the survey admits same-bundle
+clusters only, and **every `S` row is in the bundle by construction** (3888 PF
+segments over 569 PDVD payloads, 0 foreign).
+
+**A row you have already tagged is never hidden**, whatever the control says: it
+stays marked `OTHER FLASH` so you can move it, and it stays for the rest of the
+item even after `→ unassigned` — which pops the tag, and would otherwise make
+the row evict itself half way through a correction.
 
 The panel also prints what the chain calls the segment: its particle type and
 whether it called it a track or a shower. That *is* the chain's answer —

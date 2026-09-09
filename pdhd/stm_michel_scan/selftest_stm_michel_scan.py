@@ -1467,6 +1467,75 @@ def test_survey_table(det, tmp):
           % (len(rows), len(set(g["seg_src"].data["group"]))))
 
 
+def test_bundle_only_table(det, tmp):
+    """doc pdvd/53 sec 8: only THIS stop's Q-L bundle is an object of it.
+
+    Owner, 2026-09-08, on 039252_15/77's C103 and C381: "for the objects near
+    this stop, we only need the ones inside this Q-L bundle".  The picture has
+    obeyed that since doc pdhd/13 (`bundle only`, default on); the table did
+    not, and 1375 of the 2397 pdvd near-cluster rows are the other-flash
+    artifact.  One control now governs both.
+
+    CAUSAL NEGATIVE CONTROL: the same row must come BACK when the control is
+    unticked, and must carry the OTHER FLASH mark.  A test that only asserts
+    "the row is gone" passes just as well when the table is empty for an
+    unrelated reason (feedback_guard_needs_causal_negative_control).
+    """
+    print("[Q] the bundle filter on the object table, %s" % det)
+    g = load_app(det, os.path.join(tmp, "labqb_" + det))
+    target = key = None
+    for i in range(len(g["ITEMS"])):
+        g["go"](i)
+        pay = g["payload"](g["current"]())
+        for c in (pay or {}).get("near_clusters") or []:
+            if (c.get("in_bundle") == 0 and not c.get("segs")
+                    and c["id"] != (pay or {}).get("cluster_id")):
+                target, key = i, "C%d" % c["id"]
+                break
+        if target is not None:
+            break
+    if target is None:
+        print("     (no out-of-bundle near cluster in this prep -- skipped)")
+        return
+    g["go"](target)
+    on_keys = list(g["seg_src"].data["key"])
+    ck(key not in on_keys,
+       "%s: %s is from another flash and the table still lists it" % (det, key))
+    n_hidden = g["state"]["pf_hidden"]
+    ck(n_hidden >= 1,
+       "%s: a row was dropped and pf_hidden is %r" % (det, n_hidden))
+    ck("ANOTHER flash" in g["seg_head"].text,
+       "%s: rows were hidden and the header does not say so: %r"
+       % (det, g["seg_head"].text))
+    # the control is what drops it -- and the row that comes back is marked
+    g["bundle_tog"].active = False
+    off_keys = list(g["seg_src"].data["key"])
+    ck(key in off_keys,
+       "%s: %s does not come back with `bundle only` off -- the row is missing "
+       "for some other reason and the filter test is vacuous" % (det, key))
+    ck("OTHER FLASH" in g["seg_src"].data["chain"][off_keys.index(key)],
+       "%s: %s is drawn from another flash and the row does not say so"
+       % (det, key))
+    # nothing IN the bundle moved: only the out-of-bundle rows differ
+    extra = [k for k in off_keys if k not in on_keys]
+    ck(all(k.startswith("C") for k in extra),
+       "%s: the bundle control changed segment rows too: %r" % (det, extra))
+    # a saved decision is never hidden by a display default
+    pick_row(g, key)
+    g["set_pf_tag"]("gamma")
+    g["bundle_tog"].active = True
+    ck(key in list(g["seg_src"].data["key"]),
+       "%s: the scanner tagged %s and `bundle only` hid it anyway" % (det, key))
+    # ... and it survives the `unassigned` click, which POPS the tag
+    pick_row(g, key)
+    g["set_pf_tag"](None)
+    ck(key in list(g["seg_src"].data["key"]),
+       "%s: %s vanished the moment it was moved back to unassigned -- the "
+       "scanner cannot re-tag a row that evicts itself" % (det, key))
+    print("     %s: %d other-flash row%s hidden by `bundle only`, back when "
+          "off, kept once touched" % (key, n_hidden, "" if n_hidden == 1 else "s"))
+
+
 # ---------------------------------------------------------------------------
 # J -- the save read-back
 # ---------------------------------------------------------------------------
@@ -2664,6 +2733,7 @@ def main():
             test_survey_payload(det)              # doc pdvd/53
             test_survey_image_ids(det)            # doc pdvd/53
             test_survey_table(det, tmp)           # doc pdvd/53
+            test_bundle_only_table(det, tmp)      # doc pdvd/53 sec 8
             if not a.quick:
                 test_kine_gate(det)
                 test_object_tree(det)

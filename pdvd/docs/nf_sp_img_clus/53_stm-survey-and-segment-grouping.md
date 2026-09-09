@@ -491,3 +491,110 @@ selectable; deciding what they *are* is the scan's job and the next round's.
    check in every arm, this round's and doc pdvd/51's alike. It is a
    candidate-less event, not an incomplete job: 119 of 120 is the real PDVD
    count.
+
+## 8. Addendum (owner, 2026-09-08): only this stop's own Q-L bundle is an object of it
+
+**Repro** (the shipped code path, driven headless — the app's own `load_app`,
+not a re-implementation):
+
+```bash
+cd /nfs/data/1/xqian/toolkit-dev/wcp-porting-img/pdhd/stm_michel_scan
+python3 selftest_stm_michel_scan.py --det pdvd   # [Q] the bundle filter ...
+python3 selftest_stm_michel_scan.py --det pdhd
+```
+
+### 8.1 The question, answered from the payload
+
+> *"in evt 039252_15 cl 77, there are two C103 and C381, are they part of this
+> bundle?"*
+
+**No.** `smprep-039252_15-c77.json` says the muon's Q-L bundle is
+`[77, 265, 266, 267]`, and both blobs carry `in_bundle: 0`:
+
+| row | `d_stop` | pts | `flash_id` | `cluster_t0_us` | in bundle |
+|---|---|---|---|---|---|
+| the muon, cluster 77 | 0.35 | 718 | **298** | **6199.68** | yes |
+| C103 | 6.48 | 3395 | 134 | 2542.38 | **no** |
+| C381 | 15.92 | 29 | 134 | 2542.38 | **no** |
+
+They are one other cosmic and its fragment: the same foreign flash 134, the same
+t0, Δt0 = 3657.30 µs against this muon. At the PDVD drift speed
+(`cfg/pgrapher/experiment/protodunevd/params.jsonnet:131`, 1.568 mm/µs) that is
+**573 cm** of drift between them and this stop. C103 is 434 cm long with 3395
+points — a through-going track, not a piece of a Michel. They look adjacent only
+because the Bee `clustering-global` layer draws every cluster at its **own**
+bundle's t0-corrected x (doc pdhd/13 §4).
+
+### 8.2 The fix: one control now governs the picture and the table
+
+`bundle only` (default **on**) has restricted the *picture* since doc pdhd/13.
+The object table did not follow it, which is the whole defect. It does now —
+`unfitted_near()` takes the control's state, and `seg_head` prints what it
+dropped, so nothing is suppressed silently:
+
+> objects near this stop — 3 in 2 groups: muon 1, michel 2
+> **+2 blobs from ANOTHER flash hidden** — not this stop's; untick `bundle only` to see them
+
+What that removes is not a trim, it is most of the list:
+
+| | C rows before | in bundle | **other flash** | items with ≥ 1 |
+|---|---|---|---|---|
+| PDVD (569 items) | 1331 | 39 | **1292 (97 %)** | 349 (61 %) |
+| PDHD (303 items) | 583 | 24 | **559 (96 %)** | 174 (57 %) |
+
+**The S rows need no filter, and that is measured, not assumed**: 3888 PF
+segments across the 569 PDVD payloads, **0** whose cluster is outside the
+candidate's bundle. The survey admits same-bundle clusters only (§6, and the
+census's `ANOTHER flash: 0` row), so only the C rows could ever be foreign.
+
+**A saved decision is never hidden by a display default.** A row the scanner has
+already touched stays on screen whatever the control says, marked `OTHER FLASH`,
+and it stays for the rest of the item's session even after an `→ unassigned`
+click (which *pops* the tag, so a tag-only rule would make the row evict itself
+mid-correction). This matters immediately: **the owner's own saved
+`039252_0/77 → C199: muon` is such a row.** C199 is 5 points at `d_stop` 54.7 cm
+from flash 237 / t0 4450.03 µs, against that muon's flash 198 / t0 3436.37 µs —
+Δt0 1013.66 µs ≈ 159 cm of drift. The tag is reported, not touched (M13); it is
+the owner's to keep or move now that the row says where it comes from.
+
+**Display-only.** `near_clusters[].in_bundle` and the per-point cluster ids were
+already written by this round's prep, so there is no re-prep, no C++ change, no
+arm to re-run, and `smx1` is untouched: all 12 labels still resolve.
+
+### 8.3 Found beside this, reported and NOT fixed
+
+Six PDVD items hold an in-bundle cluster near the stop that **is** fitted and
+still gets no row: its segments are absent from `pf["seg"]` (the chain never
+named them) and `unfitted_near()` skips any cluster that has segments at all.
+
+| item | cluster | `d_stop` | length | segs |
+|---|---|---|---|---|
+| `039349_22`/45 | 63 | 22.31 | 395.6 cm | 5 |
+| `039349_68`/28 | 38 | 36.39 | 326.25 cm | 17 |
+| `039349_37`/52 | 33 | 14.69 | 57.84 cm | 5 |
+| `039349_37`/33 | 52 | 17.57 | 39.64 cm | 11 |
+| `039253_5`/32 | 123 | 14.47 | **2.22 cm** | 1 (`123008`) |
+| `039349_3`/26 | 188 | 4.95 | **1.25 cm** | 1 (`188005`) |
+
+The four long ones are correct behaviour — they exceed `survey_max_len_cm`
+= 25 cm and the survey was never offered them. The two short ones are not: at
+2.22 cm and 1.25 cm, 2 points and 1 point, they should have been admitted and
+given a role-6 row. The likely mechanism is the last corner of the §5.3 defect
+class — a segment whose `fits()` list is *empty*, which `keep_dead` does not
+reach because there is no fit point to keep. Reported rather than patched here:
+the owner asked for a subtraction, and adding four 39–396 cm tracks to the
+`unassigned` group would put back the noise this change removes (CLAUDE.md
+tie-breaker, §5).
+
+### 8.4 Gates
+
+- `selftest_stm_michel_scan.py`: **51147** checks PDVD, **30166** PDHD, 0 failed
+  — including the new `[Q] the bundle filter on the object table`, whose causal
+  negative control turns `bundle only` off and requires the same row to come
+  **back** carrying `OTHER FLASH` (a test that only asserts "the row is gone"
+  passes when the table is empty for any unrelated reason).
+- `selftest_smx3d_browser.py`: **82** PDVD, **82** PDHD, 0 failed.
+- The owner's item, through the shipped path: `039252_15/77` renders 3 rows
+  (muon 1, michel 2) and the head line reports the 2 hidden blobs;
+  `039252_0/77` still shows the tagged `C199` marked `OTHER FLASH`;
+  `039253_14/49` drops 8 foreign blobs and keeps its 5 surveyed pieces.

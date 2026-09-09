@@ -1191,6 +1191,10 @@ state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None,
              # pf_cluster are the two halves of it, kept apart so the highlight
              # code never has to parse the key.
              pf_tag={}, pf_seg=None, pf_cluster=None, pf_key=None, pf_rows=[],
+             # pf_stick: out-of-bundle rows the scanner touched on this item,
+             # kept on screen for the rest of the session.  pf_hidden: how many
+             # other-flash blobs the table dropped, printed in seg_head.
+             pf_stick=set(), pf_hidden=0,
              centre=None, cam_c=None)
 
 
@@ -1415,6 +1419,10 @@ def render(reframe=False):
         state["pf_seg"] = None
         state["pf_cluster"] = None
         state["pf_key"] = None
+        # rows the scanner already decided on this item: kept visible for the
+        # rest of the session even when out of bundle, and even after an
+        # `unassigned` click pops the tag
+        state["pf_stick"] = set(rec0.get("pf_segments") or {})
         state["_pf_item"] = item_key(it)
     refresh_segments(pay)
 
@@ -1861,25 +1869,45 @@ def chain_note(pay, sid):
     return "pdg %s%s" % (pt.get("pdg"), ", shower" if pt.get("shower") else "")
 
 
-def unfitted_near(pay):
-    """Near clusters the PR produced no segment for -- taggable only as a whole.
+def unfitted_near(pay, bundle_only=None, keep=()):
+    """(rows, n_hidden).  Near clusters the PR produced no segment for.
 
     doc pdvd/53.  These are the pieces that have charge on screen and nothing
     else: no dx, so no dQ/dx, so no PR segment and no particle-flow node.  They
     are still the scanner's to group, so they get a row keyed "C<id>".
+
+    Owner, 2026-09-08 (doc pdvd/53 sec 8): only pieces inside the muon's own
+    Q-L bundle are objects OF this stop, so with `bundle only` on -- the
+    default, and already the rule for the picture -- an out-of-bundle cluster
+    is not a row at all.  It is drawn at its OWN bundle's t0-corrected x (doc
+    pdhd/13 sec 4) and merely looks adjacent; 1375 of the 2397 near-cluster
+    rows in the pdvd prep are that artifact.  `keep` is the set of row keys the
+    scanner has already touched: a saved decision is never hidden by a display
+    default, so those rows stay, marked OTHER FLASH.  The count of what was
+    dropped is returned and printed -- nothing is suppressed silently.
     """
-    out = []
+    if bundle_only is None:
+        bundle_only = bool(bundle_tog.active)
+    out, hidden = [], 0
     for c in (pay or {}).get("near_clusters") or []:
         if c.get("segs"):
             continue
         if c["id"] == (pay or {}).get("cluster_id"):
             continue
+        if bundle_only and c.get("in_bundle") == 0 and ("C%d" % c["id"]) not in keep:
+            hidden += 1
+            continue
         out.append(c)
-    return out
+    return out, hidden
 
 
-def object_rows(pay):
-    """Every row of the grouped table, in GROUP_ORDER then id order."""
+def object_rows(pay, bundle_only=None):
+    """Every row of the grouped table, in GROUP_ORDER then id order.
+
+    Every S row is in the bundle by construction -- checked over the whole
+    pdvd prep: 3888 PF segments in 569 payloads, 0 whose cluster is outside
+    the candidate's bundle -- so only the C rows can need the bundle filter.
+    """
     rows = []
     for sg in pf_segments(pay):
         k = str(sg["id"])
@@ -1891,8 +1919,16 @@ def object_rows(pay):
             dqdx="" if sg.get("dqdx_med") is None else "%.0f" % sg["dqdx_med"],
             dstop="" if not rj else "%.1f" % rj.get("d_stop", -1),
             chain=chain_note(pay, sg["id"])))
-    for c in unfitted_near(pay):
+    stick = state.setdefault("pf_stick", set())
+    near, n_hidden = unfitted_near(pay, bundle_only,
+                                   keep=set(state["pf_tag"]) | stick)
+    state["pf_hidden"] = n_hidden
+    for c in near:
         k = "C%d" % c["id"]
+        if c.get("in_bundle") == 0:
+            # shown once => shown for the rest of this item, even if the
+            # scanner then moves it back to unassigned (which POPS the tag)
+            stick.add(k)
         rows.append(dict(
             key=k, group=state["pf_tag"].get(k) or "unassigned",
             obj=k, npts=c.get("n_drawn") or 0,
@@ -1906,9 +1942,9 @@ def object_rows(pay):
     return rows
 
 
-def refresh_segments(pay, keep=True):
+def refresh_segments(pay, keep=True, bundle_only=None):
     """Rebuild the grouped object table, preserving the current pick if it survives."""
-    rows = object_rows(pay)
+    rows = object_rows(pay, bundle_only)
     state["pf_rows"] = rows
     seg_src.data = dict(
         group=[r["group"] for r in rows], obj=[r["obj"] for r in rows],
@@ -1929,9 +1965,14 @@ def refresh_segments(pay, keep=True):
     for r in rows:
         n[r["group"]] = n.get(r["group"], 0) + 1
     seg_head.text = (
-        "<b>objects near this stop</b> &mdash; %d in %d group%s: %s"
+        "<b>objects near this stop</b> &mdash; %d in %d group%s: %s%s"
         % (len(rows), len(n), "" if len(n) == 1 else "s",
-           ", ".join("%s %d" % (g, n[g]) for g in GROUP_ORDER if g in n)))
+           ", ".join("%s %d" % (g, n[g]) for g in GROUP_ORDER if g in n),
+           ("" if not state.get("pf_hidden") else
+            "<br><span style='font-size:90%%;color:#b07aa1'>+%d blob%s from "
+            "ANOTHER flash hidden &mdash; not this stop's; untick <b>bundle "
+            "only</b> to see them</span>"
+            % (state["pf_hidden"], "" if state["pf_hidden"] == 1 else "s"))))
 
 
 def _adopt_row(r):
