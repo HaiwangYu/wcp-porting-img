@@ -61,6 +61,12 @@ in-gpvm-sl7.sh bash -c '
   catches a green-but-useless build, the larwirecell `make install` prefix trap, HOW TO RUN **Xin's 2-step**
   chain here (incl. the three SL7 bash-4.2/python-3.9 portability fixes his driver needs), and the tooling +
   legitimate exclusions for comparing the two chains. Read with doc 0 before building or comparing.
+  §7 = round-2 (prod0908) summary and lessons.
+- **The procedure** (gates + traps, ordered): ai-helper
+  `docs/sbnd-1step-build-run-validate.md`
+  (https://github.com/HaiwangYu/wire-cell-toolkit-ai-helper/blob/main/docs/sbnd-1step-build-run-validate.md).
+  Non-negotiables: strip wcb's build-tree `DT_RPATH` after every install; run
+  `resync-operating-point.sh` after every toolkit merge BEFORE any event runs.
 - `cm-2606/STATUS-xin-chain.md` — full status: chains, toggle, all local WCT edits, known issues, BEE uploads.
 - Quick CPU/mem profiling: `/exp/sbnd/app/users/yuhw/activity_logger/top.sh <pattern>` (run concurrently); plot example in `cm-2606/activity/`.
 - w-gap study (SP rebaseline, DNNROI truncation, charge bias): `standalone-sample/w-gap/W-GAP-STUDY.md`.

@@ -7,6 +7,9 @@ Companion to — not a replacement for — `0-build-wct-larwirecell-sl7-sbnd.md`
 resolution, the gate items that catch a *useless* green build, and how to drive
 Xin's chain on this machine.
 
+**The condensed procedure** (ordered steps, one gate and one trap each) is
+ai-helper `docs/sbnd-1step-build-run-validate.md`; this doc is the narrative behind it.
+
 Everything runs inside the SL7 apptainer via
 `/exp/sbnd/app/users/yuhw/claude-utilities/in-gpvm-sl7.sh`.
 
@@ -253,3 +256,87 @@ absent by design from the reference is structurally invisible. And counting
 occurrences of a feature name catches deletions but **never** a dropped argument
 or a changed value — `pre_mabc` went 5 → 6 sites and `save_deadarea` 3 → 3 while
 both were broken. Run the workflow.
+
+---
+
+## 7. Round 2 (2026-09-08/09): validation against prod0908 — summary and lessons
+
+Full record: ai-helper issue #24. The two purposes and their verdicts on the
+308-event gate (ncpi0 19 + nuecc48 48 + mcp1k 241), all data:
+
+| purpose | comparison | result |
+|---|---|---|
+| **P1** our binaries/cfg == Xin's | Xin's 2-step run on our binary (chain B) vs his `d102mpr` | `nusel-evt` byte-identical **308/308**; stage-A pctrees member-hash identical **308/308**; T3 **0 movers** |
+| **P2** our 1-step == Xin's 2-step | our 1-step (chain C) vs chain B, same binary, same machine | **exact 308/308** — every `T_kine`/`T_tagger` branch, every `T_rec_charge` point |
+
+P1's branch-level residual: the known cross-machine FP drift
+(`T_rec_charge:{q,reduced_chi2}`, ~1e-12), one more branch of the same kind
+(`kine_mcs_ambiguity`, 2 events at ~7e-8), and **one event in 241** (mcp1k 57661)
+where FP seeded a discrete shower-sampling change (`shw_sp_n_highest` 4→5) that
+stayed below the selection layer (nusel byte-identical, both BDT scores identical).
+Reported, not tuned away.
+
+### 7.1 The one defect that mattered: a stale operating point
+
+Our first chain C differed from production on **18 of 19** events — charge-point
+counts off, `Enu` off by up to ~70 %. Localisation, in order, each step ruling out
+one layer:
+
+1. chain A (Xin's stage B on **his** pctree, our binary) passed ⇒ not the PR code
+2. chain B (Xin's full 2-step on our binary) passed ⇒ not the build or the machine
+3. our chain-B pctrees were member-hash identical to his ⇒ not imaging/clustering/Q-L
+4. our 1-step's clustering Bee layer matched chain B's exactly ⇒ not the handoff
+5. a component diff of the compiled PR node showed **exactly six keys** present in
+   Xin's per-event `.wct-cfg-evt<ID>.json` and absent in ours — the six flips he
+   made between 09-05 and 09-08, i.e. precisely `ref/prod-2026-09-08/README.md`'s
+   listed drift.
+
+`sbnd/pr-operating-point.jsonnet` had been regenerated against the 09-05 tree and
+never re-run after the master merge. The issue-17 gate already read
+"6 differences" — it had simply not been re-run. After `resync-operating-point.sh`
+(22 named + 218 `tcn_knobs`, only the six added, gate 0): chain C **19/19**, then
+308/308.
+
+**Rule: run `resync-operating-point.sh` after EVERY toolkit merge or pull, before
+any event runs.** It costs a minute. See §8.
+
+### 7.2 Two false alarms, both from a stale reco1 reader
+
+Chain B first came back **16/19** with a census "PASS" on **16** events. The 3
+missing had no `tracking-pr.root` at all: their stage-A pctrees were gzip-corrupt
+("trailing garbage") because **both stage-A groups had processed all 19 events and
+raced on the same output files**. Our `wire-cell-sbnd-reco1` was the July build,
+which ignores `entry_begin`/`entry_count`; upstream was exactly one commit ahead
+(`85b7932 Stream an entry RANGE`). Pulled, rebuilt, RPATH set → 19/19.
+
+Two habits that follow, both now built into the gate script:
+- **check output *presence* before trusting a batch's `ok` count** — a stage-B job
+  reading an empty pctree exits 0 with an empty `mabc-pr.zip`;
+- **read the census's "compared N events" line, not only its verdict** — it
+  silently skips events missing on one side, and a PASS on 16 of 19 is not a PASS.
+
+### 7.3 Other traps met this round
+
+- **`DT_RPATH` into the build tree.** Installed WCT libs carried `RPATH` entries into
+  `wire-cell-toolkit/build/<pkg>`; `DT_RPATH` is transitive and beats
+  `LD_LIBRARY_PATH`, so seven libs loaded from `build/`, not `opt/`. Harmless while
+  `build/` matched `opt/`; `rm -rf build` would have broken the deployed runtime.
+  Fixed with `patchelf` (see §8). The reco1 reader's cmake install had **no** RPATH
+  at all and could not find `libspdlog.so.1.14` on its own.
+- **Bare-ROOT reader + LArSoft dictionaries = SIGSEGV.** `wire-cell-sbnd-reco1` ships
+  its own `recob::Wire` dictionary; with `setup-ap.sh`'s LArSoft dictionaries also on
+  `LD_LIBRARY_PATH`, ROOT saw two and destroyed a `lar::sparse_vector` with the
+  wrong layout (`__pointer=<vtable for recob::Wire+32>`). Scrub `lardataobj`,
+  `canvas`, `sbndcode`, `sbnobj`, `artdaq`, `lardataalg` from `LD_LIBRARY_PATH`
+  before any `wire-cell` job that reads reco1 (issue #494 rule). The stack trace
+  *looked* like a Go-runtime crash — those were idle gojsonnet threads.
+- **The operating-point generator has a bare-baseline step.** Feeding
+  `gen-pr-operating-point.py` a non-bare compile directory emitted **only** the six
+  new knobs and dropped ~200 (gate 6 → 245). Always go through
+  `resync-operating-point.sh`, which compiles `PR_OP=bare` first.
+- **`pkill -f <pattern>` / `pgrep -f` self-match.** The pattern appears in the
+  invoking shell's own command line. Use `pgrep -x <comm>` for process names.
+- **Sizing.** Measured peak RSS: stage A (group of 16) 0.9 GB, stage B 1.3 GB,
+  our 1-step (`lar`) 2.1 GB per process. At 32/32/20 concurrency the measured
+  peak *total* was 41.3 GB on a 50 GB budget. Size on sampled concurrent RSS, and
+  record it (`memwatch.sh`).
