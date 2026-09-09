@@ -2,7 +2,7 @@
 //
 // The SBND pattern-recognition operating point, as a wrapper around
 // clus_maker.pr().  Source of truth: the 351 TLA defaults of
-// cfg/pgrapher/experiment/sbnd/wct-pr-perevt.jsonnet (toolkit 700226d53), which is
+// cfg/pgrapher/experiment/sbnd/wct-pr-perevt.jsonnet (toolkit 0ad642235), which is
 // where the owner records each 'SBND PRODUCTION ON <date>' flip.  The 1-step
 // chain calls clus_maker.pr() directly and so never saw those values; see
 // ai-helper issue 17.  Regenerate after the owner flips more knobs:
@@ -73,6 +73,7 @@ function(clus_maker, anodes, dump=false, bee_sink=null, pipeline_names=[],
       es3_stub_guard: true,
       esva_ignore_empty_2d: true,
       examine_direction_dirsign_shower_in_guard: true,
+      excl_t0_frame: true,
       fit_blob_coverage: 0,
       fit_exclusion: true,
       iso_endpoint: true,
@@ -84,6 +85,7 @@ function(clus_maker, anodes, dump=false, bee_sink=null, pipeline_names=[],
       kine_count_guard_freed: true,
       kine_count_near_cross_cluster: true,
       kine_count_orphan_tracks: true,
+      kine_dqdx_skip_zero_dx: true,
       kine_drop_stray_satellites: true,
       kine_guard_freed_impact: 20,
       kine_guard_freed_miss_deg: 30,
@@ -91,6 +93,8 @@ function(clus_maker, anodes, dump=false, bee_sink=null, pipeline_names=[],
       kine_long_muon_mode: 2,
       kine_mainvtx_used_guard: true,
       kine_mass_rules: true,
+      kine_near_pointing_impact: 200,
+      kine_near_pointing_miss_deg: 30,
       kine_proton_recom_factor: 0.51,
       kine_recom_factor: 0.87,
       kine_shower_fudge_factor: 0.86,
@@ -102,7 +106,9 @@ function(clus_maker, anodes, dump=false, bee_sink=null, pipeline_names=[],
       long_muon_cathode_bridge: true,
       long_muon_cathode_bridge_lever: 15,
       long_muon_cathode_bridge_short_gap: 8,
+      long_muon_cathode_bridge_tail_min_len: 20,
       long_muon_cathode_bridge_track_partner: true,
+      long_muon_cathode_bridge_track_types: true,
       long_muon_members_geometry: true,
       long_muon_range_empty_chain_fallback: true,
       long_muon_stub_bridge: true,
