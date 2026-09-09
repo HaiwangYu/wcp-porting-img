@@ -10,7 +10,8 @@ stop ...`, doc pdvd/51), written to answer six questions:
 3. how the Michel's energy is calculated,
 4. if the muon has delta rays, how the cosmic-muon segments are grouped,
 5. how a connected Michel is told from nearby isolated gamma points,
-6. how the Michel electron is clustered together.
+6. how the Michel electron is clustered together,
+7. how the particle flow is formed (added on request after the first draft).
 
 **Every number quoted here was measured by another doc, and is attributed at
 the point of use.** Nothing in this file is a new result; there is no Repro
@@ -30,7 +31,9 @@ detector). Docs pdvd/48 and pdvd/51 and pdhd/03, /13-/17 are the *internals* of
 | `clus/src/StmMichelFunctions.cxx` | the graph-only predicates, so they are doctestable on synthetic graphs: profile, Bragg contrast, arm classification, the two gamma predicates |
 | `clus/src/TaggerCheckSTM.cxx` | **upstream**: sets `Flags::STM` and writes the `stm_pass` / `stm_fit` point clouds this component anchors on |
 | `clus/src/PRShower.cxx` | `Shower::complete_structure_with_start_segment` — the flood-fill that gathers the Michel |
-| `pdvd/wct-pr-perevt.jsonnet`, `pdhd/wct-pr-perevt.jsonnet` | the `stm_michel_knobs` bag (§7) |
+| `clus/src/MultiAlgBlobClustering.cxx` | `fill_bee_pf_tree` — **the renderer**: turns the graph + showers into the `mc.json` particle flow (§7) |
+| `pdvd/wct-pr-perevt.jsonnet`, `pdhd/wct-pr-perevt.jsonnet` | the `stm_michel_knobs` bag (§8) |
+| `cfg/pgrapher/experiment/{protodunevd,pdhd}/pr.jsonnet` | binds `check_stm_michel`; the particle-flow display config (§7.5) |
 
 ---
 
@@ -354,10 +357,12 @@ graph-disconnected object it falls back to `kenergy_charge`, computed with the
 (`PRShower.cxx:1855`) — which is **every bridged Michel and every attached one
 that gathered a companion piece**. `get_kine_best()` then falls back to
 `kenergy_charge`, which is 0 on this path. `fill_bee_pf_tree` prunes an EM leaf
-whose ke is below `em_ke_min` (`MultiAlgBlobClustering.cxx:2082`), so leaving it
+whose ke is below `em_ke_min` (`MultiAlgBlobClustering.cxx:2087` — the
+comment in `CheckSTM_Michel.cxx` still cites the pre-drift `:2082`), so leaving it
 at 0 **deletes the e- node from `mc.json`** — 039252_15 cluster 91 lost the
 daughter it had had since doc pdvd/48. `set_kine_best(michel_ke_best)` is the
-fix, and the module's own object energy is the right value to carry.
+fix, and the module's own object energy is the right value to carry. It does a
+second job as the node's printed label — see §7.5.
 
 ### 3.5 The calibration the Michel inherits — read this before quoting a number
 
@@ -571,8 +576,8 @@ than tuning — and it is the quantity the §6.5 defect inverted.
 - `particle_type` stays **11**, not 22 — PDG 22 is never stored anywhere in this
   codebase (`get_particle_mass(22)` is 0 and `cal_kine_range` would fall back to
   the muon range function). The `gamma` node in the display is synthesised by the
-  renderer from the connection type; the e⁻ leaf under it is what was actually
-  reconstructed: the conversion.
+  renderer from the connection type — the mechanism is §7.4; the e⁻ leaf under
+  it is what was actually reconstructed: the conversion.
 - The muon → gamma edge is a **claim about a neutral**, not a reconstructed
   connection. `set_start_vertex(stop_v, 2)` is the whole stitch: the gamma's
   segments live in a companion cluster with no graph edge into the muon's
@@ -672,7 +677,150 @@ is what the owner saw on 039252_15 cluster 77.
 
 ---
 
-## 7. The production knob bag
+## 7. How the particle flow is formed
+
+### 7.1 There is no particle-flow data structure — the PF *is* the PR graph
+
+Nothing in this component builds a particle tree. What it builds is state on the
+per-candidate `TrackFitting` object, and the **renderer** turns that into a tree
+at write time. Exactly three things are handed over
+(`grep 'tf->' CheckSTM_Michel.cxx` returns nothing else that matters):
+
+| call | what it contributes |
+|---|---|
+| `tf->add_graph(pr_graph)` | the vertices and segments — the skeleton |
+| `tf->set_main_vertex(entry_v)` | **the root** |
+| `tf->set_showers(showers)` | the Michel and every capture gamma, as `PR::Shower` views over that graph |
+
+plus, on each segment, a `ParticleInfo` written by `set_pdg`: PDG code, mass,
+name, and a 4-momentum from `segment_cal_4mom`, with `particle_score(100.0)`.
+That stamp is what gives a node its name and its energy. The chain gets 13; every
+delta arm, Michel piece and gamma segment gets 11.
+
+So the flow's topology is the graph's topology. Everything §1–§6 did — clearing
+the muon's shower flags, stamping PDGs, seeding showers at the stop — was
+already writing the particle flow.
+
+### 7.2 Publication: the slots
+
+```
+tf->assemble_fitted_charge_2d();
+if (ci == 0)          grouping.set_track_fitting(tf);                        // unnamed slot
+if (publish_nu_slots) grouping.set_track_fitting("nu" + std::to_string(ci), tf);
+```
+
+This is byte-for-byte the neutrino chain's publication
+(`TaggerCheckNeutrino.cxx:3580-3590`), and that is the point: every existing
+consumer renders this stage's graph unchanged — the Bee `track_fit`,
+`shower_track`, `vertices` and `mc` layers, `PdvdPrMagnifyTrackingVisitor`, and
+`PrDisplayDump`.
+
+Two conventions are **inherited, not chosen here**:
+
+- the **unnamed slot is candidate 0**, and
+- the per-candidate slots are named **`nu0`, `nu1`, …** — so a cosmic-ray
+  stopping muon is published in a slot called "nu". That reads oddly and is
+  deliberate: it is the slot name those writers already walk.
+
+Each candidate gets its **own** fitter and its own graph (a fresh
+`TrackFitting` per candidate, §1 of `visit()`). Resolving the unnamed slot
+implicitly is therefore only correct while there is exactly one candidate —
+`fill_bee_pf_tree` takes the fitter explicitly for that reason (doc pr/94
+Phase 4), after a bundle-0 graph was once walked from bundle *i*'s vertex.
+
+### 7.3 How the renderer walks it (`fill_bee_pf_tree`, `MultiAlgBlobClustering.cxx:1298`)
+
+The output is a jsTree array — `{id, text: "name  KE MeV", data:{start,end},
+children:[…]}` — and the algorithm is the prototype's
+`NeutrinoID::fill_particle_tree` (documented at `:1278-1297`):
+
+1. **BFS from the main vertex through non-shower track segments**, establishing
+   parent–child among segments and recording which segment arrived at each
+   vertex.
+2. **Disconnected track segments** — not reachable from the main vertex — become
+   additional root-level nodes, so nothing is silently lost.
+3. **Showers attach under their parent track segment by
+   `start_connection_type`** (§7.4).
+4. **Node ids are `cluster_id * 1000 + seg_id`.**
+
+For an STM candidate that resolves to: root at the **entry** vertex; the BFS runs
+outward along the muon chain, which is walkable precisely because §4.1 cleared
+`kShowerTrajectory`/`kShowerTopology` off every chain segment — a shower-flagged
+segment is not a track segment and the BFS would not pass through it. Delta arms
+hang off the chain segment at whose vertex they sit. The Michel and the gammas
+arrive in step 3.
+
+Step 4 is worth noticing: **`cluster_id * 1000 + seg_id` is the same encoding as
+`stop_vtx_id`, `michel_seg_id`, `entry_vtx_id` and `T_stm_michel_pts.seg_id`.**
+The tree and the flow are joinable on it without a lookup table — that is what
+lets a hand-scan display put a `T_stm_michel` row beside the node it produced.
+
+### 7.4 Why a *gamma* node appears at all — the pseudo-carrier
+
+`Shower::set_start_vertex(vtx, type)` is the whole mechanism, and this component
+uses exactly two types:
+
+| where | call | renders as |
+|---|---|---|
+| attached Michel (§2.4 type 1) | `set_start_vertex(stop_v, **1**)` | a **direct leaf child** of the last muon segment |
+| bridged Michel (type 2), **every** capture gamma | `set_start_vertex(stop_v, **2**)` | an intermediate **pseudo-particle node**, with the shower as its child |
+
+The pseudo node's PDG is chosen by `append_pseudo_shower` (`:2163`): **22 when
+the shower's `particle_type` is 11 or 22**, 2112 otherwise. That is the answer to
+"where does the gamma come from" — the shower's `particle_type` stays **11**
+throughout (PDG 22 is never stored in this codebase: `get_particle_mass(22)` is 0
+and `cal_kine_range` would fall back to the *muon* range function). The `gamma`
+node is **synthesised by the renderer from the connection type**, and the e⁻ leaf
+beneath it is what was actually reconstructed — the conversion.
+
+This is also the honest rendering of the physics: a capture gamma is neutral, so
+there is no reconstructed connection between the stop and the blob. The
+pseudo-carrier draws that claim, from `stop_v` to the shower's start point,
+rather than pretending an edge exists. The gammas' segments live in a companion
+cluster with no graph edge into the muon's component, so the step-1 BFS could
+never reach them at any knob setting — `stop_v` is BFS-reachable, and the
+renderer hangs the shower off it.
+
+One conditional does **not** apply on either ProtoDUNE: `effectively_touching`
+(`:2198`) would suppress the carrier for a conn-2 shower that starts within
+`pf_touch_max` of the main vertex, but both drivers set
+`pf_direct_when_touching = false` (`pr.jsonnet:277` / `:260`), so the carrier is
+unconditional here. Note it would key on the **main vertex**, which for this
+chain is the *entry* — the far end of the muon from where these showers start.
+
+### 7.5 The pruning floor, and the second reason the energy stamp matters
+
+`keep_node` (`:2087`) is the prototype's `KeepMC`: **a LEAF node** whose
+\|PDG\| is 11 or 22 is dropped below `em_ke_min`, and 2112 / 2212 / a nucleus
+below `np_ke_min`. A node with surviving children is always kept, so the
+hierarchy never breaks.
+
+Both ProtoDUNEs configure (`pr.jsonnet`):
+
+| key | value | why |
+|---|---|---|
+| `em_ke_min` | **0.2 MeV** | lowered from 5 MeV by doc pdvd/51 so a sub-MeV capture gamma survives |
+| `np_ke_min` | 3 MeV | |
+| `prototype_names` | true | integer-MeV labels, as the prototype's `WCReader::MCJSON` |
+| `ke_decimal_below` | **10 MeV** | an integer label reads "**0**" for a 0.8 MeV gamma; below 10 MeV the label carries two decimals (doc pdvd/51) |
+
+This closes the loop on §3.4. The Michel's energy is stamped back with
+`set_kine_best` for **two** reasons, not one: a 0 there would put the node under
+`em_ke_min` and **delete it**, *and* `get_kine_best()` is what
+`append_pseudo_shower` formats into the label. An un-stamped Michel would
+therefore either vanish or render as "e-  0 MeV".
+
+### 7.6 What the STM chain does not use
+
+`fill_bee_pf_tree` also carries pi0 grouping, stray-satellite drops,
+bridged-cluster BFS widening and orphan-track parentage. All of it is
+**inert here**: those inputs come from `tf->get_pi0_showers()`,
+`get_dropped_satellite_shower_ids()` and `get_bridged_cluster_ids()`, and this
+component never populates any of them (§7.1 lists everything it sets). Reading
+that code, do not assume a branch fires for a stopping muon just because it is in
+the function.
+
+## 8. The production knob bag
 
 Both ProtoDUNEs run the **identical** 15-key bag (only the surrounding comments
 differ), so one baseline serves both:
@@ -695,7 +843,7 @@ owner's doc pdhd/14 waiver, so it is on without appearing in the bag.
 `-S stm_michel_extra={stop_gamma_enable:false}` changes exactly one key;
 `-S stm_michel_knobs={...}` **replaces** all 15.
 
-## 8. Caveats a reader should carry away
+## 9. Caveats a reader should carry away
 
 1. **The Michel energy inherits a muon-track calibration** (§3.5). PDVD's largest
    object is 76.8 MeV against a 52.8 MeV endpoint, and that is not explained.
@@ -711,8 +859,17 @@ owner's doc pdhd/14 waiver, so it is on without appearing in the bag.
    forgets to filter on `reject_bits` is reading rejected reconstructions.
 7. `R_PROFILE_SPARSE` means *cannot judge*, not *fails* — do not fold it into a
    physics inefficiency.
+8. **The particle flow is rendered, not stored.** Every node in `mc.json` is
+   derived at write time from the graph, the PDG stamps and the shower
+   connection types (§7); a `gamma` node is the renderer's synthesis and no PDG
+   22 exists anywhere upstream of it. The display floors (`em_ke_min` 0.2 MeV,
+   `np_ke_min` 3 MeV) are **display** floors — a pruned node is still in
+   `T_stm_michel`.
+9. **Each candidate has its own fitter and graph**, published to slot `nu<i>`;
+   the unnamed slot is candidate 0. Reading the unnamed slot when a event has
+   several candidates renders candidate 0's flow for all of them.
 
-## 9. Related docs
+## 10. Related docs
 
 | doc | what it settles |
 |---|---|
