@@ -1139,6 +1139,22 @@ flag rather than review it.
 | `mkstats.py --check` | **0 of 4** published tables differ from the recomputed values |
 | `mkfailures.py` regenerated deterministically | reproduces the committed `failures.tsv` **byte-identically** |
 | every drawn object carries a tag | `allow_partial` on **0** of 509; **3462** tags over the 509, **3927** over all 569 |
+| `selftest_stm_michel_scan.py` | pdvd **51148**, pdhd **30167** checks passed, 0 failed |
+| `selftest_pin_persistence.py` | pdvd **34/34**. pdhd **27/28** — check 10 now *runs* and fails, see below |
+| `selftest_smx3d_browser.py` (ports 5091 / 5093) | **102/102** each |
+
+**The one red gate, and why it is not this round's.** §11 recorded check 10 of
+`selftest_pin_persistence.py` as *"skipped on PDHD: no `smx1` there."* A PDHD
+`smx1` tag now exists — 30 rows, written by the owner's own live session, which
+runs `--det pdhd --tag smx1`. So the `os.path.isfile(SMX1)` guard passes and the
+check runs for the first time, then fails: it asserts the hardcoded key
+`039349_18/36`, which is a **PDVD** item, is in the PDHD sheet. It is not.
+
+That is a latent bug in the selftest — a PDVD fixture behind a detector-generic
+guard — exposed by the owner's tag appearing, not by anything in this round. The
+harness edit is not implicated: this selftest loads `stm_michel_viewer.py`
+directly and never imports `scan_harness.py`, and PDVD passes 34/34 on the same
+code. Reported, not fixed (§17.5).
 
 The label file went `7456ee89` (60 rows) → `724693b3` (569) → `afa025be` after
 the one-row correction of §17.6. Those shas are recorded so a later clobber is
@@ -1249,6 +1265,12 @@ plateau ratio (§15.2) and the shape tests, which are scale-free and survive
 harness neither detects the loss per-item nor retries — it reports
 `(regl) context lost` in an end-of-run summary naming nothing, and writes the
 degraded PNG without complaint. §13.2 has the measurement and the workaround.
+
+**`selftest_pin_persistence.py` check 10 hardcodes a PDVD item.** The check is
+guarded only by "does this detector have an `smx1` tag", but its fixture key
+`039349_18/36` is PDVD-specific, so the moment a PDHD `smx1` exists the check
+runs against the wrong sheet and fails. It wants either a per-detector fixture
+or a guard on the key being in the sheet. §16.4 has the measurement.
 
 **`do_apply` could add a pin but never take one away** — *fixed in this round.*
 The spec is the whole statement of an item's state, but the pin branch only had
