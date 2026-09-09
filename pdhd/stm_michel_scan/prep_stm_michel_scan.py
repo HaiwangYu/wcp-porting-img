@@ -81,8 +81,11 @@ DET = {
     # is not on any verdict path) -- measured 83/88 branches bit-identical, the
     # five movers being the dQ/dx energies -- so the sheet, the stratification
     # and the tranche are unaffected.  Re-prep with --pin-tranche all the same.
-    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d16hnu"),
-    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d16vnu"),
+    # doc pdvd/51: the arm carrying the capture-gamma branches and the role
+    # 4 -> 3 Michel migration.  --arm overrides it for a scratch validation run
+    # so a new arm can be diffed against the promoted payloads before it lands.
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d51gh"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d51gv"),
 }
 IMAGE_MEMBER = "clustering-global"
 IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
@@ -139,6 +142,13 @@ VERDICT_SCALARS = [
     "michel_start_x", "michel_start_y", "michel_start_z",
     "n_dots", "dots_ke_dqdx", "n_dot_clusters_unfit", "dots_charge_unfit",
     "dots_ke_unfit",
+    # doc pdvd/51 -- the muon-capture gamma at the stop, a SEPARATE object class
+    # from the Michel (never folded into michel_ke_*), and michel_n_clusters,
+    # which is how many clusters the Michel object spans.  Absent on any arm
+    # older than doc 51.
+    "michel_n_clusters", "n_stop_gammas", "stop_gamma_n_unfit",
+    "stop_gamma_seg_id", "stop_gamma_ke_tot", "stop_gamma_ke_max",
+    "stop_gamma_charge", "stop_gamma_dis_min", "stop_gamma_dis_max",
     # doc pdhd/16 -- the muon's third energy scale and the three momenta.  MCS
     # reads no charge at all, so it is the one estimator blind to gain,
     # lifetime and recombination.  -1 means "not computed" (bad_path, < 20
@@ -195,7 +205,7 @@ def wire_join(rc_tree, rc, P):
             for a in out]
 
 
-def particle_flow(rc, cid, sc, off):
+def particle_flow(rc, cid, sc, off, extra_segs=()):
     """The PR particle flow of one cluster, from T_rec_charge.
 
     CheckSTM_Michel runs the full PR chain -- find_proto_vertex ->
@@ -215,9 +225,15 @@ def particle_flow(rc, cid, sc, off):
     Michel arm's type to 11) and go into the verdict block behind REVEAL, for
     the same reason `role` does.
 
-    LIMIT, measured in doc pdhd/12 sec 5.7: this segmentation and the chain's
-    own `seg_id` are NOT the same partition, so nothing here may be joined to
-    T_stm_michel_pts by id.
+    doc pdvd/51 CORRECTS the limit this docstring used to state.  The two ids
+    ARE the same encoding -- `cluster_id * 1000 + segment graph index` on both
+    sides (CheckSTM_Michel.cxx:762-763 against
+    PdvdPrMagnifyTrackingVisitor.cxx:905) -- and they join exactly: all 1107
+    distinct T_stm_michel_pts.seg_id values over the 119-event d16vnu arm are
+    present in T_rec_charge.sub_cluster_id.  What is true is the weaker
+    statement that the PARTITIONS differ (one segment can carry points of more
+    than one role), so a per-POINT join is still not well posed.  The per-SEGMENT
+    join is, and `extra_segs` below is exactly that join.
     """
     # THE SELECTOR IS sub_cluster_id // 1000, NOT cluster_id.  T_rec_charge's
     # `cluster_id` branch is bound to reco_mother_cluster_id
@@ -228,7 +244,15 @@ def particle_flow(rc, cid, sc, off):
     # rest.  `sub_cluster_id` is cluster_id * 1000 + segment graph index (:905),
     # so its top part is the segment's OWN cluster.
     empty = dict(seg=[], vtx=dict(x=[], y=[], z=[], pu=[], pv=[], pw=[], pt=[]))
-    b = (rc["flag_vertex"] == 0) & ((rc["sub_cluster_id"] // 1000) == cid)
+    # doc pdvd/51.  `sub_cluster_id // 1000 == cid` alone shows the MUON and
+    # nothing else whenever the chain's object lives in a companion cluster --
+    # a BRIDGED Michel (039252_15 cluster 77's is segments 265003/265004, pdg 11
+    # in T_rec_charge, rendered in mc.json, and invisible in this panel) or a
+    # capture gamma, which is ALWAYS in a companion cluster by construction.
+    # `extra_segs` are the segment ids the chain itself names in
+    # T_stm_michel_pts, so the panel shows the object the rest of the page shows.
+    b = (rc["flag_vertex"] == 0) & (((rc["sub_cluster_id"] // 1000) == cid)
+                                    | np.isin(rc["sub_cluster_id"], list(extra_segs or ())))
     if not b.sum():
         return empty, {}
     # A vertex row carries sub_cluster_id = -1 and only the mother's cluster_id,
@@ -526,7 +550,12 @@ def build_event(det, evtdir, with_tagger_fit=True):
             ticks_per_slice=smgeom.TICKS_PER_SLICE[det],
             proj=proj_cells(pj, cid, det), dead=dead_bands(bc, det),
         )
-        pf, pf_types = particle_flow(rc, cid, pf_sc, pf_off)
+        # doc pdvd/51: hand the PF selector the chain's own member segments
+        # (roles 3 michel / 4 dot / 5 capture gamma), so a bridged Michel and a
+        # capture gamma appear in the flow panel and not only in the 3-D view.
+        extra = sorted({int(t) for t in p["seg_id"][sel & np.isin(p["role"], (3, 4, 5))]})
+        pf, pf_types = particle_flow(rc, cid, pf_sc, pf_off, extra_segs=extra)
+        pf["chain_segs"] = extra
         pay["pf"] = pf
         v = {k: (float(m[k][i]) if m[k].dtype.kind == "f" else int(m[k][i]))
              for k in VERDICT_SCALARS if k in m}
@@ -534,7 +563,12 @@ def build_event(det, evtdir, with_tagger_fit=True):
         for k in VERDICT_POINTS:
             if k in m:
                 v[k] = round(float(m[k][i]), 2)
-        for role, name in ((2, "delta"), (3, "michel"), (4, "dots")):
+        # doc pdvd/51: role 3 now means "a member of the Michel OBJECT" for
+        # every connection type -- through doc pdhd/17 a BRIDGED Michel's pieces
+        # carried role 4, so the display drew them in the `dots` red and called
+        # them dots, which is what the owner saw on 039252_15 cluster 77.
+        # Role 5 is the new capture-gamma class and gets its own colour.
+        for role, name in ((2, "delta"), (3, "michel"), (4, "dots"), (5, "gamma")):
             k = sel & (p["role"] == role)
             RX = np.c_[p["x"][k], p["y"][k], p["z"][k]] if k.sum() else None
             r_pu, r_pv, r_pw, r_pt = wire_join(rc_tree, rc, RX)
@@ -662,6 +696,9 @@ def main():
     ap.add_argument("--sheetdir", default=None)
     ap.add_argument("--no-tagger-fit", action="store_true")
     ap.add_argument("--limit", type=int, default=0, help="first N events (debug)")
+    ap.add_argument("--arm", default=None,
+                    help="override the arm in DET (doc pdvd/51); use with --outdir "
+                         "to validate a new arm before promoting its payloads")
     ap.add_argument("--redraw", action="store_true",
                     help="re-draw tranche 1 even though labels already exist "
                          "for this detector; see the guard in main()")
@@ -671,6 +708,8 @@ def main():
                          "of re-drawing it; see read_pinned_tranche")
     a = ap.parse_args()
     det = a.det
+    if a.arm:                     # doc pdvd/51: validate a new arm before promoting
+        DET[det]["arm"] = a.arm
     outdir = a.outdir or os.path.join(HERE, "prep-" + det)
     sheetdir = a.sheetdir or os.path.join(DET[det]["root"], "docs", "scan")
     os.makedirs(outdir, exist_ok=True)

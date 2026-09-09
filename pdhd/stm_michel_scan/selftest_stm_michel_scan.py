@@ -1155,8 +1155,19 @@ def test_pf_payload(det):
             ck(all(len(sg[k]) == n for k in ("x", "y", "z", "pu", "pv", "pw",
                                              "pt", "dqdx", "rr")),
                "%s: ragged PF segment %s" % (det, sg["id"]))
-            ck(sg["id"] // 1000 == d["cluster_id"],
-               "%s: PF segment %d does not belong to cluster %d"
+            # doc pdvd/51: the PF panel is no longer confined to the
+            # candidate's own cluster.  A BRIDGED Michel and every capture gamma
+            # live in a COMPANION cluster, so restricting the selector to
+            # `sub_cluster_id // 1000 == cluster_id` showed the muon and nothing
+            # else -- which is exactly what the owner reported on 039252_15/77.
+            # A foreign-cluster segment is admissible if and only if the CHAIN
+            # itself named it, in T_stm_michel_pts; `chain_segs` is that list,
+            # and this check is what keeps the widening from becoming "anything
+            # goes".
+            chain_ok = set(pf.get("chain_segs") or ())
+            ck(sg["id"] // 1000 == d["cluster_id"] or sg["id"] in chain_ok,
+               "%s: PF segment %d belongs to neither cluster %d nor the chain's"
+               " own object"
                % (det, sg["id"], d["cluster_id"]))
             ck(str(sg["id"]) in types,
                "%s: PF segment %d has no pf_type entry" % (det, sg["id"]))
@@ -1568,19 +1579,23 @@ def test_kine_gate(det):
             ck(abs(float(a["muon_ke_best"][i]) - exp) < 1e-9,
                "%s cl %d: muon_ke_best is neither route" % (det, cid))
 
-            # L4  michel_seg_id names a segment of the right ROLE, or -1
+            # L4  michel_seg_id names a segment of the right ROLE, or -1.
+            #     doc pdvd/51: role 3 now means "a member of the Michel OBJECT"
+            #     for BOTH connection types.  Through doc pdhd/17 a bridged
+            #     Michel's pieces were role 4, which is why the display drew
+            #     them in the `dots` colour; the map used to be {1: 3, 2: 4}.
             conn = int(a["michel_conn_type"][i])
             msid = int(a["michel_seg_id"][i])
-            role = {1: 3, 2: 4}.get(conn)
+            role = {1: 3, 2: 3}.get(conn)
             if role is None:
                 ck(msid == -1, "%s cl %d: conn 0 but michel_seg_id %d"
                    % (det, cid, msid))
             else:
                 have = {int(t) for t in
                         p["seg_id"][(p["cluster_id"] == cid) & (p["role"] == role)]}
-                # add_points skips every fit with dx <= 0 (:683), so a dot whose
-                # fits ALL have dx <= 0 is counted in n_dots and named by
-                # michel_seg_id while leaving no role-4 point at all -- and is
+                # add_points skips every fit with dx <= 0 (:683), so a piece
+                # whose fits ALL have dx <= 0 is counted in n_dots and named by
+                # michel_seg_id while leaving no point at all -- and is
                 # therefore invisible on the display.  Seen once: PDHD
                 # 029107_20 cluster 136, seg 135010, 2 fits, both dx == 0.
                 nofit = not (((rc["sub_cluster_id"] == msid)
@@ -1591,9 +1606,19 @@ def test_kine_gate(det):
                 n_seg += 1
 
             # L5  dots_ke_dqdx -- the pre-doc-14 branch, still the anchor that
-            #     keeps smkine honest about the endpoint/clamp rules
+            #     keeps smkine honest about the endpoint/clamp rules.
+            #     doc pdvd/51: the DOTS are no longer role 4 -- every piece the
+            #     object absorbs is role 3 now, and role 4 is the residual
+            #     bucket (empty today).  A dot is still exactly identifiable and
+            #     in fact MORE precisely than by role: a piece comes from a
+            #     COMPANION cluster by construction (`companions` excludes the
+            #     main cluster), while an attached arm is a segment of the
+            #     candidate's own cluster.  So the dots are the role-3 segments
+            #     whose seg_id names another cluster, and this check is now
+            #     tighter than the role test it replaces.
             if int(a["n_dots"][i]):
-                k4 = (p["cluster_id"] == cid) & (p["role"] == 4)
+                k4 = ((p["cluster_id"] == cid) & (p["role"] == 3)
+                      & (p["seg_id"] // 1000 != cid))
                 got = 0.0
                 for sid in sorted({int(t) for t in p["seg_id"][k4]}):
                     k = (rc["sub_cluster_id"] == sid) & (rc["flag_vertex"] == 0)
@@ -2074,6 +2099,176 @@ def test_object_panel(det, tmp):
           % ", ".join(str(k) for k, v in sorted(seen.items()) if v))
 
 
+def test_stop_gamma_tree(det):
+    """[P] doc pdvd/51 -- the capture gamma in the ARM output.
+
+    The claims this group has to make false-able:
+      P1  the branches exist and are self-consistent (an object implies points,
+          points imply an object);
+      P2  every role-5 seg_id joins T_rec_charge.sub_cluster_id -- the join doc
+          pdhd/12 sec 5.7 said could not be made, and the whole basis of the PF
+          selector widening;
+      P3  a gamma sits in the RING, past michel_dot_radius_cm -- if one turned
+          up inside it, the Michel and the gamma would be competing for the same
+          charge, which is the thing the design forbids;
+      P4  the gamma energy is NOT inside michel_ke_best.  The Michel spectrum is
+          graded against the free 52.8 MeV endpoint, so silently folding foreign
+          charge into it would defeat the one absolute gate this module has;
+      P5  role 4 -> 3: a bridged Michel's pieces carry role 3 now.  Through doc
+          pdhd/17 they carried role 4 and the display called them dots.
+    """
+    print("[P] the capture gamma in the tree, %s" % det)
+    try:
+        import uproot
+    except ImportError:
+        print("     (uproot missing -- P skipped)")
+        return
+    arm = ARM[det]
+    files = sorted(glob.glob(os.path.join(IMG, det, "work", "*_" + arm,
+                                          "tracking-pr.root")))
+    if not files:
+        print("     (no %s arm files -- P skipped)" % arm)
+        return
+    have = False
+    n_obj = n_cand = n_join = n_join_ok = n_ring = n_bridged = 0
+    ke_folded = []
+    for fn in files[:40]:
+        f = uproot.open(fn)
+        keys = {k.split(";")[0] for k in f.keys()}
+        if "T_stm_michel" not in keys or "T_stm_michel_pts" not in keys:
+            continue
+        m = f["T_stm_michel"].arrays(library="np")
+        if "n_stop_gammas" not in m:
+            continue                      # a pre-doc-51 arm: nothing to assert
+        have = True
+        p = f["T_stm_michel_pts"].arrays(library="np")
+        rc = f["T_rec_charge"].arrays(["sub_cluster_id"], library="np")
+        subs = set(int(x) for x in np.unique(rc["sub_cluster_id"]))
+        for i in range(len(m["cluster_id"])):
+            cid = int(m["cluster_id"][i]); n_cand += 1
+            sel = p["cluster_id"] == cid
+            g5 = sel & (p["role"] == 5)
+            ng = int(m["n_stop_gammas"][i])
+            n_obj += ng
+            # P1 -- an object implies points, and points imply an object.  Both
+            # directions: one alone passes on an all-zero tree.
+            if ng > 0:
+                ck(g5.sum() > 0, "%s %s cl %d: n_stop_gammas %d but NO role-5 points"
+                   % (det, os.path.basename(os.path.dirname(fn)), cid, ng))
+            if g5.sum() > 0:
+                ck(ng > 0, "%s cl %d: role-5 points but n_stop_gammas 0" % (det, cid))
+            # P2 -- the join
+            for sg in set(int(x) for x in p["seg_id"][g5]):
+                n_join += 1
+                if sg in subs:
+                    n_join_ok += 1
+                else:
+                    ck(False, "%s cl %d: role-5 seg_id %d absent from T_rec_charge"
+                       % (det, cid, sg))
+            # P3 -- the ring
+            if ng > 0:
+                dmin = float(m["stop_gamma_dis_min"][i])
+                ck(dmin > 15.0 - 1e-6,
+                   "%s cl %d: gamma at %.2f cm is INSIDE the Michel radius"
+                   % (det, cid, dmin))
+                ck(float(m["stop_gamma_dis_max"][i]) <= 35.0 + 25.0 + 1e-6,
+                   "%s cl %d: gamma at %.2f cm is beyond radius + the piece cap"
+                   % (det, cid, float(m["stop_gamma_dis_max"][i])))
+                n_ring += 1
+                # P4 -- not folded into the Michel
+                ke_folded.append((float(m["michel_ke_best"][i]),
+                                  float(m["michel_ke_dqdx"][i]) + float(m["dots_ke_unfit"][i]),
+                                  float(m["stop_gamma_ke_tot"][i])))
+            # P5 -- a bridged Michel's pieces are role 3
+            if int(m["michel_conn_type"][i]) == 2:
+                n_bridged += 1
+                ck((sel & (p["role"] == 3)).sum() > 0,
+                   "%s cl %d: michel_conn_type 2 but no role-3 points -- the doc "
+                   "pdvd/51 role migration did not happen" % (det, cid))
+    if not have:
+        print("     (arm %s predates doc pdvd/51 -- P skipped)" % arm)
+        return
+    for best, parts, gke in ke_folded:
+        ck(abs(best - parts) < 1e-6,
+           "%s: michel_ke_best %.6f != michel_ke_dqdx + dots_ke_unfit %.6f -- the "
+           "capture gamma leaked into the Michel energy" % (det, best, parts))
+    ck(n_join == n_join_ok, "%s: %d/%d role-5 seg_ids join T_rec_charge"
+       % (det, n_join_ok, n_join))
+    print("     %d candidates, %d gamma objects on %d of them, %d/%d seg_ids join, "
+          "%d bridged Michels checked" % (n_cand, n_obj, n_ring, n_join_ok, n_join, n_bridged))
+
+    # ---- causal negative controls.  "Something fails" is not enough: corrupt
+    # the EXACT thing each check protects and require THAT check to reject it
+    # (feedback_guard_needs_causal_negative_control).  The predicates are the
+    # same expressions used above, applied to real values and to corrupted ones.
+    in_ring = lambda d: d > 15.0 - 1e-6
+    adds_up = lambda best, parts: abs(best - parts) < 1e-6
+    ck(all(in_ring(d) for d in [m for m in (16.0, 26.5, 34.9)]),
+       "P3 control: real in-ring distances must pass")
+    ck(not any(in_ring(d) for d in (0.0, 1.9, 14.9)),
+       "P3 control: a gamma INSIDE the Michel radius must be rejected -- if this "
+       "passes, the Michel and the gamma are competing for the same charge")
+    if ke_folded:
+        b0, p0, g0 = ke_folded[0]
+        ck(adds_up(b0, p0), "P4 control: a real row must satisfy the identity")
+        ck(not adds_up(b0 + max(g0, 1.0), p0),
+           "P4 control: adding the gamma energy to michel_ke_best must be "
+           "DETECTED -- if this passes, the check cannot see the leak it exists for")
+    else:
+        ck(not adds_up(10.0, 12.0), "P4 control: 10 != 12 must be rejected")
+
+
+def test_stop_gamma_payload(det):
+    """[P] doc pdvd/51 -- the gamma and the widened PF selector in the SIDECAR.
+
+    The sidecar is what the browser reads, so a tree that is right and a payload
+    that is not is a silent failure (the panel would simply show nothing).
+    """
+    print("[P] the capture gamma in the payload, %s" % det)
+    files = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    if not files:
+        print("     (no prepped payloads -- P skipped)")
+        return
+    n_g = n_chain = n_wide = n_role3 = 0
+    have = False
+    for fp in files:
+        with open(fp) as fh:
+            pay = json.load(fh)
+        v = pay.get("verdict", {})
+        if "n_stop_gammas" not in v:
+            continue
+        have = True
+        # the gamma LAYER exists whenever the chain found one
+        if int(v.get("n_stop_gammas") or 0) > 0:
+            n_g += 1
+            ck(len(((v.get("gamma") or {}).get("x")) or []) > 0,
+               "%s %s: n_stop_gammas %s but the gamma layer is empty"
+               % (det, os.path.basename(fp), v.get("n_stop_gammas")))
+        # the PF selector really was widened: chain_segs is recorded, and every
+        # id in it that has PF rows appears among the panel's segments.
+        pf = pay.get("pf") or {}
+        cs = pf.get("chain_segs")
+        if cs is None:
+            continue
+        n_chain += 1
+        ids = {int(sg["id"]) for sg in pf.get("seg", [])}
+        cid = int(pay.get("cluster", -1))
+        foreign = [t for t in cs if int(t) // 1000 != cid]
+        if foreign and any(int(t) in ids for t in foreign):
+            n_wide += 1
+        if len(((v.get("michel") or {}).get("x")) or []) > 0 and int(v.get("michel_conn_type") or 0) == 2:
+            n_role3 += 1
+    if not have:
+        print("     (payloads predate doc pdvd/51 -- P skipped)")
+        return
+    ck(n_wide > 0,
+       "%s: NOT ONE payload has a PF segment from a companion cluster -- the "
+       "doc pdvd/51 selector widening is inert" % det)
+    print("     %d payloads with a gamma layer, %d carry chain_segs, %d show a "
+          "companion-cluster segment in the flow panel, %d bridged Michels drawn "
+          "in the michel layer" % (n_g, n_chain, n_wide, n_role3))
+
+
 def test_tranche_draw(det):
     """[N] The tranche column -- pinned to a named sheet, or reproducible from the key.
 
@@ -2267,6 +2462,7 @@ def main():
             test_object_payload(det)
             test_object_panel(det, tmp)
             test_energy_payload(det)
+            test_stop_gamma_payload(det)          # doc pdvd/51
             if not a.quick:
                 test_kine_gate(det)
                 test_object_tree(det)
@@ -2275,6 +2471,7 @@ def main():
                 test_bundle_payload(det)
                 test_meas_causal(det)
                 test_pf_selector(det)
+                test_stop_gamma_tree(det)         # doc pdvd/51
                 test_image_split(det)
                 agree[det] = test_unit_agreement(det, os.path.join(HERE, "prep-" + det))
     finally:

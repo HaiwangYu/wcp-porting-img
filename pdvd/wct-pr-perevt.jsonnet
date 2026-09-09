@@ -220,6 +220,13 @@ function(
     // 137 -> 123 with kink p10 21 -> 31 deg.  Every entry differs from the C++
     // default.  Inert unless 'check_stm_michel' is in pipeline_names, so the
     // -stm production compiled config does not carry it.
+    // doc pdvd/51: a bag MERGED ON TOP of stm_michel_knobs.  Passing
+    // -S stm_michel_knobs={...} REPLACES the 15-key default above, so flipping
+    // one knob for an A/B arm used to mean re-transcribing every other one --
+    // a transcription the arm's correctness then silently depends on.  This
+    // merges last, so `-S stm_michel_extra={stop_gamma_enable:false}` changes
+    // exactly one key.  {} => compiled config byte-identical.
+    stm_michel_extra = {},
     stm_michel_knobs = {
         profile_min_dqdx_frac: 0.15,   // drop fit points below 0.15 MIP from the verdict metrics (dead cells; doc pdhd/03 sec 5)
         pid_mode: 2,                   // template PID = proton veto only (sec 6.1); +49 of PDVD's +50
@@ -3935,7 +3942,7 @@ function(
                              flag_mains_min_length=flag_mains_min_cm * wc.cm,
                              mip_dqdx_median=mip_dqdx_median,
                              pipeline_names=pipeline_names,
-                             stm_michel_knobs=stm_michel_knobs,   // doc pdvd/48
+                             stm_michel_knobs=stm_michel_knobs + stm_michel_extra,   // doc pdvd/48; + doc pdvd/51 override bag
                              tensor_outname=save_tensors,
                              save_in_scope=save_in_scope,
                              pr_bee=pr_bee,

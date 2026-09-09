@@ -316,6 +316,11 @@ LAYERS = [
     ("delta",     7.0, 0.95, "#ff7f0e",        "circle",   True,  0.0),
     ("michel",    8.0, 0.95, "#1f77b4",        "circle",   True,  0.0),
     ("dots",     10.0, 0.95, "#d62728",        "diamond",  True,  0.0),
+    # doc pdvd/51: the muon-capture gamma.  Its own colour and its own MARKER --
+    # a gamma is a different object from a Michel piece, and after doc 51 a
+    # bridged Michel's pieces are role 3 (blue), so red no longer means "the
+    # thing at the end of the muon".
+    ("gamma",    10.0, 0.95, "#17a55a",        "hex",      True,  0.0),
     ("entry",    16.0, 0.95, "#2ca02c",        "triangle", True,  0.0),
     ("stop",     16.0, 0.95, "#2ca02c",        "inverted_triangle", True, 0.0),
     ("tstop",    16.0, 0.95, "#2ca02c",        "x",        True,  0.0),
@@ -649,11 +654,12 @@ fq.toolbar.active_tap = _tapq
 # a, b are the plotted pair; c the colour field; the rest ride along for the
 # cursor.  ONE column list, so a fill that forgets one fails loudly.
 QCOLS = ["a", "b", "c", "x", "y", "z", "pu", "pv", "pw", "pt"]
-QSCAT = ("muon", "delta", "michel", "dots")
+QSCAT = ("muon", "delta", "michel", "dots", "gamma")
 SRCQ = {}
 for name, col, sz in (("ref_muon", "#333333", 0), ("ref_electron", "#8c564b", 0),
                       ("muon", "#000000", 6), ("delta", "#ff7f0e", 8),
-                      ("michel", "#1f77b4", 9), ("dots", "#d62728", 11)):
+                      ("michel", "#1f77b4", 9), ("dots", "#d62728", 11),
+                      ("gamma", "#17a55a", 12)):
     src = ColumnDataSource(dict(a=[], b=[]) if sz == 0
                            else {k: [] for k in QCOLS}, name="srcq_" + name)
     SRCQ[name] = src
@@ -672,7 +678,8 @@ for name, col, sz in (("ref_muon", "#333333", 0), ("ref_electron", "#8c564b", 0)
                    fill_color={"field": "c", "transform": cm_muon}, **common)
     else:
         fq.scatter("a", "b", source=src, fill_color=col,
-                   marker="diamond" if name == "dots" else "circle", **common)
+                   marker=("diamond" if name == "dots"
+                           else "hex" if name == "gamma" else "circle"), **common)
 fq.line("a", "b", source=ColumnDataSource(dict(a=[], b=[])), color="#e377c2")
 SRCQ["origin"] = ColumnDataSource(dict(a=[], b=[]))
 fq.line("a", "b", source=SRCQ["origin"], color="#e377c2", line_width=2,
@@ -741,6 +748,7 @@ MEAS_TRACKS = [("muon", "#000000", 3.0, False),
                ("delta", "#ff7f0e", 5.0, True),
                ("michel", "#1f77b4", 6.0, True),
                ("dots", "#d62728", 8.0, True),
+               ("gamma", "#17a55a", 8.0, True),      # doc pdvd/51
                # the particle flow, in the space where the charge lives -- which
                # is where "is this branch a real deposit" is answerable
                ("pfvtx", "#8c564b", 9.0, False),
@@ -811,7 +819,7 @@ for pl in PLANES:
                 continue
             rr = f.scatter("w", "t", source=src, size=sz, color=col,
                            marker="circle_cross" if nm == "cursor" else "circle",
-                           line_color="#333333" if nm in ("dots", "cursor") else None,
+                           line_color="#333333" if nm in ("dots", "gamma", "cursor") else None,
                            fill_alpha=0.85, line_alpha=0.9)
             MEAS_REND.setdefault(nm, []).append(rr)
         f.add_tools(HoverTool(renderers=[r], tooltips=[
@@ -929,7 +937,7 @@ def fill_meas(pay, v, rev, pin=None, reframe=False):
         mw, mt = _wt(pay.get("muon"), pl)
         SRCT[(pl, "muon")].data = dict(w=mw, t=mt)
         if rev:
-            for nm in ("delta", "michel", "dots"):
+            for nm in ("delta", "michel", "dots", "gamma"):
                 w_, t_ = _wt(v.get(nm), pl)
                 SRCT[(pl, nm)].data = dict(w=w_, t=t_)
         allw = list(ch) + mw
@@ -1358,7 +1366,7 @@ def render(reframe=False):
         "pin": ([px], [py], [pz], {}),
     }
     if rev:
-        for nm in ("delta", "michel", "dots"):
+        for nm in ("delta", "michel", "dots", "gamma"):
             g = v.get(nm) or dict(x=[], y=[], z=[])
             layers[nm] = (g["x"], g["y"], g["z"], {})
         tf = v.get("tagger_fit") or []
@@ -2207,6 +2215,36 @@ def fill_flow(v, rev):
                % (v.get("n_stop_arms"), v.get("n_dots"),
                   v.get("n_dot_clusters_unfit"), v.get("dots_charge_unfit", 0.0)))
 
+    # doc pdvd/51: the capture gammas, a SEPARATE line under the muon -- never
+    # merged into the Michel's energy, because the Michel spectrum is graded
+    # against the free 52.8 MeV endpoint and gathering foreign charge into it is
+    # exactly what that gate exists to catch.  mc.json shows the same objects as
+    # `mu- -> gamma -> e-`; here every number is a T_stm_michel branch.
+    ng = v.get("n_stop_gammas")
+    if ng is None:
+        gam = ("<br>&nbsp;&nbsp;<span style='color:#777'>this arm predates doc "
+               "pdvd/51: no capture-gamma branches.</span>")
+    elif int(ng) > 0 or int(v.get("stop_gamma_n_unfit") or 0) > 0:
+        gam = ("<br>&nbsp;&nbsp;&#9492;&#9472; <b>capture &gamma;</b> &nbsp; "
+               "<b>%d</b> object%s &nbsp; <b>%.2f MeV</b> total (max %.2f) &nbsp; "
+               "%.1f&ndash;%.1f cm past the stop"
+               "<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style='color:#777'>"
+               "a &mu;&#8315; captured on argon emits de-excitation &gamma;s; a &gamma; is "
+               "neutral, so there is no track back to the stop and the parentage is a "
+               "CLAIM about an unseen neutral, not a reconstructed edge. "
+               "%d unfitted cluster%s, %.3g e total &middot; nearest core seg "
+               "<code>%s</code></span>"
+               % (int(ng), "" if int(ng) == 1 else "s",
+                  v.get("stop_gamma_ke_tot", 0.0), v.get("stop_gamma_ke_max", 0.0),
+                  v.get("stop_gamma_dis_min", -1.0), v.get("stop_gamma_dis_max", -1.0),
+                  int(v.get("stop_gamma_n_unfit") or 0),
+                  "" if int(v.get("stop_gamma_n_unfit") or 0) == 1 else "s",
+                  v.get("stop_gamma_charge", 0.0),
+                  v.get("stop_gamma_seg_id")))
+    else:
+        gam = ("<br>&nbsp;&nbsp;<span style='color:#777'>no capture &gamma; in the "
+               "ring past the stop</span>")
+
     warn = ""
     if conn and not int(v.get("michel_found") or 0):
         warn = ("<br><span style='color:#b00'>michel_found is 0 even though a "
@@ -2217,7 +2255,7 @@ def fill_flow(v, rev):
         "<div style='background:#fff6e5;padding:6px;font-size:96%%'><b>the chain's "
         "answer &mdash; particle flow</b> <span style='color:#777'>(every field is a "
         "T_stm_michel branch)</span><br>%s<br>&nbsp;&nbsp;%s<br>&nbsp;&nbsp;&nbsp;"
-        "&nbsp;&nbsp;%s%s</div>" % (mu, link, dau, warn))
+        "&nbsp;&nbsp;%s%s%s</div>" % (mu, link, dau, gam, warn))
 
 
 def fill_reveal(v, rev):
