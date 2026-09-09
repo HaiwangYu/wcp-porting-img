@@ -11,7 +11,9 @@ stop ...`, doc pdvd/51), written to answer six questions:
 4. if the muon has delta rays, how the cosmic-muon segments are grouped,
 5. how a connected Michel is told from nearby isolated gamma points,
 6. how the Michel electron is clustered together,
-7. how the particle flow is formed (added on request after the first draft).
+7. how the particle flow is formed,
+8. whether that PF construction is consistent with the `TaggerCheckNeutrino`
+   chain (7 and 8 added on request after the first draft).
 
 **Every number quoted here was measured by another doc, and is attributed at
 the point of use.** Nothing in this file is a new result; there is no Repro
@@ -710,7 +712,8 @@ if (publish_nu_slots) grouping.set_track_fitting("nu" + std::to_string(ci), tf);
 ```
 
 This is byte-for-byte the neutrino chain's publication
-(`TaggerCheckNeutrino.cxx:3580-3590`), and that is the point: every existing
+(`TaggerCheckNeutrino.cxx:3821-3831`; `CheckSTM_Michel`'s own header comment
+still cites the pre-drift `:3580-3590`), and that is the point: every existing
 consumer renders this stage's graph unchanged — the Bee `track_fit`,
 `shower_track`, `vertices` and `mc` layers, `PdvdPrMagnifyTrackingVisitor`, and
 `PrDisplayDump`.
@@ -819,6 +822,102 @@ bridged-cluster BFS widening and orphan-track parentage. All of it is
 component never populates any of them (§7.1 lists everything it sets). Reading
 that code, do not assume a branch fires for a stopping muon just because it is in
 the function.
+
+### 7.7 Consistency with the `TaggerCheckNeutrino` chain
+
+**Short answer: identical for the PF carriers, the publication and the
+energiser; divergent for the semantics of the root and for how connection types
+are assigned — and both divergences are *forced* by shared code that assumes a
+neutrino topology.**
+
+#### Identical
+
+| | both chains |
+|---|---|
+| PF carriers | `add_graph` + `set_main_vertex` + `set_showers` — the same three, and nothing else defines the flow |
+| main-vertex flag | `VertexFlags::kNeutrinoVertex` set on the root (`TaggerCheckNeutrino.cxx:3749`) |
+| orientation | `examine_direction(g, root, root, …, /*flag_final=*/**true**)` has the final word on every segment's direction (`:3378`) |
+| the four early PR stages | `find_proto_vertex` → `clustering_points` → `separate_track_shower` → `determine_direction` |
+| energiser | `PatternAlgorithms::calculate_shower_kinematics`, the chain's production entry point — not a local recipe |
+| PID stamp | a confident call writes `particle_score(100.0)`; that is the shared PR idiom, not a local shortcut (`NeutrinoPatternBase.cxx:412/439/470/645`, `NeutrinoTrackShowerSep.cxx:326`, `NeutrinoVertexFinder.cxx:3752/3786`) |
+| publication | `assemble_fitted_charge_2d()`, then the unnamed slot for index 0 and `nu<i>` per candidate |
+| renderer | `fill_bee_pf_tree`, unchanged — **there is no STM-specific rendering code anywhere** |
+
+That last row is the design goal stated in the component's header: publish the
+way the neutrino chain publishes, so every existing consumer renders this stage
+without modification.
+
+#### Divergent, and why
+
+**1. The root is a boundary crossing, not an interaction vertex.** Both set
+`kNeutrinoVertex`, but the neutrino chain's root is where the daughters
+*originate*, and here it is the **entry** — the far end of the muon from where
+every daughter (Michel, capture gamma) actually starts. The bite is not
+cosmetic: `effectively_touching` (§7.4) suppresses a pseudo-carrier for a conn-2
+shower that starts near **the main vertex**, which for this chain is
+structurally the wrong end of the track. That predicate could not do useful work
+here whatever its knob said. Both ProtoDUNEs happen to set
+`pf_direct_when_touching = false`, so the question does not arise in production
+— but it is the shape to watch for: shared PF code that assumes the root is
+where the daughters are.
+
+**2. Connection types are assigned, not computed.** The neutrino chain derives
+1 / 2 / 3 geometrically inside `NeutrinoShowerClustering` across many seeding
+and merging passes (e.g. `:3780-3794`, where the type falls out of a
+closest-approach comparison against the main vertex). `CheckSTM_Michel` has
+exactly **two** sites and both are literals: `1` for the attached Michel, `2` for
+the bridged Michel and every capture gamma. **Type 3 never occurs.** That is
+appropriate — the topology here is known in advance, so there is nothing to
+infer — but it means the renderer's type-3 paths are unreachable from this
+component, and a reader tracing "which branch fires" must not assume the
+neutrino chain's dispatch.
+
+**3. `set_kine_best` is an override forced by a shared-code assumption.** This is
+the sharpest of the three. `Shower::calculate_kinematics` sets
+(`PRShower.cxx:1849-1858`):
+
+```
+kenergy_best = 0   whenever nsegments != nconnected_segs        (multi-cluster)
+kenergy_best = 0   when start_connection_type != 1 AND flag_shower
+```
+
+so a conn-2 EM shower gets 0 **in the neutrino chain too** — that is not special
+to this component. The difference is what `get_kine_best()` falls back to:
+`kenergy_charge`. In the neutrino chain that is the intended number. Here it is
+the **wrong** one, because `calculate_shower_kinematics` selects the *shower*
+recombination pair for anything with `flag_shower`
+(`NeutrinoEnergyReco.cxx`: `if (shower->get_flag_shower()) { recom_factor =
+m_kine_charge.shower_recom_factor; fudge_factor = m_kine_charge.shower_fudge_factor; }`),
+and doc pdhd/15 §6 measured that overshooting this component's own dQ/dx by
+**~1.66×**. So the stamp is not a stylistic choice: it is a divergence forced by
+a shared assumption that does not hold for this object class.
+
+The chain does have the same idiom — `apply_hadronic_dqdx_best`
+(`NeutrinoEnergyReco.cxx:515`, doc pr/101 K3) overrides `kine_best` with
+`get_kine_dQdx()` — but only for 2212 / 211 / 2112 and only behind a knob. This
+component applies it unconditionally to an EM object, which the chain does not
+do anywhere else.
+
+*(Doc pdhd/15 §6 also reports `kenergy_charge` itself as 0 on this path. That is
+its measurement, not a re-derivation here — `collect_charge_maps` does run for
+standalone callers, so the value is charge-map dependent. The argument for the
+stamp rests on the 1.66× overshoot, which is visible in the code above, not on
+the 0.)*
+
+**4. The auxiliary payloads are absent.** The neutrino chain additionally stashes
+`set_pi0_data`, `set_dropped_satellite_shower_ids`, `set_kine_info`,
+`set_tagger_info` and `set_vertex_scoreboard` (`TaggerCheckNeutrino.cxx:3751-3776`).
+`CheckSTM_Michel` sets **none** of them — it writes its own `T_stm_michel`
+instead of `T_kine` / `T_tagger`. This is why §7.6's renderer branches are inert,
+and it is a deliberate consequence of the component being a *replacement* for the
+neutrino PR tail on a cosmic detector, not an extension of it.
+
+**5. Shower gathering is one guarded flood-fill, not a clustering campaign.** The
+neutrino chain runs the whole of `NeutrinoShowerClustering` — multiple seeding
+passes, merges, pi0 pairing, satellite pruning. This component calls
+`complete_structure_with_start_segment` once per object with the muon chain as
+the barrier (§6.1), then adds companion pieces explicitly. Same primitive,
+vastly smaller policy layer.
 
 ## 8. The production knob bag
 
