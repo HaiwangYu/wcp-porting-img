@@ -176,22 +176,53 @@ segments, each in its own colour, and the junction vertices — in the 3-D view,
 the projections and the measurement panels. The toggle starts **off**, so the
 view you already know is unchanged until you ask for the graph.
 
-The dropdown lists every segment with its point count, length and median dQ/dx.
-Pick one and it lights up amber everywhere. Then say what it is:
+### The object table (doc pdvd/53)
+
+Below the toggle is a **grouped table of every object near this stop**, not a
+flat list. It replaced a dropdown that stopped scaling: over the 153 PDVD
+`is_stm` candidates of the d51gv arm a candidate carries a mean of 4.6 PF
+segments, p90 9 and **max 23** — `039253_12` cluster 41 is 8 muon pieces and 15
+EM ones. A muon broken into eight pieces and a Michel into fifteen is not a
+list, it is two groups.
+
+Each row is an **object**:
+
+| row | what it is |
+|---|---|
+| `S<id>` | a fitted PR segment |
+| `C<id>` | a whole cluster the PR produced **no** segment for — charge on screen and nothing else, so it can only be grouped as a whole |
+
+and the columns say how many points, how long, the median dQ/dx, how far the
+piece is from the stop, and **what the chain says about it** — including, for a
+piece the chain fitted and then dropped, the gate that dropped it.
+
+The table opens in the **chain's own grouping**, so what you are looking at is
+the reconstruction's answer and your job is to move what is wrong. Pick a row
+and it lights up amber everywhere; then move it:
 
 | button | |
 |---|---|
-| `muon` | part of the stopping muon |
-| `Michel` | part of the Michel electron |
+| `→ muon` | part of the stopping muon |
+| `→ Michel` | part of the Michel electron |
+| `→ gamma` | an isolated gamma near the stopping point — muon capture, not decay |
+| `→ unassigned` | remove your grouping (back to the chain's) |
 | `delta / other` | a delta ray or anything else hanging off the track |
-| `straddles the stop` | the segment genuinely covers both sides — the honest answer, not a coin flip |
-| `untag` | remove the tag |
+| `straddles` | the object genuinely covers both sides — the honest answer, not a coin flip |
 
 Your tags are drawn as **hollow squares**, a marker nothing else on the page
 uses, so they can never be confused with the reconstruction's colours. Only
 3.5 % (PDHD) / 6.6 % (PDVD) of segments really straddle the muon/Michel
 boundary, so the question is well posed nearly always — but not always, which is
 why the fourth button exists.
+
+**A `C<id>` row may not be where it looks.** The Bee image layer draws every
+cluster at its *own* Q-L bundle's t0-corrected x, so a cluster from another
+flash lands wherever its own drift correction puts it — on `039253_14` six of
+the eleven blobs within 60 cm of cluster 49's stop are like that, at t0 5168 µs
+and 2617 µs against the muon's 3709 µs, i.e. metres away in drift. The
+inspector says **ANOTHER FLASH** with the flash id and t0 when that is the case,
+and `bundle only` hides them from the 3-D view entirely. The chain never fits
+them: the survey admits same-bundle clusters only.
 
 The panel also prints what the chain calls the segment: its particle type and
 whether it called it a track or a shower. That *is* the chain's answer —
@@ -358,7 +389,7 @@ writer's default wire.
 | `smgeom.py` | the one shared module: envelopes, seams, wire→unit, the plane split, ticks→slices |
 | `serve_stm_michel_scan.sh` | starts it, refuses a busy port |
 | `selftest_stm_michel_scan.py` | 45624 (PDVD) / 26509 (PDHD) headless checks: that the chain's answer reaches the screen (by poisoning the verdict), the view — the rotation centre, the framing bound, and that nothing but a new item reframes — every label, the pin against brute force, the wire→unit map against the production wire file, the prep's near/far split against brute force, the scorer end to end on synthetic labels, and the measurement panel: the plane split gated against the fitter's own wire coordinate, ticks→slices gated against the files, the residual recomputed, and the click landing on the same point in all thirteen views, the particle flow (its row selector, its tagging and backward compatibility), the save read-back, the copy box and the saved-labels table |
-| `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and segment picker are pressed as real widgets |
+| `selftest_smx3d_browser.py` | 77 checks per detector in headless chromium: a real drag reaches the CustomJS, every layer moves with it, the pin stays exactly at the rotation centre, no point projects outside its own distance from the camera, **the drag survives a label click** — the camera the scanner drags to lives only in the browser, so this is the one gate that can see the server pushing a stale angle back — the nine measurement panels paint on the heaviest item of the arm (with the causal control that emptying the cell sources changes the pixels), the click link survives the websocket round trip, and the particle-flow toggle and the grouped object table are pressed as real widgets |
 | `score_stm_michel_scan.py` | scores against the key, stratum-reweighted, revealed labels separately |
 | `../docs/scan/<det>_stm_michel_scan_sheet.tsv` | the item list — no verdict, no stratum |
 | `../docs/scan/<det>_stm_michel_scan_key.tsv` | the answer key — committed as the record; its blind is an honour rule, see above |

@@ -321,6 +321,11 @@ LAYERS = [
     # bridged Michel's pieces are role 3 (blue), so red no longer means "the
     # thing at the end of the muon".
     ("gamma",    10.0, 0.95, "#17a55a",        "hex",      True,  0.0),
+    # doc pdvd/53: role 6 -- fitted, and claimed by no stage.  A DIFFERENT
+    # channel from every verdict colour on the page (open cross, teal),
+    # because it is the chain saying "I reconstructed this and I do not
+    # know what it is", which is not a verdict.
+    ("survey",   10.0, 0.95, "#00879e",        "cross",    True,  0.0),
     ("entry",    16.0, 0.95, "#2ca02c",        "triangle", True,  0.0),
     ("stop",     16.0, 0.95, "#2ca02c",        "inverted_triangle", True, 0.0),
     ("tstop",    16.0, 0.95, "#2ca02c",        "x",        True,  0.0),
@@ -339,8 +344,30 @@ LAYERS = [
 # The scanner's own per-segment answer.  Drawn as HOLLOW squares, a different
 # channel from every filled marker on the page, so a tag can never be mistaken
 # for the reconstruction's colours.
-PF_TAGS = {"muon": "#2c7fb8", "michel": "#e31a1c",
+# doc pdvd/53 adds `gamma`.  The other four are UNCHANGED values, so every row
+# already written under tag smx1 still loads and still means what it meant.
+PF_TAGS = {"muon": "#2c7fb8", "michel": "#e31a1c", "gamma": "#17a55a",
            "delta / other": "#7f7f7f", "straddles the stop": "#6a3d9a"}
+# doc pdvd/53: the order the grouped table lays the rows out in.  "unassigned"
+# is not a tag -- it is the absence of one, and it is where the chain's own
+# role-6 pieces start, which is exactly the pile the scanner is asked to sort.
+GROUP_ORDER = ["muon", "michel", "gamma", "delta / other",
+               "straddles the stop", "unassigned"]
+# The gate that dropped a role-6 segment (CheckSTM_Michel.cxx, doc pdvd/53).
+# The display SHOWS these; it re-derives none of them.
+REJ_NAMES = {
+    0: "claimed",
+    1: "outside the Michel radius",
+    2: "segment too far from the stop",
+    3: "longer than the piece cap",
+    4: "Michel body exclusion",
+    5: "outside the gamma ring",
+    6: "gamma body exclusion",
+    7: "the Michel already owns the cluster",
+    8: "energy window / per-candidate cap",
+    9: "survey only -- neither stage was offered it",
+    10: "no stop vertex -- nothing examined it",
+}
 # Measured over 25 events per detector (doc pdhd/12 sec 5.7): only 3.7 % (PDHD)
 # and 6.3 % (PDVD) of PF segments carry points on BOTH sides of the muon/Michel
 # boundary, so a per-segment tag is well posed -- but it is not always, and
@@ -654,12 +681,12 @@ fq.toolbar.active_tap = _tapq
 # a, b are the plotted pair; c the colour field; the rest ride along for the
 # cursor.  ONE column list, so a fill that forgets one fails loudly.
 QCOLS = ["a", "b", "c", "x", "y", "z", "pu", "pv", "pw", "pt"]
-QSCAT = ("muon", "delta", "michel", "dots", "gamma")
+QSCAT = ("muon", "delta", "michel", "dots", "gamma", "survey")
 SRCQ = {}
 for name, col, sz in (("ref_muon", "#333333", 0), ("ref_electron", "#8c564b", 0),
                       ("muon", "#000000", 6), ("delta", "#ff7f0e", 8),
                       ("michel", "#1f77b4", 9), ("dots", "#d62728", 11),
-                      ("gamma", "#17a55a", 12)):
+                      ("gamma", "#17a55a", 12), ("survey", "#00879e", 12)):
     src = ColumnDataSource(dict(a=[], b=[]) if sz == 0
                            else {k: [] for k in QCOLS}, name="srcq_" + name)
     SRCQ[name] = src
@@ -679,7 +706,8 @@ for name, col, sz in (("ref_muon", "#333333", 0), ("ref_electron", "#8c564b", 0)
     else:
         fq.scatter("a", "b", source=src, fill_color=col,
                    marker=("diamond" if name == "dots"
-                           else "hex" if name == "gamma" else "circle"), **common)
+                           else "hex" if name == "gamma"
+                           else "cross" if name == "survey" else "circle"), **common)
 fq.line("a", "b", source=ColumnDataSource(dict(a=[], b=[])), color="#e377c2")
 SRCQ["origin"] = ColumnDataSource(dict(a=[], b=[]))
 fq.line("a", "b", source=SRCQ["origin"], color="#e377c2", line_width=2,
@@ -749,6 +777,7 @@ MEAS_TRACKS = [("muon", "#000000", 3.0, False),
                ("michel", "#1f77b4", 6.0, True),
                ("dots", "#d62728", 8.0, True),
                ("gamma", "#17a55a", 8.0, True),      # doc pdvd/51
+               ("survey", "#00879e", 8.0, True),     # doc pdvd/53
                # the particle flow, in the space where the charge lives -- which
                # is where "is this branch a real deposit" is answerable
                ("pfvtx", "#8c564b", 9.0, False),
@@ -819,7 +848,7 @@ for pl in PLANES:
                 continue
             rr = f.scatter("w", "t", source=src, size=sz, color=col,
                            marker="circle_cross" if nm == "cursor" else "circle",
-                           line_color="#333333" if nm in ("dots", "gamma", "cursor") else None,
+                           line_color="#333333" if nm in ("dots", "gamma", "survey", "cursor") else None,
                            fill_alpha=0.85, line_alpha=0.9)
             MEAS_REND.setdefault(nm, []).append(rr)
         f.add_tools(HoverTool(renderers=[r], tooltips=[
@@ -937,7 +966,7 @@ def fill_meas(pay, v, rev, pin=None, reframe=False):
         mw, mt = _wt(pay.get("muon"), pl)
         SRCT[(pl, "muon")].data = dict(w=mw, t=mt)
         if rev:
-            for nm in ("delta", "michel", "dots", "gamma"):
+            for nm in ("delta", "michel", "dots", "gamma", "survey"):
                 w_, t_ = _wt(v.get(nm), pl)
                 SRCT[(pl, nm)].data = dict(w=w_, t=t_)
         allw = list(ch) + mw
@@ -1039,14 +1068,40 @@ flow_div = Div(text="", width=1420, name="flow_div")
 cursor_div = Div(text="", width=620)
 save_div = Div(text="", width=620)
 pf_tog = Toggle(label="show particle flow", button_type="default", width=200)
-seg_select = Select(title="PF segment (pick one to highlight and tag it)",
-                    options=[], value="", width=430)
+# doc pdvd/53: the grouped OBJECT table replaces the flat dropdown.
+#
+# The dropdown was a single Select over pay["pf"]["seg"], and it stopped being
+# usable at the scale the chain actually produces: over the 153 PDVD is_stm
+# candidates of the d51gv arm a candidate carries a mean of 4.6 PF segments,
+# p90 9 and max 23 (039253_12 cluster 41: 8 muon + 15 EM).  A muon broken into
+# eight pieces and a Michel into fifteen is not a list, it is two groups.
+#
+# Rows are OBJECTS, not points: a fitted PR segment, or -- for a piece the chain
+# produced no segment for -- a whole cluster, keyed "C<id>".  The group is the
+# scanner's tag when they have set one and the CHAIN's own grouping otherwise,
+# so the table opens already sorted the way the reconstruction sees it and the
+# scanner moves what is wrong.
+seg_src = ColumnDataSource(data=dict(group=[], obj=[], npts=[], size=[],
+                                     dqdx=[], chain=[], dstop=[], key=[]))
+seg_table = DataTable(
+    source=seg_src, name="seg_table", width=430, height=250,
+    index_position=None, row_height=22, header_row=True, sortable=False,
+    selectable=True,
+    columns=[TableColumn(field="group", title="group", width=76),
+             TableColumn(field="obj", title="object", width=62),
+             TableColumn(field="npts", title="pts", width=32),
+             TableColumn(field="size", title="cm", width=40),
+             TableColumn(field="dqdx", title="e/cm", width=48),
+             TableColumn(field="dstop", title="d_stop", width=48),
+             TableColumn(field="chain", title="the chain says", width=118)])
+seg_head = Div(text="", width=430, name="seg_head")
 seg_div = Div(text="", width=620)
-pf_mu_btn = Button(label="muon", button_type="primary", width=105)
-pf_mic_btn = Button(label="Michel", button_type="danger", width=105)
-pf_oth_btn = Button(label="delta / other", button_type="default", width=125)
-pf_mix_btn = Button(label="straddles the stop", button_type="warning", width=165)
-pf_clr_btn = Button(label="untag", button_type="default", width=90)
+pf_mu_btn = Button(label="→ muon", button_type="primary", width=88)
+pf_mic_btn = Button(label="→ Michel", button_type="danger", width=94)
+pf_gam_btn = Button(label="→ gamma", button_type="success", width=94)
+pf_oth_btn = Button(label="delta / other", button_type="default", width=112)
+pf_mix_btn = Button(label="straddles", button_type="warning", width=92)
+pf_clr_btn = Button(label="→ unassigned", button_type="default", width=120)
 save_info_btn = Button(label="what is saved on disk?", button_type="default", width=200)
 # Owner 2026-09-08, item 4: the event and cluster as SELECTABLE TEXT.  The badge
 # and the status line already say them, but inside HTML that is awkward to grab;
@@ -1130,7 +1185,13 @@ item either: press <i>next &gt;</i> when you are ready.
 # centre last pushed to the browser, so refit_camera can tell a centre MOVE from
 # an ordinary repaint without resetting anyone's zoom.
 state = dict(idx=0, pin=None, pin_i=None, pin_manual=None, cursor=None,
-             pf_tag={}, pf_seg=None, centre=None, cam_c=None)
+             # doc pdvd/53.  pf_key is the table's unit of selection and the
+             # labels.json key: "<seg_id>" for a fitted PR segment, "C<cluster>"
+             # for a near cluster the PR produced no segment for.  pf_seg and
+             # pf_cluster are the two halves of it, kept apart so the highlight
+             # code never has to parse the key.
+             pf_tag={}, pf_seg=None, pf_cluster=None, pf_key=None, pf_rows=[],
+             centre=None, cam_c=None)
 
 
 def current():
@@ -1352,6 +1413,8 @@ def render(reframe=False):
     if state.get("_pf_item") != item_key(it):
         state["pf_tag"] = dict(rec0.get("pf_segments") or {})
         state["pf_seg"] = None
+        state["pf_cluster"] = None
+        state["pf_key"] = None
         state["_pf_item"] = item_key(it)
     refresh_segments(pay)
 
@@ -1366,7 +1429,7 @@ def render(reframe=False):
         "pin": ([px], [py], [pz], {}),
     }
     if rev:
-        for nm in ("delta", "michel", "dots", "gamma"):
+        for nm in ("delta", "michel", "dots", "gamma", "survey"):
             g = v.get(nm) or dict(x=[], y=[], z=[])
             layers[nm] = (g["x"], g["y"], g["z"], {})
         tf = v.get("tagger_fit") or []
@@ -1684,7 +1747,7 @@ def save_info():
                        % (n, "" if n == 1 else "s", "{:,}".format(nb), mt, key))
         return
     keep = ("label", "choice", "partial", "michel_kind", "revealed_before_label",
-            "notes", "pf_tagged")
+            "notes", "pf_tagged", "n_pf_objects")          # doc pdvd/53
     bits = ["<b>%s</b> = %s" % (k, rec.get(k)) for k in keep if k in rec]
     pin = rec.get("pin") or {}
     if pin:
@@ -1697,6 +1760,12 @@ def save_info():
     if seg:
         bits.append("<b>pf_segments</b> = %s"
                     % ", ".join("%s:%s" % (k, v) for k, v in sorted(seg.items())))
+    # doc pdvd/53: your overrides above, the chain's own grouping here.  Both are
+    # on disk, and it is the PAIR that says whether you moved anything.
+    cg = rec.get("pf_chain_group") or {}
+    if cg:
+        bits.append("<b>pf_chain_group</b> (the chain's) = %s"
+                    % ", ".join("%s:%s" % (k, v) for k, v in sorted(cg.items())))
     status.text = ("<div style='background:#eef4ff;padding:6px'><b>%s</b> is on disk "
                    "(%d label%s in the file, %s bytes, written %s):<br>%s</div>"
                    % (key, n, "" if n == 1 else "s", "{:,}".format(nb), mt,
@@ -1751,26 +1820,129 @@ def pf_segments(pay):
     return ((pay or {}).get("pf") or {}).get("seg") or []
 
 
-def seg_label(sg, tag):
-    return "S%d   %d pts   %.1f cm%s%s" % (
-        sg["id"], sg["npts"], sg["len_cm"],
-        "" if sg.get("dqdx_med") is None else "   %.0f e/cm" % sg["dqdx_med"],
-        "" if not tag else "   [%s]" % tag)
+def chain_group(pay, sid):
+    """The group the CHAIN put a segment in, from its own role and pdg.
+
+    doc pdvd/53.  role 1 muon, 2 delta, 3 the Michel object, 5 a capture gamma,
+    6 fitted-and-unclaimed.  A segment with no role row at all is one the chain
+    never named: if it carries pdg 13 it is part of the muon the PR broke into
+    pieces (039253_13 cluster 102's muon is six segments and only ONE of them,
+    102015, carries the role-1 profile), and anything else is unassigned.
+    """
+    pf = (pay or {}).get("pf") or {}
+    r = (pf.get("chain_role") or {}).get(str(sid))
+    if r == 1:
+        return "muon"
+    if r == 3:
+        return "michel"
+    if r == 5:
+        return "gamma"
+    if r == 2:
+        return "delta / other"
+    if r == 6:
+        return "unassigned"
+    pdg = (((pay or {}).get("verdict") or {}).get("pf_type") or {}).get(str(sid), {}).get("pdg")
+    return "muon" if pdg == 13 else "unassigned"
+
+
+def chain_note(pay, sid):
+    """What the chain says about one segment, in words, for the table."""
+    pf = (pay or {}).get("pf") or {}
+    r = (pf.get("chain_role") or {}).get(str(sid))
+    rj = (pf.get("seg_rej") or {}).get(str(sid))
+    if rj:
+        return REJ_NAMES.get(int(rj.get("rej", -1)), "rej %s" % rj.get("rej"))
+    if r in (1, 2, 3, 5):
+        return {1: "the muon chain", 2: "a delta ray",
+                3: "the Michel object", 5: "a capture gamma"}[r]
+    pt = (((pay or {}).get("verdict") or {}).get("pf_type") or {}).get(str(sid), {})
+    if not pt:
+        return "not named"
+    return "pdg %s%s" % (pt.get("pdg"), ", shower" if pt.get("shower") else "")
+
+
+def unfitted_near(pay):
+    """Near clusters the PR produced no segment for -- taggable only as a whole.
+
+    doc pdvd/53.  These are the pieces that have charge on screen and nothing
+    else: no dx, so no dQ/dx, so no PR segment and no particle-flow node.  They
+    are still the scanner's to group, so they get a row keyed "C<id>".
+    """
+    out = []
+    for c in (pay or {}).get("near_clusters") or []:
+        if c.get("segs"):
+            continue
+        if c["id"] == (pay or {}).get("cluster_id"):
+            continue
+        out.append(c)
+    return out
+
+
+def object_rows(pay):
+    """Every row of the grouped table, in GROUP_ORDER then id order."""
+    rows = []
+    for sg in pf_segments(pay):
+        k = str(sg["id"])
+        rj = (((pay or {}).get("pf") or {}).get("seg_rej") or {}).get(k) or {}
+        rows.append(dict(
+            key=k, group=state["pf_tag"].get(k) or chain_group(pay, sg["id"]),
+            obj="S%d" % sg["id"], npts=sg["npts"],
+            size="%.1f" % sg["len_cm"],
+            dqdx="" if sg.get("dqdx_med") is None else "%.0f" % sg["dqdx_med"],
+            dstop="" if not rj else "%.1f" % rj.get("d_stop", -1),
+            chain=chain_note(pay, sg["id"])))
+    for c in unfitted_near(pay):
+        k = "C%d" % c["id"]
+        rows.append(dict(
+            key=k, group=state["pf_tag"].get(k) or "unassigned",
+            obj=k, npts=c.get("n_drawn") or 0,
+            size="" if c.get("length_cm") is None else "%.1f" % c["length_cm"],
+            dqdx="", dstop="%.1f" % c["d_stop"],
+            chain="no PR segment" + ("" if c.get("in_bundle") in (None, 1)
+                                     else " -- OTHER FLASH")))
+    rows.sort(key=lambda r: (GROUP_ORDER.index(r["group"])
+                             if r["group"] in GROUP_ORDER else len(GROUP_ORDER),
+                             r["key"]))
+    return rows
 
 
 def refresh_segments(pay, keep=True):
-    """Rebuild the segment dropdown, preserving the current pick if it survives."""
-    segs = pf_segments(pay)
-    opts = [seg_label(sg, state["pf_tag"].get(str(sg["id"]))) for sg in segs]
-    cur = state["pf_seg"]
-    seg_select.options = opts
-    if opts:
-        idx = next((i for i, sg in enumerate(segs) if str(sg["id"]) == str(cur)), None)
-        seg_select.value = opts[idx] if (keep and idx is not None) else opts[0]
-        state["pf_seg"] = segs[seg_select.options.index(seg_select.value)]["id"]
+    """Rebuild the grouped object table, preserving the current pick if it survives."""
+    rows = object_rows(pay)
+    state["pf_rows"] = rows
+    seg_src.data = dict(
+        group=[r["group"] for r in rows], obj=[r["obj"] for r in rows],
+        npts=[r["npts"] for r in rows], size=[r["size"] for r in rows],
+        dqdx=[r["dqdx"] for r in rows], chain=[r["chain"] for r in rows],
+        dstop=[r["dstop"] for r in rows], key=[r["key"] for r in rows])
+    cur = state.get("pf_key")
+    idx = next((i for i, r in enumerate(rows) if r["key"] == str(cur)), None)
+    if not rows:
+        seg_src.selected.indices = []
+        state["pf_key"] = None; state["pf_seg"] = None; state["pf_cluster"] = None
     else:
-        seg_select.value = ""
+        if not (keep and idx is not None):
+            idx = 0
+        seg_src.selected.indices = [idx]
+        _adopt_row(rows[idx])
+    n = {}
+    for r in rows:
+        n[r["group"]] = n.get(r["group"], 0) + 1
+    seg_head.text = (
+        "<b>objects near this stop</b> &mdash; %d in %d group%s: %s"
+        % (len(rows), len(n), "" if len(n) == 1 else "s",
+           ", ".join("%s %d" % (g, n[g]) for g in GROUP_ORDER if g in n)))
+
+
+def _adopt_row(r):
+    """Point the highlight at whatever kind of object a table row names."""
+    state["pf_key"] = r["key"]
+    if r["key"].startswith("C"):
         state["pf_seg"] = None
+        state["pf_cluster"] = int(r["key"][1:])
+    else:
+        state["pf_seg"] = int(r["key"])
+        state["pf_cluster"] = None
 
 
 def _bundle_mask(g, n):
@@ -1881,7 +2053,14 @@ def fill_pf(pay, v, rev):
     out["pfvtx"] = ((vtx["x"], vtx["y"], vtx["z"], {}) if on
                     else ([], [], [], {}))
     sel = next((sg for sg in segs if sg["id"] == state["pf_seg"]), None)
-    out["pfsel"] = ((sel["x"], sel["y"], sel["z"], {}) if sel else ([], [], [], {}))
+    if sel is not None:
+        out["pfsel"] = (sel["x"], sel["y"], sel["z"], {})
+    else:
+        # doc pdvd/53: a "C<id>" row names a cluster with no PR segment, so its
+        # only points on screen are the IMAGE points -- the same route that made
+        # it selectable in the first place.
+        cx, cy, cz = _cluster_points(pay, state.get("pf_cluster"))
+        out["pfsel"] = (cx, cy, cz, {})
     tx, ty, tz, tc = [], [], [], []
     for sg in segs:
         t = state["pf_tag"].get(str(sg["id"]))
@@ -1889,8 +2068,26 @@ def fill_pf(pay, v, rev):
             continue
         c = PF_TAGS.get(t, "#000000")
         tx += sg["x"]; ty += sg["y"]; tz += sg["z"]; tc += [c] * len(sg["x"])
+    for k, t in state["pf_tag"].items():
+        if not k.startswith("C"):
+            continue
+        cx, cy, cz = _cluster_points(pay, int(k[1:]))
+        c = PF_TAGS.get(t, "#000000")
+        tx += cx; ty += cy; tz += cz; tc += [c] * len(cx)
     out["pftag"] = (tx, ty, tz, {"col": tc})
     return out
+
+
+def _cluster_points(pay, cid):
+    """The drawn image points of one cluster, from the per-point `c` column."""
+    if cid is None:
+        return [], [], []
+    g = (pay or {}).get("image_near") or {}
+    C = g.get("c") or []
+    if len(C) != len(g.get("x") or []):
+        return [], [], []
+    k = [i for i, v in enumerate(C) if int(v) == int(cid)]
+    return ([g["x"][i] for i in k], [g["y"][i] for i in k], [g["z"][i] for i in k])
 
 
 def fill_pf_meas(pay, rev):
@@ -1908,52 +2105,96 @@ def fill_pf_meas(pay, rev):
 
 def fill_seg_div(pay, v, rev):
     segs = pf_segments(pay)
+    ntag = len(state["pf_tag"])
+    nrow = len(state.get("pf_rows") or [])
+    # doc pdvd/53: a "C<id>" row is a near cluster the PR produced no segment
+    # for.  It has no dQ/dx and no pf_type -- what it HAS is a distance to the
+    # stop, a bundle membership and a drift time, which is exactly what decides
+    # whether it can belong to this muon at all.
+    if state.get("pf_cluster") is not None:
+        c = next((r for r in (pay.get("near_clusters") or [])
+                  if r["id"] == state["pf_cluster"]), None)
+        if c is not None:
+            tag = state["pf_tag"].get("C%d" % c["id"])
+            ob = ("" if c.get("in_bundle") is None else
+                  ("in the muon's Q-L bundle" if c["in_bundle"] else
+                   "<b style='color:#b00'>ANOTHER FLASH</b> (flash %s, t0 %s us) &mdash; "
+                   "drawn at its own drift correction, so its distance on screen is "
+                   "not a distance in the detector"
+                   % (c.get("flash_id"), c.get("t0_us"))))
+            seg_div.text = (
+                "<div style='background:#f7f7f7;padding:6px;font-size:93%%'>"
+                "<b>cluster C%d</b> &mdash; no PR segment: %s points drawn, "
+                "%s cm long, %.1f cm from the stop. %s"
+                " &nbsp;|&nbsp; your group: <b style='color:%s'>%s</b>"
+                " &nbsp;|&nbsp; %d of %d objects grouped by you</div>"
+                % (c["id"], c.get("n_drawn"),
+                   "?" if c.get("length_cm") is None else "%.1f" % c["length_cm"],
+                   c["d_stop"], ob, PF_TAGS.get(tag, "#777"), tag or "none",
+                   ntag, nrow))
+            return
     if not segs:
         seg_div.text = ("<span style='color:#777'>this cluster has no particle-flow "
                         "segments in T_rec_charge</span>")
         return
     sel = next((sg for sg in segs if sg["id"] == state["pf_seg"]), None)
-    ntag = len(state["pf_tag"])
     if sel is None:
         seg_div.text = "<span style='color:#777'>%d PF segments</span>" % len(segs)
         return
     tag = state["pf_tag"].get(str(sel["id"]))
     extra = ""
+    # doc pdvd/53: for a role-6 segment, the GATE that dropped it, with the two
+    # distances the shipped predicate measured.  This is the answer to "why is
+    # this gamma not identified as a gamma associated with the STM": on
+    # 039253_13 cluster 102 the isolated gamma is segment 431017 and the gamma
+    # body exclusion rejected it by 0.03 cm.
+    rj = (((pay or {}).get("pf") or {}).get("seg_rej") or {}).get(str(sel["id"]))
+    if rj:
+        db = rj.get("d_body", -1)
+        extra += ("<br><span style='background:#eef4ff'><b>the chain fitted this and "
+                  "then dropped it</b> &mdash; %s (d_stop %.2f cm%s)</span>"
+                  % (REJ_NAMES.get(int(rj.get("rej", -1)), "rej %s" % rj.get("rej")),
+                     rj.get("d_stop", -1),
+                     "" if db is None or db < 0 else ", d_body %.2f cm" % db))
     if rev:
         ty = ((v.get("pf_type") or {}).get(str(sel["id"])) or {})
         pdg = ty.get("pdg")
         name = {13: "muon", 11: "electron/shower", 211: "pion", 2212: "proton",
                 4: "track, no hypothesis", 1: "shower, no hypothesis"}.get(pdg, str(pdg))
-        extra = ("<br><span style='background:#fff6e5'><b>the chain's answer</b>"
-                 " &mdash; calls it <b>%s</b> (pdg %s), %s (shower fraction %.2f)</span>"
-                 % (name, pdg, "SHOWER" if ty.get("shower") else "track",
-                    ty.get("frac_shower", 0.0)))
+        # += , not = : doc pdvd/53 puts the reject gate in `extra` first, and an
+        # assignment here silently wiped it -- the table row said "gamma body
+        # exclusion" while the inspector beside it said nothing.
+        extra += ("<br><span style='background:#fff6e5'><b>the chain's answer</b>"
+                  " &mdash; calls it <b>%s</b> (pdg %s), %s (shower fraction %.2f)</span>"
+                  % (name, pdg, "SHOWER" if ty.get("shower") else "track",
+                     ty.get("frac_shower", 0.0)))
     seg_div.text = (
         "<div style='background:#f7f7f7;padding:6px;font-size:93%%'>"
         "<b>segment S%d</b> &mdash; %d points, %.1f cm, median dQ/dx %s e/cm"
         "%s &nbsp;|&nbsp; your tag: <b style='color:%s'>%s</b>"
-        " &nbsp;|&nbsp; %d of %d segments tagged%s</div>"
+        " &nbsp;|&nbsp; %d of %d objects grouped by you%s</div>"
         % (sel["id"], sel["npts"], sel["len_cm"],
            "—" if sel.get("dqdx_med") is None else "%.0f" % sel["dqdx_med"],
            "" if not sel.get("n_rr_sentinel") else
            " &nbsp;(%d rr sentinel%s at branch vertices)"
            % (sel["n_rr_sentinel"], "" if sel["n_rr_sentinel"] == 1 else "s"),
-           PF_TAGS.get(tag, "#777"), tag or "none", ntag, len(segs), extra))
+           PF_TAGS.get(tag, "#777"), tag or "none", ntag, nrow, extra))
 
 
 def on_seg_pick(attr, old_, new_):
-    segs = pf_segments(payload(current()))
-    if new_ in seg_select.options and segs:
-        state["pf_seg"] = segs[seg_select.options.index(new_)]["id"]
+    """A row of the grouped table was clicked."""
+    rows = state.get("pf_rows") or []
+    if new_ and 0 <= new_[0] < len(rows):
+        _adopt_row(rows[new_[0]])
     render()
 
 
 def set_pf_tag(tag):
-    """Tag the picked segment, and persist it the moment there is a row to hold it."""
-    if state["pf_seg"] is None:
-        status.text = "<b style='color:#b00'>pick a PF segment first</b>"
+    """Move the picked object into a group, and persist the moment a row holds it."""
+    if not state.get("pf_key"):
+        status.text = "<b style='color:#b00'>pick a row in the object table first</b>"
         return
-    k = str(state["pf_seg"])
+    k = str(state["pf_key"])
     if tag is None:
         state["pf_tag"].pop(k, None)
     else:
@@ -1992,7 +2233,12 @@ def fill_dqdx(pay, v, px, py, pz, prr, psrc, rev):
     SRCQ["muon"].data = _qdata(s_mu[live], Q[live], Q[live], X[live], Y[live], Z[live],
                                _col(m, "pu", live), _col(m, "pv", live),
                                _col(m, "pw", live), _col(m, "pt", live))
-    for nm in ("delta", "michel", "dots"):
+    # doc pdvd/53 adds `survey` (role 6).  It also adds `gamma`, which doc
+    # pdvd/51 gave a SRCQ source and a marker (:689) and then never filled --
+    # so every capture gamma has been missing from this panel since it shipped.
+    # Reported rather than folded in silently: it is a pre-existing gap, found
+    # while adding the layer beside it.
+    for nm in ("delta", "michel", "dots", "gamma", "survey"):
         g = (v.get(nm) if rev else None) or dict(x=[], y=[], z=[], q=[])
         gx = np.asarray(g["x"], float); gy = np.asarray(g["y"], float)
         gz = np.asarray(g["z"], float); gq = np.asarray(g["q"], float)
@@ -2374,7 +2620,18 @@ def set_label(choice):
         # the per-segment answer.  OPTIONAL and additive: a row written before
         # this existed loads and scores unchanged.
         pf_segments=dict(state["pf_tag"]), pf_tagged=len(state["pf_tag"]),
-        n_pf_segments=len(pf_segments(pay)))
+        n_pf_segments=len(pf_segments(pay)),
+        # doc pdvd/53: the CHAIN's grouping of the same objects, snapshotted at
+        # the moment the label was written.  pf_segments stays what it has always
+        # been -- the scanner's OVERRIDES and nothing else -- so pf_tagged keeps
+        # its meaning and every row already on disk still reads correctly.  What
+        # this adds is the other half a later analysis needs: without it a row
+        # saying {"431017": "gamma"} cannot be told from one where the chain
+        # already said gamma and the scanner merely agreed.
+        pf_chain_group={r["key"]: chain_group(pay, int(r["key"]))
+                        for r in (state.get("pf_rows") or [])
+                        if not r["key"].startswith("C")},
+        n_pf_objects=len(state.get("pf_rows") or []))
     save_labels()                     # every click, not only on Save
     show_save()                       # ... and say what the FILE now holds
     refresh_options()
@@ -2449,9 +2706,10 @@ uncl_btn.on_click(lambda: set_label("UNCLEAR"))
 clear_btn.on_click(clear_label)
 save_info_btn.on_click(save_info)
 pf_tog.on_change("active", lambda a, o, n: render())
-seg_select.on_change("value", on_seg_pick)
+seg_src.selected.on_change("indices", on_seg_pick)
 pf_mu_btn.on_click(lambda: set_pf_tag("muon"))
 pf_mic_btn.on_click(lambda: set_pf_tag("michel"))
+pf_gam_btn.on_click(lambda: set_pf_tag("gamma"))
 pf_oth_btn.on_click(lambda: set_pf_tag("delta / other"))
 pf_mix_btn.on_click(lambda: set_pf_tag("straddles the stop"))
 pf_clr_btn.on_click(lambda: set_pf_tag(None))
@@ -2514,12 +2772,16 @@ right = column(
     row(zoom_tog, bundle_tog, pf_tog),
     row(centre_tog, centre_btn, view_btn),
     bundle_div,
-    Div(text="<b>particle flow</b> &mdash; the PR graph this chain walked. Pick a "
-             "segment, then say what it is. Your tags are drawn as hollow squares, "
-             "so they can never be confused with the reconstruction's colours.",
+    Div(text="<b>particle flow</b> &mdash; every object the chain reconstructed near "
+             "this stop, grouped the way the chain grouped it. Pick a row and move it "
+             "into the group it belongs in. Your tags are drawn as hollow squares, so "
+             "they can never be confused with the reconstruction's colours. A "
+             "<b>C</b>&lt;id&gt; row is a piece the PR produced no segment for.",
         width=620),
-    seg_select,
-    row(pf_mu_btn, pf_mic_btn, pf_oth_btn, pf_mix_btn, pf_clr_btn),
+    seg_head,
+    seg_table,
+    row(pf_mu_btn, pf_mic_btn, pf_gam_btn, pf_clr_btn),
+    row(pf_oth_btn, pf_mix_btn),
     seg_div,
     reveal_div,
     flow_div,

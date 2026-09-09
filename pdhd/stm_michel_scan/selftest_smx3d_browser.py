@@ -28,7 +28,8 @@ It then does the same for the two things added in the measurement round:
     cells on PDHD, 20 574 on PDVD, drawn three times over), because that is the
     one that would be unusable if anything is, and the first-paint time is
     printed rather than asserted.
-  * the PARTICLE FLOW toggle and the segment picker -- pressed as real widgets,
+  * the PARTICLE FLOW toggle and the grouped object table (doc pdvd/53) --
+    pressed as real widgets,
     so the server callback and the round trip back are both under test.
   * the dQ/dx CLICK LINK -- select a point through the live document and assert
     the cursor appears in the 3-D layer AND in all three measurement rows.  The
@@ -515,21 +516,34 @@ def main():
             npf = _rows("src3_pfseg")
             ck(npf > 0, "the 'show particle flow' toggle drew nothing (%d rows)" % npf)
             ck(_rows("src3_pfvtx") > 0, "no PF vertices reached the browser")
-            opts = page.evaluate(
-                "() => { for (const m of Bokeh.documents[0]._all_models.values())"
-                " if (m.type === 'Select' && String(m.title).indexOf('PF segment') === 0)"
-                " return m.options; return null; }")
-            ck(opts is not None and len(opts) > 0, "no PF segment dropdown in the page")
-            if opts and len(opts) > 1:
+            # doc pdvd/53: the flat Select is gone; the picker is the grouped
+            # object table.  Driving it means SELECTING A ROW in the real
+            # DataTable's source, which is what a click in the browser does --
+            # setting a model property the server never sees would prove nothing
+            # (feedback_bokeh_client_session_false_negative).
+            keys = page.evaluate(
+                "() => { const m = Bokeh.documents[0].get_model_by_name('seg_table');"
+                " return m ? m.source.data.key : null; }")
+            ck(keys is not None and len(keys) > 0,
+               "no grouped object table in the page")
+            groups = page.evaluate(
+                "() => { const m = Bokeh.documents[0].get_model_by_name('seg_table');"
+                " return m ? m.source.data.group : null; }") or []
+            ck(len(set(groups)) >= 1, "the object table has no group column")
+            if keys and len(keys) > 1:
                 page.evaluate(
-                    "(v) => { for (const m of Bokeh.documents[0]._all_models.values())"
-                    " if (m.type === 'Select' && String(m.title).indexOf('PF segment') === 0)"
-                    " m.value = v; }", opts[1])
+                    "() => { const m = Bokeh.documents[0].get_model_by_name('seg_table');"
+                    " m.source.selected.indices = [1]; }")
                 page.wait_for_timeout(1500)
                 nsel = _rows("src3_pfsel")
-                ck(nsel > 0, "picking a PF segment highlighted nothing")
+                ck(nsel > 0, "picking a row in the object table highlighted nothing")
                 ck(_rows("srct_w_pfsel") >= 0,
                    "the PF highlight never reached the measurement panels")
+                # and the group buttons are really there to move it with
+                for lab in ("\u2192 muon", "\u2192 Michel", "\u2192 gamma",
+                            "\u2192 unassigned"):
+                    ck(page.get_by_role("button", name=lab).count() > 0,
+                       "no %r button in the page" % lab)
             ck(not errs, "javascript errors after the PF checks: %s" % errs[:3])
 
             # ---- the matched Q-L bundle (doc pdhd/13 sec 4) -----------------

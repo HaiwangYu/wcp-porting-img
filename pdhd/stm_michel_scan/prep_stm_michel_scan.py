@@ -84,12 +84,17 @@ DET = {
     # doc pdvd/51: the arm carrying the capture-gamma branches and the role
     # 4 -> 3 Michel migration.  --arm overrides it for a scratch validation run
     # so a new arm can be diffed against the promoted payloads before it lands.
-    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d51gh"),
-    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d51gv"),
+    "pdhd": dict(root=os.path.join(IMG, "pdhd"), arm="d53h"),
+    "pdvd": dict(root=os.path.join(IMG, "pdvd"), arm="d53v"),
 }
 IMAGE_MEMBER = "clustering-global"
 IMAGE_NEAR_R = 20.0       # cm, full density inside this of the muon chain
-IMAGE_STOP_R = 40.0       # cm, full density inside this of the chain's rr=0 END.
+# doc pdvd/53: 60 cm, tracking survey_radius_cm.  The survey now FITS every
+# same-bundle cluster out to 60 cm of the stop and the scanner is asked to group
+# them; beyond this radius a point falls into image_far, which is thinned to
+# IMAGE_FAR_MAX -- so a 60 cm survey behind a 40 cm image radius would draw the
+# new pieces subsampled and half-clickable, and look fine while doing it.
+IMAGE_STOP_R = 60.0       # cm, full density inside this of the chain's rr=0 END.
 #   Without it a Michel that runs 20 cm off the stop leaves the near set and is
 #   thinned 1-in-N -- i.e. the display would hide the object being judged.  The
 #   ball is centred on the muon polyline's own last point, so it carries no
@@ -396,6 +401,68 @@ def bundle_ids(f, cid):
     return sorted(int(c) for c in tc["cluster_id"][same])
 
 
+def cluster_table(f):
+    """T_cluster as {cluster_id: dict}, or {} when the tree is absent.
+
+    doc pdvd/53.  The survey asks the scanner to group the isolated pieces near
+    the stop, and the FIRST thing they need to know about a piece is whether it
+    is in the muon's Q-L bundle at all: the Bee `clustering-global` layer draws
+    every cluster at its OWN bundle's t0-corrected x, so a cluster from another
+    flash lands wherever its own drift correction puts it.  On 039253_14 six of
+    the eleven blobs within 60 cm of cluster 49's stop are like that -- clusters
+    167/47 at t0 5168 us and 169/182/48 at 2617 us against the muon's 3709 us.
+    They are hundreds of cm away in drift and only LOOK adjacent.  Carrying
+    flash_id and cluster_t0_us per piece is what lets the panel say so.
+    """
+    try:
+        tc = f["T_cluster"].arrays(
+            ["cluster_id", "npoints", "length_cm", "flash_id", "cluster_t0_us",
+             "is_associated"], library="np")
+    except Exception:
+        return {}
+    return {int(tc["cluster_id"][j]): dict(
+                npts=int(tc["npoints"][j]),
+                length_cm=round(float(tc["length_cm"][j]), 2),
+                flash_id=int(tc["flash_id"][j]),
+                t0_us=round(float(tc["cluster_t0_us"][j]), 2),
+                is_associated=int(tc["is_associated"][j]))
+            for j in range(len(tc["cluster_id"]))}
+
+
+def near_clusters(g_near, ctab, bundle, stop_xyz, seg_by_cluster, radius=IMAGE_STOP_R):
+    """Every cluster with a drawn image point within `radius` of the stop.
+
+    One row per cluster, the scanner's unit of decision for an isolated piece.
+    Purely geometric on the display's own point set plus T_cluster's scalars --
+    the display computes no physics (the standing rule from doc pdhd/14).
+    `segs` lists the PR segments the chain fitted for that cluster, so a row
+    with an empty `segs` is a piece the scanner can only tag as a whole.
+    """
+    C = np.asarray(g_near.get("c") or [], np.int64)
+    if C.size == 0 or stop_xyz is None:
+        return []
+    P = np.c_[np.asarray(g_near["x"], float), np.asarray(g_near["y"], float),
+              np.asarray(g_near["z"], float)]
+    d = np.sqrt(((P - np.asarray(stop_xyz, float)) ** 2).sum(axis=1))
+    rows = []
+    for c in sorted(set(int(v) for v in C[d <= radius])):
+        if c < 0:
+            continue
+        k = C == c
+        info = ctab.get(c, {})
+        rows.append(dict(
+            id=c,
+            d_stop=round(float(d[k].min()), 2),
+            n_drawn=int(k.sum()),
+            in_bundle=(None if bundle is None else int(c in bundle)),
+            npts=info.get("npts"), length_cm=info.get("length_cm"),
+            flash_id=info.get("flash_id"), t0_us=info.get("t0_us"),
+            is_associated=info.get("is_associated"),
+            segs=sorted(seg_by_cluster.get(c, []))))
+    rows.sort(key=lambda r: r["d_stop"])
+    return rows
+
+
 def load_image(evtdir, muon_xyz, stop_xyz=None, bundle=None):
     """(near, far, members_read).  Geometric split only, over ALL the charge.
 
@@ -436,12 +503,19 @@ def load_image(evtdir, muon_xyz, stop_xyz=None, bundle=None):
         B = np.ones(X.size, bool)
     else:
         B = np.isin(CIDS.astype(np.int64), np.asarray(sorted(bundle), np.int64))
+    # doc pdvd/53: KEEP the per-point cluster id.  Through doc pdvd/51 it was
+    # read, reduced to the boolean `b`, and thrown away -- so no drawn image
+    # point carried any identity and there was no route from a point on screen
+    # to an object the scanner could name.  `c` is that route, and it is what
+    # makes an UNFITTED piece (one the PR chain produced no segment for)
+    # selectable at all.  -1 when the layer has no cluster_id column.
+    C = CIDS.astype(np.int64) if CIDS.size == X.size else np.full(X.size, -1, np.int64)
     near = dict(x=r1(X[m]), y=r1(Y[m]), z=r1(Z[m]), q=r1(Q[m]),
-                b=[int(v) for v in B[m]])
-    fx, fy, fz, fb = X[~m], Y[~m], Z[~m], B[~m]
+                b=[int(v) for v in B[m]], c=[int(v) for v in C[m]])
+    fx, fy, fz, fb, fc = X[~m], Y[~m], Z[~m], B[~m], C[~m]
     st = max(1, -(-fx.size // IMAGE_FAR_MAX))
     far = dict(x=r1(fx[::st]), y=r1(fy[::st]), z=r1(fz[::st]),
-               b=[int(v) for v in fb[::st]])
+               b=[int(v) for v in fb[::st]], c=[int(v) for v in fc[::st]])
     return near, far, read
 
 
@@ -505,6 +579,7 @@ def build_event(det, evtdir, with_tagger_fit=True):
             except Exception as ex:                       # a short/absent file
                 print("#  no tagger fit for %s: %s" % (ev, ex), file=sys.stderr)
 
+    ctab = cluster_table(f)          # doc pdvd/53
     out = []
     for i, cid in enumerate(m["cluster_id"]):
         cid = int(cid)
@@ -553,9 +628,37 @@ def build_event(det, evtdir, with_tagger_fit=True):
         # doc pdvd/51: hand the PF selector the chain's own member segments
         # (roles 3 michel / 4 dot / 5 capture gamma), so a bridged Michel and a
         # capture gamma appear in the flow panel and not only in the 3-D view.
-        extra = sorted({int(t) for t in p["seg_id"][sel & np.isin(p["role"], (3, 4, 5))]})
+        # doc pdvd/53 adds role 6, the SURVEY: an admitted companion segment that
+        # was fitted and that no stage claimed.  These are the isolated pieces
+        # near the stop the scanner is asked to group -- 039253_13 cluster 102's
+        # gamma is segment 431017 and was already fitted at doc pdvd/51; nothing
+        # named it, so nothing drew it.
+        extra = sorted({int(t) for t in p["seg_id"][sel & np.isin(p["role"], (3, 4, 5, 6))]})
         pf, pf_types = particle_flow(rc, cid, pf_sc, pf_off, extra_segs=extra)
         pf["chain_segs"] = extra
+        # doc pdvd/53: the chain's OWN grouping of every segment it named, and
+        # for a role-6 segment the gate that dropped it.  rej/d_stop/d_body are
+        # written by CheckSTM_Michel from the SHIPPED predicates -- the display
+        # re-derives none of it (doc pdvd/51 sec 6.5 is the record of what an
+        # offline re-derivation of exactly these distances costs).
+        chain_role, seg_rej = {}, {}
+        has_rej = "rej" in p
+        for sid in extra + sorted({int(t) for t in p["seg_id"][sel & (p["role"] == 1)]}):
+            k = sel & (p["seg_id"] == sid)
+            if not k.sum():
+                continue
+            chain_role[str(sid)] = int(p["role"][k][0])
+            if has_rej and int(p["role"][k][0]) == 6:
+                seg_rej[str(sid)] = dict(
+                    rej=int(p["rej"][k][0]),
+                    d_stop=round(float(p["d_stop"][k][0]), 2),
+                    d_body=round(float(p["d_body"][k][0]), 2))
+        pf["chain_role"] = chain_role
+        pf["seg_rej"] = seg_rej
+        seg_by_cluster = {}
+        for sid in {int(t) for t in rc["sub_cluster_id"] if int(t) > 0}:
+            seg_by_cluster.setdefault(sid // 1000, []).append(sid)
+        pay["near_clusters"] = near_clusters(near, ctab, bundle, stop_pt, seg_by_cluster)
         pay["pf"] = pf
         v = {k: (float(m[k][i]) if m[k].dtype.kind == "f" else int(m[k][i]))
              for k in VERDICT_SCALARS if k in m}
@@ -568,7 +671,11 @@ def build_event(det, evtdir, with_tagger_fit=True):
         # carried role 4, so the display drew them in the `dots` red and called
         # them dots, which is what the owner saw on 039252_15 cluster 77.
         # Role 5 is the new capture-gamma class and gets its own colour.
-        for role, name in ((2, "delta"), (3, "michel"), (4, "dots"), (5, "gamma")):
+        # doc pdvd/53 adds role 6, `survey`: an admitted companion segment the
+        # chain fitted and no stage claimed.  Its own colour, because it is not
+        # a verdict -- it is the pile the scanner is asked to sort.
+        for role, name in ((2, "delta"), (3, "michel"), (4, "dots"), (5, "gamma"),
+                           (6, "survey")):
             k = sel & (p["role"] == role)
             RX = np.c_[p["x"][k], p["y"][k], p["z"][k]] if k.sum() else None
             r_pu, r_pv, r_pw, r_pt = wire_join(rc_tree, rc, RX)

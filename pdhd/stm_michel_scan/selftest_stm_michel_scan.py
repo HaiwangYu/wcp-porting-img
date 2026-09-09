@@ -35,6 +35,11 @@ WHAT IT ASSERTS, grouped:
   E  the geometry: unit_from_wire re-derived from the production wire file, and
      the wire-vs-geometric confusion matrix over every payload.
   F  the prep's near/far split reproduced by brute force on one item.
+  Q  doc pdvd/53, the survey: role 6 reaches the payload with the chain's own
+     reject gate and distances; every drawn image point carries a cluster id
+     (with the causal control that stripping it removes the cluster rows); and
+     the grouped object table opens in the chain's grouping, names the gate for
+     a role-6 row, and moves exactly one row when the scanner moves one.
   G  the scorer, on synthetic labels with a known answer.
   H  the 2-D measurement panels: the plane split gated causally against the
      fitter's own wire coordinate, the tick -> slice conversion gated against
@@ -1184,12 +1189,27 @@ def test_pf_payload(det):
     print("     %d PF segments checked, %d PF points wire-split" % (nseg, npt))
 
 
+def pick_row(g, key):
+    """Select the grouped table's row for one object key, the way a click does.
+
+    doc pdvd/53: the flat Select is gone, so the driver is the table's own
+    selection.  Setting .indices fires the same on_change the browser fires --
+    never call on_seg_pick directly, or the test proves the function works and
+    says nothing about whether it is wired (the doc pdhd/12 rule).
+    """
+    keys = list(g["seg_src"].data["key"])
+    i = keys.index(str(key))
+    g["seg_src"].selected.indices = [i]
+    return i
+
+
 def test_pf_app(det, tmp):
     g = load_app(det, os.path.join(tmp, "labpf_" + det))
     # find an item that HAS more than one PF segment
     for i in range(len(g["ITEMS"])):
         g["go"](i)
-        if len(g["seg_select"].options) > 1:
+        if len(g["seg_src"].data["key"]) > 1 and len(
+                g["pf_segments"](g["payload"](g["current"]()))) > 1:
             break
     segs = g["pf_segments"](g["payload"](g["current"]()))
     ck(len(segs) > 1, "%s: no item with more than one PF segment" % det)
@@ -1206,7 +1226,7 @@ def test_pf_app(det, tmp):
        "%s: the PF segments are not separately coloured" % det)
     # the segment the panel REPORTS is the segment that was picked
     for i, sg in enumerate(segs):
-        g["seg_select"].value = g["seg_select"].options[i]
+        pick_row(g, sg["id"])
         ck(g["state"]["pf_seg"] == sg["id"],
            "%s: picking option %d selected segment %s, not %s"
            % (det, i, g["state"]["pf_seg"], sg["id"]))
@@ -1223,7 +1243,7 @@ def test_pf_app(det, tmp):
                "%s: the %s measurement highlight has more points than the segment"
                % (det, pl))
     # tag, save, reload
-    g["seg_select"].value = g["seg_select"].options[0]
+    pick_row(g, segs[0]["id"])
     g["set_pf_tag"]("michel")
     ck(len(g["SRC3"]["pftag"].data["x"]) == segs[0]["npts"],
        "%s: the tag ring does not cover the tagged segment" % det)
@@ -1241,10 +1261,18 @@ def test_pf_app(det, tmp):
     ck(rec.get("pf_tagged") == 1 and rec.get("n_pf_segments") == len(segs),
        "%s: pf_tagged/n_pf_segments wrong: %r %r"
        % (det, rec.get("pf_tagged"), rec.get("n_pf_segments")))
+    # doc pdvd/53: pf_segments still means the SCANNER's overrides only.  The
+    # chain's own grouping rides alongside it in pf_chain_group, so a later
+    # analysis can tell "the scanner moved this" from "the scanner agreed".
+    ck(str(segs[0]["id"]) in (rec.get("pf_chain_group") or {}),
+       "%s: pf_chain_group does not cover the tagged segment" % det)
+    ck(rec.get("n_pf_objects") == len(g["state"]["pf_rows"]),
+       "%s: n_pf_objects %r != the table's %d rows"
+       % (det, rec.get("n_pf_objects"), len(g["state"]["pf_rows"])))
     # write-through on an ALREADY labelled item
     g["go"](g["ITEMS"].index(next(it for it in g["ITEMS"]
                                   if g["item_key"](it) == key)))
-    g["seg_select"].value = g["seg_select"].options[1]
+    pick_row(g, segs[1]["id"])
     g["set_pf_tag"]("muon")
     with open(g["LABEL_FILE"]) as fh:
         rec = json.load(fh)["labels"][key]
@@ -1258,6 +1286,8 @@ def test_pf_app(det, tmp):
     blob["labels"][key].pop("pf_segments", None)
     blob["labels"][key].pop("pf_tagged", None)
     blob["labels"][key].pop("n_pf_segments", None)
+    blob["labels"][key].pop("pf_chain_group", None)      # doc pdvd/53
+    blob["labels"][key].pop("n_pf_objects", None)
     with open(g["LABEL_FILE"], "w") as fh:
         json.dump(blob, fh)
     g2 = load_app(det, os.path.dirname(g["LABEL_FILE"]))
@@ -1267,6 +1297,174 @@ def test_pf_app(det, tmp):
                                     if g2["item_key"](it) == key)))
     ck(g2["state"]["pf_tag"] == {},
        "%s: a label with no pf_segments produced phantom tags" % det)
+
+
+
+
+# ---------------------------------------------------------------------------
+# Q -- doc pdvd/53: the survey, and the grouped object table
+# ---------------------------------------------------------------------------
+def test_survey_payload(det):
+    """Role 6 reaches the payload, and it carries the chain's own reason."""
+    print("[Q] the survey payload, %s" % det)
+    n = nrole6 = nrej = nclus = 0
+    seen_rej = set()
+    files = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    if not files:
+        print("     (no prepped payloads -- Q skipped)")
+        return
+    for f in files[::7]:
+        pay = json.load(open(f))
+        n += 1
+        pf = pay.get("pf") or {}
+        role = pf.get("chain_role") or {}
+        rej = pf.get("seg_rej") or {}
+        ids = {str(sg["id"]) for sg in (pf.get("seg") or [])}
+        # every segment the chain named must BE in the panel: the whole defect
+        # doc pdvd/51 sec 2 diagnosed was a named segment the selector dropped.
+        for sid in pf.get("chain_segs") or []:
+            ck(str(sid) in ids,
+               "%s: %s names segment %s and the panel does not show it"
+               % (det, os.path.basename(f), sid))
+        for sid, r in role.items():
+            if r != 6:
+                continue
+            nrole6 += 1
+            ck(sid in rej,
+               "%s: role-6 segment %s carries no reject reason" % (det, sid))
+            if sid in rej:
+                nrej += 1
+                code = rej[sid]["rej"]
+                seen_rej.add(code)
+                ck(code in set(range(0, 11)),
+                   "%s: segment %s has reject code %r, not in the table"
+                   % (det, sid, code))
+                # d_stop is a real distance; d_body is -1 when no body test ran
+                ck(rej[sid]["d_stop"] >= 0,
+                   "%s: segment %s has d_stop %r" % (det, sid, rej[sid]["d_stop"]))
+        for c in pay.get("near_clusters") or []:
+            nclus += 1
+            ck(c["d_stop"] >= 0, "%s: near cluster %s has d_stop %r"
+               % (det, c["id"], c["d_stop"]))
+            ck(c["in_bundle"] in (None, 0, 1),
+               "%s: near cluster %s in_bundle %r" % (det, c["id"], c["in_bundle"]))
+            # a piece drawn from another flash MUST carry the t0 that says so,
+            # or the panel cannot warn about the doc pdhd/13 sec 4 artifact
+            if c["in_bundle"] == 0:
+                ck(c.get("t0_us") is not None,
+                   "%s: out-of-bundle cluster %s carries no t0" % (det, c["id"]))
+    ck(nrole6 > 0, "%s: no role-6 segment anywhere in the sampled payloads" % det)
+    ck(nrole6 == nrej, "%s: %d role-6 segments, %d with a reason" % (det, nrole6, nrej))
+    print("     %d payloads: %d role-6 segments (codes %s), %d near clusters"
+          % (n, nrole6, sorted(seen_rej), nclus))
+
+
+def test_survey_image_ids(det):
+    """Every drawn image point carries a cluster id -- the route to a click.
+
+    CAUSAL NEGATIVE CONTROL: strip the `c` column and the cluster rows must
+    vanish, so the test is checking the column and not something correlated
+    with it (feedback_guard_needs_causal_negative_control).
+    """
+    print("[Q] the image cluster ids, %s" % det)
+    n = 0
+    files = sorted(glob.glob(os.path.join(HERE, "prep-" + det, "smprep-*.json")))
+    if not files:
+        print("     (no prepped payloads -- Q skipped)")
+        return
+    for f in files[::11]:
+        pay = json.load(open(f))
+        near = pay.get("image_near") or {}
+        ck(len(near.get("c") or []) == len(near.get("x") or []),
+           "%s: %s image_near has %d points and %d cluster ids"
+           % (det, os.path.basename(f), len(near.get("x") or []),
+              len(near.get("c") or [])))
+        far = pay.get("image_far") or {}
+        ck(len(far.get("c") or []) == len(far.get("x") or []),
+           "%s: %s image_far c/x length mismatch" % (det, os.path.basename(f)))
+        # the candidate's OWN cluster must be among the drawn ids
+        if near.get("c"):
+            ck(pay["cluster_id"] in set(near["c"]),
+               "%s: %s draws no point of its own cluster %d"
+               % (det, os.path.basename(f), pay["cluster_id"]))
+        n += 1
+    print("     %d payloads carry a per-point cluster id" % n)
+
+
+def test_survey_table(det, tmp):
+    """The grouped table: groups, selection, moving a row, and the reason text."""
+    print("[Q] the grouped object table, %s" % det)
+    g = load_app(det, os.path.join(tmp, "labq_" + det))
+    # an item with at least one role-6 row is the one worth driving
+    target = None
+    for i in range(len(g["ITEMS"])):
+        g["go"](i)
+        pay = g["payload"](g["current"]())
+        if any(r == 6 for r in ((pay.get("pf") or {}).get("chain_role") or {}).values()):
+            target = i
+            break
+    ck(target is not None, "%s: no item with a role-6 segment to drive" % det)
+    if target is None:
+        return
+    rows = g["state"]["pf_rows"]
+    keys = list(g["seg_src"].data["key"])
+    ck(len(rows) == len(keys) and keys == [r["key"] for r in rows],
+       "%s: the table source and state[pf_rows] disagree" % det)
+    # GROUPED, not just listed: rows come out in GROUP_ORDER blocks
+    order = [g["GROUP_ORDER"].index(x) for x in g["seg_src"].data["group"]]
+    ck(order == sorted(order), "%s: the table rows are not grouped: %r" % (det, order))
+    # the chain's own grouping is what the table opens with
+    pay = g["payload"](g["current"]())
+    for r in rows:
+        if r["key"].startswith("C"):
+            continue
+        ck(r["group"] == g["chain_group"](pay, int(r["key"])),
+           "%s: row %s opened in %s, the chain says %s"
+           % (det, r["key"], r["group"], g["chain_group"](pay, int(r["key"]))))
+    # a role-6 row opens UNASSIGNED and its inspector names the gate
+    r6 = next(r for r in rows
+              if not r["key"].startswith("C")
+              and ((pay.get("pf") or {}).get("chain_role") or {}).get(r["key"]) == 6)
+    ck(r6["group"] == "unassigned",
+       "%s: a role-6 row opened in %s, not unassigned" % (det, r6["group"]))
+    pick_row(g, r6["key"])
+    reason = g["REJ_NAMES"][(pay["pf"]["seg_rej"][r6["key"]])["rej"]]
+    ck(reason in g["seg_div"].text,
+       "%s: the inspector does not name the gate (%r) for %s"
+       % (det, reason, r6["key"]))
+    # MOVING a row: the group changes, and only that row's
+    before = {r["key"]: r["group"] for r in g["state"]["pf_rows"]}
+    g["set_pf_tag"]("gamma")
+    after = {r["key"]: r["group"] for r in g["state"]["pf_rows"]}
+    ck(after[r6["key"]] == "gamma",
+       "%s: moving a row to gamma left it in %s" % (det, after[r6["key"]]))
+    moved = [k for k in before if before[k] != after[k]]
+    ck(moved == [r6["key"]],
+       "%s: moving one row changed %r" % (det, moved))
+    # CAUSAL NEGATIVE CONTROL for the group column: with the chain's roles
+    # emptied every segment row must fall back to pdg, so the michel/gamma
+    # groups cannot survive.  If they do, the table is not reading chain_role.
+    #
+    # Untag first, or the scanner override just applied would itself keep a
+    # `gamma` row alive and the control would pass for the wrong reason.
+    g["set_pf_tag"](None)
+    saved = dict(pay["pf"]["chain_role"])
+    with_roles = {r["group"] for r in g["state"]["pf_rows"]
+                  if not r["key"].startswith("C")}
+    pay["pf"]["chain_role"] = {}
+    g["refresh_segments"](pay)
+    without = {r["group"] for r in g["state"]["pf_rows"]
+               if not r["key"].startswith("C")}
+    ck(without <= {"muon", "unassigned"},
+       "%s: with chain_role emptied the groups are %r -- the table is not "
+       "reading the chain's roles" % (det, without))
+    ck(with_roles != without or with_roles <= {"muon", "unassigned"},
+       "%s: emptying chain_role changed nothing (%r) -- the control is vacuous"
+       % (det, with_roles))
+    pay["pf"]["chain_role"] = saved
+    g["refresh_segments"](pay)
+    print("     %d rows, %d groups, gate text and one-row move verified"
+          % (len(rows), len(set(g["seg_src"].data["group"]))))
 
 
 # ---------------------------------------------------------------------------
@@ -2463,6 +2661,9 @@ def main():
             test_object_panel(det, tmp)
             test_energy_payload(det)
             test_stop_gamma_payload(det)          # doc pdvd/51
+            test_survey_payload(det)              # doc pdvd/53
+            test_survey_image_ids(det)            # doc pdvd/53
+            test_survey_table(det, tmp)           # doc pdvd/53
             if not a.quick:
                 test_kine_gate(det)
                 test_object_tree(det)
