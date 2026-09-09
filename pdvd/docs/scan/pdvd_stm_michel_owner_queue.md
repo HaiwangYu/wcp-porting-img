@@ -1,6 +1,6 @@
 # PDVD STM + Michel hand scan — the owner's review queue
 
-Regenerated from the scan records; 240 of 509 tranche-2 items scanned so far.
+Regenerated from the scan records; 353 of 509 tranche-2 items scanned so far.
 
 These are the rows where a second opinion changes something. Rows not listed are
 high- or medium-confidence calls that agree with the chain and carry no pin.
@@ -21,10 +21,21 @@ high- or medium-confidence calls that agree with the chain and carry no pin.
 | 163 | `039253_7/80` | STM_MICHEL | attached | medium | PIN r9.2; scan says STM, chain says not |
 | 183 | `039349_10/58` | STM_MICHEL | attached | medium | PIN r9.7; scan says STM, chain says not |
 | 225 | `039349_19/52` | STM_MICHEL | attached | medium | PIN r7.0; scan says STM, chain says not |
+| 278 | `039349_28/60` | STM_MICHEL | attached | medium | PIN r18.1; scan says STM, chain says not |
+| 292 | `039349_30/45` | STM_MICHEL | none | medium | PIN r3.8; scan says STM, chain says not |
+| 298 | `039349_31/51` | STM_MICHEL | both | high | PIN r6.5; scan says STM, chain says not |
+| 311 | `039349_34/48` | STM_ONLY | detached dots | low | PIN r5.5; scan says STM, chain says not; LOW confidence |
+| 319 | `039349_36/63` | STM_MICHEL | both | high | PIN r1.8; scan says STM, chain says not |
+| 328 | `039349_38/57` | STM_MICHEL | attached | medium | PIN r3.8; scan says STM, chain says not |
+| 358 | `039349_44/28` | FRAG_STM_MICHEL | both | medium | PIN r4.3; scan says STM, chain says not |
+| 383 | `039349_5/54` | STM_MICHEL | both | medium | PIN r4.3; scan says STM, chain says not |
+| 396 | `039349_51/29` | STM_MICHEL | detached dots | medium | PIN r9.0; scan says STM, chain says not |
+| 399 | `039349_52/36` | STM_MICHEL | both | medium | PIN r6.5; scan says STM, chain says not |
 | 59 | `039252_5/73` | STM_ONLY | detached dots | medium | UNDERSHOOT; scan says STM, chain says not |
 | 90 | `039253_0/110` | STM_MICHEL | both | medium | UNDERSHOOT; scan says STM, chain says not |
 | 110 | `039253_13/39` | STM_MICHEL | attached | medium | UNDERSHOOT; scan says STM, chain says not |
 | 220 | `039349_18/33` | STM_ONLY | none | high | UNDERSHOOT; scan says STM, chain says not |
+| 297 | `039349_31/39` | STM_MICHEL | attached | medium | UNDERSHOOT; scan says STM, chain says not |
 | 76 | `039252_8/93` | THRU | none | medium | chain says STM, scan says not |
 | 116 | `039253_14/84` | THRU | none | medium | chain says STM, scan says not |
 | 201 | `039349_13/56` | THRU | none | medium | chain says STM, scan says not |
@@ -81,6 +92,15 @@ high- or medium-confidence calls that agree with the chain and carry no pin.
 | 248 | `039349_22/63` | STM_MICHEL | attached | high | scan says STM, chain says not |
 | 256 | `039349_24/35` | STM_ONLY | detached dots | low | scan says STM, chain says not; LOW confidence |
 | 265 | `039349_26/34` | STM_ONLY | none | medium | scan says STM, chain says not |
+| 280 | `039349_29/40` | STM_ONLY | detached dots | medium | scan says STM, chain says not |
+| 286 | `039349_3/47` | FRAG_STM_ONLY | none | medium | scan says STM, chain says not |
+| 303 | `039349_32/63` | STM_MICHEL | attached | medium | scan says STM, chain says not |
+| 344 | `039349_41/51` | STM_MICHEL | attached | medium | scan says STM, chain says not |
+| 377 | `039349_48/54` | STM_MICHEL | attached | medium | scan says STM, chain says not |
+| 384 | `039349_5/64` | STM_MICHEL | attached | high | scan says STM, chain says not |
+| 385 | `039349_5/65` | STM_MICHEL | both | high | scan says STM, chain says not |
+| 388 | `039349_50/45` | STM_ONLY | detached dots | medium | scan says STM, chain says not |
+| 394 | `039349_51/24` | STM_MICHEL | both | high | scan says STM, chain says not |
 
 ## The notes on the pinned and undershoot rows
 
@@ -112,6 +132,26 @@ high- or medium-confidence calls that agree with the chain and carry no pin.
 
 **`039349_19/52`** (scan 225, STM_MICHEL / attached) — OVERSHOOT: pin moved back 7.0 cm from the fit last point. Row 52015 is split - the first 22 cm from the far end are muon, the last 7 cm are the collapsed bridge into the electron - and is tagged muon for the majority per the rubric single-segment rule. Competing reading is THRU with the whole 8-30 cm band written off as overlapping charge, but the last points sit BELOW the plateau rather than on it, so the profile is not flat to the last point. Chain rejects with no_bragg and shape_flat, which is what its shape test does when the terminal charge collapses.
 
+**`039349_28/60`** (scan 278, STM_MICHEL / attached) — Hardest item so far, hence medium. Competing reading I weighed and rejected: the profile peaks at 1.52e5 near s 30 and the thirteen points at s 20-26 sit at 5.2-9.7e4, a factor 1.6 below that branch, which could be read as the muon stopping at s about 27 with a 7 cm Michel arm leaving it at MIP -- I would then have pinned at 27.5. I rejected it because no azimuth shows a kink or any transverse offset for such an arm, the 5.2-9.7e4 spread is a factor 1.9 of scatter which the rubric calls normal, the points there are at the ordinary 0.6 cm spacing on the fitted body, and the rubric prescribes the segment junction when the fit bridges a void. Also arguable: the far blob is compact (3.3 cm) across a clean 16 cm gap, which by the attachment tiebreak reads as a capture gamma and would give STM_ONLY / detached dots.
+
+**`039349_30/45`** (scan 292, STM_MICHEL / none) — OVERSHOOT: the fit runs about 3.8 cm past the true stop. Peak 8.7e4 at s=5-6, sustained collapse to 0.6-3.9e4 over the last 4 cm, plus an off-axis fan of unclustered image points at the fit end in all three azimuths. Pin moved to 3.8. Known schema limitation, recorded not fixed: the split falls inside row 45005 and there is no separate Michel object to tag, so 45005 takes muon for its 146 cm majority per the rubric split-segment rule, and michel_kind derives to none even though the verdict is STM_MICHEL. Flagging that the split-segment rule and the michel_kind derivation contradict each other in exactly this configuration. Confidence medium because the Michel has no object row and no separate charge blob in f_meas, so the call rests on the collapse plus the fan morphology.
+
+**`039349_31/51`** (scan 298, STM_MICHEL / both) — OVERSHOOT: the fit runs about 6.5 cm past the true stop. Peak 9.1e4-1.22e5 over s=7-12, above the reference curve, then a sustained collapse to 1.8-3.4e4 across s=1.5-6.1. Pin set to 6.5; the junction is only readable to about plus or minus 1.5 cm because the chain has a single fitted segment here so there is no segment boundary to align to, and one 7.85e4 point at s=6.4 interleaves with the collapsed points. Row 51023 spans the corrected stop and is tagged muon for its 42 cm majority; its last 6.5 cm is the bridge, and the separate michel rows carry the kind so nothing is lost. 132021 is the one judgement call: forward specks at 20-27 cm are gammas on the Michel side, but 132021 at 34.9 cm and cos_fwd -0.53 points elsewhere, so delta / other.
+
+**`039349_34/48`** (scan 311, STM_ONLY / detached dots) — LOW confidence. Revised after reading the three stop azimuths uncropped: my first reading kept 114014/117016 as an attached michel arm on the strength of the chains own particle-flow, but the full frames show a clean charge-free gap between the stop and every piece, and the rubric is explicit that a detached compact speck is a gamma however close it sits. That makes the kind detached dots and holds the verdict at STM_ONLY, since capture gammas do not promote an item to STM_MICHEL. The other live reading is THRU: the hump is only 1.3x the plateau envelope, and if it is scatter the profile is flat and this is a through-goer - the chain itself says shape_flat. I kept STM_ONLY because with the pin at 5.5 the corrected end sits at the top of the hump rather than in the empty bridge. Note MCS 74 MeV against range 1054 MeV at amb 0.94, so the momentum fit is no cross-check here.
+
+**`039349_36/63`** (scan 319, STM_MICHEL / both) — OVERSHOOT: the fit runs 1.8 cm past the muon's true stop; pin set to rr 1.8, segment 63006 (chain-typed muon) retagged michel. Stretch: the rubric asks for a collapse 'sustained over several cm' and this one is 1.8 cm / 4 points - I took it because it is a whole named segment at 0.24 MIP rather than a single low point, and because the rubric also says the depth is not a threshold and the collapse is the diagnostic. The 183005 gamma-vs-michel call does not change the kind: 182004 is a gamma on its own, so both either way.
+
+**`039349_38/57`** (scan 328, STM_MICHEL / attached) — OVERSHOOT: fit ran ~3.8 cm past the true stop. The chain rejects this item with no_bragg + shape_flat and is_stm 0, which is exactly what an overshoot manufactures - the shape test only sees the collapsed bridge. Row 57005 is split by the pin: s>3.8 muon, s<3.8 bridge/Michel side.
+
+**`039349_44/28`** (scan 358, FRAG_STM_MICHEL / both) — Overshoot direction (fit runs PAST the stop), pin moved back 4.3 cm; not the UNDERSHOOT case. Medium, for two reasons. (1) The FRAG call and the C51=muon tag stand or fall together: C51 is collinear with the backward extension in every view and the fit entry is 121.9 cm from any face so the 24 cm chain cannot be a whole cosmic, but there is an 11 cm reconstruction gap between the fit start and C51 d_min, so a parallel unrelated cosmic is not excluded. If C51 is unrelated the verdict is plain STM_MICHEL and C51 is delta / other; the STM_MICHEL core is unaffected either way. (2) 126005 vs michel: it is the chains own Michel and moving the pin back leaves it ~16 cm from the corrected stop, but the gap is explicitly empty and the piece is 0.1 cm of 2 points, so I took gamma on the attachment rule; if it were called michel the kind would still be attached-plus, i.e. the record would read attached rather than both.
+
+**`039349_5/54`** (scan 383, STM_MICHEL / both) — OVERSHOOT: fit runs about 4.3 cm past the real muon stop into the Michel; pin moved to rr 4.31. The collapse actually starts around s=6, so the last ~1.7 cm of segment 54031 is also bridge charge - that row is split and is tagged muon for what most of its 212 cm is. Confidence medium is about the pin position, not the verdict: the STM_MICHEL topology (contained end, attached 9.8 cm kinked MIP arm) is clear. The chain rejects no_bragg / shape_flat and is_stm 0, i.e. the reconstruction misses this one; the rise to 1.6x plateau is modest but it is a rise, and the collapse after it is what the chain read as flat.
+
+**`039349_51/29`** (scan 396, STM_MICHEL / detached dots) — Competing reading, and why I did not take it: the chain rejects this as no_bragg + shape_flat, and one can read the whole thing as flat-to-the-end THRU with the terminal fall being the imaging losing the track. I went the other way because a THRU needs the plateau to hold TO the last point and here nine consecutive points fall steadily from 6.8e4 to 1.7e4 below it, and because the 7-14 cm window really is elevated above the plateau on every one of its seven points, not on one outlier. The peak height rests on a 2-point 1.22-1.27e5 excursion though, and this track shows single 1.2e5 points elsewhere, so medium confidence. Verdict STM_MICHEL with kind detached dots is not a contradiction: the Michel charge is inside the fitted row, which the tag alphabet cannot split, so the only gamma/michel tags left to derive the kind from are the three detached pieces.
+
+**`039349_52/36`** (scan 399, STM_MICHEL / both) — Medium, not high, for one reason: the michel side of this is small - a 4.2 cm fitted tail plus a 2.4 cm unfitted piece, all at 0.25-0.5 of MIP, and the very last fit points measure essentially zero charge in U. The competing reading is STM_ONLY with the pin still moved to 6.5: that the fit simply ran on into nothing past the muon stop and 36013 is a stray fragment rather than an electron. I went with STM_MICHEL because 36013 is real reconstructed charge attached at the stop, forward, off the body line, which the tag alphabet calls michel, and because the collapsed tail carries 2.5-5e4 over five centimetres, too much to be nothing.
+
 **`039252_5/73`** (scan 59, STM_ONLY / detached dots) — UNDERSHOOT: the fit stops about 3.9 cm short; the real stop is at the far end of 73013 (cos_fwd +0.99, d_max 3.9 cm, 1.31e5 e/cm), which the chain offered as the pdg 11 daughter. --pin-rr cannot express this so the tip is tagged muon instead. Confidence is medium because the verdict's michel_kind hangs on one call: 281011 at 13.4 cm and 8.9 cm off the body line is a detached dot (gamma) on my reading, but if it is instead counted as body activity the item is STM_ONLY / none. The undershoot itself is not in doubt.
 
 **`039253_0/110`** (scan 90, STM_MICHEL / both) — UNDERSHOOT: the real stop is about 3 cm past the fit last point, at the far end of 110007 (3.0 cm at 1e5 e/cm, cos_fwd 0.95); --pin-rr cannot record it, so the tip is tagged muon. Competing reading, and the reason for medium: the chain sells a coherent muon-CAPTURE story (a pdg 2212 stub plus 13.7 MeV of capture gammas), and capture excludes a Michel - on that reading 110001 is part of the stop/capture smear rather than an electron and the item is STM_ONLY / detached dots. I went the other way because the charge falls from 1e5 to 42705 across 110007 into 110001, and a muon at its Bragg peak cannot continue at MIP. 110001 is small for a Michel (1.8 cm, 4 pts, about 3-4 MeV).
@@ -119,4 +159,6 @@ high- or medium-confidence calls that agree with the chain and carry no pin.
 **`039253_13/39`** (scan 110, STM_MICHEL / attached) — UNDERSHOOT: the fit stops about 2.4 cm short. The real stop is at the far end of piece 39009 (5 points, 2.4 cm, cos_fwd +0.88, d_min 0.0, 1.19e5 e/cm), which I have tagged muon; --pin-rr cannot be pushed past the fit's last point so the corrected stop is not recorded in the label. Note the chain types this tip pdg 2212 (proton), not the pdg 11 the rubric's undershoot template describes - I invoked the undershoot on the charge and the geometry, which the rubric says are the load-bearing clauses, not on the chain's particle guess. Medium and not high for the second call: 39005 sits at cos_fwd -0.81, only just off the -0.85 body-line threshold, so the competing reading is that it is a large backward delta and the item is STM_ONLY / none. I went michel on off-axis separation (about 35 deg from the muon body chord, a visible V in d_3d_stop) plus attachment at 1.74 cm and the 15.7 cm at-MIP length; a scanner weighting cos_fwd over the azimuths would land on STM_ONLY.
 
 **`039349_18/33`** (scan 220, STM_ONLY / none) — UNDERSHOOT: the fit stops about 1 cm short - the real stop is at the far end of the 1.3 cm forward tip 33010, whose 1.0-1.54e5 points carry the Bragg peak. pin-rr cannot record a stop past the fit last point, so no pin is set; 33010 is tagged muon rather than michel per the rubric charge clause. Chain reject is shape_flat only, is_stm 0, but the chain excluded the very piece that carries the peak.
+
+**`039349_31/39`** (scan 297, STM_MICHEL / attached) — UNDERSHOOT: the fit stops about 2.2 cm short. The real stop is at the far end of 39009, the vertex square one segment past the star. 39009 is tagged muon rather than michel despite the chain offering it as the Michel core, because its points reach 1.03-1.115e5, above the muon chain own last point and squarely in the rubric 0.9-1.2e5 band, and it is collinear with the incoming track. Confidence medium, not high, because the median of 39009 is 7.4e4, only about 1.4 times MIP, so the rubric several-times-MIP phrasing is not met even though its explicit numeric band is; the two top points, the collinearity and the sharp ninety-degree kink into sub-MIP falling charge at 39007 are what carry the call. Pin not moved: --pin-rr cannot move past the fit last point.
 

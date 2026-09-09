@@ -1,0 +1,449 @@
+# doc pdvd/55 sec 17 -- CheckSTM_Michel failure register, arm d53v.
+# One row per (item, failure class).  Regenerate with pdhd/stm_michel_scan/mkfailures.py after a fix to see whether a class shrank.
+# 'scan' columns are the hand scan (doc 55); everything else is the chain's own payload.
+item	scan_id	tranche	failure_class	scan_verdict	chain_is_stm	chain_reject	detail
+039252_8/93	76	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039253_14/84	116	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_13/56	201	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_21/26	240	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_22/45	246	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_26/51	267	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_38/60	329	1	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_59/14	433	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039349_6/62	439	2	A_is_stm_false_positive	THRU	1	STM	chain is_stm=1, scan THRU
+039252_0/75	2	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_12/123	16	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg	scan STM_ONLY, chain rejects no_bragg
+039252_12/95	14	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039252_15/81	28	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_16/108	37	2	B_is_stm_false_negative	STM_ONLY	0	plateau_off_mip	scan STM_ONLY, chain rejects plateau_off_mip
+039252_16/110	38	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039252_16/32	31	2	B_is_stm_false_negative	STM_MICHEL	0	profile_sparse	scan STM_MICHEL, chain rejects profile_sparse
+039252_16/98	36	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039252_17/104	43	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039252_17/88	40	2	B_is_stm_false_negative	STM_MICHEL	0	plateau_off_mip	scan STM_MICHEL, chain rejects plateau_off_mip
+039252_2/103	50	2	B_is_stm_false_negative	STM_MICHEL	0	stop_near_boundary	scan STM_MICHEL, chain rejects stop_near_boundary
+039252_2/39	44	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_2/55	45	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039252_3/75	56	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039252_5/73	59	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039252_6/100	64	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039252_6/106	65	2	B_is_stm_false_negative	STM_ONLY	0	plateau_off_mip	scan STM_ONLY, chain rejects plateau_off_mip
+039252_7/98	70	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_7/99	71	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_8/102	78	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|plateau_off_mip	scan STM_MICHEL, chain rejects no_bragg|plateau_off_mip
+039252_8/82	74	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039252_9/101	84	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_9/49	80	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039252_9/52	81	1	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_9/94	83	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_0/102	89	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_0/110	90	2	B_is_stm_false_negative	STM_MICHEL	0	stop_near_boundary	scan STM_MICHEL, chain rejects stop_near_boundary
+039253_0/44	86	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039253_1/79	92	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039253_1/98	93	2	B_is_stm_false_negative	STM_ONLY	0	not_muon_pid	scan STM_ONLY, chain rejects not_muon_pid
+039253_10/77	98	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_13/39	110	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_13/73	111	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_15/105	124	1	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_15/45	120	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_17/115	133	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_17/77	131	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039253_2/13	135	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_2/77	138	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_3/29	142	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_3/61	143	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_4/79	146	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_6/90	161	2	B_is_stm_false_negative	STM_MICHEL	0	profile_sparse	scan STM_MICHEL, chain rejects profile_sparse
+039253_7/80	163	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039253_8/27	165	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039253_8/28	166	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_8/64	172	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039253_9/42	173	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_0/28	177	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_1/52	179	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_10/58	183	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_11/19	184	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_15/23	206	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_16/70	212	2	B_is_stm_false_negative	STM_ONLY	0	plateau_off_mip	scan STM_ONLY, chain rejects plateau_off_mip
+039349_18/33	220	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_18/36	221	1	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_19/52	225	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_2/38	229	1	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_2/56	232	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_20/32	234	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_21/51	241	1	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_22/22	242	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_22/41	245	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_22/56	247	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_22/63	248	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_24/35	256	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg	scan STM_ONLY, chain rejects no_bragg
+039349_26/18	264	1	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_26/34	265	2	B_is_stm_false_negative	STM_ONLY	0	plateau_off_mip	scan STM_ONLY, chain rejects plateau_off_mip
+039349_26/40	266	1	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_27/41	270	1	B_is_stm_false_negative	STM_MICHEL	0	stop_near_boundary	scan STM_MICHEL, chain rejects stop_near_boundary
+039349_28/60	278	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_29/40	280	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_29/45	281	1	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_3/46	285	1	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_3/47	286	2	B_is_stm_false_negative	FRAG_STM_ONLY	0	no_bragg|shape_flat	scan FRAG_STM_ONLY, chain rejects no_bragg|shape_flat
+039349_30/45	292	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039349_31/39	297	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_31/51	298	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_32/63	303	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_34/48	311	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat|profile_sparse	scan STM_ONLY, chain rejects shape_flat|profile_sparse
+039349_36/63	319	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_38/57	328	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_41/51	344	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039349_44/28	358	2	B_is_stm_false_negative	FRAG_STM_MICHEL	0	no_bragg|shape_flat	scan FRAG_STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_48/54	377	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_5/54	383	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_5/64	384	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_5/65	385	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|continuation	scan STM_MICHEL, chain rejects shape_flat|continuation
+039349_50/45	388	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_51/21	393	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_51/24	394	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_51/29	396	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_52/36	399	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_53/51	405	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_54/30	409	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_54/56	411	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039349_55/24	415	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_56/36	422	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_58/21	430	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_58/69	431	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_60/40	441	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_61/21	446	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_63/41	458	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_63/55	462	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_64/24	464	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_64/52	465	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_64/65	468	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_65/40	471	2	B_is_stm_false_negative	STM_ONLY	0	stop_near_boundary	scan STM_ONLY, chain rejects stop_near_boundary
+039349_66/78	474	1	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_67/78	481	1	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_68/63	487	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_7/4	492	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain rejects shape_flat|profile_sparse
+039349_7/63	496	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_7/65	497	2	B_is_stm_false_negative	STM_ONLY	0	plateau_off_mip	scan STM_ONLY, chain rejects plateau_off_mip
+039349_70/61	502	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_71/37	505	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_76/25	527	2	B_is_stm_false_negative	STM_ONLY	0	shape_flat	scan STM_ONLY, chain rejects shape_flat
+039349_77/63	534	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_81/25	549	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039349_81/41	550	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_81/44	551	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_82/25	555	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_82/54	559	2	B_is_stm_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain rejects shape_flat
+039349_82/60	560	2	B_is_stm_false_negative	STM_ONLY	0	no_bragg|shape_flat	scan STM_ONLY, chain rejects no_bragg|shape_flat
+039349_9/19	566	2	B_is_stm_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain rejects no_bragg|shape_flat
+039252_0/35	1	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 8.3 cm, KE 1.7 MeV), scan THRU
+039252_0/76	3	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 9.4 cm, KE 0.6 MeV), scan STM_ONLY
+039252_12/90	13	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 2.6 cm, KE 4.1 MeV), scan THRU
+039252_16/110	38	2	C_michel_false_positive	STM_ONLY	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 10.9 cm, KE 0.2 MeV), scan STM_ONLY
+039252_16/40	33	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 11.2 cm, KE 3.8 MeV), scan STM_ONLY
+039252_17/91	42	2	C_michel_false_positive	THRU	0	stop_unmatched|no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 12.1 cm, KE 6.2 MeV), scan THRU
+039252_3/45	53	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 24.8 MeV), scan THRU
+039252_6/100	64	2	C_michel_false_positive	STM_ONLY	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 9.4 cm, KE 4.8 MeV), scan STM_ONLY
+039252_6/114	66	1	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 3.8 MeV), scan THRU
+039252_8/77	73	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	chain michel_found=1 (conn 2, dis 12.6 cm, KE 0.3 MeV), scan THRU
+039252_8/97	77	2	C_michel_false_positive	THRU	0	plateau_off_mip	chain michel_found=1 (conn 2, dis 9.1 cm, KE 4.6 MeV), scan THRU
+039253_16/51	125	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 14.3 cm, KE 1.1 MeV), scan STM_ONLY
+039253_4/91	148	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 4.3 cm, KE 4.1 MeV), scan STM_ONLY
+039253_8/31	167	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 7.0 MeV), scan THRU
+039349_0/28	177	2	C_michel_false_positive	STM_ONLY	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 4.5 cm, KE 0.1 MeV), scan STM_ONLY
+039349_0/68	178	1	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 5.9 MeV), scan THRU
+039349_10/27	181	1	C_michel_false_positive	THRU	0	shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 2.0 MeV), scan THRU
+039349_12/45	194	1	C_michel_false_positive	FRAG_THRU	0	profile_sparse	chain michel_found=1 (conn 1, dis 0.0 cm, KE 9.3 MeV), scan FRAG_THRU
+039349_13/60	202	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 12.2 cm, KE 1.3 MeV), scan STM_ONLY
+039349_19/24	224	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat|stop_near_boundary	chain michel_found=1 (conn 2, dis 5.8 cm, KE 4.6 MeV), scan THRU
+039349_22/56	247	2	C_michel_false_positive	STM_ONLY	0	shape_flat	chain michel_found=1 (conn 2, dis 7.0 cm, KE 13.6 MeV), scan STM_ONLY
+039349_3/26	284	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 3.2 cm, KE 5.6 MeV), scan THRU
+039349_32/56	301	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 10.6 cm, KE 0.7 MeV), scan THRU
+039349_34/48	311	2	C_michel_false_positive	STM_ONLY	0	shape_flat|profile_sparse	chain michel_found=1 (conn 2, dis 4.8 cm, KE 8.0 MeV), scan STM_ONLY
+039349_35/30	313	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat|stop_near_boundary	chain michel_found=1 (conn 1, dis 0.0 cm, KE 4.7 MeV), scan THRU
+039349_39/56	334	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 29.0 MeV), scan THRU
+039349_44/53	359	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 8.0 cm, KE 7.2 MeV), scan THRU
+039349_44/66	360	2	C_michel_false_positive	THRU	0	shape_flat|profile_sparse	chain michel_found=1 (conn 2, dis 13.1 cm, KE 4.1 MeV), scan THRU
+039349_44/68	361	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 10.9 cm, KE 1.2 MeV), scan THRU
+039349_45/25	365	2	C_michel_false_positive	FRAG_THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 27.2 MeV), scan FRAG_THRU
+039349_45/52	366	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 9.7 cm, KE 1.3 MeV), scan THRU
+039349_48/58	378	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 9.1 cm, KE 0.5 MeV), scan STM_ONLY
+039349_49/72	382	2	C_michel_false_positive	THRU	0	stop_near_boundary|profile_sparse	chain michel_found=1 (conn 2, dis 14.6 cm, KE 0.2 MeV), scan THRU
+039349_64/61	467	2	C_michel_false_positive	STM_ONLY	1	STM	chain michel_found=1 (conn 2, dis 14.3 cm, KE 3.2 MeV), scan STM_ONLY
+039349_7/29	493	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 8.5 cm, KE 2.7 MeV), scan THRU
+039349_7/57	495	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 4.3 cm, KE 6.6 MeV), scan THRU
+039349_81/51	553	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 2, dis 9.2 cm, KE 12.9 MeV), scan THRU
+039349_83/23	561	2	C_michel_false_positive	THRU	0	no_bragg|shape_flat	chain michel_found=1 (conn 1, dis 0.0 cm, KE 1.7 MeV), scan THRU
+039349_83/53	563	2	C_michel_false_positive	THRU	0	shape_flat|stop_near_boundary|profile_sparse	chain michel_found=1 (conn 2, dis 14.3 cm, KE 0.9 MeV), scan THRU
+039252_0/75	2	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039252_16/32	31	2	D_michel_false_negative	STM_MICHEL	0	profile_sparse	scan STM_MICHEL, chain reports no daughter
+039252_16/98	36	2	D_michel_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain reports no daughter
+039252_2/39	44	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039252_8/102	78	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|plateau_off_mip	scan STM_MICHEL, chain reports no daughter
+039252_9/101	84	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_0/102	89	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_0/110	90	2	D_michel_false_negative	STM_MICHEL	0	stop_near_boundary	scan STM_MICHEL, chain reports no daughter
+039253_13/39	110	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_13/73	111	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_17/77	131	2	D_michel_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain reports no daughter
+039253_2/13	135	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_3/29	142	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_3/61	143	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039253_3/79	145	2	D_michel_false_negative	STM_MICHEL	1	STM	scan STM_MICHEL, chain reports no daughter
+039349_10/58	183	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_11/19	184	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_18/36	221	1	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_22/63	248	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_23/54	252	2	D_michel_false_negative	STM_MICHEL	1	STM	scan STM_MICHEL, chain reports no daughter
+039349_28/60	278	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_30/45	292	2	D_michel_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain reports no daughter
+039349_31/51	298	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_32/63	303	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_48/54	377	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_5/64	384	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_5/65	385	2	D_michel_false_negative	STM_MICHEL	0	shape_flat|continuation	scan STM_MICHEL, chain reports no daughter
+039349_51/29	396	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_52/36	399	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_58/69	431	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_60/40	441	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_64/24	464	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_64/52	465	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_64/65	468	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_69/56	491	2	D_michel_false_negative	STM_MICHEL	1	STM	scan STM_MICHEL, chain reports no daughter
+039349_7/4	492	2	D_michel_false_negative	STM_MICHEL	0	shape_flat|profile_sparse	scan STM_MICHEL, chain reports no daughter
+039349_71/37	505	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_81/25	549	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_81/44	551	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_82/54	559	2	D_michel_false_negative	STM_MICHEL	0	shape_flat	scan STM_MICHEL, chain reports no daughter
+039349_9/19	566	2	D_michel_false_negative	STM_MICHEL	0	no_bragg|shape_flat	scan STM_MICHEL, chain reports no daughter
+039252_0/35	1	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 8.3 cm from the stop carrying 1.7 MeV (conn 2)
+039252_0/76	3	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 9.4 cm from the stop carrying 0.6 MeV (conn 2)
+039252_14/81	24	2	E_michel_range_energy_impossible	STM_MICHEL	1	STM	michel 13.5 cm from the stop carrying 1.5 MeV (conn 2)
+039252_16/110	38	2	E_michel_range_energy_impossible	STM_ONLY	0	no_bragg|shape_flat	michel 10.9 cm from the stop carrying 0.2 MeV (conn 2)
+039252_16/40	33	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 11.2 cm from the stop carrying 3.8 MeV (conn 2)
+039252_17/91	42	2	E_michel_range_energy_impossible	THRU	0	stop_unmatched|no_bragg|shape_flat	michel 12.1 cm from the stop carrying 6.2 MeV (conn 2)
+039252_6/100	64	2	E_michel_range_energy_impossible	STM_ONLY	0	no_bragg|shape_flat	michel 9.4 cm from the stop carrying 4.8 MeV (conn 2)
+039252_8/77	73	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	michel 12.6 cm from the stop carrying 0.3 MeV (conn 2)
+039252_8/97	77	2	E_michel_range_energy_impossible	THRU	0	plateau_off_mip	michel 9.1 cm from the stop carrying 4.6 MeV (conn 2)
+039253_16/51	125	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 14.3 cm from the stop carrying 1.1 MeV (conn 2)
+039253_4/91	148	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 4.3 cm from the stop carrying 4.1 MeV (conn 2)
+039349_0/28	177	2	E_michel_range_energy_impossible	STM_ONLY	0	no_bragg|shape_flat	michel 4.5 cm from the stop carrying 0.1 MeV (conn 2)
+039349_10/54	182	2	E_michel_range_energy_impossible	MESSY	0	no_bragg|plateau_off_mip	michel 7.0 cm from the stop carrying 4.0 MeV (conn 2)
+039349_13/60	202	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 12.2 cm from the stop carrying 1.3 MeV (conn 2)
+039349_19/24	224	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat|stop_near_boundary	michel 5.8 cm from the stop carrying 4.6 MeV (conn 2)
+039349_3/26	284	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 3.2 cm from the stop carrying 5.6 MeV (conn 2)
+039349_32/56	301	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 10.6 cm from the stop carrying 0.7 MeV (conn 2)
+039349_34/48	311	2	E_michel_range_energy_impossible	STM_ONLY	0	shape_flat|profile_sparse	michel 4.8 cm from the stop carrying 8.0 MeV (conn 2)
+039349_40/49	342	1	E_michel_range_energy_impossible	MESSY	0	plateau_off_mip	michel 6.2 cm from the stop carrying 5.5 MeV (conn 2)
+039349_44/28	358	2	E_michel_range_energy_impossible	FRAG_STM_MICHEL	0	no_bragg|shape_flat	michel 14.9 cm from the stop carrying 1.0 MeV (conn 2)
+039349_44/53	359	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 8.0 cm from the stop carrying 7.2 MeV (conn 2)
+039349_44/66	360	2	E_michel_range_energy_impossible	THRU	0	shape_flat|profile_sparse	michel 13.1 cm from the stop carrying 4.1 MeV (conn 2)
+039349_44/68	361	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 10.9 cm from the stop carrying 1.2 MeV (conn 2)
+039349_45/52	366	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 9.7 cm from the stop carrying 1.3 MeV (conn 2)
+039349_48/58	378	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 9.1 cm from the stop carrying 0.5 MeV (conn 2)
+039349_49/72	382	2	E_michel_range_energy_impossible	THRU	0	stop_near_boundary|profile_sparse	michel 14.6 cm from the stop carrying 0.2 MeV (conn 2)
+039349_64/61	467	2	E_michel_range_energy_impossible	STM_ONLY	1	STM	michel 14.3 cm from the stop carrying 3.2 MeV (conn 2)
+039349_67/78	481	1	E_michel_range_energy_impossible	STM_MICHEL	0	shape_flat	michel 3.9 cm from the stop carrying 1.3 MeV (conn 2)
+039349_7/29	493	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 8.5 cm from the stop carrying 2.7 MeV (conn 2)
+039349_7/57	495	2	E_michel_range_energy_impossible	THRU	0	no_bragg|shape_flat	michel 4.3 cm from the stop carrying 6.6 MeV (conn 2)
+039349_81/45	552	2	E_michel_range_energy_impossible	MESSY	0	shape_flat|profile_sparse	michel 12.7 cm from the stop carrying 0.7 MeV (conn 2)
+039349_83/53	563	2	E_michel_range_energy_impossible	THRU	0	shape_flat|stop_near_boundary|profile_sparse	michel 14.3 cm from the stop carrying 0.9 MeV (conn 2)
+039252_5/73	59	2	F_fit_stops_short	STM_ONLY	0	shape_flat	seg 73013: 4.2 cm at 131325 e/cm (2.43 MIP) forward of the fit end
+039253_0/110	90	2	F_fit_stops_short	STM_MICHEL	0	stop_near_boundary	seg 110007: 3.0 cm at 99976 e/cm (1.85 MIP) forward of the fit end
+039253_13/39	110	2	F_fit_stops_short	STM_MICHEL	0	shape_flat	seg 39009: 2.4 cm at 119206 e/cm (2.21 MIP) forward of the fit end
+039349_18/33	220	2	F_fit_stops_short	STM_ONLY	0	shape_flat	seg 33010: 1.3 cm at 118138 e/cm (2.19 MIP) forward of the fit end
+039349_66/78	474	1	F_fit_stops_short	STM_ONLY	0	no_bragg|shape_flat	seg 78041: 1.8 cm at 120416 e/cm (2.23 MIP) forward of the fit end
+039252_3/90	57	2	G_coiled_fit_end	THRU	0	shape_flat|profile_sparse	19.4 cm of fit arc inside a 10.2 cm ball (ratio 1.90)
+039253_1/105	94	2	G_coiled_fit_end	THRU	0	no_bragg|shape_flat|plateau_off_mip	19.6 cm of fit arc inside a 12.4 cm ball (ratio 1.57)
+039253_16/95	126	2	G_coiled_fit_end	THRU	0	shape_flat|profile_sparse	19.7 cm of fit arc inside a 11.6 cm ball (ratio 1.69)
+039253_17/77	131	2	G_coiled_fit_end	STM_MICHEL	0	shape_flat|profile_sparse	19.7 cm of fit arc inside a 9.7 cm ball (ratio 2.02)
+039253_8/53	169	2	G_coiled_fit_end	MESSY	0	shape_flat|plateau_off_mip	20.0 cm of fit arc inside a 13.2 cm ball (ratio 1.51)
+039349_10/54	182	2	G_coiled_fit_end	MESSY	0	no_bragg|plateau_off_mip	8.6 cm of fit arc inside a 5.0 cm ball (ratio 1.71)
+039349_18/36	221	1	G_coiled_fit_end	STM_MICHEL	0	no_bragg|shape_flat	19.8 cm of fit arc inside a 13.0 cm ball (ratio 1.52)
+039349_2/56	232	2	G_coiled_fit_end	STM_MICHEL	0	no_bragg|shape_flat	19.5 cm of fit arc inside a 12.9 cm ball (ratio 1.51)
+039349_28/42	274	2	G_coiled_fit_end	THRU	0	no_bragg|shape_flat	19.9 cm of fit arc inside a 10.0 cm ball (ratio 1.99)
+039349_40/49	342	1	G_coiled_fit_end	MESSY	0	plateau_off_mip	19.8 cm of fit arc inside a 12.7 cm ball (ratio 1.55)
+039349_48/21	375	2	G_coiled_fit_end	THRU	0	no_bragg|shape_flat	19.9 cm of fit arc inside a 5.8 cm ball (ratio 3.41)
+039349_56/36	422	2	G_coiled_fit_end	STM_MICHEL	0	shape_flat	19.5 cm of fit arc inside a 12.4 cm ball (ratio 1.57)
+039349_61/21	446	2	G_coiled_fit_end	STM_MICHEL	0	no_bragg|shape_flat	19.9 cm of fit arc inside a 9.2 cm ball (ratio 2.15)
+039349_64/52	465	2	G_coiled_fit_end	STM_MICHEL	0	no_bragg|shape_flat	19.8 cm of fit arc inside a 9.0 cm ball (ratio 2.19)
+039349_72/54	513	2	G_coiled_fit_end	THRU	0	no_bragg|shape_flat	19.4 cm of fit arc inside a 12.0 cm ball (ratio 1.61)
+039349_75/72	524	1	G_coiled_fit_end	MESSY	0	shape_flat|profile_sparse	19.8 cm of fit arc inside a 9.6 cm ball (ratio 2.07)
+039349_77/52	533	2	G_coiled_fit_end	MESSY	0	plateau_off_mip	19.8 cm of fit arc inside a 9.5 cm ball (ratio 2.08)
+039349_81/54	554	1	G_coiled_fit_end	MESSY	0	shape_flat|plateau_off_mip	20.0 cm of fit arc inside a 6.4 cm ball (ratio 3.15)
+039252_17/80	39	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat	seg 80015: 28.9 cm at 7742 e/cm = 0.19 of the track plateau
+039252_17/90	41	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat	seg 90003: 76.5 cm at 2222 e/cm = 0.06 of the track plateau
+039252_3/74	55	1	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 74011: 20.3 cm at 777 e/cm = 0.02 of the track plateau
+039252_3/74	55	1	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 74028: 22.4 cm at 4655 e/cm = 0.10 of the track plateau
+039252_3/74	55	1	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 74030: 26.6 cm at 6204 e/cm = 0.13 of the track plateau
+039253_17/127	134	2	H_fit_unsupported_by_charge	STM_ONLY	1	STM	seg 127010: 112.0 cm at 3892 e/cm = 0.07 of the track plateau
+039253_2/77	138	2	H_fit_unsupported_by_charge	STM_MICHEL	0	no_bragg|shape_flat	seg 77019: 22.4 cm at 5583 e/cm = 0.12 of the track plateau
+039253_2/77	138	2	H_fit_unsupported_by_charge	STM_MICHEL	0	no_bragg|shape_flat	seg 77035: 41.3 cm at 2633 e/cm = 0.06 of the track plateau
+039253_2/77	138	2	H_fit_unsupported_by_charge	STM_MICHEL	0	no_bragg|shape_flat	seg 77041: 20.1 cm at 2323 e/cm = 0.05 of the track plateau
+039253_2/77	138	2	H_fit_unsupported_by_charge	STM_MICHEL	0	no_bragg|shape_flat	seg 77043: 94.0 cm at 3642 e/cm = 0.08 of the track plateau
+039253_4/95	149	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|plateau_off_mip	seg 95006: 48.9 cm at 4825 e/cm = 0.16 of the track plateau
+039253_4/95	149	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|plateau_off_mip	seg 95011: 33.5 cm at 4781 e/cm = 0.16 of the track plateau
+039253_4/95	149	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|plateau_off_mip	seg 95012: 35.6 cm at 2895 e/cm = 0.10 of the track plateau
+039253_4/95	149	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|plateau_off_mip	seg 95013: 33.0 cm at 4770 e/cm = 0.16 of the track plateau
+039253_6/82	159	2	H_fit_unsupported_by_charge	THRU	0	shape_flat	seg 82001: 78.2 cm at 5978 e/cm = 0.16 of the track plateau
+039253_6/82	159	2	H_fit_unsupported_by_charge	THRU	0	shape_flat	seg 82020: 49.2 cm at 3283 e/cm = 0.09 of the track plateau
+039253_6/82	159	2	H_fit_unsupported_by_charge	THRU	0	shape_flat	seg 82035: 45.0 cm at 2508 e/cm = 0.07 of the track plateau
+039253_6/82	159	2	H_fit_unsupported_by_charge	THRU	0	shape_flat	seg 82039: 47.5 cm at 2230 e/cm = 0.06 of the track plateau
+039253_6/82	159	2	H_fit_unsupported_by_charge	THRU	0	shape_flat	seg 82041: 208.6 cm at 4363 e/cm = 0.11 of the track plateau
+039253_8/62	171	1	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 62020: 59.1 cm at 4555 e/cm = 0.14 of the track plateau
+039349_12/44	193	2	H_fit_unsupported_by_charge	STM_ONLY	1	STM	seg 44005: 169.8 cm at 3116 e/cm = 0.10 of the track plateau
+039349_15/17	204	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat	seg 17011: 36.4 cm at 5921 e/cm = 0.13 of the track plateau
+039349_22/45	246	2	H_fit_unsupported_by_charge	THRU	1	STM	seg 45015: 91.5 cm at 3052 e/cm = 0.07 of the track plateau
+039349_22/45	246	2	H_fit_unsupported_by_charge	THRU	1	STM	seg 45018: 72.0 cm at 2820 e/cm = 0.06 of the track plateau
+039349_26/34	265	2	H_fit_unsupported_by_charge	STM_ONLY	0	plateau_off_mip	seg 34001: 30.2 cm at 4667 e/cm = 0.16 of the track plateau
+039349_30/41	291	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|continuation|plateau_off_mip	seg 41002: 32.7 cm at 6129 e/cm = 0.17 of the track plateau
+039349_30/41	291	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|continuation|plateau_off_mip	seg 41003: 30.6 cm at 4279 e/cm = 0.12 of the track plateau
+039349_30/41	291	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|continuation|plateau_off_mip	seg 41011: 31.0 cm at 6996 e/cm = 0.20 of the track plateau
+039349_30/41	291	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|continuation|plateau_off_mip	seg 41013: 27.2 cm at 6464 e/cm = 0.18 of the track plateau
+039349_30/41	291	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|continuation|plateau_off_mip	seg 41014: 36.8 cm at 6969 e/cm = 0.20 of the track plateau
+039349_33/45	306	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat	seg 45003: 168.9 cm at 4271 e/cm = 0.24 of the track plateau
+039349_37/39	322	2	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 39031: 21.9 cm at 5926 e/cm = 0.13 of the track plateau
+039349_37/39	322	2	H_fit_unsupported_by_charge	STM_MICHEL	1	STM	seg 137046: 29.8 cm at 8535 e/cm = 0.18 of the track plateau
+039349_44/72	362	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|profile_sparse	seg 72001: 39.0 cm at 9191 e/cm = 0.22 of the track plateau
+039349_54/66	414	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|plateau_off_mip	seg 66020: 22.9 cm at 7689 e/cm = 0.21 of the track plateau
+039349_63/48	460	1	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 48001: 30.0 cm at 6374 e/cm = 0.19 of the track plateau
+039349_63/48	460	1	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 48002: 26.6 cm at 4171 e/cm = 0.12 of the track plateau
+039349_63/48	460	1	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 48007: 33.5 cm at 1411 e/cm = 0.04 of the track plateau
+039349_66/33	473	2	H_fit_unsupported_by_charge	THRU	0	no_bragg|shape_flat	seg 33003: 115.0 cm at 2206 e/cm = 0.16 of the track plateau
+039349_83/53	563	2	H_fit_unsupported_by_charge	THRU	0	shape_flat|stop_near_boundary|profile_sparse	seg 53006: 55.4 cm at 7003 e/cm = 0.15 of the track plateau
+039349_10/54	182	2	I_d_stop_sentinel	MESSY	0	no_bragg|plateau_off_mip	seg 214040: d_stop=1e+08 reaches the display; true 24.7 cm
+039252_3/75	56	2	I_d_stop_wrong	STM_ONLY	0	no_bragg|shape_flat	seg 230008: d_stop=20.5, true 15.0 cm (off by 5.5)
+039252_3/90	57	2	I_d_stop_wrong	THRU	0	shape_flat|profile_sparse	seg 298005: d_stop=43.2, true 38.0 cm (off by 5.2)
+039253_0/87	87	2	I_d_stop_wrong	STM_MICHEL	1	STM	seg 287009: d_stop=52.4, true 159.0 cm (off by 106.6)
+039349_0/28	177	2	I_d_stop_wrong	STM_ONLY	0	no_bragg|shape_flat	seg 172008: d_stop=47.1, true 39.9 cm (off by 7.1)
+039349_33/58	307	2	I_d_stop_wrong	STM_ONLY	1	STM	seg 227031: d_stop=50.1, true 55.4 cm (off by 5.3)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 243040: d_stop=32.5, true 160.1 cm (off by 127.6)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 276043: d_stop=42.7, true 51.8 cm (off by 9.1)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 287051: d_stop=57.4, true 64.2 cm (off by 6.9)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 287058: d_stop=57.4, true 64.2 cm (off by 6.9)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 287059: d_stop=57.4, true 70.5 cm (off by 13.1)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 287060: d_stop=57.4, true 68.3 cm (off by 10.9)
+039349_33/66	308	2	I_d_stop_wrong	THRU	0	no_bragg|shape_flat|stop_near_boundary	seg 288065: d_stop=47.6, true 54.5 cm (off by 6.8)
+039349_37/39	322	2	I_d_stop_wrong	STM_MICHEL	1	STM	seg 319058: d_stop=35.2, true 44.5 cm (off by 9.2)
+039349_63/41	458	2	I_d_stop_wrong	STM_MICHEL	0	no_bragg|shape_flat	seg 261041: d_stop=17.5, true 23.7 cm (off by 6.2)
+039349_66/78	474	1	I_d_stop_wrong	STM_ONLY	0	no_bragg|shape_flat	seg 225036: d_stop=22.9, true 30.5 cm (off by 7.6)
+039253_1/98	93	2	J_not_a_muon	STM_ONLY	0	not_muon_pid	chain reject not_muon_pid; scan STM_ONLY
+039252_15/81	28	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 2.20 cm back along the fit
+039252_16/110	38	2	K_stop_moved_by_scan	STM_ONLY	0	no_bragg|shape_flat	scan moved the stop 3.60 cm back along the fit
+039252_16/32	31	2	K_stop_moved_by_scan	STM_MICHEL	0	profile_sparse	scan moved the stop 3.30 cm back along the fit
+039252_16/98	36	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat|profile_sparse	scan moved the stop 3.40 cm back along the fit
+039252_2/39	44	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 11.10 cm back along the fit
+039252_9/101	84	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 5.00 cm back along the fit
+039253_13/73	111	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 8.20 cm back along the fit
+039253_17/77	131	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat|profile_sparse	scan moved the stop 10.10 cm back along the fit
+039253_2/13	135	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 3.40 cm back along the fit
+039253_3/29	142	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 3.50 cm back along the fit
+039253_3/61	143	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 2.10 cm back along the fit
+039253_7/80	163	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 9.20 cm back along the fit
+039349_10/58	183	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 9.65 cm back along the fit
+039349_18/36	221	1	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 9.50 cm back along the fit
+039349_19/52	225	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 7.00 cm back along the fit
+039349_26/40	266	1	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 4.00 cm back along the fit
+039349_28/60	278	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 18.06 cm back along the fit
+039349_30/45	292	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat|profile_sparse	scan moved the stop 3.80 cm back along the fit
+039349_31/51	298	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 6.50 cm back along the fit
+039349_34/48	311	2	K_stop_moved_by_scan	STM_ONLY	0	shape_flat|profile_sparse	scan moved the stop 5.50 cm back along the fit
+039349_36/63	319	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 1.80 cm back along the fit
+039349_38/57	328	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 3.80 cm back along the fit
+039349_44/28	358	2	K_stop_moved_by_scan	FRAG_STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 4.30 cm back along the fit
+039349_5/54	383	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 4.31 cm back along the fit
+039349_51/29	396	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 9.00 cm back along the fit
+039349_52/36	399	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 6.50 cm back along the fit
+039349_54/56	411	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat|profile_sparse	scan moved the stop 11.35 cm back along the fit
+039349_56/36	422	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat	scan moved the stop 1.50 cm back along the fit
+039349_58/69	431	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 3.00 cm back along the fit
+039349_60/40	441	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat	scan moved the stop 6.10 cm back along the fit
+039349_61/21	446	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 13.90 cm back along the fit
+039349_67/78	481	1	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat	scan moved the stop 4.80 cm back along the fit
+039349_7/4	492	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat|profile_sparse	scan moved the stop 5.90 cm back along the fit
+039349_71/37	505	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 6.50 cm back along the fit
+039349_81/25	549	2	K_stop_moved_by_scan	STM_MICHEL	0	no_bragg|shape_flat	scan moved the stop 6.00 cm back along the fit
+039349_81/44	551	2	K_stop_moved_by_scan	STM_MICHEL	0	shape_flat	scan moved the stop 7.53 cm back along the fit
+039252_12/114	15	2	L_plateau_off_mip	THRU	0	no_bragg|plateau_off_mip	chain flags plateau_off_mip
+039252_12/130	17	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_12/88	12	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_13/91	20	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039252_14/62	22	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_14/64	23	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_16/108	37	2	L_plateau_off_mip	STM_ONLY	0	plateau_off_mip	chain flags plateau_off_mip
+039252_17/88	40	2	L_plateau_off_mip	STM_MICHEL	0	plateau_off_mip	chain flags plateau_off_mip
+039252_2/87	49	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039252_6/106	65	2	L_plateau_off_mip	STM_ONLY	0	plateau_off_mip	chain flags plateau_off_mip
+039252_7/37	69	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_8/102	78	2	L_plateau_off_mip	STM_MICHEL	0	no_bragg|plateau_off_mip	chain flags plateau_off_mip
+039252_8/77	73	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039252_8/97	77	2	L_plateau_off_mip	THRU	0	plateau_off_mip	chain flags plateau_off_mip
+039253_0/40	85	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039253_1/105	94	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039253_12/88	109	2	L_plateau_off_mip	THRU	0	continuation|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039253_17/91	132	2	L_plateau_off_mip	MESSY	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039253_4/95	149	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039253_8/53	169	2	L_plateau_off_mip	MESSY	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_10/54	182	2	L_plateau_off_mip	MESSY	0	no_bragg|plateau_off_mip	chain flags plateau_off_mip
+039349_16/56	211	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_16/70	212	2	L_plateau_off_mip	STM_ONLY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_24/21	254	2	L_plateau_off_mip	UNCLEAR	0	plateau_off_mip	chain flags plateau_off_mip
+039349_25/43	260	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_25/48	262	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_26/34	265	2	L_plateau_off_mip	STM_ONLY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_28/52	275	1	L_plateau_off_mip	MESSY	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_30/41	291	2	L_plateau_off_mip	THRU	0	shape_flat|continuation|plateau_off_mip	chain flags plateau_off_mip
+039349_30/66	293	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_37/52	323	2	L_plateau_off_mip	THRU	0	plateau_off_mip	chain flags plateau_off_mip
+039349_40/49	342	1	L_plateau_off_mip	MESSY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_42/41	345	2	L_plateau_off_mip	MESSY	0	stop_unmatched|plateau_off_mip	chain flags plateau_off_mip
+039349_43/62	353	2	L_plateau_off_mip	THRU	0	stop_unmatched|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039349_54/65	413	2	L_plateau_off_mip	FRAG_THRU	0	stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039349_54/66	414	2	L_plateau_off_mip	THRU	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_56/18	418	2	L_plateau_off_mip	THRU	0	plateau_off_mip	chain flags plateau_off_mip
+039349_60/47	443	2	L_plateau_off_mip	MESSY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_63/47	459	2	L_plateau_off_mip	THRU	0	no_bragg|plateau_off_mip	chain flags plateau_off_mip
+039349_68/71	489	2	L_plateau_off_mip	MESSY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_7/65	497	2	L_plateau_off_mip	STM_ONLY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_71/27	503	2	L_plateau_off_mip	FRAG_THRU	0	no_bragg|shape_flat|stop_near_boundary|plateau_off_mip	chain flags plateau_off_mip
+039349_71/51	507	2	L_plateau_off_mip	THRU	0	plateau_off_mip	chain flags plateau_off_mip
+039349_71/59	508	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_74/28	520	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_77/26	531	2	L_plateau_off_mip	THRU	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_77/52	533	2	L_plateau_off_mip	MESSY	0	plateau_off_mip	chain flags plateau_off_mip
+039349_79/71	538	2	L_plateau_off_mip	THRU	0	no_bragg|shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_80/48	544	2	L_plateau_off_mip	THRU	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039349_81/54	554	1	L_plateau_off_mip	MESSY	0	shape_flat|plateau_off_mip	chain flags plateau_off_mip
+039252_13/66	18	2	L_profile_sparse	MESSY	0	profile_sparse	chain flags profile_sparse
+039252_16/32	31	2	L_profile_sparse	STM_MICHEL	0	profile_sparse	chain flags profile_sparse
+039252_16/91	35	2	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039252_16/98	36	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039252_3/90	57	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039252_6/88	61	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_11/44	101	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_15/81	122	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_16/95	126	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_17/77	131	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_6/76	157	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039253_6/90	161	2	L_profile_sparse	STM_MICHEL	0	profile_sparse	chain flags profile_sparse
+039349_11/43	187	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_12/45	194	1	L_profile_sparse	FRAG_THRU	0	profile_sparse	chain flags profile_sparse
+039349_2/41	231	2	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_20/41	235	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_30/45	292	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_34/48	311	2	L_profile_sparse	STM_ONLY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_37/33	321	2	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_41/51	344	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_44/66	360	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_44/72	362	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_46/58	368	1	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_49/72	382	2	L_profile_sparse	THRU	0	stop_near_boundary|profile_sparse	chain flags profile_sparse
+039349_54/56	411	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_57/26	427	2	L_profile_sparse	FRAG_THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_60/46	442	2	L_profile_sparse	MESSY	0	profile_sparse	chain flags profile_sparse
+039349_68/28	483	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_7/4	492	2	L_profile_sparse	STM_MICHEL	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_75/72	524	1	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_77/48	532	2	L_profile_sparse	THRU	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_81/45	552	2	L_profile_sparse	MESSY	0	shape_flat|profile_sparse	chain flags profile_sparse
+039349_83/53	563	2	L_profile_sparse	THRU	0	shape_flat|stop_near_boundary|profile_sparse	chain flags profile_sparse

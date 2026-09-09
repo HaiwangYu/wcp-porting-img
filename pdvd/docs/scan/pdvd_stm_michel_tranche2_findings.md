@@ -47,6 +47,42 @@ sequential slice of the sheet, not a random sample of the 509, and the first
 scan was taken under a rubric that was still moving. It is a lower bound on the
 frozen-rubric reproducibility, and it is measured on 11 % of the round.
 
+### A second, cleaner double scan — and it costs the 24/24
+
+A wave-list race scanned **4 items twice**, by different agents, **both under the
+frozen rubric**. That is a cleaner comparison than the 57 above, where the first
+pass ran under a rubric that was still moving.
+
+| item | scan A | scan B | |
+|---|---|---|---|
+| `039349_62/66` | THRU / none (medium) | THRU / none (medium) | agree, tags 4/4 |
+| `039349_71/43` | STM_ONLY / detached dots (high) | same (medium) | agree, tags 5/5 |
+| `039349_71/51` | THRU / none (medium) | same (low) | agree, tags 26/26 |
+| **`039349_62/63`** | **STM_MICHEL / attached (high)** | **STM_ONLY / none (high)** | **disagree** |
+
+3 of 4 agree, with per-object tags identical on all three. But the fourth is
+**the round's first disagreement where both scanners said `high`**, and it
+matters more than its weight in the sample: §0's headline property was that
+high-confidence calls do not move (24/24).
+
+**Revised, combining both double scans (61 items):**
+
+| both scanners said | verdict agreement |
+|---|---:|
+| `high` | **24/25 (96 %)** |
+| at least one `medium` | 30/32 (94 %) |
+| either `low` | 0/4 (0 %) |
+
+The claim weakens from "high-confidence calls do not move" to **"high-confidence
+calls move about one time in twenty-five"** — still a strong and usable
+reliability key, and still cleanly separated from the `low` rows, but not the
+absolute it looked like at n=24.
+
+`039349_62/63` is in the owner queue. The disagreement is the round's recurring
+one: whether a forward, MIP-charge arm at the stop is the Michel (→
+`STM_MICHEL`) or the muon carrying on (→ `STM_ONLY`), which is the same
+judgement §2e shows the chain itself struggles with.
+
 ### The pin is the least reproducible thing in the scan
 
 Verdicts agree 93 %, but on the same 57 items the two scans placed a pin on six
@@ -73,6 +109,134 @@ centimetre value attached to it.
 
 **Reported, not fixed.** The obvious remedy — two scanners on every pinned row —
 was not affordable at 509 items in this round.
+
+## 0a. THE LIMIT ON EVERY NUMBER HERE: scanners saw the chain's answer first
+
+A scanner flagged this against its own results, and it governs how the round's
+purity and efficiency figures may be quoted:
+
+> *"the brief's step order has me read `reject_names` before the frames, so I saw
+> the chain's answer first every time."*
+
+It is correct. `AGENT_TASK.md` step 1 is "`cat` the item's `context.json`", and
+that file carries `ends.is_stm` and `ends.reject_names` — the chain's own
+verdict — before step 2 opens a single frame. Every scanner in every wave read
+the reconstruction's answer before looking at the picture.
+
+**This is inherited by design, not an oversight.** The display shows the chain's
+verdict in its header, the owner scans with it visible, and doc pdhd/12 §13.2
+already records tranche 1 the same way: `revealed_before_label: true` on all 32
+of the owner's rows. Tranche 2 is therefore the same *kind* of measurement as
+tranche 1, which is what makes the two comparable — but it is a specific kind:
+
+> **the chain's reconstruction, reviewed by a physicist — not an unbiased
+> benchmark of the chain.**
+
+What this does and does not damage:
+
+* **Damaged:** any claim that the scan is an *independent* ground truth. Where
+  scanner and chain agree, agreement is partly anchoring. The purity and
+  efficiency numbers must be quoted with this caveat attached, every time.
+* **Not damaged:** the *disagreements*. A scanner who saw `is_stm 1` and still
+  wrote `THRU`, or saw `no_bragg` and still wrote `STM_ONLY`, overcame the
+  anchor rather than following it. The round's headline asymmetry — far more
+  "scan says stopper, chain says not" than the reverse — is if anything
+  **understated** by this bias, since anchoring pulls toward agreement.
+* **Not damaged:** the mechanism findings (§2b undershoot, §2c, §2d), which rest
+  on payload arithmetic over all 569 items rather than on any scanner's call.
+
+**What a blind round would take.** Suppressing `is_stm` and `reject_names` from
+`context.json` is a one-line change in `context_of()`, and the shots would have
+to be regenerated. That is the round that could measure the flag rather than
+review it, and it is worth doing before the numbers here are used to set a
+sample definition.
+
+One scanner also volunteered that 8 of its 12 items were `THRU` and that "only
+the owner comparing chunks can judge that as real or as my bias" — the per-chunk
+verdict distributions are in the committed table, so that check is available.
+
+## 0b. Which model should scan? A direct A/B
+
+The owner asked whether a smaller model could do the scanning. Rather than
+guess, one Sonnet agent was given **12 items already scanned at Opus**, the same
+frozen rubric and the same frames, writing to a separate directory.
+
+| metric | Sonnet vs Opus (n=12) | Opus vs Opus (n=57) |
+|---|---|---|
+| verdict | **11/12 (92 %)** | 53/57 (93 %) |
+| `michel_kind` | 9/12 (75 %) | 52/57 (91 %) |
+| per-object tag | 65/76 (86 %) | 350/387 (90 %) |
+
+Sonnet ran ~2× faster (18 min vs 30–40 min per chunk) at comparable token cost.
+
+**On the headline verdict the two are indistinguishable.** On per-object
+attribution Sonnet points weaker on both metrics — but at n=12 a two-item
+difference is not statistically established, so this is weak, consistent
+evidence, not a demonstrated gap.
+
+Two qualitative points carried more weight than the counts:
+
+* all three disagreements fall in the far-speck `gamma`/`delta` region that
+  §3k and §3e2 already identify as the rubric's weakest, and one is a real
+  verdict flip (`039253_4/91`: Opus `STM_ONLY / detached dots`, Sonnet
+  `STM_MICHEL / both`) on the item whose Michel is bridged across a 4.33 cm
+  charge-free gap;
+* Sonnet marked one of the disagreements **`high`** confidence. The property
+  that makes these labels usable (§0) is precisely that high-confidence calls do
+  not move — 24/24 in the Opus double scan.
+
+**Decision: the round continued at Opus.** The owner's stated goals 2 and 3 are
+per-object attribution, which is where the weaker signal sits, and this is a
+record they will validate. The A/B records are kept under `t2/v_sonnet/` so the
+comparison stays auditable and can be extended cheaply if a future round wants a
+larger sample.
+
+## 0c. THE RESULT: the STM+Michel flag scored, and a cut that improves it
+
+This is what doc pdvd/48 §11 asked for. **Preliminary — 403 of 509 tranche-2
+items judged at the time of writing; the final numbers go in doc 55 §14.**
+
+Scoring the chain's `michel_found` against the scan, over judged items
+(`MESSY`/`UNCLEAR` excluded):
+
+| | TP | FP | FN | purity | efficiency | F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| **as shipped** (`michel_found`) | 69 | 30 | 33 | **0.70** | **0.68** | 0.69 |
+| require `michel_conn_type == 1` | 59 | 5 | 43 | **0.92** | 0.58 | 0.71 |
+| **drop range-energy-impossible Michels** | 67 | 11 | 35 | **0.86** | **0.66** | **0.74** |
+| both cuts together | 59 | 5 | 43 | 0.92 | 0.58 | 0.71 |
+
+**The recommendation is the third row.** Dropping Michels that fail the
+kinematic consistency test of §2f — more than 5 cm from the stop *and* under
+10 MeV, which an electron born at the stop cannot be — lifts purity from
+**0.70 to 0.86** while costing almost nothing in efficiency (0.68 → 0.66). It
+is the best F1 of the four and it uses only fields the payload already writes.
+
+Requiring `conn_type == 1` is the blunter instrument: it buys more purity (0.92)
+but throws away a tenth of the real Michels, because a handful of genuine ones
+are proximity-connected. Use it only if purity matters far more than efficiency.
+
+**Where the two error classes come from**, both established independently of any
+scanner judgement:
+
+* **False positives (30):** 25 of 30 are `conn_type == 2` — the chain reaching a
+  distant dot by proximity (§2f). Median 9.1 cm from the stop, 1.2 cm long,
+  4.1 MeV. Five different scanners demoted these to `gamma` on the attachment
+  tie-break before the field was ever examined.
+* **False negatives (33):** the Michel *suppresses the Bragg signature the flag
+  tests for* (§2e) — `STM_MICHEL` items score a terminal-to-plateau ratio of
+  1.32 against `STM_ONLY`'s 1.86 — and the fit-stops-short mechanism (§2b)
+  accounts for five more, all five rejected by the chain. Scanners also found
+  the chain reporting "no daughter" on items with an unassigned 14 cm MIP arm or
+  20 MeV of shower at the stop.
+
+**Caveat, and it is not small.** §0a applies: scanners read `is_stm` and
+`reject_names` before the frames, so *which* items are called `STM_MICHEL`
+carries an anchor toward the chain. That biases these figures **toward
+agreement**, so 0.70/0.68 are if anything optimistic and the disagreement
+classes are conservative. The *cut* recommendation is more robust than the
+absolute scores: it is driven by `michel_dis_cm` and `michel_ke_best`, payload
+fields no scanner saw or influenced.
 
 ## 1. Five concurrent headless browsers silently lose the WebGL context
 
@@ -282,6 +446,57 @@ attribution under the undershoot rule, so no label changes. What changes is the
 whose fit ended 1.8 cm early — and the chain's `no_bragg` on it is a false
 negative with an identified cause.
 
+### How robust is "5"? It depends on one stated choice
+
+A scanner verified that the object table's `dqdx` column is a **median**, not a
+mean (checked against the panel: a 3-point row reading 1.11e5 / 1.9e4 / 1.0e4
+tables as 19862). The census above uses that median. Redoing it against each
+candidate segment's **maximum** point instead:
+
+| statistic | items meeting the signature |
+|---|---:|
+| median ≥ 1.67 × MIP | **5** |
+| max ≥ 1.67 × MIP (median below) | **10 more** |
+
+The ten extras are real objects with one hot sample among several ordinary ones
+— e.g. `039349_81/41` seg `41004`, median 41987 but max 114502 over 3 points;
+`039349_2/56` seg `56014`, median 55228, max 140503.
+
+**The median is the right statistic here, and that is a physics choice, not a
+convenience.** A muon's last centimetres are *sustained* high charge — the Bragg
+rise is a property of the whole tip, not one sample. A single hot point among
+several at plateau is a delta ray or a noise sample, which is exactly what the
+median rejects and the maximum admits.
+
+That reading is corroborated by the scanning: five of the ten extras were
+examined by scanners on their own items (`039252_14/81`, `039349_13/56`,
+`039349_11/46`, `039349_12/45`, `039349_2/56`) and every one was rejected as an
+undershoot on the ground that the charge is at or near plateau overall, or falls
+outward rather than rising in.
+
+So **5 in 569 stands**, with the caveat stated: it counts tips whose charge is
+high *throughout*. A count that admitted single-sample spikes would be 15, and
+would be counting deltas.
+
+**The column's semantics, settled.** A scanner reported the `dqdx` column
+disagreeing with the plotted points by 15× on `039349_61/50` seg `94004`
+(column 8467, points reaching 1.27e5) and asked whether the column means what
+the undershoot test assumes. Checked over 1279 segments in 200 payloads:
+
+> `dqdx_med` is **exactly the median of the segment's live (q > 0) points** —
+> 1279 of 1279, no exceptions. (It equals the median of *all* points only 73 %
+> of the time, so the zero-charge filter is real and is applied.)
+
+On `94004` the five point values are `[127538, 69780, 8467, 5370, 6214]`; the
+median is 8467. Both the column and the panel are correct — they answer
+different questions. **24 of 1279 segments (1.9 %) have max/median > 10**, so a
+row whose median represents neither half of its points is uncommon but not rare.
+
+This is a documentation gap rather than a defect, and it does not disturb the
+census: for the undershoot test the median is the quantity wanted, because a
+muon tip is high *throughout*. A segment like `94004` — two high points and
+three low — is correctly excluded by it.
+
 ### This closes the audit opened in §3e5
 
 The rubric's contradictory "four to six times MIP" clause **could not have
@@ -289,6 +504,291 @@ suppressed any undershoot**. The entire candidate population above the correct
 absolute band is these 5 objects; every scanner that met one flagged it; and the
 gap to the next candidate (1.85 → 1.48 MIP) means no borderline case was
 decided by the wrong multiplier. The census stands at **5 in 569 (0.9 %)**.
+
+## 2e. The Michel degrades the very quantity the chain tests for — a structural efficiency loss
+
+A scanner quantified its own decision threshold instead of leaving it implicit:
+the **terminal-to-plateau charge ratio**, median of the last five live fit
+points over the median of the body, calling ≥ ~1.9 a stopper and ≤ ~1.6 a
+through-goer. That is re-derivable from the payload, so it can be applied to
+every scanned item and checked against every verdict.
+
+Over the 300 items scanned at the time of writing:
+
+| scanner verdict | n | p10 | median | p90 |
+|---|---:|---:|---:|---:|
+| `THRU` | 152 | 0.37 | **0.91** | 1.24 |
+| `STM_ONLY` | 65 | 0.96 | **1.86** | 2.57 |
+| `STM_MICHEL` | 73 | 0.45 | **1.32** | 2.25 |
+
+A single cut at 1.35 reproduces **81 %** of the scanners' verdicts (146/152
+`THRU`, 88/138 stoppers) — so the scanners were, in effect, applying a
+consistent quantitative rule they were never given.
+
+**Two things in that table matter more than the threshold.**
+
+**(1) `STM_MICHEL` scores *lower* than `STM_ONLY` — 1.32 against 1.86.** An
+item with a Michel has a systematically *weaker* measured Bragg rise. That is
+the overshoot mechanism (§2b, §3e9) appearing as a population effect rather than
+as 18 individually pinned rows: when decay charge sits past the stop, the fit
+tends to run into it, and the terminal points that define the ratio are diluted
+by the bridge.
+
+**(2) Crossing the ratio with the chain's own flag shows what the chain is
+actually measuring:**
+
+| | n | median ratio |
+|---|---:|---:|
+| scan `THRU`, chain not-STM | 146 | 0.90 |
+| scan `THRU`, chain STM | 6 | 1.18 |
+| scan stopper, chain not-STM | **72** | **1.11** |
+| scan stopper, chain STM | 67 | **1.98** |
+
+Among items the scanners call stoppers, the chain's accept/reject splits almost
+perfectly on this ratio: 1.98 for the ones it accepts, **1.11** for the 72 it
+rejects. The chain is not making an arbitrary error — its shape test is
+measuring the terminal rise, and on those 72 the terminal rise genuinely is
+weak *in the fitted profile*.
+
+**Put together: the chain's `STM + Michel` flag loses efficiency precisely
+because a Michel suppresses the signature the flag tests for.** The events it is
+designed to find are the ones whose Bragg ratio the Michel degrades. That is a
+structural loss, not a tuning problem, and it is why `shape_flat` is the
+dominant rejection reason (354 of 509 tranche-2 items).
+
+**Caveats, stated because this is a headline claim.** The *ratio* is computed
+from the payload and is independent of any scanner. Which items are called
+stoppers is not — §0a's anchoring applies, and it pulls toward agreeing with the
+chain, so the 72-item disagreement class is if anything conservative. The
+`STM_ONLY`-vs-`STM_MICHEL` comparison is the more robust half, since the chain
+does not distinguish those two and cannot have anchored it.
+
+## 2f. `michel_conn_type == 2` flags the chain's unreliable Michels — 26 of 45 are physically impossible
+
+Scanners kept reporting, independently and in almost the same words, that the
+chain's "Michel object" was a tiny dot reached **across a charge-free gap**: a
+3.8 MeV electron first appearing 11.2 cm from the stop, a 0.3 cm two-point speck
+across 9.4 cm, a 4-point piece bridged over 12.07 cm. Five different scanners
+demoted such objects to `gamma` on the attachment tie-break.
+
+The payload already records the distinction, in two fields nobody was using:
+`michel_dis_cm` (stop → Michel) and `michel_conn_type`.
+
+Over all 569 payloads, 158 carry `michel_found`:
+
+| `michel_conn_type` | n | `michel_dis_cm` p25/med/p75/max | `michel_len` cm p25/med/max | KE MeV p25/med/max |
+|---|---:|---|---|---|
+| **1** (graph edge) | 113 | 0.00 / **0.00** / 0.00 / 0.00 | 3.46 / **6.49** / 20.10 | 12.74 / **21.39** / 51.0 |
+| **2** (proximity) | 45 | 4.30 / **9.11** / 11.20 / 14.90 | 0.36 / **1.20** / 16.08 | 1.22 / **4.11** / 76.8 |
+
+Type 1 is a textbook Michel population: attached at the stop (distance exactly
+zero on all 113), 6.5 cm long, 21 MeV — right on the Michel spectrum, whose mean
+is ~35 MeV and whose range in liquid argon is 10–20 cm.
+
+Type 2 is not. Median 9.1 cm from the stop, 1.2 cm long, 4.1 MeV.
+
+**The decisive test is kinematic.** An electron that is born at the muon's stop
+cannot travel 5 cm through liquid argon and then deposit less than 10 MeV — the
+range and the energy contradict each other.
+
+| | items failing `dis > 5 cm` **and** `KE < 10 MeV` |
+|---|---|
+| `michel_conn_type == 1` | **0 of 113** |
+| `michel_conn_type == 2` | **26 of 45** |
+
+Zero false on one side, 58 % impossible on the other. **`michel_conn_type` is
+already a working quality flag for the chain's Michel identification, and it is
+not being used as one.**
+
+**What this is worth.** 45 of 158 chain Michels (28 %) are proximity-connected,
+and 26 (16 % of all chain Michels) are physically impossible as decay electrons.
+Those are false positives in any sample defined by the `STM + Michel` flag, and
+they are separable *today* with a field the payload already writes — no new
+reconstruction, no retuning. A range-energy consistency cut would remove the
+rest.
+
+Together with §2e this gives the flag's two failure modes with mechanisms:
+the Michel **suppresses** the Bragg signature the flag tests for (efficiency
+loss), and **proximity-connected dots are admitted as Michels** (purity loss).
+
+**Caveat.** This is payload arithmetic over all 569 items and is independent of
+every scanner judgement, so §0a's anchoring bias does not touch it. What the
+scanners contributed was noticing the pattern; the numbers are the chain's own.
+
+## 2g. A third fit failure: the coiled end, where dQ/dx is wrong in both directions
+
+Overshoot and undershoot both assume the fit is a *straight* object that ends in
+the wrong place. A scanner found a third mode the rubric does not describe: the
+fit **coils in place** at its end — 17–20 cm of fit arc confined inside a ball
+under 5 cm across.
+
+This is worse than a misplaced stop, because dQ/dx is charge divided by path
+length: a coil corrupts the **denominator**, inflating charge where the fit runs
+on and suppressing it where the fit folds back. Both fit-failure diagnostics
+read the resulting profile, so both are unreliable on such an item — the scanner
+found one where the same suspect denominator produced a 1.37e5 "Bragg peak" and
+a 1.5–3.3e4 "collapse" a few cm apart, in opposite directions.
+
+Measured over 567 payloads as the ratio of fit **arc** to 3-D **span** across
+the last 20 cm of fit:
+
+| arc / span | items | share |
+|---|---:|---:|
+| median | — | 1.06 |
+| ≥ 1.5 | **18** | 3.2 % |
+| ≥ 2.0 | 7 | 1.2 % |
+| ≥ 3.0 | 2 | 0.4 % |
+
+The scanner's own item, `039349_48/21`, is **the most coiled fit end in the
+entire corpus** at 3.41 (19.9 cm of arc inside a 5.8 cm ball) — it found the
+extreme case from the picture alone.
+
+**How far it contaminates the round: barely.** Cross-checking every pin placed
+so far against the coil ratio:
+
+> **1 of 24 pins** sits on a coiled fit end — `039253_17/77` (pin rr 10.10,
+> arc/span 2.02). The other 23 sit on geometry with ratios 1.03–1.40.
+
+So the pin measurements are almost entirely on clean tracks, and that single row
+is flagged in the owner queue as a pin whose dQ/dx evidence rests on an
+unreliable denominator.
+
+**Reported, not fixed.** `arc/span` over the last 20 cm is a two-line
+computation from fields the payload already carries, and it would let the chain
+— or the next rubric — mark an item as "profile unreliable, geometry only"
+before anyone reads its dQ/dx. It joins `plateau_off_mip` (§3l) and
+`profile_sparse` as a named class where the charge scale should not be trusted.
+
+## 2h. The rubric's absolute charge anchors are wrong; the scanners were right to ignore them
+
+Four scanners objected that the frozen rubric's sanity-check band — *"real
+stoppers here top out at 1.2–1.35e5"* — did not match what they were seeing.
+Measured over 393 scanned items, peak dQ/dx within 10 cm of the stop:
+
+| verdict | n | p10 | median | p90 | max |
+|---|---:|---:|---:|---:|---:|
+| `THRU` | 207 | 41 342 | **73 638** | 115 988 | 256 809 |
+| `STM_ONLY` | 85 | 96 542 | **136 841** | 216 332 | 272 475 |
+| `STM_MICHEL` | 101 | 78 685 | **112 147** | 140 503 | 220 434 |
+
+Against the stated band, over the 186 scanner-called stoppers:
+
+> **87 (47 %) peak below 1.2e5, and 66 (35 %) peak above 1.35e5.**
+> Fewer than one stopper in five falls inside the band the rubric quotes.
+
+The number was mine, inherited from the tranche-1 write-up, and it is simply not
+a property of this population. It is the same error family as the "four to six
+times MIP" clause (§3e5): **absolute charge anchors do not transfer**, because
+plateaus range over 4.0–6.5e4 across the sample and 9 % of items never reach MIP
+at all (§3l).
+
+**Why the round survives it.** The scanners noticed and routed around it — four
+of them independently substituted the track's own plateau as the yardstick
+(§3i), and §2e shows that substitute reproduces 81 % of the verdicts as a single
+cut. The absolute band was never load-bearing; it was a cross-check that kept
+failing, and the scanners correctly trusted the shape over the number.
+
+**Two things worth keeping from the table.** `THRU` at median 73 638 is cleanly
+separated from stoppers at 123 350, so the peak *is* discriminating — just not
+at the stated values. And `STM_MICHEL` (112 147) again sits **below** `STM_ONLY`
+(136 841), the same suppression §2e measures by ratio, now visible in absolute
+charge: the Michel depresses the peak as well as the ratio.
+
+**For the next rubric: delete the absolute bands.** Quote the plateau ratio
+(§2e) and the shape tests (§3i), which are scale-free and survive
+`plateau_off_mip`.
+
+### The third and largest of the same error: "nothing ever crosses the curve"
+
+The frozen rubric tells scanners the test is *not* "the data must cross the
+reference curve", and justifies it: *"the overlaid muon curve asymptotes to
+~1.6e5 at s = 0 and real stoppers here top out at 1.2–1.35e5, so nothing ever
+crosses it."*
+
+The guidance is right. **The justification is false, on 86 % of items.**
+Counting points above the muon reference curve within 25 cm of the stop, over
+411 scanned items:
+
+| | items | share |
+|---|---:|---:|
+| ≥ 1 point above the curve | **352** | **86 %** |
+| ≥ 3 points above the curve | 327 | 80 % |
+
+| verdict | above / total |
+|---|---|
+| `STM_MICHEL` | 100 / 101 (99 %) |
+| `STM_ONLY` | 82 / 85 (96 %) |
+| `THRU` | 163 / 208 (78 %) |
+| `MESSY` | 3 / 11 (27 %) |
+
+The confusion is a coordinate one. The reference curve is steep: ~1.6e5 at the
+stop but only ~6.2e4 by 20 cm out. Data rarely exceeds it *at* s = 0, which is
+what the calibration scanner originally reported — but *away* from the stop the
+curve sits near MIP, and any delta ray on the muon body crosses it easily. My
+write-up generalised "no stopper reaches 1.6e5 at the stop" into "nothing ever
+crosses the curve anywhere", which is a different and untrue claim.
+
+It cost real scanner time: one recorded that the assertion "made me doubt my axis
+calibration for a while", and another used curve-crossing as evidence for a
+species mis-identification that did not hold up (§3j).
+
+**Correct wording for the next rubric:** *real Bragg charge does not exceed the
+muon curve near the stop; delta rays routinely exceed it further back, so a
+crossing away from s = 0 is ordinary and carries no information.*
+
+Three calibration errors, all mine, all the same shape: a statement true of one
+narrow situation, generalised into a rule. The scanners caught all three, and in
+each case they trusted the shape tests over my numbers — which is why the
+verdicts survived (§2e reproduces 81 % of them from the plateau ratio alone).
+
+## 2i. A fourth fit failure: the fit spans ground the imaging never covered
+
+Scanners kept describing the same thing in different words — *"a 50 cm hole in
+the middle of the charge"*, *"115 cm at 2207 e/cm drawn as a bare fit line"*,
+*"the fit bridges ~40 cm of near-empty space"*, *"45 cm of fit at 0.05–0.35 MIP
+past the dense spine"*. It is neither the overshoot (which bridges *to*
+something) nor the coil (§2g, which folds in place): the fit simply extends
+across a region with no imaged charge.
+
+The right unit is the **segment**, not the point. Nothing here is a *dead* fit
+point — over all 569 payloads there is not one item ending in a run of `q ≤ 0`
+points. The charge is present but tiny. Counting fitted segments ≥ 20 cm long
+whose median charge is under a quarter of their item's own plateau:
+
+> **40 segments over 20 distinct items — 3.5 % of the sample.**
+
+| item | segment | length | dQ/dx median | fraction of plateau |
+|---|---|---:|---:|---:|
+| `039253_6/82` | 82041 | **208.6 cm** | 4363 | 0.114 |
+| `039349_12/44` | 44005 | 169.8 cm | 3117 | 0.102 |
+| `039349_33/45` | 45003 | 168.9 cm | 4272 | 0.242 |
+| `039349_66/33` | 33003 | 115.0 cm | 2207 | 0.164 |
+| `039253_17/127` | 127010 | 112.0 cm | 3892 | 0.074 |
+| `039349_83/53` | 53006 | 55.4 cm | 7003 | 0.149 |
+
+A **2.08 metre** fitted segment carrying a ninth of the track's own charge is not
+a measurement of anything. `039253_6/82` has three such segments (208.6, 78.2,
+49.2 cm) in one object.
+
+**Why it matters for the verdicts.** This is the class where scanners were most
+often torn between `THRU` and `MESSY`, and they said so: `MESSY` requires "no
+coherent spine", but these objects *have* a spine — a fitted one, drawn through
+empty space. So they fall to `THRU` on "no Bragg rise", and one scanner put the
+consequence plainly: *"my THRU bucket therefore contains objects that are not
+through-going muons."*
+
+**Reported, not fixed**, and it is a chain-side observation rather than a display
+one: a segment of that length at that charge is a statement about the
+reconstruction, not about a muon. Like §2g's coil ratio it is computable from
+fields the payload already carries, and it would let an item be flagged
+*"fit unsupported by charge over N cm"* before anyone reads its profile.
+
+**One correction to the scanner report that prompted this.** The claim was that
+`039349_83/53`'s terminal 52 cm "carry no charge at all". They carry ~7000 e/cm
+— about a seventh of the plateau, not zero — and all 227 of that item's fit
+points are live. The substance stands; the wording overstated it, and a
+per-point search for dead charge (which is what "no charge" implies) finds
+nothing in the whole corpus.
 
 ## 2c. The hot last point is real charge, not a step-length artefact
 
@@ -529,6 +1029,19 @@ load-bearing. Two things are owed upstream: find why `seg_rej.d_stop` diverges
 (it looks measured against a different reference than the final stop), and
 filter the 1e8 sentinel before it reaches a display column.
 
+**A related, smaller tail in the same family.** A scanner flagged object rows
+whose `size` exceeds the whole fitted track. Checked over all 569 payloads:
+**9 rows**, seven of them marginal (1.05–1.2×) and two not — `039349_82/54` seg
+`54005` at 1.97×, and `039349_43/62` seg `188002` at **4.90×** (111.9 cm on a
+22.8 cm track).
+
+`size` is not lying: on `188002` the row has **two points 111.9 cm apart**, and
+the field reports that span faithfully. The defect is upstream — two unrelated
+points have been grouped into one "object", which the display then draws as a
+111.9 cm entity beside a 22.8 cm track. The scanner's reading ("a survey
+artefact rather than an object") is right, and the useful check is cheap: a row
+whose `size` exceeds the track length is not an object.
+
 ## 3e8. One item in the scan is probably not a muon at all
 
 `039253_1/98` is a clean contained stopper with nothing past the end, so
@@ -567,6 +1080,81 @@ evidence at `medium` confidence rather than letting the label stand unqualified.
 needs a "bridged gap, nothing past it" option before tranche 3 — and every
 overshoot pin in the round should be re-read for the same forcing. It is the one
 place in this round where the label schema cannot express what the scanner saw.
+
+### The mirror case: a verdict/kind contradiction that ships
+
+The same schema gap runs the other way, and one record in the round carries it.
+On `039349_30/45` the pin moved (rr 3.8) on a clean collapse, but the decay
+charge past the new stop is **unclustered image points** — there is no drawn
+object to carry a `michel` tag. The rubric forbids the escape ("not something to
+solve by picking a tag that misdescribes the whole row"), so the only legal
+record is `STM_MICHEL` with `michel_kind: none`: a row whose verdict asserts a
+Michel and whose kind field — the one that exists to be countable across all 509
+rows — denies any decay charge past the stop.
+
+`mkv.py` enforces kind-against-**tags** but nothing enforces kind-against-
+**verdict**, so it ships. Measured over 360 records:
+
+| | count |
+|---|---:|
+| `STM_MICHEL` verdict with **no** object tagged `michel` | **2** |
+| `michel` tag on a non-`STM_MICHEL` verdict | **0** |
+
+Both are the same gap seen from two sides: on `039349_30/45` the decay charge is
+unclustered image points (kind `none`); on `039349_51/29` the Michel charge sits
+*inside* a row that is mostly muon and therefore tagged `muon`, leaving only
+gammas to set the kind (`detached dots`). 2 of 360 is 0.6 %, both carry their
+reasoning in the notes, and both are in the owner queue.
+
+**A related property of the mechanical rule, deliberate rather than accidental.**
+`michel` ⇒ `attached` means the rule *cannot express a detached Michel*. That is
+the right behaviour: a Michel electron is born at the muon's stop, so an
+apparently detached one means either the stop is in the wrong place — move the
+pin, which is the overshoot/undershoot case — or the piece is not the Michel at
+all, which is the `gamma` case. The rule forces that question to be answered
+rather than recorded as an ambiguity. Tranche 1 never produced the combination
+either (18 `attached`, 16 `both`, 0 `detached dots` across 34 `STM_MICHEL`). **No guard was added**: rejecting the record would force the scanner to
+either mis-tag an unrelated row or downgrade a verdict the evidence supports,
+which is worse than one honestly-contradictory row carrying its reason in the
+notes. The real fix is a schema that can say "decay charge present, no object
+drawn for it".
+
+`039349_30/45` is in the owner queue.
+
+### The rubric already had the answer and contradicted itself about it
+
+A scanner found this and it is the sharpest self-inflicted problem of the round.
+The frozen rubric says, in the pin section:
+
+> *"the tag alphabet is per-object and cannot split one"* (line 182)
+
+and, in the tag table:
+
+> `straddles the stop` — *"one object genuinely spanning the stop"* (line 254)
+
+**`straddles the stop` is exactly the tag for a split row.** The alphabet *can*
+express it; I wrote that it could not, in a different paragraph, and then framed
+the split-row case as an unsolvable schema limitation (§3e9) when the schema
+already had the value.
+
+The consequence is measurable: **`straddles the stop` was used 0 times in 473
+scanned items**, exactly as in tranche 1's 60. Every scanner that met a split row
+followed the "cannot split one" sentence — tagging the row for what most of it
+is — and two of them ended up shipping the `STM_MICHEL`-with-no-`michel`-tag
+records described above. Had they reached for `straddles the stop`, both records
+would have been expressible.
+
+Whether `straddles` *should* carry the split-collapse case is a physics decision
+for the owner — it was introduced (doc pdhd/12 §5.7.2) for an object genuinely
+spanning the stop, which is arguably a different thing from a fit segment the
+scan has decided is part muon and part Michel. But the round should not have
+foreclosed it by assertion.
+
+**For the next rubric:** either state that `straddles the stop` is the split-row
+tag, or say explicitly why it is not and keep the limitation — but not both.
+
+Tag totals over the 473 scanned rows, for reference: `muon` 1447,
+`delta / other` 1245, `gamma` 241, `michel` 219, `straddles the stop` **0**.
 
 ## 3h. The `gamma` tag conflates two mutually exclusive processes
 
@@ -612,6 +1200,23 @@ One flagged it explicitly as "an extension I invented, not an application". It
 is the single most reproduced methodological improvement of the round, it came
 from the scanning rather than from the rubric, and it should be the stated test
 next time.
+
+**Three more scanner-built tests worth adopting**, each invented to fill a gap
+the rubric leaves and each stated in a form another scanner could re-apply:
+
+* **The coexistence test — is a high-charge patch a Bragg lift or a delta?**
+  *A Bragg rise lifts every point in its range; a delta leaves ordinary points
+  interleaved at the same arc length.* This decided three items in one chunk and
+  is the cleanest discriminator anyone produced for the round's most common
+  ambiguity. §2e's terminal-to-plateau ratio is its quantitative cousin.
+* **The destination test** — before moving a pin, is there an object at
+  `dstop ≈ 0` for the fit to have bridged *to*? Used to withdraw two pins.
+* **The ramp test** — a real Bragg approach ramps *into* the peak over 10–20 cm;
+  a lone hot point with sub-plateau charge a few cm in front of it cannot be an
+  approaching muon.
+
+Taken together these three plus the plateau ratio are most of a rubric the next
+round could state up front instead of having each scanner rediscover.
 
 ## 3j. Two scanner claims that did NOT survive checking
 
@@ -743,6 +1348,25 @@ frozen rubric already calls ordinary scatter. The conclusion is a threshold
 statement rather than a yes/no: **the shape is real and diagnostic when strong
 (≈1 % of items), and ordinary profile noise when weak.** The scanner's caution
 was right; the artefact reading was not.
+
+## 3f2. The particle-flow band's *extent* is a second, distinct trap
+
+Display trap 2 warns that the amber particle-flow band can be misread as high
+charge. A scanner found the sharper version: **the band covers a different
+portion of the chain on different items** — the whole chain on one, a single
+segment on another, the body only on a third — so the boundary where thick amber
+gives way to thin turbo reads as a *physical change in the object's character*.
+
+It caused the round's clearest self-caught error. On `039349_57/26` a scanner
+first recorded `STM_MICHEL / both` with the pin moved 21.7 cm, reading
+"thick body ending, thin trail continuing" as muon-then-Michel. It then
+overwrote the record with `FRAG_THRU / none` on realising the transition was the
+selection band ending, not the object changing — and that its supposed Bragg
+peak was a single 1.55e5 point with 9.8e4 and 9.3e4 either side, the same delta
+pattern it had rejected twice on other items.
+
+Worth stating as its own trap: *the amber band's start and end are display
+state, not physics; never read a change of character at its boundary.*
 
 ## 3f. The particle-flow overlay contaminates `f_meas` too, not just the 3-D frames
 
