@@ -168,6 +168,8 @@ VERDICT_SCALARS = [
     # comprehension below skips missing keys, so a pre-doc-57 arm re-preps
     # byte-identically with no n_retreat/retreat_len column at all.
     "n_retreat", "retreat_len",
+    # doc pdvd/58 (T1c) -- the stop split.  Same absent-on-older-arm guard.
+    "n_split", "split_len", "split_kink_deg",
     "contrast", "contrast_expected", "plateau_med", "tail_med",
     "n_tail", "n_plateau", "short_track", "ks_mu", "ks_flat",
     "stop_dis", "t0_us", "gid", "chain_coverage", "n_cluster_pts",

@@ -283,6 +283,47 @@ function(
         // C++ default false, so omitting the key is byte-identical.
         michel_unfit_from_model: true,
         michel_unfit_dedx: 2.1,
+        // doc pdvd/57/58: retreat the STM stop off the fit's far end when the
+        // trailing tail is charge-collapsed and a Bragg rise survives before
+        // it.  Confirmed on the 569-item smx1a scan record: +2 is_stm TP / 0
+        // regressions / 0 new is_stm false positives (byte-identical gates
+        // PASS both detectors, 0 flips), pin residual over the 36 pins
+        // 4.60 -> 3.53 cm.  Cost: michel_found purity 0.740 -> 0.737 (2 THRU
+        // items gain a spurious michel_found at conn_type 1, dis_cm 0.00 --
+        // feeds T2, doc 56 sec 8).  retreat_collapse_frac/peak_frac/
+        // peak_window_cm stay at their C++ defaults -- that is what the
+        // scored arm (d57v) ran.  PDHD is NOT flipped: no PDHD STM/Michel
+        // hand-scan record exists to confirm it there (doc pdhd/03's scan
+        // sheet is unfilled), and CLAUDE.md sec 5.7 forbids flipping what
+        // cannot be scored.
+        stop_retreat_max: 2,
+        // doc pdvd/58: the STOP SPLIT (T1c).  The retreat above can only
+        // move the stop onto a vertex the chain already has; this instead
+        // splits the fit's last chain segment at a fit row (PR::break_segment
+        // -- the same primitive anchor_vertex() already uses to split at the
+        // tagger's own entry/stop), gated on the fitted trajectory's own bend
+        // at that row (>= split_kink_min_deg) rather than an existing vertex,
+        // which is what keeps it from firing on a through-going track (doc
+        // 58 sec 1: bend median 18.5 vs 6.3 deg on the negative control).
+        // Confirmed on the same 569-item record: +1 is_stm TP / 0 regressions
+        // / 0 new is_stm false positives (identical FP set before/after),
+        // pin residual 3.53 -> 3.16 cm.  Cost: michel_found purity 0.737 ->
+        // 0.727 (3 THRU items gain a spurious michel_found at conn_type 1,
+        // dis_cm 0.00, on top of the retreat's own 2 -- feeds T2).  This is
+        // the first STM/Michel knob that mutates PR graph topology when ON
+        // (a new vertex, a new segment id) rather than only the verdict --
+        // doc 58 sec 5/6 reports the T_stm_michel_pts role/geometry census
+        // this round's OFF-path gate already covers; nothing else in this
+        // component runs downstream of it that the split's own
+        // VertexFlags::kProtectedBreak stamp needs to protect against.
+        // split_kink_min_deg/split_collapse_frac/peak_frac/peak_window_cm/
+        // min_drop_cm/dir_window_cm all stay at their C++ defaults -- that is
+        // what the scored arm (d58v) ran, and it keeps the OFF-path compiled
+        // JSON free of any inert-but-present key (a key set here would show
+        // up in the compiled config even with stop_split_max overridden to 0,
+        // which is not byte-identical in the sense CLAUDE.md sec 4 means).
+        // PDHD is NOT flipped, same reason as the retreat above.
+        stop_split_max: 1,
     },
     // TrackFitting parameter JSON, required whenever tagger_check_stm is in the
     // pipeline: the C++ preset defaults are uBooNE-hard-coded, never right for

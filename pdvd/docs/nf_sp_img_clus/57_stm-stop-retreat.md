@@ -1,10 +1,14 @@
 # 57 — T1a: the STM stop retreat
 
-**Status (2026-09-09). Behavior change behind a default-OFF knob. Not
-production: `stop_retreat_max` is not set in either ProtoDUNE `wct-pr-perevt.jsonnet`.
-Two byte-identical gates PASS (PDVD 579/579, PDHD 325/325 shared branches);
-the feature arm is scored against the frozen 569-item scan record, not a new
-hand scan.**
+**Status (2026-09-09, updated same day). `stop_retreat_max: 2` is now PDVD
+PRODUCTION in `pdvd/wct-pr-perevt.jsonnet` (confirmed on this round's own
+census: 0 regressions, 0 new `is_stm` false positives). PDHD stays OFF: no
+PDHD STM/Michel hand-scan record exists to confirm it there. Two
+byte-identical gates PASS (PDVD 579/579, PDHD 325/325 shared branches); the
+feature arm is scored against the frozen 569-item scan record, not a new
+hand scan. See doc pdvd/58 for T1c, the companion mechanism this round's §1
+sized (the stop split, for the 23 items the retreat cannot reach — now
+9 structural + 14 proxy-only, corrected there).**
 
 Doc pdvd/56 §8 named T1a first: on 51 of the 125 missed stoppers the STM stop
 is, in practice, the far end of the tagger's trajectory fit, because
