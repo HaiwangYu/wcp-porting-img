@@ -323,9 +323,10 @@ n_pf_objects` on every one, and both pins carry a `moved_cm`.
   moved 4.07 cm, against their `rr 3.0` and 2.88 cm), a 1.2 cm difference on a
   correction §7 calls good to no better than ±3 cm.  This scan pins a **third**
   row they had not scanned, `039349_67/78`, and that one came out of their
-  review rather than out of the first pass (§7, §9).  In the live tag they have
+  review rather than out of the first pass (§7, §9).  In the live tag they had
   since moved the `039349_26/40` pin to `rr 0.60` and placed one on
-  `039349_12/45` (§11).
+  `039349_12/45`; on their 2026-09-09 call both were returned to this scan's
+  placement (§11).
 
 **What this number is and is not.**  It is **not blind.**  The owner asked for
 their 32 to be used as calibration, so their per-item labels were in front of
@@ -561,14 +562,28 @@ be the harness's fault.  Run after the scan, all green:
 
 **`smx1a` is a live tag, and the record is this scan only.**  The owner edits it
 through the app while validating, so `labels.json` can hold placements this
-document does not describe.  As of the run above it carries **two pins that are
-not in the scan record**, both made in their own session on 2026-09-09:
-`039349_12/45` at `rr 58.78` (the record asks for none) and `039349_26/40` at
-`rr 0.60` (the record asks for `rr 4.00`, §7).  `verify_scan_record.py` names
-exactly those two and nothing else, which is the intended behaviour: the record
-is what *this scan* found, the file is what the tag currently holds, and the
-tool is what keeps the difference visible instead of silent.  The rows are
-marked **†** in §12.
+document does not describe.  Through the tranche-2 round it carried **two pins
+that were not in the scan record**, both made in their own session on
+2026-09-09: `039349_12/45` at `rr 58.78` (the record asks for none) and
+`039349_26/40` at `rr 0.60` (the record asks for `rr 4.00`, §7).  They were
+preserved untouched for the whole round, and `verify_scan_record.py` named
+exactly those two and nothing else — the intended behaviour: the record is what
+*this scan* found, the file is what the tag currently holds, and the tool keeps
+the difference visible instead of silent.
+
+**Resolved 2026-09-09** — the owner's call: *"they are OK either way, you can
+use your own scan results."*  Both rows were re-driven through the real widgets
+from the record, so `039349_12/45` now carries no pin and `039349_26/40` sits at
+`rr 4.2` (the slider's snap to the record's `rr 4.00`, inside the 0.5 cm
+tolerance).  Only the `pin` field moved on either row, and no other row moved at
+all.  `verify_scan_record.py` is now clean on all 569: *"the artifact says what
+the record says, on every field the doc publishes."*  Pins on disk go 37 → 36,
+and §16.2's spread tightens accordingly — `p90 8.43 → 8.32 cm`, `max 51.33 →
+17.42 cm`, median unchanged at 4.85 — because the 51.33 cm outlier **was** the
+`039349_12/45` pin.  No verdict, kind or tag changed anywhere, so §14 and §15
+are untouched (`mkstats.py --check`: 0 of 4 tables differ) and the failure
+register regenerates byte-identically.  The rows are
+marked **†** in §12 (as of 2026-09-09 there are none left — see below).
 
 ## 12. The 60 rows (tranche 1)
 
@@ -577,8 +592,9 @@ chain's own verdict: `STM` when `is_stm = 1`, otherwise its reject names.
 `mu/mi/ga/ot` counts the tags: muon / michel / gamma / delta-other.  `owner` is
 their review of 2026-09-09 (§9): ✓ confirmed, **corrected** where it moved,
 blank where it was not reviewed.  Verdict, kind, tags and pin are read out of
-`labels.json`; a pin marked **†** is one the file holds and this scan did not
-place (§11).
+`labels.json`.  The **†** marker — a pin the file held that this scan did not
+place — is now unused: the owner's two live pins were returned to this scan's
+placement on 2026-09-09 (§11), so the table and the file agree on every row.
 
 | scan | item | len | chain | my verdict | kind | conf | owner | mu/mi/ga/ot | pin |
 |---:|---|---:|---|---|---|---|---|---|---|
@@ -605,7 +621,7 @@ place (§11).
 | 171 ‡ | `039253_8/62` | 275 | STM | **STM_MICHEL** | both | high |  | 7/2/3/5 | - |
 | 178 ‡ | `039349_0/68` | 279 | no_bragg,shape_flat | **THRU** | none | high |  | 4/0/0/3 | - |
 | 181 ‡ | `039349_10/27` | 238 | shape_flat | **THRU** | none | high |  | 8/0/0/5 | - |
-| 194 ‡ | `039349_12/45` | 120 | profile_sparse | **FRAG_THRU** | none | medium | ✓ | 5/0/0/1 | rr 58.8 † |
+| 194 ‡ | `039349_12/45` | 120 | profile_sparse | **FRAG_THRU** | none | medium | ✓ | 5/0/0/1 | - |
 | 210 ‡ | `039349_15/59` | 254 | no_bragg,shape_flat | **THRU** | none | high |  | 1/0/0/0 | - |
 | 221 ‡ | `039349_18/36` | 147 | no_bragg,shape_flat | **STM_MICHEL** | attached | high |  | 7/1/0/0 | rr 9.6 |
 | 229 ‡ | `039349_2/38` | 71 | shape_flat | **STM_ONLY** | none | high |  | 4/0/0/3 | - |
@@ -613,7 +629,7 @@ place (§11).
 | 249 ‡ | `039349_22/64` | 477 | STM | **STM_ONLY** | detached dots | high |  | 7/0/1/1 | - |
 | 261 ‡ | `039349_25/47` | 243 | STM | **STM_ONLY** | none | high |  | 2/0/0/1 | - |
 | 264 ‡ | `039349_26/18` | 74 | no_bragg,shape_flat | **STM_ONLY** | detached dots | high |  | 3/0/1/1 | - |
-| 266 ‡ | `039349_26/40` | 27 | no_bragg,shape_flat | **STM_MICHEL** | both | medium | ✓ | 1/1/2/0 | rr 0.6 † |
+| 266 ‡ | `039349_26/40` | 27 | no_bragg,shape_flat | **STM_MICHEL** | both | medium | ✓ | 1/1/2/0 | rr 4.2 |
 | 270 ‡ | `039349_27/41` | 71 | stop_near_boundary | **STM_MICHEL** | attached | medium | ✓ | 1/1/0/0 | - |
 | 273 | `039349_28/36` | 348 | STM | **STM_MICHEL** | both | high |  | 5/4/3/0 | - |
 | 275 | `039349_28/52` | 92 | shape_flat,plateau_off_mip | **MESSY** | none | high |  | 0/0/0/26 | - |
@@ -1100,6 +1116,12 @@ and tranche 2's 33, should be read as one scanner's placement — the
 verdict-level claim ("the fit's stop is wrong here") is far more robust than the
 centimetre attached to it.
 
+Across the **36** pins the file now holds, the stop moves a median **4.85 cm**,
+p90 **8.32 cm**, max **17.42 cm** (`score_stm_michel_scan.py`). Those are the
+numbers after §11's resolution of the owner's two live pins; before it the file
+held 37 and the max was 51.33 cm, which was that one placement and not a
+property of the scan.
+
 **The pins are not resting on dead wires.** Testing each pinned item's fit points
 between the stop and the moved pin against the payload's dead-channel lists:
 **9 of 33 have any dead-channel coverage, and none in more than one plane.**
@@ -1132,9 +1154,9 @@ flag rather than review it.
 | every one of the 509 written by clicking the real widgets | 509 saved, **0 retries**, no `SystemExit` in any apply log |
 | the five private label dirs merge disjointly | 102+102+102+102+101 = **509**, no key written twice |
 | the 60 tranche-1 rows survive the merge | **all 60 byte-identical** to the pre-round snapshot `7456ee89` |
-| the owner's two live pins survive | `039349_12/45` rr 58.78, `039349_26/40` rr 0.60 — **preserved as found** |
+| the owner's two live pins survive the round | `039349_12/45` rr 58.78, `039349_26/40` rr 0.60 — **preserved as found** throughout; brought onto this scan's placement afterwards on the owner's call (§11) |
 | `pdvd/work/stm_michel_labels/smx1/` untouched (M13) | sha `8fc76b33…` unchanged start to end |
-| `verify_scan_record.py … --record …` | **569 records over 569 rows**; every verdict, kind and tag matches. Two mismatches remain **by design** — the owner's pins above, which the record does not claim |
+| `verify_scan_record.py … --record …` | **569 records over 569 rows**, **0 mismatches** — *"the artifact says what the record says, on every field the doc publishes."* (During the round it named exactly the owner's two pins, by design; those were resolved afterwards, §11) |
 | `score_stm_michel_scan.py --det pdvd --tag smx1a` | clean, rc 0 (it refuses an unknown `label`) |
 | `mkstats.py --check` | **0 of 4** published tables differ from the recomputed values |
 | `mkfailures.py` regenerated deterministically | reproduces the committed `failures.tsv` **byte-identically** |
@@ -1157,8 +1179,9 @@ directly and never imports `scan_harness.py`, and PDVD passes 34/34 on the same
 code. Reported, not fixed (§17.5).
 
 The label file went `7456ee89` (60 rows) → `724693b3` (569) → `afa025be` after
-the one-row correction of §17.6. Those shas are recorded so a later clobber is
-detectable rather than silent.
+the one-row correction of §17.6 → **`5ffc889e`** after §11's resolution of the
+owner's two live pins. Those shas are recorded so a later clobber is detectable
+rather than silent.
 
 ---
 
