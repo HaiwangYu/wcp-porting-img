@@ -958,6 +958,27 @@ function(
     // -stm-vertex-guard / SBND_STM_VERTEX_GUARD=1.
     stm_deficit_guard = false,   // PDVD: OFF (STM is the signal, doc 25 sec 2.3); SBND production true
     stm_vertex_kink_guard = false,   // PDVD: OFF (STM is the signal, doc 25 sec 2.3); SBND production true
+    // doc pdvd/56 T1b (doc 59): a third, additive OR-clause in
+    // find_first_kink's charge gate (both sweeps), admitting an ASYMMETRIC
+    // kink (Bragg into a cold Michel) that the existing "both arms hot"
+    // clauses never accept.  C++ defaults false/1.2/0.5; keys omitted when
+    // off => byte-identical.  CONFIRMED and FLIPPED ON for PDVD production:
+    // +2 is_stm TP (039349_52/36, 039349_67/78) / 0 regressions / 0 new
+    // is_stm false positives (identical 9-item FP set, byte-identical gates
+    // PASS both detectors, 579/579 + 325/325) on the 569-item smx1a scan
+    // record.  Pin residual 3.16 -> 2.78 cm.  Confirmed upstream of T1a/T1c:
+    // 3 items where stop_retreat_max/stop_split_max used to fire no longer
+    // need to (this clause finds the real kink directly first), with NO
+    // change to any of those items' is_stm verdict -- credit reassignment,
+    // not regression.  Cost: 1 new spurious michel_found on a MESSY item,
+    // on top of T1a/T1c's own 5 (6 total) -- feeds T2.  PDHD is NOT flipped:
+    // no PDHD hand-scan record exists to confirm it there.  SBND is
+    // untouched: this key is threaded through sbnd/clus.jsonnet but SBND's
+    // own wct-pr-perevt.jsonnet never sets it (compiled-config grep: 0
+    // occurrences), so this flip carries zero SBND exposure.
+    stm_kink_asym_enable = true,
+    stm_kink_asym_entry_mip = 1.2,
+    stm_kink_asym_far_mip = 0.5,
     // stm_descent_guard (doc 94 round 1): veto an STM accept whose stop was
     // reached travelling UPWARD or near-horizontally.  A cosmic stopping muon
     // arrived from the sky, so it entered a boundary face ABOVE the point
@@ -4062,6 +4083,9 @@ function(
                              stm_second_track_guard=stm_second_track_guard,
                              stm_deficit_guard=stm_deficit_guard,
                              stm_vertex_kink_guard=stm_vertex_kink_guard,
+                             stm_kink_asym_enable=stm_kink_asym_enable,
+                             stm_kink_asym_entry_mip=stm_kink_asym_entry_mip,
+                             stm_kink_asym_far_mip=stm_kink_asym_far_mip,
                              stm_descent_guard=stm_descent_guard,
                              stm_descent_cos_y=stm_descent_cos_y,
                              stm_descent_min_cm=stm_descent_min_cm,

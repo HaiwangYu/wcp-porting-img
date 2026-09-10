@@ -930,6 +930,14 @@ function(
     // -stm-vertex-guard / SBND_STM_VERTEX_GUARD=1.
     stm_deficit_guard = false,   // PDVD: OFF (STM is the signal, doc 25 sec 2.3); SBND production true
     stm_vertex_kink_guard = false,   // PDVD: OFF (STM is the signal, doc 25 sec 2.3); SBND production true
+    // doc pdvd/56 T1b: a third, additive OR-clause in find_first_kink's
+    // charge gate (both sweeps), admitting an ASYMMETRIC kink (Bragg into a
+    // cold Michel).  C++ defaults false/1.2/0.5; keys omitted when off =>
+    // byte-identical.  DEFAULT OFF: no PDHD STM/Michel hand-scan record
+    // exists to confirm this here, PDVD-only measurement (doc 59).
+    stm_kink_asym_enable = false,
+    stm_kink_asym_entry_mip = 1.2,
+    stm_kink_asym_far_mip = 0.5,
     // stm_descent_guard (doc 94 round 1): veto an STM accept whose stop was
     // reached travelling UPWARD or near-horizontally.  A cosmic stopping muon
     // arrived from the sky, so it entered a boundary face ABOVE the point
@@ -4051,6 +4059,9 @@ function(
                              stm_second_track_guard=stm_second_track_guard,
                              stm_deficit_guard=stm_deficit_guard,
                              stm_vertex_kink_guard=stm_vertex_kink_guard,
+                             stm_kink_asym_enable=stm_kink_asym_enable,
+                             stm_kink_asym_entry_mip=stm_kink_asym_entry_mip,
+                             stm_kink_asym_far_mip=stm_kink_asym_far_mip,
                              stm_descent_guard=stm_descent_guard,
                              stm_descent_cos_y=stm_descent_cos_y,
                              stm_descent_min_cm=stm_descent_min_cm,
