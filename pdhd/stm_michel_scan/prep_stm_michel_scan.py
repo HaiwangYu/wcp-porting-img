@@ -164,6 +164,10 @@ VERDICT_SCALARS = [
     "muon_p_range", "muon_p_dqdx", "muon_p_mcs",
     "n_delta", "delta_len", "n_body_hadron", "n_stop_arms",
     "cont_len", "cont_angle_deg", "cont_mip", "n_ext", "ext_len", "dead_ahead",
+    # doc pdvd/57 -- the stop retreat.  Absent on any arm before it; the dict
+    # comprehension below skips missing keys, so a pre-doc-57 arm re-preps
+    # byte-identically with no n_retreat/retreat_len column at all.
+    "n_retreat", "retreat_len",
     "contrast", "contrast_expected", "plateau_med", "tail_med",
     "n_tail", "n_plateau", "short_track", "ks_mu", "ks_flat",
     "stop_dis", "t0_us", "gid", "chain_coverage", "n_cluster_pts",
